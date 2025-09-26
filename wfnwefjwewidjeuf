@@ -488,36 +488,104 @@ Tabs.Shop:Toggle({
     end
 })
 
+Tabs.Shop:Section({ Title = "Rows" })
+
+local HttpService = game:GetService("HttpService")
+local Remote = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+
+local selectedRows = { "1" } -- default
+local autoBuyEnabled = false
+
+-- Dropdown pilih row
+Tabs.Shop:Dropdown({
+    Title = "Select Rows",
+    Values = { "1","2","3","4","5","6","7" },
+    Value = { "1" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option)
+        selectedRows = option
+    end
+})
+
+-- Toggle auto buy
+Tabs.Shop:Toggle({
+    Title = "Auto Buy Plant Rows",
+    Value = false,
+    Callback = function(state)
+        autoBuyEnabled = state
+    end
+})
+
+-- Loop auto buy
+spawn(function()
+    while true do
+        wait(1) -- delay 1 detik, bisa diubah sesuai kebutuhan
+        if autoBuyEnabled and #selectedRows > 0 then
+            for _, row in ipairs(selectedRows) do
+                local args = { { tonumber(row), "\t" } } -- format sesuai server
+                Remote:FireServer(unpack(args))
+            end
+        end
+    end
+end)
+
 Tabs.Inventory:Section({ Title = "Sell" })
 
--- Slider untuk mengatur delay auto sell
+-- Variable global
+AutoSellEnabled = false
+AutoSellDelay = 1
+AutoSellMode = "Delay" -- default mode: "Delay" atau "Full"
+
+-- Dropdown untuk memilih mode Auto Sell
+Tabs.Inventory:Dropdown({
+    Title = "Auto Sell Mode",
+    Values = { "Delay", "Inventory Full" },
+    Value = "Delay",
+    Callback = function(option)
+        AutoSellMode = option
+
+    end
+})
+
+-- Slider untuk delay
 Tabs.Inventory:Slider({
     Title = "Auto Sell Delay", 
     Step = 1, 
     Value = {
         Min = 1, 
-        Max = 100,  -- bisa kamu ubah sesuai kebutuhan
+        Max = 100,
         Default = 1, 
     },
     Callback = function(value)
-        -- value akan dipakai sebagai delay
         AutoSellDelay = value
     end
 })
 
--- Toggle untuk mengaktifkan / menonaktifkan Auto Sell
+-- Toggle Auto Sell
 Tabs.Inventory:Toggle({ 
     Title = "Auto Sell", 
     Value = false,
     Callback = function(state)
         AutoSellEnabled = state
         if state then
-            -- jalankan auto sell loop
             spawn(function()
                 while AutoSellEnabled do
-                    -- fire server ItemSell
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ItemSell"):FireServer()
-                    wait(AutoSellDelay)  -- delay sesuai slider
+                    if AutoSellMode == "Delay" then
+                        -- fire server sesuai delay
+                        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ItemSell"):FireServer()
+                        wait(AutoSellDelay)
+                    elseif AutoSellMode == "Full" then
+                        -- Cek notifikasi tas penuh
+                        local player = game:GetService("Players").LocalPlayer
+                        local notifGui = player:WaitForChild("PlayerGui"):WaitForChild("Notifications"):WaitForChild("Notifications")
+                        local notification = notifGui:FindFirstChild("Notification")
+                        if notification and notification.Text:match("Your inventory is full!") then
+                            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ItemSell"):FireServer()
+                        end
+                        wait(0.5) -- delay kecil biar gak overload
+                    end
+                    wait()
                 end
             end)
         end
@@ -533,31 +601,38 @@ local event = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRem
 local selectedSeed = nil
 local selectedRow = nil
 local autoMode = false
-local myPlot = nil -- disimpan setelah ketemu
+local myPlot = nil
 
--- cari plot player (pakai loop index)
+-- cari plot player
 local function findMyPlot()
-    for i = 1, #workspace.Plots:GetChildren() do
-        local plot = workspace.Plots:FindFirstChild(tostring(i))
-        if plot then
-            local sign = plot:FindFirstChild("PlayerSign")
-            if sign and sign:FindFirstChild("BillboardGui") and sign.BillboardGui:FindFirstChild("TextLabel") then
-                local textLabel = sign.BillboardGui.TextLabel
-                if textLabel.Text == player.DisplayName then
-                    print("Ini plot kita: " .. i)
-                    myPlot = plot
-                    return plot
-                end
+    for _, plot in ipairs(workspace.Plots:GetChildren()) do
+        local sign = plot:FindFirstChild("PlayerSign")
+        if sign and sign:FindFirstChild("BillboardGui") then
+            local textLabel = sign.BillboardGui:FindFirstChild("TextLabel")
+            if textLabel and textLabel.Text == player.DisplayName then
+                return plot
             end
         end
     end
-    return nil
 end
 
--- ambil info seed dari backpack (support nama tanpa [x...])
+-- ambil info seed dari backpack atau character
 local function getSeedData(seedName)
     local backpack = player:WaitForChild("Backpack")
+    local character = player.Character or player.CharacterAdded:Wait()
+
     for _, tool in ipairs(backpack:GetChildren()) do
+        if tool:IsA("Tool") and string.find(tool.Name, seedName) then
+            return {
+                ID = tool:GetAttribute("ID"),
+                Plant = tool:GetAttribute("Plant"),
+                Tool = tool,
+                Name = tool.Name
+            }
+        end
+    end
+
+    for _, tool in ipairs(character:GetChildren()) do
         if tool:IsA("Tool") and string.find(tool.Name, seedName) then
             return {
                 ID = tool:GetAttribute("ID"),
@@ -569,24 +644,23 @@ local function getSeedData(seedName)
     end
 end
 
--- tanam semua di plot (atau hanya row tertentu kalau dipilih)
+-- tanam di plot
 local function plantAll(seedName, rowFilter)
     local seedData = getSeedData(seedName)
-    if not seedData then
-        warn(seedName .. " tidak ditemukan di backpack")
-        return
+    if not seedData then return end
+
+    local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+    if humanoid and seedData.Tool.Parent ~= player.Character then
+        humanoid:EquipTool(seedData.Tool)
+        task.wait(0.2)
     end
 
     if not myPlot then
         myPlot = findMyPlot()
-        if not myPlot then
-            warn("Plot tidak ditemukan untuk player: " .. player.DisplayName)
-            return
-        end
+        if not myPlot then return end
     end
 
     for _, row in ipairs(myPlot.Rows:GetChildren()) do
-        -- cek row filter (misalnya hanya row "3")
         if not rowFilter or row.Name == tostring(rowFilter) then
             if row:FindFirstChild("Grass") then
                 for _, grass in ipairs(row.Grass:GetChildren()) do
@@ -594,8 +668,7 @@ local function plantAll(seedName, rowFilter)
                         {
                             {
                                 ID = seedData.ID,
-                                -- tanam + naik 2 stud
-                                CFrame = grass.CFrame * CFrame.new(0, 2, 0),
+                                CFrame = grass.CFrame * CFrame.new(0, 1, 0),
                                 Item = seedData.Plant,
                                 Floor = grass
                             },
@@ -603,7 +676,6 @@ local function plantAll(seedName, rowFilter)
                         }
                     }
                     event:FireServer(unpack(args))
-                    print("Nanam " .. seedData.Plant .. " (" .. seedData.Name .. ") di atas Grass " .. grass.Name .. " (Row " .. row.Name .. ") +2 stud")
                     task.wait(0.2)
                 end
             end
@@ -611,7 +683,7 @@ local function plantAll(seedName, rowFilter)
     end
 end
 
--- Dropdown untuk pilih seed
+-- Dropdown pilih seed
 Tabs.Auto:Dropdown({ 
     Title = "Select Seed",  
     Values = { 
@@ -630,39 +702,37 @@ Tabs.Auto:Dropdown({
     Value = "",
     Callback = function(option) 
         selectedSeed = option
-        print("Selected Seed: " .. option) 
     end
 })
 
--- Dropdown untuk pilih row (1-7)
+-- Dropdown pilih row
 Tabs.Auto:Dropdown({ 
     Title = "Select Row", 
-    Values = { "1","2","3","4","5","6","7" },
-    Value = "",
+    Values = { "All","1","2","3","4","5","6","7" },
+    Value = "All",
     Callback = function(option) 
-        selectedRow = tonumber(option)
-        print("Row terpilih: " .. option) 
+        if option == "All" then
+            selectedRow = nil
+        else
+            selectedRow = tonumber(option)
+        end
     end
 })
 
--- Toggle untuk aktifkan auto plant
+-- Toggle auto plant
 Tabs.Auto:Toggle({ 
     Title = "Auto Plant", 
     Value = false,
     Callback = function(state) 
         autoMode = state
-        print("Auto Plant: " .. tostring(state))
 
         if autoMode then
-            if not selectedSeed then
-                warn("Pilih dulu seed dari dropdown!")
-                return
-            end
+            if not selectedSeed then return end
 
             task.spawn(function()
                 while autoMode do
                     plantAll(selectedSeed, selectedRow)
-                    task.wait(5) -- jeda supaya tidak spam
+                    task.wait(5)
                 end
             end)
         end
