@@ -575,7 +575,7 @@ Tabs.Inventory:Toggle({
                         -- fire server sesuai delay
                         game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ItemSell"):FireServer()
                         wait(AutoSellDelay)
-                    elseif AutoSellMode == "Full" then
+                    elseif AutoSellMode == "Inventory Full" then
                         -- Cek notifikasi tas penuh
                         local player = game:GetService("Players").LocalPlayer
                         local notifGui = player:WaitForChild("PlayerGui"):WaitForChild("Notifications"):WaitForChild("Notifications")
