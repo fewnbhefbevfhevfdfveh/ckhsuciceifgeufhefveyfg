@@ -157,10 +157,7 @@ Tabs.Home:Paragraph({
 
 Tabs.Farm:Section({ Title = "Brainrot Farm" })
 
--- Telepeort
--- Services
 local Players = game:GetService("Players")
-
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
@@ -169,22 +166,28 @@ local Brainrots = workspace:WaitForChild("ScriptedMap"):WaitForChild("Brainrots"
 
 local teleportEnabled = false -- status toggle
 
--- Fungsi Teleport ke Brainrot (langsung model)
-local function teleportToBrainrot(brainrot)
-    if brainrot and brainrot:IsA("Model") then
-        local pivotCFrame = brainrot:GetPivot()
-        -- posisi turun 1 stud supaya tidak nempel di atas model
-        humanoidRootPart.CFrame = pivotCFrame + Vector3.new(0, -2, 0)
+-- Fungsi teleport ke Brainrot aktif (Model)
+local function teleportToBrainrot()
+    -- Cari Brainrot yang ada/aktif
+    local target
+    for _, brainrot in ipairs(Brainrots:GetChildren()) do
+        if brainrot:IsA("Model") then
+            target = brainrot
+            break
+        end
+    end
+
+    if target then
+        local pivotCFrame = target:GetPivot()
+        humanoidRootPart.CFrame = pivotCFrame + Vector3.new(0, -2, 1)
     end
 end
 
--- Loop teleport (jalan terus tapi dicek toggle)
+-- Loop teleport (cek toggle)
 task.spawn(function()
-    while task.wait(0.001) do
+    while task.wait(0.0001) do -- pakai wait lebih aman, 0.001 terlalu cepat
         if teleportEnabled then
-            for _, brainrot in ipairs(Brainrots:GetChildren()) do
-                teleportToBrainrot(brainrot)
-            end
+            teleportToBrainrot()
         end
     end
 end)
@@ -197,7 +200,6 @@ Tabs.Farm:Toggle({
         teleportEnabled = state
     end
 })
-
 
 
 -- Attack
@@ -214,22 +216,65 @@ Tabs.Farm:Toggle({
 
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local WeaponAttack = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("AttacksServer"):WaitForChild("WeaponAttack")
 local Brainrots = workspace:WaitForChild("ScriptedMap"):WaitForChild("Brainrots")
 
--- Fungsi buat nyerang Brainrot
+local localPlayer = Players.LocalPlayer
+local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+
+-- Fungsi untuk hitung jarak
+local function getDistance(part1, part2)
+    return (part1.Position - part2.Position).Magnitude
+end
+
+-- Cari Part utama Brainrot (misal Head atau Part pertama)
+local function getBrainrotPart(brainrot)
+    for _, part in ipairs(brainrot:GetChildren()) do
+        if part:IsA("BasePart") then
+            return part
+        end
+    end
+    return nil
+end
+
+-- Fungsi cari Brainrot terdekat
+local function getClosestBrainrot()
+    local closest = nil
+    local shortestDistance = math.huge
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
+
+    for _, brainrot in ipairs(Brainrots:GetChildren()) do
+        if brainrot:IsA("Model") then
+            local targetPart = getBrainrotPart(brainrot)
+            if targetPart then
+                local distance = getDistance(hrp, targetPart)
+                if distance < shortestDistance then
+                    shortestDistance = distance
+                    closest = brainrot
+                end
+            end
+        end
+    end
+
+    return closest
+end
+
+-- Fungsi serang Brainrot
 local function attackBrainrot(brainrot)
-    if brainrot and brainrot:IsA("Model") then
+    if brainrot then
         WeaponAttack:FireServer({ brainrot.Name })
     end
 end
 
 -- Loop serang terus saat toggle aktif
 task.spawn(function()
-    while task.wait(0.0001) do
+    while task.wait(0.1) do
         if autoAttackEnabled then
-            for _, brainrot in ipairs(Brainrots:GetChildren()) do
-                attackBrainrot(brainrot)
+            local target = getClosestBrainrot()
+            if target then
+                attackBrainrot(target)
             end
         end
     end
