@@ -1,1 +1,80 @@
 
+--[[
+ _   _ _______ __   __    _    
+| \ | |  ____|  \ /  |  / \   
+|  \| | |__     \ V /  / _ \  
+| . ` |  __|     > <  / ___ \ 
+| |\  | |____   / . \/ /   \ \
+|_| \_|______| /_/ \_/_/     \_\
+]]
+
+repeat task.wait() until game.Players.LocalPlayer and game.Players.LocalPlayer.Character
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+print("Supported loader system running...")
+print("Join my discord - discord.gg/ECxQFc97F5")
+
+local placeId = game.PlaceId
+
+local games = {
+    [121864768012064] = 'https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/sjfeufeufegfefy', -- Fish It
+    [129827112113663] = 'https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/ewfheufefgeufg', -- Prospecting!
+    [16732694052] = 'https://raw.githubusercontent.com/squdgwdujwodhwu/cdjvdkjfekhfeufdjwfbehu/refs/heads/main/Fisch%20%7C%20Premium', -- Fisch
+}
+
+local scriptUrl = games[placeId]
+
+if scriptUrl then
+    local success, err = pcall(function()
+        loadstring(game:HttpGet(scriptUrl))()
+    end)
+    if not success then
+        warn("Failed to load script:", err)
+    end
+else
+    warn("Unsupported game. PlaceId:", placeId)
+end
+
+-- AntiAFK Safe Auto-ON
+local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
+local player = Players.LocalPlayer
+
+local AntiAFKEnabled = true
+local AntiAFKConnection
+local loopThread
+
+local function doVirtualAction()
+    -- simulasi klik ringan, aman untuk mencegah kick AFK
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new(math.random(0,800), math.random(0,600)))
+    wait(0.05)
+    VirtualUser:ClickButton2(Vector2.new(math.random(0,800), math.random(0,600)))
+end
+
+local function startLoop()
+    loopThread = coroutine.create(function()
+        while AntiAFKEnabled do
+            pcall(doVirtualAction)
+            local waitTime = math.random(60, 300) -- interval acak 1-5 menit
+            local elapsed = 0
+            while elapsed < waitTime and AntiAFKEnabled do
+                wait(1)
+                elapsed = elapsed + 1
+            end
+        end
+    end)
+    coroutine.resume(loopThread)
+end
+
+-- pasang listener Idled untuk respon cepat event AFK
+AntiAFKConnection = player.Idled:Connect(function()
+    if AntiAFKEnabled then
+        pcall(doVirtualAction)
+    end
+end)
+
+-- jalankan loop berkala
+startLoop()
