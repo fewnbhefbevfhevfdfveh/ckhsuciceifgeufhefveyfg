@@ -1,0 +1,752 @@
+
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+local Localization = WindUI:Localization({
+    Enabled = true,
+    Prefix = "loc:",
+    DefaultLanguage = "en",
+    Translations = {
+        ["en"] = {
+            ["WINDUI_EXAMPLE"] = "WindUI Example",
+            ["WELCOME"] = "Welcome to WindUI!",
+            ["LIB_DESC"] = "Beautiful UI library for Roblox",
+            ["SETTINGS"] = "Settings",
+            ["APPEARANCE"] = "Appearance",
+            ["FEATURES"] = "Features",
+            ["UTILITIES"] = "Utilities",
+            ["UI_ELEMENTS"] = "UI Elements",
+            ["CONFIGURATION"] = "Configuration",
+            ["SAVE_CONFIG"] = "Save Configuration",
+            ["LOAD_CONFIG"] = "Load Configuration",
+            ["THEME_SELECT"] = "Select Theme",
+            ["TRANSPARENCY"] = "Window Transparency",
+            ["LOCKED_TAB"] = "Locked Tab"
+        }
+    }
+})
+
+WindUI.TransparencyValue = 0.2
+WindUI:SetTheme("Dark")
+
+local function gradient(text, startColor, endColor)
+    local result = ""
+    for i = 1, #text do
+        local t = (i - 1) / (#text - 1)
+        local r = math.floor((startColor.R + (endColor.R - startColor.R) * t) * 255)
+        local g = math.floor((startColor.G + (endColor.G - startColor.G) * t) * 255)
+        local b = math.floor((startColor.B + (endColor.B - startColor.B) * t) * 255)
+        result = result .. string.format('<font color="rgb(%d,%d,%d)">%s</font>', r, g, b, text:sub(i, i))
+    end
+    return result
+end
+
+
+-- Ambil nama player
+local player = game.Players.LocalPlayer
+local playerName = player.Name
+local playerDisplayName = player.DisplayName
+
+-- Buat Window versi baru
+local Window = WindUI:CreateWindow({
+    Title = "Nexa - Premium",
+    Icon = "rbxassetid://107488593993096",
+    Author = "Plants Vs Brainrots Script | @ Han",
+    Folder = "Hanzo",
+    Size = UDim2.fromOffset(540, 420),
+    Transparent = true,
+    Theme = "Dark",
+    
+    HidePanelBackground = true,
+    NewElements = false,
+
+    User = {
+        Enabled = true,
+        Anonymous = false,           -- false biar muncul nama asli
+        Name = playerDisplayName,    -- Nama tampilan
+        UserName = "@" .. playerName, -- Username Roblox
+        Callback = function()
+            WindUI:Notify({
+                Title = "User Profile",
+                Content = "User profile clicked!",
+                Duration = 3
+            })
+        end
+    },
+    
+    Acrylic = false,
+    HideSearchBar = false,
+    SideBarWidth = 200,
+})
+
+Window:Tag({
+    Title = "v0.0.0",
+    Color = Color3.fromHex("#30ff6a")
+})
+
+
+Window:EditOpenButton({
+    Enabled = false
+})
+
+WindUI:Notify({
+    Title = "Game Supported",
+    Content = "Dig 🔴, 99 Nights in the Forest 🔴, Fish It 🟢, Grow A Garden 🔴",
+    Icon = "gamepad",
+    Duration = 6
+})
+
+task.delay(6.5, function()
+    WindUI:Notify({
+        Title = "Bug Report",
+        Content = "If there are any errors, please let the developer know. Join Discord to report bugs.",
+        Icon = "cloud-alert",
+        Duration = 6
+    })
+end)
+
+task.delay(13, function()
+    WindUI:Notify({
+        Title = "Purchase",
+        Content = "If you want to buy this premium script key, join Discord to buy premium.",
+        Icon = "shopping-cart",
+        Duration = 6
+    })
+end)
+
+local Tabs = {
+    Home = Window:Tab({ Title = "Home", Icon = "house"  }),
+    Farm = Window:Tab({ Title = "Farm", Icon = "swords"  }),
+    Shop = Window:Tab({ Title = "Shop", Icon = "shopping-cart"  }),
+    Inventory = Window:Tab({ Title = "Inventory", Icon = "backpack"  }),
+    Auto = Window:Tab({ Title = "Automaticaly", Icon = "repeat-2"  }),
+}
+
+Tabs.Home:Section({ Title = "Update" })
+
+Tabs.Home:Paragraph({
+    Title = "Here's what's new:",
+    Desc = [[
+
+    ]]
+})
+
+Tabs.Home:Section({ Title = "Server" })
+
+Tabs.Home:Paragraph({
+    Title = "Discord - Nexa | COMMUNITY",
+    Desc = "Indonesia 🇮🇩",
+    Image = "https://images-eds-ssl.xboxlive.com/image?url=4rt9.lXDC4H_93laV1_eHHFT949fUipzkiFOBH3fAiZZUCdYojwUyX2aTonS1aIwMrx6NUIsHfUHSLzjGJFxxsG72wAo9EWJR4yQWyJJaDaK1XdUso6cUMpI9hAdPUU_FNs11cY1X284vsHrnWtRw7oqRpN1m9YAg21d_aNKnIo-&format=source",
+    ImageSize = 20,
+    Color = "Grey",
+    Buttons = {
+        {
+            Title = "Copy Link",
+            Icon = "copy",
+            Variant = "Tertiary",
+            Callback = function()
+                setclipboard("discord.gg/ECxQFc97F5")
+                WindUI:Notify({
+                    Title = "Copied!",
+                    Content = "Discord link copied to clipboard",
+                    Duration = 2
+                })
+            end
+        }
+    }
+})
+
+Tabs.Farm:Section({ Title = "Brainrot Farm" })
+
+-- Telepeort
+-- Services
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+local Brainrots = workspace:WaitForChild("ScriptedMap"):WaitForChild("Brainrots")
+
+local teleportEnabled = false -- status toggle
+
+-- Fungsi Teleport ke Brainrot (langsung model)
+local function teleportToBrainrot(brainrot)
+    if brainrot and brainrot:IsA("Model") then
+        local pivotCFrame = brainrot:GetPivot()
+        -- posisi turun 1 stud supaya tidak nempel di atas model
+        humanoidRootPart.CFrame = pivotCFrame + Vector3.new(0, -2, 0)
+    end
+end
+
+-- Loop teleport (jalan terus tapi dicek toggle)
+task.spawn(function()
+    while task.wait(0.001) do
+        if teleportEnabled then
+            for _, brainrot in ipairs(Brainrots:GetChildren()) do
+                teleportToBrainrot(brainrot)
+            end
+        end
+    end
+end)
+
+-- WindUI Toggle
+Tabs.Farm:Toggle({ 
+    Title = "Teleport to Brainrot", 
+    Value = false,
+    Callback = function(state) 
+        teleportEnabled = state
+    end
+})
+
+
+
+-- Attack
+-- Toggle WindUI
+local autoAttackEnabled = false
+
+Tabs.Farm:Toggle({ 
+    Title = "Auto Attack Brainrot", 
+    Value = false,
+    Callback = function(state)
+        autoAttackEnabled = state
+    end
+})
+
+-- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local WeaponAttack = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("AttacksServer"):WaitForChild("WeaponAttack")
+local Brainrots = workspace:WaitForChild("ScriptedMap"):WaitForChild("Brainrots")
+
+-- Fungsi buat nyerang Brainrot
+local function attackBrainrot(brainrot)
+    if brainrot and brainrot:IsA("Model") then
+        WeaponAttack:FireServer({ brainrot.Name })
+    end
+end
+
+-- Loop serang terus saat toggle aktif
+task.spawn(function()
+    while task.wait(0.0001) do
+        if autoAttackEnabled then
+            for _, brainrot in ipairs(Brainrots:GetChildren()) do
+                attackBrainrot(brainrot)
+            end
+        end
+    end
+end)
+
+Tabs.Farm:Section({ Title = "Collect" })
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- cari plot kita
+local myDisplayName = player.DisplayName
+local plots = workspace:WaitForChild("Plots")
+
+local myPlot = nil
+for _, plot in pairs(plots:GetChildren()) do
+    local sign = plot:FindFirstChild("PlayerSign")
+    if sign then
+        local billboard = sign:FindFirstChild("BillboardGui")
+        if billboard then
+            local label = billboard:FindFirstChild("TextLabel")
+            if label and label:IsA("TextLabel") then
+                if label.Text == myDisplayName then
+                    myPlot = plot
+                    break
+                end
+            end
+        end
+    end
+end
+if not myPlot then return end
+
+local brainrots = myPlot:WaitForChild("Brainrots")
+
+-- Atur speed jalan
+humanoid.WalkSpeed = 50
+
+-- Variabel kontrol
+local autoCollect = false
+local collectDelay = 1
+
+-- Fungsi untuk jalan ke model
+local function walkTo(model)
+    if not model then return end
+    local part = model:FindFirstChildWhichIsA("BasePart", true)
+    if part then
+        humanoid:MoveTo(part.Position + Vector3.new(0, 3, 0))
+        humanoid.MoveToFinished:Wait()
+    end
+end
+
+-- Fungsi utama auto jalan
+task.spawn(function()
+    while task.wait() do
+        if autoCollect then
+            -- loop selama toggle aktif
+            for i = 1, 17 do
+                if not autoCollect then break end
+                local model = brainrots:FindFirstChild(tostring(i))
+                if model then
+                    walkTo(model)
+                end
+            end
+            -- selesai 1 → 17, tunggu sesuai slider
+            if autoCollect then
+                task.wait(collectDelay)
+            end
+        end
+    end
+end)
+
+-- UI
+Tabs.Farm:Slider({
+    Title = "Collect Delay",
+    Step = 1,
+    Value = {
+        Min = 1,
+        Max = 100,
+        Default = 1,
+    },
+    Callback = function(value)
+        collectDelay = value
+    end
+})
+
+Tabs.Farm:Toggle({
+    Title = "Auto Collect",
+    Value = false,
+    Callback = function(state)
+        autoCollect = state
+    end
+})
+
+Tabs.Shop:Section({ Title = "Seed" })
+
+local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local dataRemoteEvent = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+
+-- Daftar seed
+local seedList = {
+    "Cactus Seed",
+    "Strawberry Seed",
+    "Pumpkin Seed",
+    "Sunflower Seed",
+    "Dragon Fruit Seed",
+    "Eggplant Seed",
+    "Watermelon Seed",
+    "Cocotank Seed",
+    "Carnivorous Plant Seed",
+    "Mr. Carrot Seed",
+    "Tomatrio Seed"
+}
+
+-- Status toggle & pilihan seed
+local autoBuyEnabled = false
+local selectedSeeds = {}
+
+-- Fungsi loop auto buy
+local function startAutoBuy()
+    spawn(function()
+        while autoBuyEnabled do
+            for _, seedName in ipairs(selectedSeeds) do
+                local args = { { seedName, "\a" } }
+                dataRemoteEvent:FireServer(unpack(args))
+                task.wait(0.5) -- kasih delay antar pembelian
+            end
+            task.wait(1) -- delay per cycle
+        end
+    end)
+end
+
+-- Dropdown multi pilih seed
+Tabs.Shop:Dropdown({
+    Title = "Select Seeds",
+    Values = seedList,
+    Value = {}, -- default kosong
+    Multi = true,
+    AllowNone = true,
+    Callback = function(options)
+        selectedSeeds = options
+        print("Seeds selected: " .. HttpService:JSONEncode(options))
+    end
+})
+
+-- Toggle auto buy
+Tabs.Shop:Toggle({
+    Title = "Auto Buy Selected Seeds",
+    Value = false,
+    Callback = function(state)
+        autoBuyEnabled = state
+        if state then
+            startAutoBuy()
+        end
+    end
+})
+
+Tabs.Shop:Section({ Title = "Gear" })
+
+local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local dataRemoteEvent = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+
+-- Daftar gear/items
+local gearList = {
+    "Water Bucket",
+    "Frost Grenade",
+    "Banana Gun",
+    "Frost Blower",
+    "Carrot Launcher"
+}
+
+-- Status toggle & pilihan gear
+local autoBuyEnabled = false
+local selectedGear = {}
+
+-- Fungsi loop auto buy gear
+local function startAutoBuy()
+    spawn(function()
+        while autoBuyEnabled do
+            for _, gearName in ipairs(selectedGear) do
+                local args = {
+                    { gearName, " " } -- bedanya di sini pakai " " bukan "\a"
+                }
+                dataRemoteEvent:FireServer(unpack(args))
+                task.wait(0.5) -- delay antar pembelian
+            end
+            task.wait(1) -- delay per cycle
+        end
+    end)
+end
+
+-- Dropdown multi pilih gear
+Tabs.Shop:Dropdown({
+    Title = "Select Gear (Multi)",
+    Values = gearList,
+    Value = {}, -- default kosong
+    Multi = true,
+    AllowNone = true,
+    Callback = function(options)
+        selectedGear = options
+        print("Gear selected: " .. HttpService:JSONEncode(options))
+    end
+})
+
+-- Toggle auto buy gear
+Tabs.Shop:Toggle({
+    Title = "Auto Buy Selected Gear",
+    Value = false,
+    Callback = function(state)
+        autoBuyEnabled = state
+        if state then
+            startAutoBuy()
+        end
+    end
+})
+
+Tabs.Shop:Section({ Title = "Platform" })
+
+local HttpService = game:GetService("HttpService")
+local Remote = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+
+-- Dropdown untuk pilih item
+local selectedItems = {} -- nyimpen item yang dipilih
+
+Tabs.Shop:Dropdown({ 
+    Title = "Select Platform To Buy",  
+    Values = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17" }, 
+    Value = {},
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        selectedItems = option -- update item yang dipilih
+    end
+})
+
+-- Toggle untuk Auto Buy
+local autoBuy = false
+
+Tabs.Shop:Toggle({ 
+    Title = "Auto Buy Platform",  
+    Value = false,
+    Callback = function(state) 
+        autoBuy = state
+        print("Mode activated: " .. tostring(state))
+        if autoBuy and #selectedItems > 0 then
+            -- Loop beli semua item yang dipilih
+            for _, itemId in ipairs(selectedItems) do
+                local args = { { itemId, "4" } } -- "4" bisa disesuaikan server action
+                Remote:FireServer(unpack(args))
+                wait(0.1)
+            end
+        end
+    end
+})
+
+Tabs.Inventory:Section({ Title = "Sell" })
+
+-- Slider untuk mengatur delay auto sell
+Tabs.Inventory:Slider({
+    Title = "Auto Sell Delay", 
+    Step = 1, 
+    Value = {
+        Min = 1, 
+        Max = 100,  -- bisa kamu ubah sesuai kebutuhan
+        Default = 1, 
+    },
+    Callback = function(value)
+        -- value akan dipakai sebagai delay
+        AutoSellDelay = value
+    end
+})
+
+-- Toggle untuk mengaktifkan / menonaktifkan Auto Sell
+Tabs.Inventory:Toggle({ 
+    Title = "Auto Sell", 
+    Value = false,
+    Callback = function(state)
+        AutoSellEnabled = state
+        if state then
+            -- jalankan auto sell loop
+            spawn(function()
+                while AutoSellEnabled do
+                    -- fire server ItemSell
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ItemSell"):FireServer()
+                    wait(AutoSellDelay)  -- delay sesuai slider
+                end
+            end)
+        end
+    end
+})
+
+Tabs.Auto:Section({ Title = "Plant" })
+
+local player = game:GetService("Players").LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local event = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+
+local selectedSeed = nil
+local selectedRow = nil
+local autoMode = false
+local myPlot = nil -- disimpan setelah ketemu
+
+-- cari plot player (pakai loop index)
+local function findMyPlot()
+    for i = 1, #workspace.Plots:GetChildren() do
+        local plot = workspace.Plots:FindFirstChild(tostring(i))
+        if plot then
+            local sign = plot:FindFirstChild("PlayerSign")
+            if sign and sign:FindFirstChild("BillboardGui") and sign.BillboardGui:FindFirstChild("TextLabel") then
+                local textLabel = sign.BillboardGui.TextLabel
+                if textLabel.Text == player.DisplayName then
+                    print("Ini plot kita: " .. i)
+                    myPlot = plot
+                    return plot
+                end
+            end
+        end
+    end
+    return nil
+end
+
+-- ambil info seed dari backpack (support nama tanpa [x...])
+local function getSeedData(seedName)
+    local backpack = player:WaitForChild("Backpack")
+    for _, tool in ipairs(backpack:GetChildren()) do
+        if tool:IsA("Tool") and string.find(tool.Name, seedName) then
+            return {
+                ID = tool:GetAttribute("ID"),
+                Plant = tool:GetAttribute("Plant"),
+                Tool = tool,
+                Name = tool.Name
+            }
+        end
+    end
+end
+
+-- tanam semua di plot (atau hanya row tertentu kalau dipilih)
+local function plantAll(seedName, rowFilter)
+    local seedData = getSeedData(seedName)
+    if not seedData then
+        warn(seedName .. " tidak ditemukan di backpack")
+        return
+    end
+
+    if not myPlot then
+        myPlot = findMyPlot()
+        if not myPlot then
+            warn("Plot tidak ditemukan untuk player: " .. player.DisplayName)
+            return
+        end
+    end
+
+    for _, row in ipairs(myPlot.Rows:GetChildren()) do
+        -- cek row filter (misalnya hanya row "3")
+        if not rowFilter or row.Name == tostring(rowFilter) then
+            if row:FindFirstChild("Grass") then
+                for _, grass in ipairs(row.Grass:GetChildren()) do
+                    local args = {
+                        {
+                            {
+                                ID = seedData.ID,
+                                -- tanam + naik 2 stud
+                                CFrame = grass.CFrame * CFrame.new(0, 2, 0),
+                                Item = seedData.Plant,
+                                Floor = grass
+                            },
+                            "\005"
+                        }
+                    }
+                    event:FireServer(unpack(args))
+                    print("Nanam " .. seedData.Plant .. " (" .. seedData.Name .. ") di atas Grass " .. grass.Name .. " (Row " .. row.Name .. ") +2 stud")
+                    task.wait(0.2)
+                end
+            end
+        end
+    end
+end
+
+-- Dropdown untuk pilih seed
+Tabs.Auto:Dropdown({ 
+    Title = "Select Seed",  
+    Values = { 
+        "Cactus Seed",
+        "Strawberry Seed",
+        "Pumpkin Seed",
+        "Sunflower Seed",
+        "Dragon Fruit Seed",
+        "Eggplant Seed",
+        "Watermelon Seed",
+        "Cocotank Seed",
+        "Carnivorous Plant Seed",
+        "Mr Carrot Seed", 
+        "Tomatrio Seed"
+    },
+    Value = "",
+    Callback = function(option) 
+        selectedSeed = option
+        print("Selected Seed: " .. option) 
+    end
+})
+
+-- Dropdown untuk pilih row (1-7)
+Tabs.Auto:Dropdown({ 
+    Title = "Select Row", 
+    Values = { "1","2","3","4","5","6","7" },
+    Value = "",
+    Callback = function(option) 
+        selectedRow = tonumber(option)
+        print("Row terpilih: " .. option) 
+    end
+})
+
+-- Toggle untuk aktifkan auto plant
+Tabs.Auto:Toggle({ 
+    Title = "Auto Plant", 
+    Value = false,
+    Callback = function(state) 
+        autoMode = state
+        print("Auto Plant: " .. tostring(state))
+
+        if autoMode then
+            if not selectedSeed then
+                warn("Pilih dulu seed dari dropdown!")
+                return
+            end
+
+            task.spawn(function()
+                while autoMode do
+                    plantAll(selectedSeed, selectedRow)
+                    task.wait(5) -- jeda supaya tidak spam
+                end
+            end)
+        end
+    end
+})
+
+local TweenService = game:GetService("TweenService")
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.CoreGui
+
+local ImgBtn = Instance.new("ImageButton")
+ImgBtn.Parent = ScreenGui
+ImgBtn.Size = UDim2.new(0, 60, 0, 60)
+ImgBtn.Position = UDim2.new( 0, 100, 1, -300)
+ImgBtn.BackgroundTransparency = 1
+ImgBtn.Image = "rbxassetid://137184014634632" -- ganti dengan gambar planet
+
+-- Biar ujung tombol bulat/halus
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 15)
+UICorner.Parent = ImgBtn
+
+-- Toggle GUI dengan ImageButton
+local isOpen = false
+ImgBtn.MouseButton1Click:Connect(function()
+    -- ANIMASI KLIK (scale kecil dulu baru balik normal)
+    local shrink = TweenService:Create(ImgBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 50, 0, 50)
+    })
+    local grow = TweenService:Create(ImgBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 60, 0, 60)
+    })
+
+    shrink:Play()
+    shrink.Completed:Wait()
+    grow:Play()
+
+    -- Toggle Window
+    if isOpen then
+        Window:Close()
+    else
+        Window:Open()
+    end
+    isOpen = not isOpen
+end)
+
+local UserInputService = game:GetService("UserInputService")
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    ImgBtn.Position = UDim2.new(
+        startPos.X.Scale, startPos.X.Offset + delta.X,
+        startPos.Y.Scale, startPos.Y.Offset + delta.Y
+    )
+end
+
+ImgBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = ImgBtn.Position
+
+        -- biar bisa lepas drag kalau jari/mouse diangkat
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+ImgBtn.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement 
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
