@@ -676,7 +676,7 @@ end
 
 -- Fungsi Step 2
 local function step2()
-	local args = {-1.2331849336624146, 0.9660855341529426}
+	local args = {-1.233184814453125, 0.08751149696158361}
 	requestMinigame:InvokeServer(unpack(args))
 end
 
@@ -692,16 +692,13 @@ Tabs.Farm:Toggle({
                 while autoFish do
                     -- Step 1 & 2
                     step1()
-                    task.wait(0.1)
+                    task.wait(0.5)
                     step2()
 
                     -- Tunggu sampai container sesuai
                     repeat
                         task.wait(0.2)
                     until not autoFish or container.Position == UDim2.new(0.5, 0, 0.1, 0)
-
-                    if autoFish then
-                    end
                 end
             end)
         end
