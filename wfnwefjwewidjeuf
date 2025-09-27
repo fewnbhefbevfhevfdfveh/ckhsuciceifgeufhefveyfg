@@ -181,7 +181,7 @@ local function teleportToBrainrot()
 
     if target then
         local pivotCFrame = target:GetPivot()
-        humanoidRootPart.CFrame = pivotCFrame + Vector3.new(0, -2, 1)
+        humanoidRootPart.CFrame = pivotCFrame + Vector3.new(0, -1, 1)
     end
 end
 
@@ -206,7 +206,7 @@ Tabs.Farm:Toggle({
 
 -- Attack
 local autoAttackEnabled = false
-local maxTargets = 5 -- 🔹 jumlah Brainrot yg diserang sekaligus (ubah sesuai kebutuhan)
+local maxTargets = 3 -- 🔹 jumlah Brainrot yg diserang sekaligus (ubah sesuai kebutuhan)
 
 Tabs.Farm:Toggle({ 
     Title = "Auto Attack Brainrot", 
@@ -280,7 +280,7 @@ end
 
 -- Loop auto attack
 task.spawn(function()
-    while task.wait(0.001) do
+    while task.wait(0.01) do
         if autoAttackEnabled then
             local targets = getClosestBrainrots(maxTargets)
             attackBrainrots(targets)
