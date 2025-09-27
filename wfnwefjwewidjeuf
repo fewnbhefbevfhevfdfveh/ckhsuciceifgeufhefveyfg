@@ -338,14 +338,14 @@ task.spawn(function()
     while task.wait() do
         if autoCollect then
             -- loop selama toggle aktif
-            for i = 1, 17 do
+            for i = 1, 10 do
                 if not autoCollect then break end
                 local model = brainrots:FindFirstChild(tostring(i))
                 if model then
                     walkTo(model)
                 end
             end
-            -- selesai 1 → 17, tunggu sesuai slider
+            -- selesai 1 → 10, tunggu sesuai slider
             if autoCollect then
                 task.wait(collectDelay)
             end
@@ -479,7 +479,7 @@ end
 
 -- 🔹 Dropdown multi pilih gear
 Tabs.Shop:Dropdown({
-    Title = "Select Gear (Multi)",
+    Title = "Select Gear",
     Values = gearList,
     Value = {}, -- default kosong
     Multi = true,
@@ -513,8 +513,7 @@ local selectedPlatforms = {}
 -- Dropdown multi select untuk pilih platform
 Tabs.Shop:Dropdown({ 
     Title = "Select Platform To Buy",  
-    Values = { "1","2","3","4","5","6","7","8","9","10",
-               "11","12","13","14","15","16","17" }, 
+    Values = { "1","2","3","4","5","6","7","8","9","10" }, 
     Value = {},
     Multi = true,
     AllowNone = true,
