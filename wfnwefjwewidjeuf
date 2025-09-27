@@ -394,7 +394,8 @@ local seedList = {
     "Cocotank Seed",
     "Carnivorous Plant Seed",
     "Mr Carrot Seed",
-    "Tomatrio Seed"
+    "Tomatrio Seed",
+    "Shroombino Seed"
 }
 
 -- 🔹 Status toggle & pilihan seed
@@ -757,7 +758,8 @@ Tabs.Auto:Dropdown({
         "Cocotank Seed",
         "Carnivorous Plant Seed",
         "Mr Carrot Seed", 
-        "Tomatrio Seed"
+        "Tomatrio Seed",
+        "Shroombino Seed"
     },
     Value = "",
     Callback = function(option) 
@@ -858,7 +860,8 @@ Tabs.Auto:Dropdown({
         "Cocotank",
         "Carnivorous Plant",
         "Mr Carrot",
-        "Tomatrio"
+        "Tomatrio",
+        "Shroombino"
     },
     Value = "",
     Callback = function(option) 
