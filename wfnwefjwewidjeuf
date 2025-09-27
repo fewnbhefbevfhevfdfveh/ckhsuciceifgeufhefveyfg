@@ -278,7 +278,7 @@ end
 
 -- Loop auto attack
 task.spawn(function()
-    while task.wait(0.2) do
+    while task.wait(0.001) do
         if autoAttackEnabled then
             local targets = getClosestBrainrots(maxTargets)
             attackBrainrots(targets)
