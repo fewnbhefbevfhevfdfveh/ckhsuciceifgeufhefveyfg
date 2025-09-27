@@ -1,4 +1,3 @@
-
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
 local Localization = WindUI:Localization({
@@ -48,7 +47,7 @@ local playerDisplayName = player.DisplayName
 
 -- Buat Window versi baru
 local Window = WindUI:CreateWindow({
-    Title = "Nexa - Free",
+    Title = "Nexa - Premium",
     Icon = "rbxassetid://107488593993096",
     Author = "Fish IT! Script | @ Han",
     Folder = "Hanzo",
@@ -676,7 +675,7 @@ end
 
 -- Fungsi Step 2
 local function step2()
-	local args = {-1.233184814453125, 0.08751149696158361}
+	local args = {-1.2331849336624146, 0.9660855341529426}
 	requestMinigame:InvokeServer(unpack(args))
 end
 
