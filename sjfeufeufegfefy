@@ -126,7 +126,7 @@ Tabs.Home:Divider()
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[/] Delete Dropdwon Charge Mode
+[-] Delete Dropdwon Charge Mode
 [/] Improve Auto FishV2
     ]]
 })
