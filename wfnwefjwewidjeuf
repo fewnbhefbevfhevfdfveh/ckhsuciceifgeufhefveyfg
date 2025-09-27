@@ -203,8 +203,8 @@ Tabs.Farm:Toggle({
 
 
 -- Attack
--- Toggle WindUI
 local autoAttackEnabled = false
+local maxTargets = 5 -- 🔹 jumlah Brainrot yg diserang sekaligus (ubah sesuai kebutuhan)
 
 Tabs.Farm:Toggle({ 
     Title = "Auto Attack Brainrot", 
@@ -223,12 +223,12 @@ local Brainrots = workspace:WaitForChild("ScriptedMap"):WaitForChild("Brainrots"
 local localPlayer = Players.LocalPlayer
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
 
--- Fungsi untuk hitung jarak
+-- Hitung jarak antar part
 local function getDistance(part1, part2)
     return (part1.Position - part2.Position).Magnitude
 end
 
--- Cari Part utama Brainrot (misal Head atau Part pertama)
+-- Ambil Part utama dari Brainrot
 local function getBrainrotPart(brainrot)
     for _, part in ipairs(brainrot:GetChildren()) do
         if part:IsA("BasePart") then
@@ -238,44 +238,50 @@ local function getBrainrotPart(brainrot)
     return nil
 end
 
--- Fungsi cari Brainrot terdekat
-local function getClosestBrainrot()
-    local closest = nil
-    local shortestDistance = math.huge
+-- Cari beberapa Brainrot terdekat
+local function getClosestBrainrots(maxCount)
     local hrp = character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return nil end
+    if not hrp then return {} end
+
+    local brainrotList = {}
 
     for _, brainrot in ipairs(Brainrots:GetChildren()) do
         if brainrot:IsA("Model") then
             local targetPart = getBrainrotPart(brainrot)
             if targetPart then
-                local distance = getDistance(hrp, targetPart)
-                if distance < shortestDistance then
-                    shortestDistance = distance
-                    closest = brainrot
-                end
+                table.insert(brainrotList, {
+                    model = brainrot,
+                    dist = getDistance(hrp, targetPart)
+                })
             end
         end
     end
 
-    return closest
+    table.sort(brainrotList, function(a, b)
+        return a.dist < b.dist
+    end)
+
+    local result = {}
+    for i = 1, math.min(maxCount, #brainrotList) do
+        table.insert(result, brainrotList[i].model.Name)
+    end
+
+    return result
 end
 
--- Fungsi serang Brainrot
-local function attackBrainrot(brainrot)
-    if brainrot then
-        WeaponAttack:FireServer({ brainrot.Name })
+-- Serang banyak Brainrot
+local function attackBrainrots(brainrotNames)
+    if #brainrotNames > 0 then
+        WeaponAttack:FireServer(brainrotNames)
     end
 end
 
--- Loop serang terus saat toggle aktif
+-- Loop auto attack
 task.spawn(function()
-    while task.wait(0.1) do
+    while task.wait(0.2) do
         if autoAttackEnabled then
-            local target = getClosestBrainrot()
-            if target then
-                attackBrainrot(target)
-            end
+            local targets = getClosestBrainrots(maxTargets)
+            attackBrainrots(targets)
         end
     end
 end)
@@ -376,7 +382,7 @@ local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local dataRemoteEvent = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
 
--- Daftar seed
+-- 🔹 Daftar seed
 local seedList = {
     "Cactus Seed",
     "Strawberry Seed",
@@ -387,29 +393,30 @@ local seedList = {
     "Watermelon Seed",
     "Cocotank Seed",
     "Carnivorous Plant Seed",
-    "Mr. Carrot Seed",
+    "Mr Carrot Seed",
     "Tomatrio Seed"
 }
 
--- Status toggle & pilihan seed
+-- 🔹 Status toggle & pilihan seed
 local autoBuyEnabled = false
 local selectedSeeds = {}
 
--- Fungsi loop auto buy
+-- 🔹 Fungsi loop auto buy
 local function startAutoBuy()
     spawn(function()
         while autoBuyEnabled do
             for _, seedName in ipairs(selectedSeeds) do
-                local args = { { seedName, "\a" } }
+                -- Remote Event: pakai "\b"
+                local args = { { seedName, "\b" } }
                 dataRemoteEvent:FireServer(unpack(args))
-                task.wait(0.5) -- kasih delay antar pembelian
+                task.wait(0.5) -- delay antar pembelian
             end
             task.wait(1) -- delay per cycle
         end
     end)
 end
 
--- Dropdown multi pilih seed
+-- 🔹 Dropdown multi pilih seed
 Tabs.Shop:Dropdown({
     Title = "Select Seeds",
     Values = seedList,
@@ -422,7 +429,7 @@ Tabs.Shop:Dropdown({
     end
 })
 
--- Toggle auto buy
+-- 🔹 Toggle auto buy
 Tabs.Shop:Toggle({
     Title = "Auto Buy Selected Seeds",
     Value = false,
@@ -440,7 +447,7 @@ local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local dataRemoteEvent = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
 
--- Daftar gear/items
+-- 🔹 Daftar gear/items
 local gearList = {
     "Water Bucket",
     "Frost Grenade",
@@ -449,17 +456,18 @@ local gearList = {
     "Carrot Launcher"
 }
 
--- Status toggle & pilihan gear
+-- 🔹 Status toggle & pilihan gear
 local autoBuyEnabled = false
 local selectedGear = {}
 
--- Fungsi loop auto buy gear
+-- 🔹 Fungsi loop auto buy gear
 local function startAutoBuy()
     spawn(function()
         while autoBuyEnabled do
             for _, gearName in ipairs(selectedGear) do
+                -- Remote Event: pakai "\026"
                 local args = {
-                    { gearName, " " } -- bedanya di sini pakai " " bukan "\a"
+                    { gearName, "\026" }
                 }
                 dataRemoteEvent:FireServer(unpack(args))
                 task.wait(0.5) -- delay antar pembelian
@@ -469,7 +477,7 @@ local function startAutoBuy()
     end)
 end
 
--- Dropdown multi pilih gear
+-- 🔹 Dropdown multi pilih gear
 Tabs.Shop:Dropdown({
     Title = "Select Gear (Multi)",
     Values = gearList,
@@ -482,7 +490,7 @@ Tabs.Shop:Dropdown({
     end
 })
 
--- Toggle auto buy gear
+-- 🔹 Toggle auto buy gear
 Tabs.Shop:Toggle({
     Title = "Auto Buy Selected Gear",
     Value = false,
@@ -496,40 +504,47 @@ Tabs.Shop:Toggle({
 
 Tabs.Shop:Section({ Title = "Platform" })
 
-local HttpService = game:GetService("HttpService")
-local Remote = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
 
--- Dropdown untuk pilih item
-local selectedItems = {} -- nyimpen item yang dipilih
+-- 🔹 Simpan pilihan platform
+local selectedPlatforms = {}
 
+-- Dropdown multi select untuk pilih platform
 Tabs.Shop:Dropdown({ 
     Title = "Select Platform To Buy",  
-    Values = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17" }, 
+    Values = { "1","2","3","4","5","6","7","8","9","10",
+               "11","12","13","14","15","16","17" }, 
     Value = {},
     Multi = true,
     AllowNone = true,
     Callback = function(option) 
-        selectedItems = option -- update item yang dipilih
+        selectedPlatforms = option
     end
 })
 
--- Toggle untuk Auto Buy
+-- Toggle auto buy
 local autoBuy = false
-
 Tabs.Shop:Toggle({ 
     Title = "Auto Buy Platform",  
     Value = false,
     Callback = function(state) 
         autoBuy = state
-        print("Mode activated: " .. tostring(state))
-        if autoBuy and #selectedItems > 0 then
-            -- Loop beli semua item yang dipilih
-            for _, itemId in ipairs(selectedItems) do
-                local args = { { itemId, "4" } } -- "4" bisa disesuaikan server action
-                Remote:FireServer(unpack(args))
-                wait(0.1)
+
+        task.spawn(function()
+            while autoBuy do
+                if #selectedPlatforms > 0 then
+                    for _, platformId in ipairs(selectedPlatforms) do
+                        local args = {
+                            { tostring(platformId), "," }
+                        }
+                        Remote:FireServer(unpack(args))
+                        task.wait(0.2)
+                    end
+                end
+                task.wait(1)
             end
-        end
+        end)
     end
 })
 
@@ -717,7 +732,7 @@ local function plantAll(seedName, rowFilter)
                                 Item = seedData.Plant,
                                 Floor = grass
                             },
-                            "\005"
+                            "\006" -- ✅ pakai RemoteEvent versi baru
                         }
                     }
                     event:FireServer(unpack(args))
@@ -786,7 +801,6 @@ Tabs.Auto:Toggle({
 
 Tabs.Auto:Section({ Title = "Remove" })
 
--- ✅ Script Auto Remove Plant (Dropdown + Toggle) tanpa print
 local player = game.Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local dataRemoteEvent = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
@@ -817,10 +831,11 @@ local function removeSelectedPlant()
         if plant.Name == selectedPlant then
             local id = plant:GetAttribute("ID") or (plant:FindFirstChild("ID") and plant.ID.Value) or plant.ID
             if id then
+                -- Remote baru dengan "\a"
                 local args = {
                     {
                         id,
-                        "\006"
+                        "\a"
                     }
                 }
                 dataRemoteEvent:FireServer(unpack(args))
