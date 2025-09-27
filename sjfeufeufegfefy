@@ -1,3 +1,4 @@
+
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
 local Localization = WindUI:Localization({
@@ -47,7 +48,7 @@ local playerDisplayName = player.DisplayName
 
 -- Buat Window versi baru
 local Window = WindUI:CreateWindow({
-    Title = "Nexa - Premium",
+    Title = "Nexa - Free",
     Icon = "rbxassetid://107488593993096",
     Author = "Fish IT! Script | @ Han",
     Folder = "Hanzo",
@@ -78,20 +79,13 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v1.2.3",
+    Title = "v1.2.4",
     Color = Color3.fromHex("#30ff6a")
 })
 
 
 Window:EditOpenButton({
     Enabled = false
-})
-
-WindUI:Notify({
-    Title = "Game Supported",
-    Content = "Dig 🔴, 99 Nights in the Forest 🔴, Fish It 🟢, Grow A Garden 🔴",
-    Icon = "gamepad",
-    Duration = 6
 })
 
 task.delay(6.5, function()
@@ -132,11 +126,8 @@ Tabs.Home:Divider()
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[+] Added Anti Lava
-[/] Improve Auto Fish v2
-[/] Rework Teleport Event & Status Ecent
-[-] Delete Tab Visual
-[/] Move Visual To Player Tab Place
+[/] Delete Dropdwon Charge Mode
+[/] Improve Auto FishV2
     ]]
 })
 
@@ -357,11 +348,11 @@ local isActive = false
 
 -- Offset per event
 local offsets = {
-    ["Shark Hunt"] = Vector3.new(0, 4, 0),
-    ["Worm Hunt"] = Vector3.new(0, 10, 0),
+    ["Shark Hunt"] = Vector3.new(0, 10, 0),
+    ["Worm Hunt"] = Vector3.new(0, 30, 0),
     ["Megalodon Hunt"] = Vector3.new(0, 4, 0),
-    ["Ghost Shark Hunt"] = Vector3.new(0, 4, 0),
-    ["Fishing Hunt"] = Vector3.new(0, 4, 0),
+    ["Ghost Shark Hunt"] = Vector3.new(0, 10, 0),
+    ["Fishing Hunt"] = Vector3.new(0, 10, 0),
 }
 
 -- Target finder
@@ -661,129 +652,58 @@ task.spawn(function()
 end)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
 local Net = ReplicatedStorage:WaitForChild("Packages")
-    :WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0")
-    :WaitForChild("net")
+	:WaitForChild("_Index")
+	:WaitForChild("sleitnick_net@0.2.0")
+	:WaitForChild("net")
 
-local player = game.Players.LocalPlayer
-local container = player:WaitForChild("PlayerGui")
-    :WaitForChild("Small Notification")
-    :WaitForChild("Display")
-    :WaitForChild("Container")
+local chargeRod = Net:WaitForChild("RF/ChargeFishingRod")
+local requestMinigame = Net:WaitForChild("RF/RequestFishingMinigameStarted")
 
-local initialPos = UDim2.new(0.5, 0, -1.9, 0)
+local notificationGui = LocalPlayer.PlayerGui:WaitForChild("Small Notification")
+local container = notificationGui.Display.Container
 
-local AutoFish = false
-local FishMode = "PERFECT"
-local runningCycle = false -- mencegah tumpukan siklus
+local autoFish = false
 
--- Step 1 → Charge Fishing Rod
-local function Step1()
-    Net:WaitForChild("RF/ChargeFishingRod"):InvokeServer(os.clock())
+-- Fungsi Step 1
+local function step1()
+	local args = {1758953489.104789}
+	chargeRod:InvokeServer(unpack(args))
 end
 
--- Step 2 → Start Fishing Minigame
-local function Step2()
-    local args
-    if FishMode == "PERFECT" then
-        args = { -0.75, 0.9949902531063812 }
-    elseif FishMode == "OK" then
-        args = { -0.75, 0.3251698002015836 }
-    elseif FishMode == "AMAZING" then
-        args = { -0.5718746185302734, 0.8702929274284 }
-    elseif FishMode == "GREAT" then
-        args = { -0.5718746185302734, 0.744264094698844 }
-    else
-        args = { -0.75, 0.9949902531063812 }
-    end
-    Net:WaitForChild("RF/RequestFishingMinigameStarted"):InvokeServer(unpack(args))
+-- Fungsi Step 2
+local function step2()
+	local args = {-1.2331849336624146, 0.9660855341529426}
+	requestMinigame:InvokeServer(unpack(args))
 end
 
--- Step 4 → Reset rod cepat
-local function Step4()
-    Net:WaitForChild("RE/UnequipToolFromHotbar"):FireServer()
-    task.wait(0.01)
-    Net:WaitForChild("RE/EquipToolFromHotbar"):FireServer(1)
-    task.wait(0.01)
-end
-
--- Step 3 → Tunggu container berubah atau timeout
-local function Step3(callback)
-    local connection
-    local finished = false
-
-    connection = container:GetPropertyChangedSignal("Position"):Connect(function()
-        if container.Position ~= initialPos and not finished then
-            finished = true
-            connection:Disconnect()
-            callback() -- lanjut Step4
-        end
-    end)
-
-    -- Timeout 7 detik
-    task.delay(7, function()
-        if not finished then
-            finished = true
-            if connection and connection.Connected then
-                connection:Disconnect()
-            end
-            -- Container ga berubah → cancel fishing inputs
-            Net:WaitForChild("RF/CancelFishingInputs"):InvokeServer()
-            callback() -- lanjut Step4
-        end
-    end)
-end
-
--- Jalankan siklus Auto Fish (serial)
-function RunCycle()
-    if runningCycle then return end
-    runningCycle = true
-
-    task.spawn(function()
-        while AutoFish do
-            -- Step1
-            Step1()
-            task.wait(0.001)
-
-            -- Step2
-            Step2()
-
-            -- Step3 + Step4
-            local step3Finished = false
-            Step3(function()
-                Step4()
-                step3Finished = true
-            end)
-
-            -- Tunggu Step3+Step4 selesai sebelum ulang loop
-            repeat task.wait() until step3Finished
-
-            -- Delay kecil agar tidak spam server
-            task.wait(0.001)
-        end
-        runningCycle = false
-    end)
-end
-
--- UI Dropdown
-Tabs.Farm:Dropdown({ 
-    Title = "Choose Charge Mode", 
-    Values = { "PERFECT", "OK", "AMAZING", "GREAT"}, 
-    Value = "PERFECT", 
-    Callback = function(option) 
-        FishMode = option
-    end
-})
-
--- UI Toggle
-Tabs.Farm:Toggle({
-    Title = "Auto Fish v2",
+-- Toggle WindUI
+Tabs.Farm:Toggle({ 
+    Title = "Auto Fish V2", 
     Value = false,
-    Callback = function(state)
-        AutoFish = state
+    Callback = function(state) 
+        autoFish = state
+
         if state then
-            RunCycle()
+            task.spawn(function()
+                while autoFish do
+                    -- Step 1 & 2
+                    step1()
+                    task.wait(0.1)
+                    step2()
+
+                    -- Tunggu sampai container sesuai
+                    repeat
+                        task.wait(0.2)
+                    until not autoFish or container.Position == UDim2.new(0.5, 0, 0.1, 0)
+
+                    if autoFish then
+                    end
+                end
+            end)
         end
     end
 })
@@ -2379,40 +2299,6 @@ Tabs.Server:Dropdown({
         print("Selected staff actions: " .. game:GetService("HttpService"):JSONEncode(option))
     end
 })
-
-local Players = game:GetService("Players")
-local VirtualUser = game:GetService("VirtualUser")
-
-local antiAFKConnection = nil
-
--- Function to enable or disable Anti-AFK
-local function setAntiAFK(state)
-    if state then
-        if not antiAFKConnection then
-            antiAFKConnection = Players.LocalPlayer.Idled:Connect(function()
-                VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-                task.wait(1)
-                VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-                print("✅ Anti-AFK triggered")
-            end)
-        end
-    else
-        if antiAFKConnection then
-            antiAFKConnection:Disconnect()
-            antiAFKConnection = nil
-            print("❌ Anti-AFK disabled")
-        end
-    end
-end
-
--- WindUI Toggle
-Tabs.Server:Toggle({
-    Title = "Anti AFK",
-    Value = true,
-    Callback = setAntiAFK
-})
-
-
 
 Tabs.Server:Section({ Title = "Server" })
 
