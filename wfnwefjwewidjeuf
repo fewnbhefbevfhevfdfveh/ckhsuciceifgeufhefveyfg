@@ -784,6 +784,90 @@ Tabs.Auto:Toggle({
     end
 })
 
+Tabs.Auto:Section({ Title = "Remove" })
+
+-- ✅ Script Auto Remove Plant (Dropdown + Toggle) tanpa print
+local player = game.Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local dataRemoteEvent = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+
+local autoRemove = false
+local selectedPlant = nil -- hasil pilihan dropdown
+
+-- Fungsi cari plot milik kita
+local function getMyPlot()
+    for _, plot in ipairs(workspace.Plots:GetChildren()) do
+        local sign = plot:FindFirstChild("PlayerSign")
+        if sign and sign:FindFirstChild("BillboardGui") and sign.BillboardGui:FindFirstChild("TextLabel") then
+            local textLabel = sign.BillboardGui.TextLabel
+            if textLabel.Text == player.DisplayName then
+                return plot
+            end
+        end
+    end
+    return nil
+end
+
+-- Fungsi hapus tanaman sesuai pilihan dropdown
+local function removeSelectedPlant()
+    local myPlot = getMyPlot()
+    if not myPlot or not myPlot:FindFirstChild("Plants") or not selectedPlant then return end
+
+    for _, plant in pairs(myPlot.Plants:GetChildren()) do
+        if plant.Name == selectedPlant then
+            local id = plant:GetAttribute("ID") or (plant:FindFirstChild("ID") and plant.ID.Value) or plant.ID
+            if id then
+                local args = {
+                    {
+                        id,
+                        "\006"
+                    }
+                }
+                dataRemoteEvent:FireServer(unpack(args))
+            end
+        end
+    end
+end
+
+-- Dropdown untuk pilih tanaman
+Tabs.Auto:Dropdown({ 
+    Title = "Select Plant", 
+    Values = { 
+        "Cactus",
+        "Strawberry",
+        "Pumpkin",
+        "Sunflower",
+        "Dragon Fruit",
+        "Eggplant",
+        "Watermelon",
+        "Cocotank",
+        "Carnivorous Plant",
+        "Mr Carrot",
+        "Tomatrio"
+    },
+    Value = "",
+    Callback = function(option) 
+        selectedPlant = option
+    end
+})
+
+-- Toggle auto remove
+Tabs.Auto:Toggle({
+    Title = "Auto Remove Plant",
+    Value = false,
+    Callback = function(state)
+        autoRemove = state
+        if state then
+            task.spawn(function()
+                while autoRemove do
+                    removeSelectedPlant()
+                    task.wait(2) -- delay biar ga spam
+                end
+            end)
+        end
+    end
+})
+
 local TweenService = game:GetService("TweenService")
 
 local ScreenGui = Instance.new("ScreenGui")
