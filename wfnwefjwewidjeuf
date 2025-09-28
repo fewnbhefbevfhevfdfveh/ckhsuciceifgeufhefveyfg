@@ -111,6 +111,7 @@ local Tabs = {
     Shop = Window:Tab({ Title = "Shop", Icon = "shopping-cart"  }),
     Inventory = Window:Tab({ Title = "Inventory", Icon = "backpack"  }),
     Auto = Window:Tab({ Title = "Automaticaly", Icon = "repeat-2"  }),
+    Server = Window:Tab({ Title = "Server", Icon = "server"  }),
 }
 
 Tabs.Home:Section({ Title = "Update" })
@@ -1172,6 +1173,281 @@ Tabs.Auto:Dropdown({
     end
 })
 
+Tabs.Server:Section({ Title = "Staff" })
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- 🔒 List of Staff UserIds
+local staffIds = {
+    75974130,
+    33372493,
+    30944240,
+}
+
+-- 🌐 Global Flags
+getgenv().StaffDetectionEnabled = false
+getgenv().StaffActions = { "Notify" } -- default: Notify
+
+-- ✅ Check if player is staff
+local function isStaff(player)
+    for _, id in ipairs(staffIds) do
+        if player.UserId == id then
+            return true
+        end
+    end
+    return false
+end
+
+-- ⚠️ Handle detected staff
+local function handleStaff(player)
+    if not getgenv().StaffDetectionEnabled then return end
+    if not isStaff(player) then return end
+
+    for _, action in ipairs(getgenv().StaffActions) do
+        if action == "Kick" then
+            LocalPlayer:Kick("Staff detected: " .. player.Name)
+        elseif action == "Notify" then
+            UI:Notify({
+                Title = "⚠️ Staff Detected",
+                Content = player.Name .. " (UserId: " .. player.UserId .. ") joined!",
+                Duration = 6.5
+            })
+        end
+    end
+end
+
+-- 🔁 Detect staff on join
+Players.PlayerAdded:Connect(function(player)
+    handleStaff(player)
+end)
+
+-- 🔘 Main Toggle
+Tabs.Server:Toggle({
+    Title = "Anti Staff",
+    Value = true,
+    Callback = function(state)
+        getgenv().StaffDetectionEnabled = state
+        print("Anti Staff Enabled: " .. tostring(state))
+
+        -- Scan current players if enabled
+        if state then
+            for _, player in ipairs(Players:GetPlayers()) do
+                handleStaff(player)
+            end
+        end
+    end
+})
+
+-- 🔽 Multi-Select Dropdown for Actions
+Tabs.Server:Dropdown({
+    Title = "Staff Actions",
+    Desc = "Choose actions to execute when staff is detected",
+    Values = { "Kick", "Notify" },
+    Value = { "Notify" },
+    Multi = true,
+    AllowNone = false,
+    Callback = function(option)
+        getgenv().StaffActions = option
+        print("Selected staff actions: " .. game:GetService("HttpService"):JSONEncode(option))
+    end
+})
+
+Tabs.Server:Section({ Title = "Server" })
+
+-- WindUI + Executor-friendly Discord webhook sender (prints removed)
+local HttpService = game:GetService("HttpService")
+
+local webhookURL = "https://discord.com/api/webhooks/1421786317322457088/b6Xj6NHry0-wv-zKV8WftRQ9cgAGBZ6gAG1JsI7GfqFv50v1F25QFoSSNEgyXLQTN110" -- <-- ganti di sini
+
+-- helper: kirim request via berbagai executor
+local function sendWebhook(payloadTable)
+    local body = HttpService:JSONEncode(payloadTable)
+
+    -- syn.request (Synapse)
+    if syn and syn.request then
+        local ok, res = pcall(function()
+            return syn.request({
+                Url = webhookURL,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = body
+            })
+        end)
+        return ok, res
+    end
+
+    -- http_request / request (other executors)
+    if http_request or request then
+        local req = http_request or request
+        local ok, res = pcall(function()
+            return req({
+                Url = webhookURL,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = body
+            })
+        end)
+        return ok, res
+    end
+
+    -- fallback ke HttpService:PostAsync (Studio)
+    local ok, res = pcall(function()
+        return HttpService:PostAsync(webhookURL, body, Enum.HttpContentType.ApplicationJson)
+    end)
+    return ok, res
+end
+
+-- Contoh payload embed
+local function makePayload(username, userId, reportText)
+    local gameName = tostring(game.PlaceId)
+    pcall(function()
+        -- GetProductInfo bisa error di executor; bungkus dengan pcall
+        local ms = game:GetService("MarketplaceService")
+        local info = ms:GetProductInfo(game.PlaceId)
+        if info and info.Name then
+            gameName = info.Name
+        end
+    end)
+
+    return {
+        username = "Roblox Bug Reporter",
+        embeds = {
+            {
+                title = "New Bug Report",
+                description = reportText,
+                fields = {
+                    { name = "Player", value = username or "Unknown", inline = true },
+                    { name = "UserId", value = tostring(userId or "Unknown"), inline = true },
+                    { name = "Game", value = gameName, inline = true }
+                },
+                footer = { text = "Report Sand Nexa Hub" },
+                timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ", os.time())
+            }
+        }
+    }
+end
+
+-- WindUI Input
+Tabs.Server:Input({ 
+    Title = "Report Bug", 
+    Value = "",
+    Placeholder = "Enter Bug", 
+    Callback = function(input)
+        -- validasi
+        if not input or input:match("^%s*$") then
+            warn("Report kosong. Mohon isi laporan bug terlebih dahulu.")
+            return
+        end
+
+        -- ambil info user (bila dijalankan client/executor)
+        local playerName = "ExecutorUser"
+        local playerId = "N/A"
+        if type(game) == "userdata" and game.Players then
+            local localPlayer = game.Players.LocalPlayer
+            if localPlayer then
+                playerName = localPlayer.Name
+                playerId = localPlayer.UserId
+            end
+        end
+
+        local payload = makePayload(playerName, playerId, input)
+
+        local ok, res = sendWebhook(payload)
+        if not ok then
+            warn("Gagal mengirim bug report. Response/Error:", res)
+        end
+        -- sukses: silent (sesuai permintaan, print dihapus)
+    end 
+})
+
+-- 📦 Services
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+
+-- 👤 Pemain lokal
+local LocalPlayer = Players.LocalPlayer
+
+-- 🔘 Tombol WindUI untuk Rejoin
+Tabs.Server:Button({
+    Title = "Rejoin Server",
+    Callback = function()
+        local placeId = game.PlaceId
+        local jobId = game.JobId
+        TeleportService:TeleportToPlaceInstance(placeId, jobId, LocalPlayer)
+    end
+})
+
+-- 📦 Roblox Services
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- 🌐 Server Hop dengan WindUI
+Tabs.Server:Button({
+    Title = "Server Hop",
+    Callback = function()
+        local success, response = pcall(function()
+            local url = ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100"):format(game.PlaceId)
+            return game:HttpGet(url)
+        end)
+
+        if not success then
+            warn("Gagal ambil data server.")
+            return
+        end
+
+        local servers = HttpService:JSONDecode(response)
+        for _, server in ipairs(servers.data) do
+            if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, server.id, LocalPlayer)
+                return
+            end
+        end
+
+        warn("Tidak ada server lain yang tersedia.")
+    end
+})
+
+Tabs.Server:Button({
+    Title = "Copy Job ID",
+    Desc = "Copy the server JobId to the clipboard",
+    Callback = function()
+        setclipboard(game.JobId)
+    end
+})
+
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlaceId = game.PlaceId
+
+local targetJobId = ""
+
+Tabs.Server:Input({
+    Title = "Enter Job ID",
+    PlaceholderText = "Enter the JobId here...",
+    Default = "",
+    Callback = function(text)
+        targetJobId = text
+    end
+})
+
+Tabs.Server:Button({
+    Title = "Teleport to Job ID",
+    Desc = "Teleport to the server using the provided JobId",
+    Callback = function()
+        if targetJobId ~= "" then
+            TeleportService:TeleportToPlaceInstance(PlaceId, targetJobId, LocalPlayer)
+        end
+    end
+})
 
 local TweenService = game:GetService("TweenService")
 
