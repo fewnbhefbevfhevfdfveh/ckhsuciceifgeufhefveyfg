@@ -78,20 +78,13 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v0.0.1",
+    Title = "v0.0.2",
     Color = Color3.fromHex("#30ff6a")
 })
 
 
 Window:EditOpenButton({
     Enabled = false
-})
-
-WindUI:Notify({
-    Title = "Game Supported",
-    Content = "Dig 🔴, 99 Nights in the Forest 🔴, Fish It 🟢, Grow A Garden 🔴",
-    Icon = "gamepad",
-    Duration = 6
 })
 
 task.delay(6.5, function()
@@ -125,10 +118,12 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[/] Improve Auto Attack
-[/] Fixed Auto Collect
-[/] FIxed Auto Buy Seed, Gear, Platform, Rows
-[/] Fixed Auto Plant & Remove Plant
+ - Water Bucket
+[+] Select Plant To Watering
+[+] Auto Water Bucket Selected Plant
+  - Brainrot  Farm
+[+] Select Tool
+[+] Added Auto Shoot Brainrot
     ]]
 })
 
@@ -1051,7 +1046,7 @@ end)
 
 -- Dropdown pilih tanaman
 Tabs.Auto:Dropdown({
-    Title = "Select a Plant",
+    Title = "Select Plant To Watering",
     Values = {
         "Cactus",
         "Strawberry",
