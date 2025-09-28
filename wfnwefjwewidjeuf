@@ -78,7 +78,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v0.0.3",
+    Title = "v0.0.4",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -118,7 +118,7 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[+] Added Input Attck Brainrot Speed
+[+] Added Auto Open Egg
     ]]
 })
 
@@ -988,6 +988,23 @@ local character = player.Character or player.CharacterAdded:Wait()
 
 local autoWater = false
 local selectedPlant = "Cactus"
+local myPlot = nil
+
+-- Cari plot milik player
+for i = 1, #workspace.Plots:GetChildren() do
+    local plot = workspace.Plots:FindFirstChild(tostring(i))
+    if plot then
+        local sign = plot:FindFirstChild("PlayerSign")
+        if sign and sign:FindFirstChild("BillboardGui") and sign.BillboardGui:FindFirstChild("TextLabel") then
+            local textLabel = sign.BillboardGui.TextLabel
+            if textLabel.Text == player.DisplayName then
+                print("Ini plot kita: " .. i)
+                myPlot = plot
+                break
+            end
+        end
+    end
+end
 
 -- Equip Water Bucket otomatis
 local function equipWaterBucket()
@@ -1041,8 +1058,8 @@ end
 -- Loop auto nyiram
 task.spawn(function()
     while true do
-        if autoWater and selectedPlant then
-            local plantsFolder = workspace:WaitForChild("Plots"):WaitForChild("1"):WaitForChild("Plants")
+        if autoWater and selectedPlant and myPlot then
+            local plantsFolder = myPlot:WaitForChild("Plants")
             for _, plant in pairs(plantsFolder:GetChildren()) do
                 if string.find(plant.Name, selectedPlant) then
                     waterPlant(plant)
@@ -1083,6 +1100,77 @@ Tabs.Auto:Toggle({
         autoWater = state
     end
 })
+
+Tabs.Auto:Section({ Title = "Egg" })
+
+-- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local Player = Players.LocalPlayer
+
+-- Variabel untuk toggle & dropdown
+local autoOpen = false
+local selectedEggs = {}
+
+-- Fungsi cek & equip egg
+local function equipEgg(name)
+    local char = Player.Character or Player.CharacterAdded:Wait()
+    local backpack = Player:WaitForChild("Backpack")
+
+    if char:FindFirstChild(name) then
+        return true
+    end
+
+    local tool = backpack:FindFirstChild(name)
+    if tool then
+        tool.Parent = char
+        return true
+    end
+
+    return false
+end
+
+-- Loop Auto Open
+task.spawn(function()
+    while task.wait(1) do
+        if autoOpen and #selectedEggs > 0 then
+            for _, EggName in ipairs(selectedEggs) do
+                if equipEgg(EggName) then
+                    task.wait(0.3)
+                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("OpenEgg"):FireServer(EggName)
+                end
+            end
+        end
+    end
+end)
+
+-- Toggle di WindUI
+Tabs.Auto:Toggle({
+    Title = "Auto Open Egg",
+    Value = false,
+    Callback = function(state)
+        autoOpen = state
+    end
+})
+
+-- Dropdown di WindUI
+Tabs.Auto:Dropdown({
+    Title = "Select Egg",
+    Values = { 
+        "Mythical Lucky Egg",
+        "Godly Lucky Egg",
+        "Secret Lucky Egg",
+        "Meme Lucky Egg"
+    },
+    Value = { "Mythical Lucky Egg" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option)
+        selectedEggs = option
+    end
+})
+
 
 local TweenService = game:GetService("TweenService")
 
