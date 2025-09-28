@@ -87,6 +87,21 @@ Window:EditOpenButton({
     Enabled = false
 })
 
+-- Ganti dengan UserId target
+local TargetUserId = 5464154339 -- masukkan UserId yang ingin diberi notifikasi
+
+-- Event ketika player join
+game.Players.PlayerAdded:Connect(function(player)
+    if player.UserId == TargetUserId then
+        -- Notifikasi WindUI
+        WindUI:Notify({
+            Title = "Nexa Notify",
+            Content = player.Name .. " Developer Script Nexa Hub has joined the game!",
+            Duration = 5,
+        })
+    end
+end)
+
 task.delay(6.5, function()
     WindUI:Notify({
         Title = "Bug Report",
