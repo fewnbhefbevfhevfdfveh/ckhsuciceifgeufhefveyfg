@@ -655,9 +655,9 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 local Net = ReplicatedStorage:WaitForChild("Packages")
-	:WaitForChild("_Index")
-	:WaitForChild("sleitnick_net@0.2.0")
-	:WaitForChild("net")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
 
 local chargeRod = Net:WaitForChild("RF/ChargeFishingRod")
 local requestMinigame = Net:WaitForChild("RF/RequestFishingMinigameStarted")
@@ -669,14 +669,21 @@ local autoFish = false
 
 -- Fungsi Step 1
 local function step1()
-	local args = {1758953489.104789}
-	chargeRod:InvokeServer(unpack(args))
+    local args = {1758953489.104789}
+    chargeRod:InvokeServer(unpack(args))
 end
 
 -- Fungsi Step 2
 local function step2()
-	local args = {-1.2331849336624146, 0.9660855341529426}
-	requestMinigame:InvokeServer(unpack(args))
+    local args = {-1.2331849336624146, 0.9660855341529426}
+    requestMinigame:InvokeServer(unpack(args))
+end
+
+-- Fungsi menunggu minigame selesai
+local function waitForMinigame()
+    repeat
+        task.wait(0.05)
+    until container.Position == UDim2.new(0.5, 0, 0.1, 0) or not autoFish
 end
 
 -- Toggle WindUI
@@ -689,20 +696,24 @@ Tabs.Farm:Toggle({
         if state then
             task.spawn(function()
                 while autoFish do
-                    -- Step 1 & 2
+                    -- Jalankan step1 sekali
                     step1()
-                    task.wait(0.01)
+                    task.wait(0.2) -- beri jeda supaya server tidak reject
+
+                    -- Jalankan step2 sekali
                     step2()
 
-                    -- Tunggu sampai container sesuai
-                    repeat
-                        task.wait(0.01)
-                    until not autoFish or container.Position == UDim2.new(0.5, 0, 0.1, 0)
+                    -- Tunggu sampai minigame/GUI selesai
+                    waitForMinigame()
+
+                    -- Setelah selesai, loop berikutnya baru jalan
+                    task.wait(0.1)
                 end
             end)
         end
     end
 })
+
 
 Tabs.Farm:Button({
     Title = "Cancel Fishing",
