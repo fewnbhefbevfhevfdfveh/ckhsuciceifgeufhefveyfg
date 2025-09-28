@@ -160,6 +160,92 @@ Tabs.Home:Paragraph({
 Tabs.Farm:Section({ Title = "Brainrot Farm" })
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local backpack = player:WaitForChild("Backpack")
+local remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("UseItem")
+local brainrotsFolder = Workspace:WaitForChild("ScriptedMap"):WaitForChild("Brainrots")
+
+-- Status
+local autoThrow = false
+local selectedItem = "Frost Grenade" -- default item
+
+-- Fungsi cari item di Backpack
+local function getItem(itemName)
+    for _, tool in ipairs(backpack:GetChildren()) do
+        if tool:IsA("Tool") and string.find(tool.Name, itemName) then
+            return tool
+        end
+    end
+    return nil
+end
+
+-- Fungsi equip item
+local function equipItem(itemName)
+    local tool = getItem(itemName)
+    if tool then
+        player.Character.Humanoid:EquipTool(tool)
+        return tool
+    end
+    return nil
+end
+
+-- Dropdown Select Item
+Tabs.Farm:Dropdown({
+    Title = "Select Item",
+    Values = {
+        "Banana Gun",
+        "Carrot Launcher",
+        "Frost Grenade",
+        "Frost Blower"
+    },
+    Value = "Frost Grenade",
+    Callback = function(option)
+        selectedItem = option
+    end
+})
+
+-- Toggle Auto Throw
+Tabs.Farm:Toggle({
+    Title = "Auto Shoot",
+    Value = false,
+    Callback = function(state)
+        autoThrow = state
+    end
+})
+
+-- Loop Auto Throw
+task.spawn(function()
+    while task.wait(0.5) do
+        if autoThrow and selectedItem then
+            local tool = player.Character and player.Character:FindFirstChildWhichIsA("Tool")
+            if not tool or not string.find(tool.Name, selectedItem) then
+                tool = equipItem(selectedItem)
+            end
+
+            if tool then
+                for _, model in ipairs(brainrotsFolder:GetChildren()) do
+                    if model:IsA("Model") and model.PrimaryPart then
+                        local targetPos = model.PrimaryPart.Position
+                        local args = {
+                            {
+                                Toggle = true,
+                                Tool = tool,
+                                Time = 0.5,
+                                Pos = targetPos
+                            }
+                        }
+                        remote:FireServer(unpack(args))
+                    end
+                end
+            end
+        end
+    end
+end)
+
+local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
@@ -884,6 +970,113 @@ Tabs.Auto:Toggle({
                 end
             end)
         end
+    end
+})
+
+Tabs.Auto:Section({ Title = "Water Bucket" })
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+local backpack = player:WaitForChild("Backpack")
+local character = player.Character or player.CharacterAdded:Wait()
+
+local autoWater = false
+local selectedPlant = "Cactus"
+
+-- Equip Water Bucket otomatis
+local function equipWaterBucket()
+    local equippedTool = character:FindFirstChildWhichIsA("Tool")
+    if equippedTool and string.find(equippedTool.Name, "Water Bucket") then
+        return equippedTool
+    end
+    for _, item in pairs(backpack:GetChildren()) do
+        if item:IsA("Tool") and string.find(item.Name, "Water Bucket") then
+            item.Parent = character
+            return item
+        end
+    end
+    return nil
+end
+
+-- Ambil posisi tanaman
+local function getPlantPosition(plant)
+    if plant:IsA("Model") then
+        if plant.PrimaryPart then
+            return plant.PrimaryPart.Position
+        else
+            local part = plant:FindFirstChildWhichIsA("BasePart")
+            if part then
+                return part.Position
+            end
+        end
+    elseif plant:IsA("BasePart") then
+        return plant.Position
+    end
+    return nil
+end
+
+-- Nyiram tanaman
+local function waterPlant(plant)
+    local tool = equipWaterBucket()
+    local pos = getPlantPosition(plant)
+    if tool and pos then
+        local args = {
+            {
+                Toggle = true,
+                Tool = tool,
+                Pos = pos
+            }
+        }
+        ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("UseItem"):FireServer(unpack(args))
+        task.wait(0.2)
+    end
+end
+
+-- Loop auto nyiram
+task.spawn(function()
+    while true do
+        if autoWater and selectedPlant then
+            local plantsFolder = workspace:WaitForChild("Plots"):WaitForChild("1"):WaitForChild("Plants")
+            for _, plant in pairs(plantsFolder:GetChildren()) do
+                if string.find(plant.Name, selectedPlant) then
+                    waterPlant(plant)
+                end
+            end
+        end
+        task.wait(2)
+    end
+end)
+
+-- Dropdown pilih tanaman
+Tabs.Auto:Dropdown({
+    Title = "Select a Plant",
+    Values = {
+        "Cactus",
+        "Strawberry",
+        "Pumpkin",
+        "Sunflower",
+        "Dragon Fruit",
+        "Eggplant",
+        "Watermelon",
+        "Cocotank",
+        "Carnivorous Plant",
+        "Mr Carrot",
+        "Tomatrio"
+    },
+    Value = "Cactus",
+    Callback = function(option)
+        selectedPlant = option
+    end
+})
+
+-- Toggle Auto Water Bucket
+Tabs.Auto:Toggle({
+    Title = "Auto Water Bucket", 
+    Value = false,
+    Callback = function(state)
+        autoWater = state
     end
 })
 
