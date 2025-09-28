@@ -21,7 +21,7 @@ local placeId = game.PlaceId
 -- Table games dengan multiple PlaceId
 local games = {
     ["FishIt"] = {
-        placeIds = {121864768012064, 222222222222222}, -- bisa tambah PlaceId tambahan
+        placeIds = {121864768012064}, -- bisa tambah PlaceId tambahan
         url = 'https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/sjfeufeufegfefy'
     },
     ["Prospecting"] = {
@@ -33,7 +33,7 @@ local games = {
         url = 'https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/wfnwefjwewidjeuf'
     },
     ["Fisch"] = {
-        placeIds = {16732694052},
+        placeIds = {16732694052, 131716211654599},
         url = 'https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/wjdgydfwydwyFISCH'
     }
 }
