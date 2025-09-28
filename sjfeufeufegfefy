@@ -347,11 +347,11 @@ local isActive = false
 
 -- Offset per event
 local offsets = {
-    ["Shark Hunt"] = Vector3.new(0, 10, 0),
+    ["Shark Hunt"] = Vector3.new(0, 50, 0),
     ["Worm Hunt"] = Vector3.new(0, 30, 0),
-    ["Megalodon Hunt"] = Vector3.new(0, 4, 0),
-    ["Ghost Shark Hunt"] = Vector3.new(0, 10, 0),
-    ["Fishing Hunt"] = Vector3.new(0, 10, 0),
+    ["Megalodon Hunt"] = Vector3.new(0, 50, 0),
+    ["Ghost Shark Hunt"] = Vector3.new(0, 50, 0),
+    ["Fishing Hunt"] = Vector3.new(0, 50, 0),
 }
 
 -- Target finder
@@ -713,7 +713,6 @@ Tabs.Farm:Toggle({
         end
     end
 })
-
 
 Tabs.Farm:Button({
     Title = "Cancel Fishing",
@@ -2309,7 +2308,115 @@ Tabs.Server:Dropdown({
 
 Tabs.Server:Section({ Title = "Server" })
 
-Tabs.Server:Divider()
+-- WindUI + Executor-friendly Discord webhook sender (prints removed)
+local HttpService = game:GetService("HttpService")
+
+local webhookURL = "https://discord.com/api/webhooks/1421786317322457088/b6Xj6NHry0-wv-zKV8WftRQ9cgAGBZ6gAG1JsI7GfqFv50v1F25QFoSSNEgyXLQTN110" -- <-- ganti di sini
+
+-- helper: kirim request via berbagai executor
+local function sendWebhook(payloadTable)
+    local body = HttpService:JSONEncode(payloadTable)
+
+    -- syn.request (Synapse)
+    if syn and syn.request then
+        local ok, res = pcall(function()
+            return syn.request({
+                Url = webhookURL,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = body
+            })
+        end)
+        return ok, res
+    end
+
+    -- http_request / request (other executors)
+    if http_request or request then
+        local req = http_request or request
+        local ok, res = pcall(function()
+            return req({
+                Url = webhookURL,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = body
+            })
+        end)
+        return ok, res
+    end
+
+    -- fallback ke HttpService:PostAsync (Studio)
+    local ok, res = pcall(function()
+        return HttpService:PostAsync(webhookURL, body, Enum.HttpContentType.ApplicationJson)
+    end)
+    return ok, res
+end
+
+-- Contoh payload embed
+local function makePayload(username, userId, reportText)
+    local gameName = tostring(game.PlaceId)
+    pcall(function()
+        -- GetProductInfo bisa error di executor; bungkus dengan pcall
+        local ms = game:GetService("MarketplaceService")
+        local info = ms:GetProductInfo(game.PlaceId)
+        if info and info.Name then
+            gameName = info.Name
+        end
+    end)
+
+    return {
+        username = "Roblox Bug Reporter",
+        embeds = {
+            {
+                title = "New Bug Report",
+                description = reportText,
+                fields = {
+                    { name = "Player", value = username or "Unknown", inline = true },
+                    { name = "UserId", value = tostring(userId or "Unknown"), inline = true },
+                    { name = "Game", value = gameName, inline = true }
+                },
+                footer = { text = "Report Sand Nexa Hub" },
+                timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ", os.time())
+            }
+        }
+    }
+end
+
+-- WindUI Input
+Tabs.Server:Input({ 
+    Title = "Report Bug", 
+    Value = "",
+    Placeholder = "Enter Bug", 
+    Callback = function(input)
+        -- validasi
+        if not input or input:match("^%s*$") then
+            warn("Report kosong. Mohon isi laporan bug terlebih dahulu.")
+            return
+        end
+
+        -- ambil info user (bila dijalankan client/executor)
+        local playerName = "ExecutorUser"
+        local playerId = "N/A"
+        if type(game) == "userdata" and game.Players then
+            local localPlayer = game.Players.LocalPlayer
+            if localPlayer then
+                playerName = localPlayer.Name
+                playerId = localPlayer.UserId
+            end
+        end
+
+        local payload = makePayload(playerName, playerId, input)
+
+        local ok, res = sendWebhook(payload)
+        if not ok then
+            warn("Gagal mengirim bug report. Response/Error:", res)
+        end
+        -- sukses: silent (sesuai permintaan, print dihapus)
+    end 
+})
 
 -- 📦 Services
 local Players = game:GetService("Players")
