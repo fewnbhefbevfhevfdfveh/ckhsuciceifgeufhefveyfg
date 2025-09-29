@@ -224,7 +224,7 @@ local PlayerGUI = LocalPlayer:WaitForChild("PlayerGui")
 
 -- Config
 local autoShake = false -- toggle auto shake
-local autoShakeDelay = 0.1 -- delay antar tekan (default)
+local autoShakeDelay = 0.1 -- default delay (Slow)
 
 -- WindUI Toggle untuk Auto Shake
 Tabs.Farm:Toggle({ 
@@ -235,15 +235,20 @@ Tabs.Farm:Toggle({
     end
 })
 
--- WindUI Input untuk Speed / Delay
-Tabs.Farm:Input({ 
-    Title = "Speed Shake Set", 
-    Value = tostring(autoShakeDelay),
-    Placeholder = "Enter delay (seconds)",
-    Callback = function(input)
-        local delayValue = tonumber(input)
-        if delayValue and delayValue > 0 then
-            autoShakeDelay = delayValue
+-- WindUI Dropdown untuk Speed Mode
+Tabs.Farm:Dropdown({ 
+    Title = "Select Mode", 
+    Values = { "Slow", "Normal", "Fast", "Super Fast" }, 
+    Value = "Slow", 
+    Callback = function(option)
+        if option == "Slow" then
+            autoShakeDelay = 0.1
+        elseif option == "Normal" then
+            autoShakeDelay = 0.01
+        elseif option == "Fast" then
+            autoShakeDelay = 0.001
+        elseif option == "Super Fast" then
+            autoShakeDelay = 0.0001
         end
     end
 })
@@ -278,7 +283,6 @@ PlayerGUI.ChildAdded:Connect(function(GUI)
     end
 end)
 
-
 -- // Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -306,6 +310,8 @@ spawn(function()
         wait(0.1) -- jeda antar cast, bisa diubah sesuai kebutuhan
     end
 end)
+
+Tabs.Farm:Section({ Title = "Settings" })
 
 -- EQUIP ROD
 Tabs.Farm:Toggle({
