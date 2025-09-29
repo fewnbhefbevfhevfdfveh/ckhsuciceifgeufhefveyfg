@@ -703,9 +703,9 @@ Tabs.Farm:Toggle({
         if AutoFishV2 then
             -- Jalankan Step1 → Step2 → Step3 sekali di awal
             Step1()
-            task.wait(0.001)
+            task.wait(0.01)
             Step2()
-            task.wait(0.001)
+            task.wait(0.01)
             Step3()
         end
     end
@@ -714,9 +714,9 @@ Tabs.Farm:Toggle({
 -- Listener Step4
 Container:GetPropertyChangedSignal("Position"):Connect(function()
     if AutoFishV2 and Container.Position == UDim2.new(0.5, 0, 0.100000001, 0) then
-        task.wait(0.001)
+        task.wait(0.01)
         Step2()
-        task.wait(0.001)
+        task.wait(0.01)
         Step3()
     end
 end)
