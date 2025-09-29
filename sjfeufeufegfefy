@@ -665,69 +665,63 @@ task.spawn(function()
     end
 end)
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
+local Container = LocalPlayer.PlayerGui["Small Notification"].Display.Container
 
 local Net = ReplicatedStorage:WaitForChild("Packages")
     :WaitForChild("_Index")
     :WaitForChild("sleitnick_net@0.2.0")
     :WaitForChild("net")
 
-local chargeRod = Net:WaitForChild("RF/ChargeFishingRod")
-local requestMinigame = Net:WaitForChild("RF/RequestFishingMinigameStarted")
+local ChargeFishingRod = Net:WaitForChild("RF/ChargeFishingRod")
+local RequestFishingMinigameStarted = Net:WaitForChild("RF/RequestFishingMinigameStarted")
 
-local notificationGui = LocalPlayer.PlayerGui:WaitForChild("Small Notification")
-local container = notificationGui.Display.Container
+local AutoFishV2 = false  -- status toggle
 
-local autoFish = false
-
--- Fungsi Step 1
-local function step1()
-    local args = {1758953489.104789}
-    chargeRod:InvokeServer(unpack(args))
+-- Step Functions
+local function Step1()
+    Container.Position = UDim2.new(0.5, 0, -1.89999998, 1)
 end
 
--- Fungsi Step 2
-local function step2()
-    local args = {-1.2331849336624146, 0.9660855341529426}
-    requestMinigame:InvokeServer(unpack(args))
+local function Step2()
+    ChargeFishingRod:InvokeServer(1759130348.448756)
 end
 
--- Fungsi menunggu minigame selesai
-local function waitForMinigame()
-    repeat
-        task.wait(0.05)
-    until container.Position == UDim2.new(0.5, 0, 0.1, 0) or not autoFish
+local function Step3()
+    RequestFishingMinigameStarted:InvokeServer(-0.5718746185302734, 0.96170184695718)
 end
 
--- Toggle WindUI
-Tabs.Farm:Toggle({ 
-    Title = "Auto Fish V2", 
+-- Toggle UI WindUI
+Tabs.Farm:Toggle({
+    Title = "Auto Fish V2",
     Value = false,
-    Callback = function(state) 
-        autoFish = state
+    Callback = function(state)
+        AutoFishV2 = state
+        print("Auto Fish V2: " .. tostring(state))
 
-        if state then
-            task.spawn(function()
-                while autoFish do
-                    -- Jalankan step1 sekali
-                    step1()
-                    task.wait(0.2) -- beri jeda supaya server tidak reject
-
-                    -- Jalankan step2 sekali
-                    step2()
-
-                    -- Tunggu sampai minigame/GUI selesai
-                    waitForMinigame()
-
-                    -- Setelah selesai, loop berikutnya baru jalan
-                    task.wait(0.1)
-                end
-            end)
+        if AutoFishV2 then
+            -- Jalankan Step1 → Step2 → Step3 sekali di awal
+            Step1()
+            task.wait(0.001)
+            Step2()
+            task.wait(0.001)
+            Step3()
         end
     end
 })
+
+-- Listener Step4
+Container:GetPropertyChangedSignal("Position"):Connect(function()
+    if AutoFishV2 and Container.Position == UDim2.new(0.5, 0, 0.100000001, 0) then
+        task.wait(0.001)
+        Step2()
+        task.wait(0.001)
+        Step3()
+    end
+end)
+
 
 Tabs.Farm:Button({
     Title = "Cancel Fishing",
