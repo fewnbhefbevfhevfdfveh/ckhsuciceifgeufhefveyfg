@@ -699,7 +699,6 @@ Tabs.Farm:Toggle({
     Value = false,
     Callback = function(state)
         AutoFishV2 = state
-        print("Auto Fish V2: " .. tostring(state))
 
         if AutoFishV2 then
             -- Jalankan Step1 → Step2 → Step3 sekali di awal
