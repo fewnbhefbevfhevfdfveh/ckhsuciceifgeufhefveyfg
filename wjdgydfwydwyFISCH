@@ -829,9 +829,67 @@ Tabs.Shop:Button({
     end
 })
 
+Tabs.Shop:Section({ Title = "Marlin" })
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+local savedCFrame = nil
+local relicBuying = false
+
+Tabs.Shop:Toggle({ 
+    Title = "Auto Buy Enchant Relic", 
+    Value = false,
+    Callback = function(state) 
+        print("Mode activated: " .. tostring(state))
+        relicBuying = state
+
+        if relicBuying then
+            -- Step 1: Save posisi awal
+            savedCFrame = root.CFrame
+
+            -- Step 2: Teleport ke Merlin
+            root.CFrame = CFrame.new(
+                -928.032837, 223.700027, -998.744995,
+                -0.86823225, 0, 0.496157885,
+                0, 1, 0,
+                -0.496157885, 0, -0.86823225
+            )
+
+            -- Step 3: Loop spam InvokeServer
+            task.spawn(function()
+                while relicBuying do
+                    local args = {
+                        {
+                            voice = 11,
+                            npc = workspace:WaitForChild("world"):WaitForChild("npcs"):WaitForChild("Merlin"),
+                            idle = workspace:WaitForChild("world"):WaitForChild("npcs"):WaitForChild("Merlin"):WaitForChild("description"):WaitForChild("idle")
+                        }
+                    }
+
+                    workspace:WaitForChild("world")
+                    :WaitForChild("npcs")
+                    :WaitForChild("Merlin")
+                    :WaitForChild("Merlin")
+                    :WaitForChild("buy2Relics")
+                    :InvokeServer(unpack(args))
+
+                    task.wait(0.5) -- spam speed (ubah kalau mau lebih cepat/lambat)
+                end
+            end)
+
+        else
+            -- Step 4: Balik ke posisi awal kalau toggle OFF
+            if savedCFrame then
+                root.CFrame = savedCFrame
+            end
+        end
+    end
+})
+
 Tabs.Teleport:Section({ Title = "Island" })
 
--- List lokasi teleport (gunakan CFrame)
 local teleportLocations = {
     ["Ancient Archives"] = CFrame.new(-3156.37451, -745.713989, 1683.13574, -0.860117316, 1.84150082e-08, -0.510096252, 2.10384705e-08, 1, 6.26265706e-10, 0.510096252, -1.01929825e-08, -0.860117316),
     ["Ancient Isle"] = CFrame.new(6057.07422, 195.280151, 277.14859, 0.18684645, 2.1313635e-08, 0.982389152, -6.77808432e-08, 1, -8.78668072e-09, -0.982389152, -6.50338237e-08, 0.18684645),
@@ -864,11 +922,15 @@ local teleportLocations = {
 
 local selectedLocation = nil
 
--- Ambil keys dari teleportLocations sebagai values
-local locationNames = {}
-for name, _ in pairs(teleportLocations) do
-    table.insert(locationNames, name)
-end
+-- Isi Values manual agar SearchBarEnabled bekerja
+local locationNames = {
+    "Ancient Archives", "Ancient Isle", "Ancient Isle 1", "Ancient Isle 2", "Atlantis",
+    "Blue Moon Pool", "Carrot Garden", "Crystal Cove", "Desolate Deep", "Forsaken Shores",
+    "Grand Reef", "Moosewood", "Mushgrove Swamp", "Northern Expedition", "Podium 1",
+    "Podium 2", "Podium 3", "Podium 4", "Roslit Bay", "Roslit Volcano",
+    "Snowcap Island", "Statue of Sovereignty", "Sunstone Island", "Terrapin Island",
+    "The Depths", "Vertigo", "Volcanic Vents"
+}
 
 Tabs.Teleport:Dropdown({
     Title = "Select Location",
@@ -901,6 +963,7 @@ Tabs.Teleport:Button({
         end
     end
 })
+
 
 Tabs.Server:Section({ Title = "Server" })
 
