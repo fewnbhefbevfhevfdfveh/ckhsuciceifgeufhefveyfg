@@ -296,7 +296,7 @@ local PlayerGUI = LocalPlayer:WaitForChild("PlayerGui")
 
 -- Config
 local autoShake = false -- toggle auto shake
-local autoShakeDelay = 0.0001 -- default delay
+local autoShakeDelay = 0.001 -- default delay
 
 -- WindUI Toggle untuk Auto Shake
 Tabs.Farm:Toggle({ 
