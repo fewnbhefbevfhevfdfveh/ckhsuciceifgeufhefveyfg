@@ -355,6 +355,76 @@ Tabs.Farm:Toggle({
     end
 })
 
+-- Variabel global
+local savedCFrame = nil
+local teleportEnabled = false
+
+-- Tombol Save Position
+Tabs.Farm:Button({ 
+    Title = "Save Position", 
+    Callback = function() 
+        local player = game.Players.LocalPlayer
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            savedCFrame = hrp.CFrame -- simpan CFrame lengkap (posisi + arah)
+            WindUI:Notify({
+                Title = "Saved",
+                Content = "Posisi berhasil disimpan!",
+                Duration = 5,
+            })
+        else
+            WindUI:Notify({
+                Title = "Error",
+                Content = "Karakter belum siap!",
+                Duration = 5,
+            })
+        end
+    end
+})
+
+-- Fungsi Freeze dan kembalikan ke posisi
+local function freezeCharacter()
+    local player = game.Players.LocalPlayer
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp or not savedCFrame then return end
+
+    -- BodyVelocity & BodyGyro
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+    bv.Velocity = Vector3.new(0,0,0)
+    bv.Parent = hrp
+
+    local bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
+    bg.CFrame = savedCFrame
+    bg.Parent = hrp
+
+    -- Loop freeze & check distance
+    spawn(function()
+        while teleportEnabled and hrp and hrp.Parent do
+            local distance = (hrp.Position - savedCFrame.Position).Magnitude
+            if distance > 1 then
+                hrp.CFrame = savedCFrame
+            end
+            task.wait(0.1)
+        end
+        -- Hapus BV & BG saat toggle dimatikan
+        if bv then bv:Destroy() end
+        if bg then bg:Destroy() end
+    end)
+end
+
+-- Toggle Teleport + Freeze
+Tabs.Farm:Toggle({ 
+    Title = "Teleport to Saved Position", 
+    Value = false,
+    Callback = function(state) 
+        teleportEnabled = state
+        if teleportEnabled then
+            freezeCharacter()
+        end
+    end
+})
 Tabs.Farm:Section({ Title = "Equipment Rod" })
 
 local equipRods = {
