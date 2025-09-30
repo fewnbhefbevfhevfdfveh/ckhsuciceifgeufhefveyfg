@@ -78,7 +78,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v0.0.6",
+    Title = "v0.0.7",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -86,21 +86,6 @@ Window:Tag({
 Window:EditOpenButton({
     Enabled = false
 })
-
--- Ganti dengan UserId target
-local TargetUserId = 5464154339 -- masukkan UserId yang ingin diberi notifikasi
-
--- Event ketika player join
-game.Players.PlayerAdded:Connect(function(player)
-    if player.UserId == TargetUserId then
-        -- Notifikasi WindUI
-        WindUI:Notify({
-            Title = "Nexa Notify",
-            Content = player.Name .. " Developer Script Nexa Hub has joined the game!",
-            Duration = 50,
-        })
-    end
-end)
 
 task.delay(6.5, function()
     WindUI:Notify({
@@ -127,6 +112,7 @@ local Tabs = {
     Inventory = Window:Tab({ Title = "Inventory", Icon = "backpack"  }),
     Auto = Window:Tab({ Title = "Automaticaly", Icon = "repeat-2"  }),
     Server = Window:Tab({ Title = "Server", Icon = "server"  }),
+    Player = Window:Tab({ Title = "Player", Icon = "user"  }),
 }
 
 Tabs.Home:Section({ Title = "Update" })
@@ -134,7 +120,7 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-
+[+] Added Tab Player
     ]]
 })
 
@@ -348,6 +334,13 @@ local Brainrots = workspace:WaitForChild("ScriptedMap"):WaitForChild("Brainrots"
 
 local localPlayer = Players.LocalPlayer
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- Handle respawn (biar humanoid & character update)
+localPlayer.CharacterAdded:Connect(function(char)
+    character = char
+    humanoid = char:WaitForChild("Humanoid")
+end)
 
 -- Hitung jarak antar part
 local function getDistance(part1, part2)
@@ -402,15 +395,34 @@ local function attackBrainrots(brainrotNames)
     end
 end
 
+-- Equip senjata yang ada kata "Bat"
+local function equipBat()
+    -- Cek dulu apakah sudah pegang Bat
+    local equipped = character:FindFirstChildOfClass("Tool")
+    if equipped and equipped.Name:lower():find("bat") then
+        return -- sudah pegang Bat, tidak usah equip lagi
+    end
+
+    -- Kalau belum, cari di Backpack
+    for _, tool in ipairs(localPlayer.Backpack:GetChildren()) do
+        if tool:IsA("Tool") and tool.Name:lower():find("bat") then
+            humanoid:EquipTool(tool)
+            break
+        end
+    end
+end
+
 -- Loop auto attack
 task.spawn(function()
     while task.wait(attackSpeed) do
         if autoAttackEnabled then
+            equipBat()
             local targets = getClosestBrainrots(maxTargets)
             attackBrainrots(targets)
         end
     end
 end)
+
 
 Tabs.Farm:Section({ Title = "Collect" })
 
@@ -834,7 +846,7 @@ Tabs.Inventory:Toggle({
             task.spawn(function()
                 while equipLoop do
                     Remote:FireServer()
-                    task.wait(2) -- jeda 2 detik biar ga terlalu spam
+                    task.wait(5) -- jeda 2 detik biar ga terlalu spam
                 end
             end)
         end
@@ -867,7 +879,6 @@ Tabs.Inventory:Dropdown({
     AllowNone = true,
     Callback = function(option) 
         SelectedRarity = option
-        print("Categories selected: " .. game:GetService("HttpService"):JSONEncode(option)) 
     end
 })
 
@@ -877,7 +888,6 @@ Tabs.Inventory:Toggle({
     Value = false,
     Callback = function(state) 
         AutoFav = state
-        print("Auto Favorite: " .. tostring(state))
     end
 })
 
@@ -887,7 +897,6 @@ Tabs.Inventory:Toggle({
     Value = false,
     Callback = function(state) 
         AutoUnFav = state
-        print("Auto UnFavorite: " .. tostring(state))
     end
 })
 
@@ -916,13 +925,11 @@ task.spawn(function()
                 -- Favorite
                 if AutoFav and (not heart or not heart.Visible) then
                     FavoriteItem:FireServer(button:GetAttribute("ID"))
-                    print("✅ Favorite: " .. button.ToolName.Text)
                 end
 
                 -- UnFavorite
                 if AutoUnFav and heart and heart.Visible then
                     FavoriteItem:FireServer(button:GetAttribute("ID"))
-                    print("🗑️ UnFavorite: " .. button.ToolName.Text)
                 end
             end
         end
@@ -1621,6 +1628,166 @@ Tabs.Server:Button({
         if targetJobId ~= "" then
             TeleportService:TeleportToPlaceInstance(PlaceId, targetJobId, LocalPlayer)
         end
+    end
+})
+
+Tabs.Player:Section({ Title = "LocalPlayer" })
+
+Tabs.Player:Toggle({
+    Title = "Disabled Backpack",
+    Value = false,
+    Callback = function(state)
+        local player = game:GetService("Players").LocalPlayer
+        local backpackGui = player:WaitForChild("PlayerGui"):WaitForChild("BackpackGui")
+        
+        -- kalau toggle aktif, matikan BackpackGui
+        backpackGui.Enabled = not state
+        
+    end
+})
+
+-- WindUI Toggle
+Tabs.Player:Toggle({ 
+    Title = "Black Screen",
+    Value = false,
+    Callback = function(state)
+        local player = game.Players.LocalPlayer
+        local playerGui = player:WaitForChild("PlayerGui")
+        
+        -- Cari ScreenGui DarkScreenGUI
+        local darkGui = playerGui:FindFirstChild("DarkScreenGUI")
+        
+        if state then
+            -- Aktifkan Dark Screen
+            if not darkGui then
+                darkGui = Instance.new("ScreenGui")
+                darkGui.Name = "DarkScreenGUI"
+                darkGui.ResetOnSpawn = false
+                darkGui.IgnoreGuiInset = true
+                darkGui.Parent = playerGui
+
+                local darkFrame = Instance.new("Frame")
+                darkFrame.Name = "DarkFrame"
+                darkFrame.Size = UDim2.new(1, 0, 1, 0)
+                darkFrame.Position = UDim2.new(0, 0, 0, 0)
+                darkFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+                darkFrame.BackgroundTransparency = 0
+                darkFrame.BorderSizePixel = 0
+                darkFrame.Parent = darkGui
+            end
+
+            -- Matikan efek lighting & particle untuk hemat GPU/CPU
+            local lighting = game:GetService("Lighting")
+            lighting.GlobalShadows = false
+            lighting.Brightness = 0
+            lighting.FogEnd = 100000
+            lighting.ClockTime = 12
+
+            for particle, _ in pairs(originalParticles) do
+                particle.Enabled = false
+            end
+
+        else
+            -- Matikan Dark Screen
+            if darkGui then
+                darkGui:Destroy()
+            end
+
+            -- Kembalikan setting lighting
+            local lighting = game:GetService("Lighting")
+            lighting.GlobalShadows = originalLightingSettings.GlobalShadows
+            lighting.Brightness = originalLightingSettings.Brightness
+            lighting.FogEnd = originalLightingSettings.FogEnd
+            lighting.ClockTime = originalLightingSettings.ClockTime
+
+            -- Kembalikan particle
+            for particle, enabled in pairs(originalParticles) do
+                if particle.Parent then
+                    particle.Enabled = enabled
+                end
+            end
+        end
+
+    end
+})
+
+Tabs.Player:Button({ 
+    Title = "Boost FPS",  -- Nama tombol
+    Callback = function() 
+        WindUI:Notify({
+            Title = "Boost FPS",
+            Content = "On!",
+            Duration = 5,
+        })
+
+        -- Script Boost FPS
+        local Lighting = game:GetService("Lighting")
+        local Workspace = game:GetService("Workspace")
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+
+        -- Optimasi grafis
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 9e9
+        Lighting.Brightness = 1
+        Lighting.ExposureCompensation = 0
+        Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+        Lighting.ShadowSoftness = 0
+
+        pcall(function()
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Explosion") then
+                    obj.Enabled = false
+                elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                    obj.Transparency = 1
+                end
+            end
+        end)
+    end
+})
+
+Tabs.Player:Button({
+    Title = "Reduce Lag", -- Nama tombol
+    Callback = function()
+        -- Notifikasi
+        WindUI:Notify({
+            Title = "Reduce Lag",
+            Content = "On!",
+            Duration = 5,
+        })
+
+        -- Script Reduce Lag
+        local Players = game:GetService("Players")
+        local Workspace = game:GetService("Workspace")
+        local Lighting = game:GetService("Lighting")
+        local LocalPlayer = Players.LocalPlayer
+
+        -- Optimasi Lighting
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 9e9
+        Lighting.Brightness = 1
+        Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+        Lighting.ExposureCompensation = 0
+        Lighting.ShadowSoftness = 0
+
+        -- Hapus efek particle dan decal
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Explosion") then
+                obj.Enabled = false
+            elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                obj.Transparency = 1
+            end
+        end
+
+        -- Optimasi GUI player
+        for _, gui in pairs(LocalPlayer:WaitForChild("PlayerGui"):GetDescendants()) do
+            if gui:IsA("TextLabel") or gui:IsA("TextButton") then
+                gui.TextScaled = false
+            elseif gui:IsA("ImageLabel") or gui:IsA("ImageButton") then
+                gui.ImageTransparency = 0.5
+            end
+        end
+
     end
 })
 
