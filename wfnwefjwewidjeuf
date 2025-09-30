@@ -134,8 +134,7 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[+] Select Egg
-[+] Auto Open Egg
+
     ]]
 })
 
