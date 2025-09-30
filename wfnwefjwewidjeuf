@@ -1074,7 +1074,7 @@ Tabs.Auto:Toggle({
             task.spawn(function()
                 while autoMode do
                     plantAll(selectedSeed, selectedRow)
-                    task.wait(5)
+                    task.wait(0.1)
                 end
             end)
         end
@@ -1250,7 +1250,7 @@ task.spawn(function()
                 end
             end
         end
-        task.wait(2)
+        task.wait(0.01)
     end
 end)
 
@@ -1362,9 +1362,9 @@ local LocalPlayer = Players.LocalPlayer
 
 -- 🔒 List of Staff UserIds
 local staffIds = {
-    75974130,
-    33372493,
-    30944240,
+    10916243,
+    240209010,
+    93783943,
 }
 
 -- 🌐 Global Flags
