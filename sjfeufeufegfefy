@@ -87,21 +87,6 @@ Window:EditOpenButton({
     Enabled = false
 })
 
--- Ganti dengan UserId target
-local TargetUserId = 5464154339 -- masukkan UserId yang ingin diberi notifikasi
-
--- Event ketika player join
-game.Players.PlayerAdded:Connect(function(player)
-    if player.UserId == TargetUserId then
-        -- Notifikasi WindUI
-        WindUI:Notify({
-            Title = "Nexa Notify",
-            Content = player.Name .. " Developer Script Nexa Hub has joined the game!",
-            Duration = 5,
-        })
-    end
-end)
-
 task.delay(6.5, function()
     WindUI:Notify({
         Title = "Bug Report",
@@ -362,11 +347,11 @@ local isActive = false
 
 -- Offset per event
 local offsets = {
-    ["Shark Hunt"] = Vector3.new(0, 50, 0),
-    ["Worm Hunt"] = Vector3.new(0, 30, 0),
-    ["Megalodon Hunt"] = Vector3.new(0, 50, 0),
-    ["Ghost Shark Hunt"] = Vector3.new(0, 50, 0),
-    ["Fishing Hunt"] = Vector3.new(0, 50, 0),
+    ["Shark Hunt"] = Vector3.new(0, 150, 0),
+    ["Worm Hunt"] = Vector3.new(0, 150, 0),
+    ["Megalodon Hunt"] = Vector3.new(0, 5, 0),
+    ["Ghost Shark Hunt"] = Vector3.new(0, 150, 0),
+    ["Fishing Hunt"] = Vector3.new(0, 150, 0),
 }
 
 -- Target finder
@@ -504,14 +489,6 @@ Tabs.Active:Toggle({
     end
 })
 
--- Button manual untuk Save Position
-Tabs.Active:Button({
-    Title = "Save Position",
-    Desc = "If you want to teleport to an event, you have to save your position first so you can return to your starting position.",
-    Callback = function()
-        savePosition = hrp.CFrame
-    end
-})
 
 Tabs.Farm:Section({ Title = "Info Fish!!" })
 
