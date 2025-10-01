@@ -1161,10 +1161,11 @@ Tabs.Auto:Toggle({
     end
 })
 
-Tabs.Auto:Section({ Title = "Water Bucket" })
+Tabs.Auto:Section({ Title = "Watering System" })
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 local backpack = player:WaitForChild("Backpack")
@@ -1172,6 +1173,7 @@ local character = player.Character or player.CharacterAdded:Wait()
 
 local autoWater = false
 local selectedPlant = "Cactus"
+local selectedTools = {"Water Bucket"} -- default tool
 local myPlot = nil
 
 -- Cari plot milik player
@@ -1190,14 +1192,14 @@ for i = 1, #workspace.Plots:GetChildren() do
     end
 end
 
--- Equip Water Bucket otomatis
-local function equipWaterBucket()
+-- Fungsi equip tool otomatis
+local function equipTool(toolNames)
     local equippedTool = character:FindFirstChildWhichIsA("Tool")
-    if equippedTool and string.find(equippedTool.Name, "Water Bucket") then
+    if equippedTool and table.find(toolNames, equippedTool.Name) then
         return equippedTool
     end
     for _, item in pairs(backpack:GetChildren()) do
-        if item:IsA("Tool") and string.find(item.Name, "Water Bucket") then
+        if item:IsA("Tool") and table.find(toolNames, item.Name) then
             item.Parent = character
             return item
         end
@@ -1224,7 +1226,7 @@ end
 
 -- Nyiram tanaman
 local function waterPlant(plant)
-    local tool = equipWaterBucket()
+    local tool = equipTool(selectedTools)
     local pos = getPlantPosition(plant)
     if tool and pos then
         local args = {
@@ -1250,13 +1252,13 @@ task.spawn(function()
                 end
             end
         end
-        task.wait(0.01)
+        task.wait(0.1) -- jangan terlalu cepat biar ga lag
     end
 end)
 
 -- Dropdown pilih tanaman
 Tabs.Auto:Dropdown({
-    Title = "Select Plant To Watering",
+    Title = "Select Plant",
     Values = {
         "Cactus",
         "Strawberry",
@@ -1276,9 +1278,22 @@ Tabs.Auto:Dropdown({
     end
 })
 
--- Toggle Auto Water Bucket
+-- Dropdown pilih tools
+Tabs.Auto:Dropdown({
+    Title = "Select Tool", 
+    Values = { "Frost Grenade", "Frost Blower", "Water Bucket" }, 
+    Value = { "Water Bucket" }, 
+    Multi = true,           
+    AllowNone = true,       
+    Callback = function(option) 
+        selectedTools = option
+        print("Tools selected: " .. HttpService:JSONEncode(selectedTools)) 
+    end
+})
+
+-- Toggle Auto Water
 Tabs.Auto:Toggle({
-    Title = "Auto Water Bucket", 
+    Title = "Auto Water Plants", 
     Value = false,
     Callback = function(state)
         autoWater = state
