@@ -1163,17 +1163,19 @@ Tabs.Auto:Toggle({
 
 Tabs.Auto:Section({ Title = "Watering System" })
 
+-- Services
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 
+-- Locals
 local player = Players.LocalPlayer
 local backpack = player:WaitForChild("Backpack")
 local character = player.Character or player.CharacterAdded:Wait()
 
 local autoWater = false
 local selectedPlant = "Cactus"
-local selectedTools = {"Water Bucket"} -- default tool
+local selectedTools = { "Water Bucket" } -- default
 local myPlot = nil
 
 -- Cari plot milik player
@@ -1192,14 +1194,14 @@ for i = 1, #workspace.Plots:GetChildren() do
     end
 end
 
--- Fungsi equip tool otomatis
-local function equipTool(toolNames)
+-- Equip tool otomatis
+local function equipTool(toolName)
     local equippedTool = character:FindFirstChildWhichIsA("Tool")
-    if equippedTool and table.find(toolNames, equippedTool.Name) then
+    if equippedTool and string.find(equippedTool.Name, toolName) then
         return equippedTool
     end
     for _, item in pairs(backpack:GetChildren()) do
-        if item:IsA("Tool") and table.find(toolNames, item.Name) then
+        if item:IsA("Tool") and string.find(item.Name, toolName) then
             item.Parent = character
             return item
         end
@@ -1224,9 +1226,9 @@ local function getPlantPosition(plant)
     return nil
 end
 
--- Nyiram tanaman
-local function waterPlant(plant)
-    local tool = equipTool(selectedTools)
+-- Pakai tool ke tanaman
+local function useToolOnPlant(toolName, plant)
+    local tool = equipTool(toolName)
     local pos = getPlantPosition(plant)
     if tool and pos then
         local args = {
@@ -1241,24 +1243,26 @@ local function waterPlant(plant)
     end
 end
 
--- Loop auto nyiram
+-- Loop auto pakai tool
 task.spawn(function()
     while true do
         if autoWater and selectedPlant and myPlot then
             local plantsFolder = myPlot:WaitForChild("Plants")
             for _, plant in pairs(plantsFolder:GetChildren()) do
                 if string.find(plant.Name, selectedPlant) then
-                    waterPlant(plant)
+                    for _, toolName in pairs(selectedTools) do
+                        useToolOnPlant(toolName, plant)
+                    end
                 end
             end
         end
-        task.wait(0.1) -- jangan terlalu cepat biar ga lag
+        task.wait(0.01)
     end
 end)
 
 -- Dropdown pilih tanaman
 Tabs.Auto:Dropdown({
-    Title = "Select Plant",
+    Title = "Select Plant To Watering",
     Values = {
         "Cactus",
         "Strawberry",
@@ -1278,25 +1282,25 @@ Tabs.Auto:Dropdown({
     end
 })
 
--- Dropdown pilih tools
-Tabs.Auto:Dropdown({
-    Title = "Select Tool", 
-    Values = { "Frost Grenade", "Frost Blower", "Water Bucket" }, 
-    Value = { "Water Bucket" }, 
-    Multi = true,           
-    AllowNone = true,       
-    Callback = function(option) 
-        selectedTools = option
-        print("Tools selected: " .. HttpService:JSONEncode(selectedTools)) 
-    end
-})
-
--- Toggle Auto Water
+-- Toggle Auto Tool
 Tabs.Auto:Toggle({
-    Title = "Auto Water Plants", 
+    Title = "Auto Use Tool", 
     Value = false,
     Callback = function(state)
         autoWater = state
+    end
+})
+
+-- Dropdown pilih tool
+Tabs.Auto:Dropdown({
+    Title = "Select Tools To Use", 
+    Values = { "Frost Grenade", "Frost Blower", "Water Bucket" }, 
+    Value = { "Water Bucket" }, -- default
+    Multi = true,               
+    AllowNone = true,           
+    Callback = function(option) 
+        selectedTools = option
+        print("Selected Tools: " .. HttpService:JSONEncode(option))
     end
 })
 
@@ -1645,6 +1649,112 @@ Tabs.Server:Button({
         end
     end
 })
+
+Tabs.Player:Section({ Title = "Troll Player" })
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Backpack = LocalPlayer:WaitForChild("Backpack")
+
+local selectedPlayerName = nil
+local autoShoot = false
+
+-- Fungsi untuk cari tool Carrot Launcher
+local function getTool()
+	-- Cek di Character dulu
+	for _, v in pairs(Character:GetChildren()) do
+		if v:IsA("Tool") and string.find(v.Name, "Carrot Launcher") then
+			return v
+		end
+	end
+	-- Kalau tidak ada di Character, cek di Backpack
+	for _, v in pairs(Backpack:GetChildren()) do
+		if v:IsA("Tool") and string.find(v.Name, "Carrot Launcher") then
+			return v
+		end
+	end
+	return nil
+end
+
+-- Fungsi untuk equip tool otomatis, dengan pengecekan
+local function equipTool(tool)
+	if tool and tool.Parent ~= Character then
+		tool.Parent = Character
+	end
+end
+
+-- Fungsi untuk refresh daftar player (exclude local player)
+local function getPlayerList()
+	local list = {}
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer then
+			table.insert(list, p.Name)
+		end
+	end
+	return list
+end
+
+-- Dropdown untuk pilih target player
+local dropdown = Tabs.Player:Dropdown({ 
+	Title = "Select Player", 
+	Values = getPlayerList(), 
+	Value = "Select", 
+	Callback = function(option) 
+		selectedPlayerName = option
+	end
+})
+
+-- Button untuk refresh daftar player di dropdown
+Tabs.Player:Button({ 
+	Title = "Refresh Player", 
+	Callback = function() 
+		local list = getPlayerList()
+		dropdown:Refresh(list) -- refresh Values Dropdown
+		WindUI:Notify({
+			Title = "Player List Refreshed",
+			Content = "Updated list of players.",
+			Duration = 3,
+		})
+	end
+})
+
+-- Toggle untuk auto shoot
+Tabs.Player:Toggle({ 
+	Title = "Auto Shoot", 
+	Value = false,
+	Callback = function(state) 
+		autoShoot = state
+	end
+})
+
+-- Loop Auto Shoot
+spawn(function()
+	while task.wait(5) do
+		if autoShoot and selectedPlayerName then
+			local targetPlayer = Players:FindFirstChild(selectedPlayerName)
+			local tool = getTool()
+			if targetPlayer and tool and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+				-- Cek dulu apakah tool sudah dipegang, baru equip
+				if tool.Parent ~= Character then
+					equipTool(tool)
+				end
+
+				-- Fire remote
+				local args = {
+					{
+						Toggle = true,
+						Tool = tool,
+						Time = 0.1,
+						Pos = targetPlayer.Character.HumanoidRootPart.Position
+					}
+				}
+				ReplicatedStorage.Remotes.UseItem:FireServer(unpack(args))
+			end
+		end
+	end
+end)
 
 Tabs.Player:Section({ Title = "LocalPlayer" })
 
