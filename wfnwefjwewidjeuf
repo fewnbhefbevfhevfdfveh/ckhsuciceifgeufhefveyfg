@@ -1541,7 +1541,6 @@ Tabs.Server:Input({
     Callback = function(input)
         -- validasi
         if not input or input:match("^%s*$") then
-            warn("Report kosong. Mohon isi laporan bug terlebih dahulu.")
             return
         end
 
@@ -1612,7 +1611,6 @@ Tabs.Server:Button({
             end
         end
 
-        warn("Tidak ada server lain yang tersedia.")
     end
 })
 
