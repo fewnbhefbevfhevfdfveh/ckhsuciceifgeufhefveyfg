@@ -280,67 +280,29 @@ Tabs.Exclusive:Button({
 
         if myPlot then
             local ep = myPlot:FindFirstChild("EventPlatforms")
-            if ep then
-                -- Cari semua BasePart di dalam EventPlatforms
-                local parts = {}
-                for _, obj in ipairs(ep:GetDescendants()) do
-                    if obj:IsA("BasePart") then
-                        table.insert(parts, obj.Position)
-                    end
+            if ep and ep:IsA("Model") then
+                -- Dapatkan posisi model EventPlatforms
+                local pivotCFrame = ep:GetPivot()
+                local tpPos = pivotCFrame.Position + Vector3.new(0, 5, 0)
+
+                -- Teleport player
+                hrp.CFrame = CFrame.new(tpPos)
+
+                -- Hapus pad lama kalau ada
+                local oldPad = workspace:FindFirstChild("TeleportPad")
+                if oldPad then
+                    oldPad:Destroy()
                 end
 
-                if #parts > 0 then
-                    -- Hitung posisi rata-rata
-                    local sum = Vector3.new(0, 0, 0)
-                    for _, pos in ipairs(parts) do
-                        sum += pos
-                    end
-                    local center = sum / #parts
-
-                    -- Teleport ke atas pusat
-                    local tpPos = center + Vector3.new(0, 5, 0)
-                    hrp.CFrame = CFrame.new(tpPos)
-
-                    -- Hapus pad lama kalau ada
-                    local oldPad = workspace:FindFirstChild("TeleportPad")
-                    if oldPad then
-                        oldPad:Destroy()
-                    end
-
-                    -- Buat pad baru
-                    local pad = Instance.new("Part")
-                    pad.Size = Vector3.new(50, 1, 50)
-                    pad.Anchored = true
-                    pad.CanCollide = true
-                    pad.Position = tpPos - Vector3.new(0, 7, 0)
-                    pad.Name = "TeleportPad"
-                    pad.Parent = workspace
-
-                    WindUI:Notify({
-                        Title = "Nexa Notify",
-                        Content = "Successfully teleported to Daily Island",
-                        Duration = 5,
-                    })
-                else
-                    WindUI:Notify({
-                        Title = "Nexa Notify",
-                        Content = "There is no BasePart in Daily Island",
-                        Duration = 5,
-                    })
-                end
-            else
-                WindUI:Notify({
-                    Title = "Nexa Notify",
-                    Content = "Daily Island not found",
-                    Duration = 5,
-                })
+                -- Buat pad baru di bawah
+                local pad = Instance.new("Part")
+                pad.Size = Vector3.new(80, 1, 80)
+                pad.Anchored = true
+                pad.CanCollide = true
+                pad.Position = tpPos - Vector3.new(0, 10, 0)
+                pad.Name = "TeleportPad"
+                pad.Parent = workspace
             end
-        else
-            WindUI:Notify({
-                Title = "Nexa Notify",
-                Content = "Your plot was not found!",
-                Duration = 5,
-            })
         end
     end
 })
