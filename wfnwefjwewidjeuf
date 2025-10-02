@@ -107,6 +107,8 @@ end)
 
 local Tabs = {
     Home = Window:Tab({ Title = "Home", Icon = "house"  }),
+    Active = Window:Tab({ Title = "Active", Icon = "info"  }),
+    Exclusive = Window:Tab({ Title = "Exclusive", Icon = "sparkles"  }),
     Farm = Window:Tab({ Title = "Farm", Icon = "swords"  }),
     Shop = Window:Tab({ Title = "Shop", Icon = "shopping-cart"  }),
     Inventory = Window:Tab({ Title = "Inventory", Icon = "backpack"  }),
@@ -147,6 +149,201 @@ Tabs.Home:Paragraph({
             end
         }
     }
+})
+
+Tabs.Active:Section({ Title = "Stock Info" })
+
+local player = game:GetService("Players").LocalPlayer
+local gearsFrame = player.PlayerGui.Main.Gears.Frame.ScrollingFrame
+
+-- List gear yang mau di cek
+local gearList = {
+    "Water Bucket"
+    "Frost Grenade",
+    "Banana Gun",
+    "Frost Blower    
+    "Carrot Launcher",
+}
+
+-- Buat Paragraph sekali
+local stockParagraph = Tabs.Active:Paragraph({
+    Title = "Gears Stock",
+    Desc = "Loading..."
+})
+
+-- Fungsi ambil angka dari text (contoh "x3")
+local function getStockNumber(text)
+    local number = text:match("x(%d+)")
+    return tonumber(number) or 0
+end
+
+-- Loop update setiap 1 detik
+task.spawn(function()
+    while true do
+        local descText = ""
+
+        for _, gearName in ipairs(gearList) do
+            local gear = gearsFrame:FindFirstChild(gearName)
+            if gear and gear:FindFirstChild("Stock") then
+                local stock = getStockNumber(gear.Stock.Text)
+                if stock > 0 then
+                    descText = descText .. gearName .. ": " .. stock .. "\n"
+                else
+                    descText = descText .. gearName .. ": No Stock\n"
+                end
+            else
+                descText = descText .. gearName .. ": Tidak ditemukan\n"
+            end
+        end
+
+        stockParagraph:SetDesc(descText)
+        task.wait(1)
+    end
+end)
+
+local player = game:GetService("Players").LocalPlayer
+local seedsFrame = player.PlayerGui.Main.Seeds.Frame.ScrollingFrame
+
+-- List seed yang mau dicek
+local seedList = {
+    "Cactus Seed",
+    "Strawberry Seed",
+    "Pumpkin Seed",
+    "Sunflower Seed",
+    "Dragon Fruit Seed",
+    "Eggplant Seed",
+    "Watermelon Seed",
+    "Grape Seed",
+    "Cocotank Seed",
+    "Carnivorous Plant Seed",
+    "Mr Carrot Seed",
+    "Tomatrio Seed",
+    "Shroombino Seed"
+}
+
+-- Buat Paragraph sekali
+local stockParagraph = Tabs.Active:Paragraph({
+    Title = "Seeds Stock",
+    Desc = "Loading..."
+})
+
+-- Fungsi ambil angka dari text (contoh "x3")
+local function getStockNumber(text)
+    local number = text:match("x(%d+)")
+    return tonumber(number) or 0
+end
+
+-- Loop update setiap 1 detik
+task.spawn(function()
+    while true do
+        local descText = ""
+
+        for _, seedName in ipairs(seedList) do
+            local seed = seedsFrame:FindFirstChild(seedName)
+            if seed and seed:FindFirstChild("Stock") then
+                local stock = getStockNumber(seed.Stock.Text)
+                if stock > 0 then
+                    descText = descText .. seedName .. ": " .. stock .. "\n"
+                else
+                    descText = descText .. seedName .. ": No Stock\n"
+                end
+            else
+                descText = descText .. seedName .. ": Tidak ditemukan\n"
+            end
+        end
+
+        stockParagraph:SetDesc(descText)
+        task.wait(1)
+    end
+end)
+
+Tabs.Exclusive:Section({ Title = "Exclusive" })
+
+Tabs.Exclusive:Button({
+    Title = "Teleport To Daily Island",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+
+        -- Cari plot milik player
+        local myPlot = nil
+        for _, plot in ipairs(workspace.Plots:GetChildren()) do
+            local sign = plot:FindFirstChild("PlayerSign")
+            if sign and sign:FindFirstChild("BillboardGui") and sign.BillboardGui:FindFirstChild("TextLabel") then
+                local textLabel = sign.BillboardGui.TextLabel
+                if textLabel.Text == player.DisplayName then
+                    myPlot = plot
+                    break
+                end
+            end
+        end
+
+        if myPlot then
+            local ep = myPlot:FindFirstChild("EventPlatforms")
+            if ep then
+                -- Cari semua BasePart di dalam EventPlatforms
+                local parts = {}
+                for _, obj in ipairs(ep:GetDescendants()) do
+                    if obj:IsA("BasePart") then
+                        table.insert(parts, obj.Position)
+                    end
+                end
+
+                if #parts > 0 then
+                    -- Hitung posisi rata-rata
+                    local sum = Vector3.new(0, 0, 0)
+                    for _, pos in ipairs(parts) do
+                        sum += pos
+                    end
+                    local center = sum / #parts
+
+                    -- Teleport ke atas pusat
+                    local tpPos = center + Vector3.new(0, 5, 0)
+                    hrp.CFrame = CFrame.new(tpPos)
+
+                    -- Hapus pad lama kalau ada
+                    local oldPad = workspace:FindFirstChild("TeleportPad")
+                    if oldPad then
+                        oldPad:Destroy()
+                    end
+
+                    -- Buat pad baru
+                    local pad = Instance.new("Part")
+                    pad.Size = Vector3.new(50, 1, 50)
+                    pad.Anchored = true
+                    pad.CanCollide = true
+                    pad.Position = tpPos - Vector3.new(0, 7, 0)
+                    pad.Name = "TeleportPad"
+                    pad.Parent = workspace
+
+                    WindUI:Notify({
+                        Title = "Nexa Notify",
+                        Content = "Successfully teleported to Daily Island",
+                        Duration = 5,
+                    })
+                else
+                    WindUI:Notify({
+                        Title = "Nexa Notify",
+                        Content = "There is no BasePart in Daily Island",
+                        Duration = 5,
+                    })
+                end
+            else
+                WindUI:Notify({
+                    Title = "Nexa Notify",
+                    Content = "Daily Island not found",
+                    Duration = 5,
+                })
+            end
+        else
+            WindUI:Notify({
+                Title = "Nexa Notify",
+                Content = "Your plot was not found!",
+                Duration = 5,
+            })
+        end
+    end
 })
 
 Tabs.Farm:Section({ Title = "Brainrot Farm" })
