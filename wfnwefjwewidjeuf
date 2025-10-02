@@ -152,7 +152,7 @@ Tabs.Home:Paragraph({
     }
 })
 
-Tabs.Active:Section({ Title = "Stock Info" })
+Tabs.Info:Section({ Title = "Stock Info" })
 
 local player = game:GetService("Players").LocalPlayer
 local gearsFrame = player.PlayerGui.Main.Gears.Frame.ScrollingFrame
