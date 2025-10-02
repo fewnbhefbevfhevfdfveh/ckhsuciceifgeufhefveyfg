@@ -107,7 +107,7 @@ end)
 
 local Tabs = {
     Home = Window:Tab({ Title = "Home", Icon = "house"  }),
-    Active = Window:Tab({ Title = "Active", Icon = "info"  }),
+    Info = Window:Tab({ Title = "Info", Icon = "info"  }),
     Exclusive = Window:Tab({ Title = "Exclusive", Icon = "sparkles"  }),
     Farm = Window:Tab({ Title = "Farm", Icon = "swords"  }),
     Shop = Window:Tab({ Title = "Shop", Icon = "shopping-cart"  }),
@@ -167,7 +167,7 @@ local gearList = {
 }
 
 -- Buat Paragraph sekali
-local stockParagraph = Tabs.Active:Paragraph({
+local stockParagraph = Tabs.Info:Paragraph({
     Title = "Gears Stock",
     Desc = "Loading..."
 })
@@ -222,7 +222,7 @@ local seedList = {
 }
 
 -- Buat Paragraph sekali
-local stockParagraph = Tabs.Active:Paragraph({
+local stockParagraph = Tabs.Info:Paragraph({
     Title = "Seeds Stock",
     Desc = "Loading..."
 })
