@@ -158,10 +158,10 @@ local gearsFrame = player.PlayerGui.Main.Gears.Frame.ScrollingFrame
 
 -- List gear yang mau di cek
 local gearList = {
-    "Water Bucket"
+    "Water Bucket",
     "Frost Grenade",
     "Banana Gun",
-    "Frost Blower    
+    "Frost Blower",
     "Carrot Launcher",
 }
 
@@ -179,7 +179,7 @@ end
 
 -- Loop update setiap 1 detik
 task.spawn(function()
-    while true do
+    while task.wait(1) do
         local descText = ""
 
         for _, gearName in ipairs(gearList) do
@@ -197,7 +197,6 @@ task.spawn(function()
         end
 
         stockParagraph:SetDesc(descText)
-        task.wait(1)
     end
 end)
 
