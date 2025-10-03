@@ -1,3 +1,22 @@
+-- Teeport To Kohana Volcano
+
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+
+local targetCFrame = CFrame.new(
+    -552.315918, 18.5700703, 182.853104,
+    0.493660033, 4.75018354e-08, 0.869654953,
+    -2.51374654e-08, 1, -4.03521767e-08,
+    -0.869654953, -1.94606407e-09, 0.493660033
+)
+
+-- Teleport
+if char and char:FindFirstChild("HumanoidRootPart") then
+    char.HumanoidRootPart.CFrame = targetCFrame
+end
+
+-- Auto Fishing
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
@@ -88,3 +107,201 @@ task.spawn(function()
     end
 end)
 
+-- Auto Sell
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Remote
+local sellRemote = ReplicatedStorage:WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/SellAllItems")
+
+-- Ambil config dari getgenv, kalau kosong pakai default
+local mode = getgenv().ModeSell or "Sell Delay"
+local sellDelay = getgenv().SellDelay or 2
+
+-- Auto sell loop
+task.spawn(function()
+    while true do
+        pcall(function()
+            if mode == "Sell Delay" then
+                sellRemote:InvokeServer()
+                task.wait(sellDelay)
+            elseif mode == "Backpack Full" then
+                local bagLabel = LocalPlayer.PlayerGui.Inventory.Main.Top.Options.Fish.Label.BagSize
+                if bagLabel and bagLabel.Text == "5,000/5,000" then
+                    sellRemote:InvokeServer()
+                end
+                task.wait(1)
+            end
+        end)
+    end
+end)
+
+-- Purchase Rod
+
+-- Table mapping nama rod ke ID
+local rodMap = {
+	StarterRod   = 1,
+	LuckRod      = 79,
+	CarbonRod    = 76,
+	GrassRod     = 85,
+	DemascusRod  = 77,
+	IceRod       = 78,
+	LuckyRod     = 4,
+	MidnightRod  = 80,
+	SteampunkRod = 6,
+	ChromeRod    = 7,
+	AstralRod    = 5,
+}
+
+-- Remote
+local remote = game:GetService("ReplicatedStorage")
+	:WaitForChild("Packages")
+	:WaitForChild("_Index")
+	:WaitForChild("sleitnick_net@0.2.0")
+	:WaitForChild("net")
+	:WaitForChild("RF/PurchaseFishingRod")
+
+-- Cek getgenv dan beli hanya rod yang diset true
+for rodName, rodId in pairs(rodMap) do
+	if getgenv()[rodName] then
+		pcall(function()
+			remote:InvokeServer(rodId)
+		end)
+	end
+end
+
+-- Purchase Bait
+
+-- Table mapping nama bait ke ID
+local BaitID = {
+    TopwaterBait   = 10,
+    LuckBait       = 2,
+    MidnightBait   = 3,
+    NatureBait     = 17,
+    ChromaBait     = 6,
+    DarkMatterBait = 8,
+    CorruptBait    = 15,
+    AetherBait     = 16,
+}
+
+-- Remote
+local remote = game:GetService("ReplicatedStorage")
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/PurchaseBait")
+
+-- Cek config getgenv, beli bait yang diset true
+for baitName, baitId in pairs(BaitID) do
+    if getgenv()[baitName] then
+        pcall(function()
+            remote:InvokeServer(baitId)
+        end)
+    end
+end
+
+-- Auto Deep Sea Quest
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Ambil ItemName TextLabel
+local itemNameLabel = LocalPlayer.PlayerGui.Backpack.Display.Tile.Inner.Tags.ItemName
+
+-- Fungsi utama teleport & freeze (kode kamu)
+local questLabel = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content:WaitForChild("Label1")
+
+local posBelum100 = CFrame.new(
+    -3563.65063, -279.074219, -1605.75671,
+     0.707868576,  1.15482976e-07,  0.706344128,
+    -9.39126679e-08, 1,            -6.93785722e-08,
+    -0.706344128,   -1.72237495e-08, 0.707868576
+)
+
+local posSudah100 = CFrame.new(
+    -3698.01001, -135.073914, -1010.34033,
+    -0.937130094, -7.4511493e-09,  0.348980278,
+    -5.57951241e-09, 1,             6.36803633e-09,
+    -0.348980278,  4.0207917e-09, -0.937130094
+)
+
+local freezeBV, freezeBG
+local savedCFrame
+
+local function Freeze(char)
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    if freezeBV then freezeBV:Destroy() freezeBV = nil end
+    if freezeBG then freezeBG:Destroy() freezeBG = nil end
+    freezeBV = Instance.new("BodyVelocity")
+    freezeBV.Velocity = Vector3.new(0,0,0)
+    freezeBV.MaxForce = Vector3.new(9e9,9e9,9e9)
+    freezeBV.Parent = hrp
+    freezeBG = Instance.new("BodyGyro")
+    freezeBG.MaxTorque = Vector3.new(9e9,9e9,9e9)
+    freezeBG.CFrame = hrp.CFrame
+    freezeBG.Parent = hrp
+end
+
+local function Unfreeze()
+    if freezeBV then freezeBV:Destroy() freezeBV = nil end
+    if freezeBG then freezeBG:Destroy() freezeBG = nil end
+end
+
+local function TeleportOnce(cf, doFreeze)
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char:SetPrimaryPartCFrame(cf)
+        savedCFrame = cf
+        if doFreeze then
+            Freeze(char)
+        else
+            Unfreeze()
+        end
+    end
+end
+
+local function CheckQuest()
+    local text = questLabel.Text
+    local persen = text:match("(%d+)%%")
+    persen = tonumber(persen)
+
+    if persen and persen < 100 then
+        TeleportOnce(posBelum100, true)
+    elseif persen and persen >= 100 then
+        TeleportOnce(posSudah100, false)
+        savedCFrame = nil
+    end
+end
+
+-- **Cek langsung ItemName**
+if itemNameLabel.Text == "Astral Rod" then
+    print("Astral Rod ditemukan! Menjalankan sistem teleport & freeze...")
+    
+    -- Jalankan saat teks quest berubah
+    questLabel:GetPropertyChangedSignal("Text"):Connect(CheckQuest)
+    
+    -- Anti geser
+    RunService.Heartbeat:Connect(function()
+        if savedCFrame then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hrp = char.HumanoidRootPart
+                if (hrp.Position - savedCFrame.Position).Magnitude > 2 then
+                    hrp.CFrame = savedCFrame
+                end
+            end
+        end
+    end)
+    
+    -- Cek pertama kali
+    task.wait(1)
+    CheckQuest()
+end
