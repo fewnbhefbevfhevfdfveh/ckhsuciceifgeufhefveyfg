@@ -1,0 +1,48 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local Container = LocalPlayer.PlayerGui["Small Notification"].Display.Container
+
+local Net = ReplicatedStorage:WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+
+local ChargeFishingRod = Net:WaitForChild("RF/ChargeFishingRod")
+local RequestFishingMinigameStarted = Net:WaitForChild("RF/RequestFishingMinigameStarted")
+
+local AutoFishV2 = true -- langsung aktif
+
+-- Step Functions
+local function Step1()
+    Container.Position = UDim2.new(0.5, 0, -1.89999998, 1)
+end
+
+local function Step2()
+    ChargeFishingRod:InvokeServer(1759130348.448756)
+end
+
+local function Step3()
+    RequestFishingMinigameStarted:InvokeServer(-0.5718746185302734, 0.96170184695718)
+end
+
+-- Jalankan sekali di awal
+if AutoFishV2 then
+    Step1()
+    task.wait(0.01)
+    Step2()
+    task.wait(0.01)
+    Step3()
+end
+
+-- Listener Step4
+Container:GetPropertyChangedSignal("Position"):Connect(function()
+    if AutoFishV2 and Container.Position == UDim2.new(0.5, 0, 0.100000001, 0) then
+        task.wait(0.01)
+        Step2()
+        task.wait(0.01)
+        Step3()
+    end
+end)
+
+
