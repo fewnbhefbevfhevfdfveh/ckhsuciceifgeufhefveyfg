@@ -589,6 +589,7 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
+local hrp = character:WaitForChild("HumanoidRootPart")
 
 -- cari plot kita
 local myDisplayName = player.DisplayName
@@ -614,36 +615,33 @@ if not myPlot then return end
 
 local brainrots = myPlot:WaitForChild("Brainrots")
 
--- Atur speed jalan
-humanoid.WalkSpeed = 50
-
 -- Variabel kontrol
 local autoCollect = false
 local collectDelay = 1
 
--- Fungsi untuk jalan ke model
-local function walkTo(model)
+-- Fungsi teleport ke model
+local function teleportTo(model)
     if not model then return end
     local part = model:FindFirstChildWhichIsA("BasePart", true)
     if part then
-        humanoid:MoveTo(part.Position + Vector3.new(0, 3, 0))
-        humanoid.MoveToFinished:Wait()
+        hrp.CFrame = part.CFrame + Vector3.new(0, 5, 0)
     end
 end
 
--- Fungsi utama auto jalan
+-- Fungsi utama auto teleport
 task.spawn(function()
     while task.wait() do
         if autoCollect then
             -- loop selama toggle aktif
-            for i = 1, 9 do
+            for i = 1, 17 do
                 if not autoCollect then break end
                 local model = brainrots:FindFirstChild(tostring(i))
                 if model then
-                    walkTo(model)
+                    teleportTo(model)
+                    task.wait(0.5) -- biar ga terlalu cepat
                 end
             end
-            -- selesai 1 → 9, tunggu sesuai slider
+            -- selesai 1 → 17, tunggu sesuai slider
             if autoCollect then
                 task.wait(collectDelay)
             end
@@ -666,13 +664,12 @@ Tabs.Farm:Slider({
 })
 
 Tabs.Farm:Toggle({
-    Title = "Auto Collect",
+    Title = "Auto Collect (Teleport)",
     Value = false,
     Callback = function(state)
         autoCollect = state
     end
 })
-
 Tabs.Shop:Section({ Title = "Seed" })
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
