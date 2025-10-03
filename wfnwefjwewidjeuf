@@ -1091,6 +1091,149 @@ task.spawn(function()
     end
 end)
 
+Tabs.Auto:Section({ Title = "Plant +" })
+
+local player = game:GetService("Players").LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local placeItem = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlaceItem")
+
+local selectedSeed = nil
+local selectedRow = nil
+local autoMode = false
+local myPlot = nil
+
+-- cari plot player
+local function findMyPlot()
+    for _, plot in ipairs(workspace.Plots:GetChildren()) do
+        local sign = plot:FindFirstChild("PlayerSign")
+        if sign and sign:FindFirstChild("BillboardGui") then
+            local textLabel = sign.BillboardGui:FindFirstChild("TextLabel")
+            if textLabel and textLabel.Text == player.DisplayName then
+                return plot
+            end
+        end
+    end
+end
+
+-- ambil info seed dari backpack atau character
+local function getSeedData(seedName)
+    local backpack = player:WaitForChild("Backpack")
+    local character = player.Character or player.CharacterAdded:Wait()
+
+    for _, tool in ipairs(backpack:GetChildren()) do
+        if tool:IsA("Tool") and string.find(tool.Name, seedName) then
+            return {
+                ID = tool:GetAttribute("ID"),
+                Tool = tool,
+                Name = tool.Name
+            }
+        end
+    end
+
+    for _, tool in ipairs(character:GetChildren()) do
+        if tool:IsA("Tool") and string.find(tool.Name, seedName) then
+            return {
+                ID = tool:GetAttribute("ID"),
+                Tool = tool,
+                Name = tool.Name
+            }
+        end
+    end
+end
+
+-- tanam di plot (versi remote baru, tanpa "Seed")
+local function plantAll(seedName, rowFilter)
+    local seedData = getSeedData(seedName)
+    if not seedData then return end
+
+    local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+    if humanoid and seedData.Tool.Parent ~= player.Character then
+        humanoid:EquipTool(seedData.Tool)
+        task.wait(0.2)
+    end
+
+    if not myPlot then
+        myPlot = findMyPlot()
+        if not myPlot then return end
+    end
+
+    for _, row in ipairs(myPlot.Rows:GetChildren()) do
+        if not rowFilter or row.Name == tostring(rowFilter) then
+            if row:FindFirstChild("Grass") then
+                for _, grass in ipairs(row.Grass:GetChildren()) do
+                    local args = {
+                        {
+                            ID = seedData.ID,
+                            CFrame = grass.CFrame,
+                            Item = seedName, -- langsung pakai nama dropdown (tanpa "Seed")
+                            Floor = grass
+                        }
+                    }
+                    placeItem:FireServer(unpack(args))
+                    task.wait(0.2)
+                end
+            end
+        end
+    end
+end
+
+-- Dropdown pilih seed (tanpa kata "Seed")
+Tabs.Auto:Dropdown({ 
+    Title = "Select Plant",  
+    Values = { 
+        "Cactus",
+        "Strawberry",
+        "Pumpkin",
+        "Sunflower",
+        "Dragon Fruit",
+        "Eggplant",
+        "Watermelon",
+        "Cocotank",
+        "Carnivorous Plant",
+        "Mr Carrot", 
+        "Tomatrio",
+        "Shroombino"
+    },
+    Value = "",
+    Callback = function(option) 
+        selectedSeed = option
+    end
+})
+
+-- Dropdown pilih row
+Tabs.Auto:Dropdown({ 
+    Title = "Select Row", 
+    Values = { "All","1","2","3","4","5","6","7" },
+    Value = "All",
+    Callback = function(option) 
+        if option == "All" then
+            selectedRow = nil
+        else
+            selectedRow = tonumber(option)
+        end
+    end
+})
+
+-- Toggle auto plant
+Tabs.Auto:Toggle({ 
+    Title = "Auto Plant", 
+    Value = false,
+    Callback = function(state) 
+        autoMode = state
+
+        if autoMode then
+            if not selectedSeed then return end
+
+            task.spawn(function()
+                while autoMode do
+                    plantAll(selectedSeed, selectedRow)
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end
+})
+
 Tabs.Auto:Section({ Title = "Plant" })
 
 local player = game:GetService("Players").LocalPlayer
@@ -1218,7 +1361,7 @@ Tabs.Auto:Dropdown({
 
 -- Toggle auto plant
 Tabs.Auto:Toggle({ 
-    Title = "Auto Plant", 
+    Title = "Auto Plant Seed", 
     Value = false,
     Callback = function(state) 
         autoMode = state
