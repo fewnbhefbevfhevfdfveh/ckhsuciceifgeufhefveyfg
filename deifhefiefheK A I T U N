@@ -283,7 +283,6 @@ end
 
 -- **Cek langsung ItemName**
 if itemNameLabel.Text == "Astral Rod" then
-    print("Astral Rod ditemukan! Menjalankan sistem teleport & freeze...")
     
     -- Jalankan saat teks quest berubah
     questLabel:GetPropertyChangedSignal("Text"):Connect(CheckQuest)
@@ -304,4 +303,70 @@ if itemNameLabel.Text == "Astral Rod" then
     -- Cek pertama kali
     task.wait(1)
     CheckQuest()
+end
+
+-- Cek Quest Depp Sea
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local board = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board
+local surfaceGui = board:WaitForChild("Gui")
+local content = surfaceGui:WaitForChild("Content")
+
+local labelNames = {"Label1", "Label2", "Label3", "Label4"}
+
+-- Target CFrame
+local targetCFrame = CFrame.new(
+    -552.315918, 18.5700703, 182.853104,
+     0.493660033, 4.75018354e-08, 0.869654953,
+    -2.51374654e-08, 1, -4.03521767e-08,
+    -0.869654953, -1.94606407e-09, 0.493660033
+)
+
+-- Flag biar nggak double notify/teleport
+local alreadyTeleported = false
+
+-- Fungsi cek apakah teks berakhir dengan "100%"
+local function isComplete(text)
+    return string.match(text, "100%%$") ~= nil
+end
+
+-- Cek semua label
+local function allLabelsComplete()
+    for _, name in ipairs(labelNames) do
+        local label = content:FindFirstChild(name)
+        if not label or not isComplete(label.Text) then
+            return false
+        end
+    end
+    return true
+end
+
+-- Fungsi handle perubahan label
+local function onLabelChanged()
+    if not alreadyTeleported and allLabelsComplete() then
+        alreadyTeleported = true
+        
+        -- Notify pakai WindUI
+        WindUI:Notify({
+            Title = "Nexa Notify", 
+            Content = "Semua misi sudah 100%! Teleport sekarang...",
+            Duration = 5,
+        })
+
+        -- Teleport player
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        hrp.CFrame = targetCFrame
+    end
+end
+
+-- Pasang listener
+for _, name in ipairs(labelNames) do
+    local label = content:FindFirstChild(name)
+    if label then
+        onLabelChanged()
+        label:GetPropertyChangedSignal("Text"):Connect(onLabelChanged)
+    end
 end
