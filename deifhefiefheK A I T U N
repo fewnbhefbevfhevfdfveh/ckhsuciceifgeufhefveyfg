@@ -45,4 +45,46 @@ Container:GetPropertyChangedSignal("Position"):Connect(function()
     end
 end)
 
+-- Auto Fishing Complite
+
+getgenv().AutoFishing = true
+
+task.spawn(function()
+    while getgenv().AutoFishing do
+        pcall(function()
+            game:GetService("ReplicatedStorage")
+                :WaitForChild("Packages")
+                :WaitForChild("_Index")
+                :WaitForChild("sleitnick_net@0.2.0")
+                :WaitForChild("net")
+                :WaitForChild("RE/FishingCompleted")
+                :FireServer()
+        end)
+        task.wait(0.1) -- delay biar server nggak ke-spam terlalu cepat
+    end
+end)
+
+-- Auto Equip Rod
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Remote events
+local Net = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net")
+local EquipRemote = Net:WaitForChild("RE/EquipToolFromHotbar")
+local UnequipRemote = Net:WaitForChild("RE/UnequipToolFromHotbar")
+
+-- Character
+local char = workspace:WaitForChild("Characters"):WaitForChild(LocalPlayer.Name)
+
+-- Auto equip loop
+task.spawn(function()
+    while task.wait(1) do
+        -- Kalau masih ada !!!FISHING_VIEW_MODEL!!! berarti rod BELUM dipegang → equip slot 1
+        if char:FindFirstChild("!!!FISHING_VIEW_MODEL!!!") then
+            EquipRemote:FireServer(1)
+        end
+    end
+end)
 
