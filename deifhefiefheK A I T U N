@@ -1,3 +1,62 @@
+-- Auto Equip Rod
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Remote events
+local Net = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net")
+local EquipRemote = Net:WaitForChild("RE/EquipToolFromHotbar")
+local UnequipRemote = Net:WaitForChild("RE/UnequipToolFromHotbar")
+
+-- Character
+local char = workspace:WaitForChild("Characters"):WaitForChild(LocalPlayer.Name)
+
+-- Auto equip loop
+task.spawn(function()
+    while task.wait(1) do
+        -- Kalau masih ada !!!FISHING_VIEW_MODEL!!! berarti rod BELUM dipegang → equip slot 1
+        if char:FindFirstChild("!!!FISHING_VIEW_MODEL!!!") then
+            EquipRemote:FireServer(1)
+        end
+    end
+end)
+
+-- Auto Sell
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Remote
+local sellRemote = ReplicatedStorage:WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/SellAllItems")
+
+-- Ambil config dari getgenv, kalau kosong pakai default
+local mode = getgenv().ModeSell or "Sell Delay"
+local sellDelay = getgenv().SellDelay or 2
+
+-- Auto sell loop
+task.spawn(function()
+    while true do
+        pcall(function()
+            if mode == "Sell Delay" then
+                sellRemote:InvokeServer()
+                task.wait(sellDelay)
+            elseif mode == "Backpack Full" then
+                local bagLabel = LocalPlayer.PlayerGui.Inventory.Main.Top.Options.Fish.Label.BagSize
+                if bagLabel and bagLabel.Text == "5,000/5,000" then
+                    sellRemote:InvokeServer()
+                end
+                task.wait(1)
+            end
+        end)
+    end
+end)
+
 -- Teeport To Kohana Volcano
 
 local player = game.Players.LocalPlayer
@@ -80,65 +139,6 @@ task.spawn(function()
                 :FireServer()
         end)
         task.wait(0.1) -- delay biar server nggak ke-spam terlalu cepat
-    end
-end)
-
--- Auto Equip Rod
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
--- Remote events
-local Net = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net")
-local EquipRemote = Net:WaitForChild("RE/EquipToolFromHotbar")
-local UnequipRemote = Net:WaitForChild("RE/UnequipToolFromHotbar")
-
--- Character
-local char = workspace:WaitForChild("Characters"):WaitForChild(LocalPlayer.Name)
-
--- Auto equip loop
-task.spawn(function()
-    while task.wait(1) do
-        -- Kalau masih ada !!!FISHING_VIEW_MODEL!!! berarti rod BELUM dipegang → equip slot 1
-        if char:FindFirstChild("!!!FISHING_VIEW_MODEL!!!") then
-            EquipRemote:FireServer(1)
-        end
-    end
-end)
-
--- Auto Sell
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
--- Remote
-local sellRemote = ReplicatedStorage:WaitForChild("Packages")
-    :WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0")
-    :WaitForChild("net")
-    :WaitForChild("RF/SellAllItems")
-
--- Ambil config dari getgenv, kalau kosong pakai default
-local mode = getgenv().ModeSell or "Sell Delay"
-local sellDelay = getgenv().SellDelay or 2
-
--- Auto sell loop
-task.spawn(function()
-    while true do
-        pcall(function()
-            if mode == "Sell Delay" then
-                sellRemote:InvokeServer()
-                task.wait(sellDelay)
-            elseif mode == "Backpack Full" then
-                local bagLabel = LocalPlayer.PlayerGui.Inventory.Main.Top.Options.Fish.Label.BagSize
-                if bagLabel and bagLabel.Text == "5,000/5,000" then
-                    sellRemote:InvokeServer()
-                end
-                task.wait(1)
-            end
-        end)
     end
 end)
 
