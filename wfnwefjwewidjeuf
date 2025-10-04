@@ -2158,7 +2158,6 @@ Tabs.Player:Toggle({
         end
 
         if not myPlot then
-            warn("Plot milikmu tidak ditemukan.")
             return
         end
 
