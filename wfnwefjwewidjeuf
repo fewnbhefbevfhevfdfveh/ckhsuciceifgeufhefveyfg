@@ -637,7 +637,7 @@ Tabs.Farm:Toggle({
                                         firstTeleportDone = true
                                     end
 
-                                    hrp.CFrame = part.CFrame + Vector3.new(0, 5, 0)
+                                    hrp.CFrame = part.CFrame + Vector3.new(0, 0, 0)
                                     task.wait(0.5) -- delay antar Brainrot selanjutnya bisa diatur manual
                                 end
                             end
