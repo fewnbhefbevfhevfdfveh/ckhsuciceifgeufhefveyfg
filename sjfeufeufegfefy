@@ -87,6 +87,52 @@ Window:EditOpenButton({
     Enabled = false
 })
 
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local merchant = LocalPlayer.PlayerGui.Merchant.Main.Background.Items.ScrollingFrame
+
+-- 🧩 Notif pertama kali script dijalankan
+WindUI:Notify({
+    Title = "Nexa Notify Merchant",
+    Content = "Stock Merchant aktif — memantau perubahan ItemName...",
+    Duration = 5,
+})
+
+-- Fungsi untuk memantau setiap ItemName
+local function monitorItemName(itemLabel)
+	if not itemLabel then return end
+	local oldText = itemLabel.Text
+
+	itemLabel:GetPropertyChangedSignal("Text"):Connect(function()
+		if itemLabel.Text ~= oldText then
+			oldText = itemLabel.Text
+			WindUI:Notify({
+				Title = "Nexa Notify Merchant",
+				Content = "Stock Changes: " .. itemLabel.Text,
+				Duration = 10,
+			})
+		end
+	end)
+end
+
+-- Pasang listener ke semua Template yang sudah ada
+for _, child in ipairs(merchant:GetChildren()) do
+	if child:FindFirstChild("Frame") and child.Frame:FindFirstChild("ItemName") then
+		monitorItemName(child.Frame.ItemName)
+	end
+end
+
+-- Jika ada Template baru ditambahkan (misalnya setelah refresh)
+merchant.ChildAdded:Connect(function(child)
+	task.wait(0.5) -- delay kecil agar Frame dan ItemName sempat muncul
+	if child:FindFirstChild("Frame") and child.Frame:FindFirstChild("ItemName") then
+		monitorItemName(child.Frame.ItemName)
+	end
+end)
+
+
+
 task.delay(6.5, function()
     WindUI:Notify({
         Title = "Bug Report",
@@ -120,13 +166,10 @@ local Tabs = {
 
 Tabs.Home:Section({ Title = "Update" })
 
-Tabs.Home:Divider()
-
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[-] Delete Dropdwon Charge Mode
-[/] Improve Auto FishV2
+
     ]]
 })
 
@@ -154,62 +197,6 @@ Tabs.Home:Paragraph({
         }
     }
 })
-
-Tabs.Active:Section({ Title = "Status" })
-
--- FPS, Ping, dan Lama di Server ke WindUI Paragraph
-
-local RunService = game:GetService("RunService")
-local Stats = game:GetService("Stats")
-
-local displayFPS = 0
-local accTime, accFrames = 0, 0
-local smoothing = 0.15
-
--- Catat waktu join server
-local joinTime = tick()
-
--- Buat Paragraph di tab Active
-local statusParagraph = Tabs.Active:Paragraph({
-    Title = "Status Player",
-    Desc = "FPS: ...\nPing: ...\nTime: ..."
-})
-
--- Fungsi format waktu (hh:mm:ss)
-local function formatTime(seconds)
-    local h = math.floor(seconds / 3600)
-    local m = math.floor((seconds % 3600) / 60)
-    local s = math.floor(seconds % 60)
-    return string.format("%02d:%02d:%02d", h, m, s)
-end
-
--- Update tiap frame
-RunService.RenderStepped:Connect(function(dt)
-    accTime = accTime + dt
-    accFrames = accFrames + 1
-
-    if accTime >= 0.5 then
-        local instantFPS = accFrames / accTime
-        displayFPS = displayFPS + (instantFPS - displayFPS) * smoothing
-
-        -- Ambil ping (ms)
-        local ping = Stats.Network.ServerStatsItem["Data Ping"]:GetValue()
-
-        -- Lama waktu di server
-        local elapsed = tick() - joinTime
-        local timePlayed = formatTime(elapsed)
-
-        -- Update Paragraph WindUI
-        statusParagraph:SetDesc(
-            "FPS: " .. math.floor(displayFPS + 0.5) ..
-            "\nPing: " .. math.floor(ping) .. " ms" ..
-            "\nTime: " .. timePlayed
-        )
-
-        accTime = 0
-        accFrames = 0
-    end
-end)
 
 Tabs.Active:Section({ Title = "Info Event" })
 
@@ -500,186 +487,92 @@ Tabs.Active:Toggle({
     end
 })
 
-
-Tabs.Farm:Section({ Title = "Info Fish!!" })
+Tabs.Farm:Section({ Title = "Fishing" })
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- UI Notif
+-- === SCREEN GUI KECIL DI POJOK KIRI ATAS ===
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "Bar"
+screenGui.Parent = playerGui
+screenGui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 100, 0, 35)
+frame.Position = UDim2.new(0, 10, 0, 10)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.BackgroundTransparency = 0.5
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
+
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1, 0, 1, 0)
+label.BackgroundTransparency = 1
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.Font = Enum.Font.SourceSansBold
+label.TextSize = 14
+label.Text = "Success: 0\nFailed: 0"
+label.TextWrapped = true
+label.Parent = frame
+
+-- === UI NOTIF & POSISI ===
 local smallNotif = playerGui:WaitForChild("Small Notification")
 local display = smallNotif:WaitForChild("Display")
 local container = display:WaitForChild("Container")
 
 local notifications = playerGui:WaitForChild("Text Notifications")
-local frame = notifications:WaitForChild("Frame")
+local notifFrame = notifications:WaitForChild("Frame")
 
--- posisi default (before) dan sukses
-local beforePos = UDim2.new(0.5, 0, -1.89999998, 0)
 local successPos = UDim2.new(0.5, 0, 0.100000001, 0)
 
--- counter sukses & gagal
+-- === COUNTER ===
 local successCount = 0
 local failCount = 0
+local isFishingMode = false -- toggle state
 
--- satu paragraph gabungan
-local ProgressParagraph = Tabs.Farm:Paragraph({
-    Title = "Fishing Attempts",
-    Desc = "Success: 0\nFailed: 0"
-})
-
--- update text paragraph
-local function updateParagraph()
-    ProgressParagraph:SetDesc("Success: " .. successCount .. "\nFailed: " .. failCount)
+local function updateLabel()
+    label.Text = "Success: " .. successCount .. "\nFailed: " .. failCount
 end
 
--- === SUCCESS DETECTION (berdasarkan posisi container) ===
+-- === SUCCESS DETECTION ===
 container:GetPropertyChangedSignal("Position"):Connect(function()
-    local pos = container.Position
-
-    if pos == successPos then
+    if isFishingMode and container.Position == successPos then
         successCount += 1
-        updateParagraph()
+        updateLabel()
     end
 end)
 
--- === FAIL DETECTION (berdasarkan notifikasi text) ===
-frame.ChildAdded:Connect(function(child)
-    if child.Name == "TextTile" then
+-- === FAIL DETECTION ===
+notifFrame.ChildAdded:Connect(function(child)
+    if isFishingMode and child.Name == "TextTile" then
         local header = child:WaitForChild("Header", 5)
         if header and header:IsA("TextLabel") then
             if header.Text == "The fish got away!" then
                 failCount += 1
-                updateParagraph()
+                updateLabel()
             end
 
-            -- listen kalau text berubah setelah spawn
             header:GetPropertyChangedSignal("Text"):Connect(function()
                 if header.Text == "The fish got away!" then
                     failCount += 1
-                    updateParagraph()
+                    updateLabel()
                 end
             end)
         end
     end
 end)
 
-Tabs.Farm:Section({ Title = "Fishing" })
-
-Tabs.Farm:Paragraph({
-    Title = "loc:Pesan Developer",
-    Desc = "loc:Kalau ada bug di Auto Fish v2, pakai Auto Fish v1 saja. Sudah di-fix bug tapi masih sama saja."
-})
-
--- Services
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-local fishingGui = playerGui:WaitForChild("Fishing")
-local mainFrame = fishingGui:WaitForChild("Main")
-local vim = game:GetService("VirtualInputManager")
-local camera = workspace.CurrentCamera
-
--- Default settings
-local beforePosition = UDim2.new(0.5, 0, 1.5, 0)  -- posisi awal Main
-local delayTime = 0.1  -- default delay klik (detik)
-local toggleState = false  -- status toggle dari UI
-
--- Mapping dropdown ke delay
-local delayMapping = {
-    Slow = 0.8,
-    Normal = 0.1,
-    Fast = 0.05,
-    ["Super Fast"] = 0.005,
-    ["God Speed"] = 0.0001 
-}
-
--- ==========================
--- WindUI Dropdown: Atur Delay Klik
--- ==========================
-Tabs.Farm:Dropdown({
-    Title = "Click Speed",
-    Values = {"Slow", "Normal", "Fast", "Super Fast", "God Speed"},
-    Value = "Slow", -- default
-    Callback = function(option)
-        delayTime = delayMapping[option] or 0.1
-    end
-})
-
--- ==========================
--- WindUI Toggle: Auto Fishing
--- ==========================
+-- === TOGGLE DI TABS.FARM ===
 Tabs.Farm:Toggle({ 
-    Title = "Auto Fish v1",
-    Desc = "You must be at least level 3",
-    Value = false,
+    Title = "Fishing Counter", 
+    Value = true,
     Callback = function(state)
-        -- Simpan status toggle
-        toggleState = state
-
-        -- Kirim status Auto Fishing ke server
-        local args = { state }
-        game:GetService("ReplicatedStorage")
-            :WaitForChild("Packages")
-            :WaitForChild("_Index")
-            :WaitForChild("sleitnick_net@0.2.0")
-            :WaitForChild("net")
-            :WaitForChild("RF/UpdateAutoFishingState")
-            :InvokeServer(unpack(args))
+        isFishingMode = state
+        print("Fishing Mode activated: " .. tostring(state))
     end
 })
-
--- ==========================
--- Loop cek posisi Main & Auto Click ke UDim2 target
--- ==========================
-task.spawn(function()
-    while true do
-        task.wait(delayTime)
-
-        -- Hanya jalan kalau toggle aktif DAN posisi Main berubah
-        if toggleState and mainFrame.Position ~= beforePosition then
-            local screenSize = camera.ViewportSize
-            local target = UDim2.new(0.88, 0, 0.89, -20)
-
-            -- konversi ke pixel
-            local targetX = (screenSize.X * target.X.Scale) + target.X.Offset
-            local targetY = (screenSize.Y * target.Y.Scale) + target.Y.Offset
-
-            -- klik
-            vim:SendMouseButtonEvent(targetX, targetY, 0, true, game, 0)  -- down
-            vim:SendMouseButtonEvent(targetX, targetY, 0, false, game, 0) -- up
-        end
-    end
-end)
-
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local LocalPlayer = Players.LocalPlayer
-local Container = LocalPlayer.PlayerGui["Small Notification"].Display.Container
-
-local Net = ReplicatedStorage:WaitForChild("Packages")
-    :WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0")
-    :WaitForChild("net")
-
-local ChargeFishingRod = Net:WaitForChild("RF/ChargeFishingRod")
-local RequestFishingMinigameStarted = Net:WaitForChild("RF/RequestFishingMinigameStarted")
-
-local AutoFishV2 = false  -- status toggle
-
--- Step Functions
-local function Step1()
-    Container.Position = UDim2.new(0.5, 0, -1.89999998, 1)
-end
-
-local function Step2()
-    ChargeFishingRod:InvokeServer(1759130348.448756)
-end
-
-local function Step3()
-    RequestFishingMinigameStarted:InvokeServer(-0.5718746185302734, 0.96170184695718)
-end
 
 -- Toggle UI WindUI
 Tabs.Farm:Toggle({
@@ -709,33 +602,9 @@ Container:GetPropertyChangedSignal("Position"):Connect(function()
     end
 end)
 
-
-Tabs.Farm:Button({
-    Title = "Cancel Fishing",
-    Desc = "If there is a bug or stuck, click this to cancel and restart Fishv2 auto.",
-    Callback = function()
-        -- Panggil RemoteFunction CancelFishingInputs
-        game:GetService("ReplicatedStorage")
-            :WaitForChild("Packages")
-            :WaitForChild("_Index")
-            :WaitForChild("sleitnick_net@0.2.0")
-            :WaitForChild("net")
-            :WaitForChild("RF/CancelFishingInputs")
-            :InvokeServer()
-
-        -- Notifikasi
-        WindUI:Notify({
-            Title = "Fishing Cancelled",
-            Content = "You can now restart Fishv2 Auto.",
-            Duration = 5,
-        })
-    end
-})
-
-
 Tabs.Farm:Toggle({
     Title = "Auto Fishing Completed",
-    Value = false,
+    Value = true,
     Callback = function(state)
         if state then
             -- Aktifkan loop auto fishing
@@ -761,6 +630,27 @@ Tabs.Farm:Toggle({
     end
 })
 
+Tabs.Farm:Button({
+    Title = "Cancel Fishing",
+    Desc = "If there is a bug or stuck, click this to cancel and restart Fishv2 auto.",
+    Callback = function()
+        -- Panggil RemoteFunction CancelFishingInputs
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/CancelFishingInputs")
+            :InvokeServer()
+
+        -- Notifikasi
+        WindUI:Notify({
+            Title = "Fishing Cancelled",
+            Content = "You can now restart Fishv2 Auto.",
+            Duration = 5,
+        })
+    end
+})
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
