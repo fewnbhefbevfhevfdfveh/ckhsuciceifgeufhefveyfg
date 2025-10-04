@@ -78,7 +78,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v0.1.0",
+    Title = "v0.1.1",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -122,7 +122,7 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[/] Fixed Auto Collect
+[+] Added Auto Plant
     ]]
 })
 
