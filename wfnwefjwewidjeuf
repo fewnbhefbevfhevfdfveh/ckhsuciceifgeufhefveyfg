@@ -1124,6 +1124,7 @@ local function getSeedData(seedName)
         if tool:IsA("Tool") and string.find(tool.Name, seedName) then
             return {
                 ID = tool:GetAttribute("ID"),
+                Plant = tool:GetAttribute("Plant"),
                 Tool = tool,
                 Name = tool.Name
             }
@@ -1134,6 +1135,7 @@ local function getSeedData(seedName)
         if tool:IsA("Tool") and string.find(tool.Name, seedName) then
             return {
                 ID = tool:GetAttribute("ID"),
+                Plant = tool:GetAttribute("Plant"),
                 Tool = tool,
                 Name = tool.Name
             }
@@ -1141,7 +1143,7 @@ local function getSeedData(seedName)
     end
 end
 
--- tanam di plot (versi remote baru, tanpa "Seed")
+-- tanam di plot
 local function plantAll(seedName, rowFilter)
     local seedData = getSeedData(seedName)
     if not seedData then return end
@@ -1159,13 +1161,15 @@ local function plantAll(seedName, rowFilter)
 
     for _, row in ipairs(myPlot.Rows:GetChildren()) do
         if not rowFilter or row.Name == tostring(rowFilter) then
-            if row:FindFirstChild("Grass") then
-                for _, grass in ipairs(row.Grass:GetChildren()) do
+            local grassFolder = row:FindFirstChild("Grass")
+            if grassFolder then
+                for _, grass in ipairs(grassFolder:GetChildren()) do
+                    -- ganti ke format args remote baru
                     local args = {
                         {
                             ID = seedData.ID,
-                            CFrame = grass.CFrame,
-                            Item = seedName, -- langsung pakai nama dropdown (tanpa "Seed")
+                            CFrame = grass.CFrame * CFrame.new(0, 1, 0),
+                            Item = seedData.Plant,
                             Floor = grass
                         }
                     }
@@ -1177,7 +1181,7 @@ local function plantAll(seedName, rowFilter)
     end
 end
 
--- Dropdown pilih seed (tanpa kata "Seed")
+-- Dropdown pilih seed
 Tabs.Auto:Dropdown({ 
     Title = "Select Plant",  
     Values = { 
