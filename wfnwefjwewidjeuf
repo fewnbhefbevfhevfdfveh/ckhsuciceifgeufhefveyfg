@@ -742,29 +742,15 @@ local seedList = {
     "Mango Seed"
 }
 
--- 🔹 Daftar seed berdasarkan rarity
-local rarityList = {
-    Rare = {"Cactus Seed", "Strawberry Seed", "Dragon Fruit Seed", "Eggplant Seed"},
-    Epic = {"Pumpkin Seed", "Sunflower Seed"},
-    Legendary = {"Dragon Fruit Seed", "Eggplant Seed"},
-    Mythic = {"Watermelon Seed", "Grape Seed"},
-    Godly = {"Cocotank Seed", "Carnivorous Plant Seed"},
-    Secret = {"Mr Carrot Seed", "Tomatrio Seed", "Shroombino Seed"}
-}
-
 -- 🔹 Status toggle & pilihan seed
 local autoBuyEnabled = false
 local manualSeeds = {}
-local raritySeeds = {}
 local selectedSeeds = {}
 
 -- 🔹 Fungsi update selectedSeeds tanpa duplikasi
 local function updateSelectedSeeds()
     local seedSet = {}
     for _, seed in ipairs(manualSeeds) do
-        seedSet[seed] = true
-    end
-    for _, seed in ipairs(raritySeeds) do
         seedSet[seed] = true
     end
 
@@ -780,7 +766,7 @@ local function startAutoBuy()
         while autoBuyEnabled do
             for _, seedName in ipairs(selectedSeeds) do
                 ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seedName)
-                task.wait(0.5) -- delay antar pembelian
+                task.wait(0.1) -- delay antar pembelian
             end
             task.wait(1) -- delay per cycle
         end
@@ -800,28 +786,9 @@ Tabs.Shop:Dropdown({
     end
 })
 
--- 🔹 Dropdown pilih rarity
-Tabs.Shop:Dropdown({
-    Title = "Select Rarity",
-    Values = {"Rare", "Epic", "Legendary", "Mythic", "Godly", "Secret"},
-    Value = {},
-    Multi = true,
-    AllowNone = true,
-    Callback = function(selectedRarities)
-        local seedsToBuy = {}
-        for _, rarity in ipairs(selectedRarities) do
-            for _, seed in ipairs(rarityList[rarity]) do
-                table.insert(seedsToBuy, seed)
-            end
-        end
-        raritySeeds = seedsToBuy
-        updateSelectedSeeds()
-    end
-})
-
 -- 🔹 Toggle auto buy
 Tabs.Shop:Toggle({
-    Title = "Auto Buy Selected Seeds",
+    Title = "Auto Buy Seeds",
     Value = false,
     Callback = function(state)
         autoBuyEnabled = state
