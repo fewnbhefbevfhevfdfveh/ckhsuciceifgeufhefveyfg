@@ -321,6 +321,7 @@ local brainrotsFolder = Workspace:WaitForChild("ScriptedMap"):WaitForChild("Brai
 -- Status
 local autoThrow = false
 local selectedItem = "Frost Grenade" -- default item
+local selectedRarities = {"All"} -- default Rarity
 
 -- Fungsi cari item di Backpack
 local function getItem(itemName)
@@ -357,6 +358,18 @@ Tabs.Farm:Dropdown({
     end
 })
 
+-- Dropdown Select Brainrot Rarity
+Tabs.Farm:Dropdown({
+    Title = "Select Brainrot Rarity",
+    Values = {"All", "Rare", "Epic", "Legendary", "Mythic", "Godly", "Secret", "Limited"},
+    Value = {"All"},
+    Multi = true,
+    AllowNone = false,
+    Callback = function(option) 
+        selectedRarities = option
+    end
+})
+
 -- Toggle Auto Throw
 Tabs.Farm:Toggle({
     Title = "Auto Shoot Brainrot",
@@ -378,16 +391,30 @@ task.spawn(function()
             if tool then
                 for _, model in ipairs(brainrotsFolder:GetChildren()) do
                     if model:IsA("Model") and model.PrimaryPart then
-                        local targetPos = model.PrimaryPart.Position
-                        local args = {
-                            {
-                                Toggle = true,
-                                Tool = tool,
-                                Time = 0.5,
-                                Pos = targetPos
-                            }
-                        }
-                        remote:FireServer(unpack(args))
+                        local rarityFolder = model:FindFirstChild("Stats") and model.Stats:FindFirstChild("Rarity")
+                        if rarityFolder then
+                            -- Check apakah model termasuk selected rarities
+                            local shoot = false
+                            for _, rarity in ipairs(selectedRarities) do
+                                if rarity == "All" or rarityFolder:FindFirstChild(rarity) then
+                                    shoot = true
+                                    break
+                                end
+                            end
+
+                            if shoot then
+                                local targetPos = model.PrimaryPart.Position
+                                local args = {
+                                    {
+                                        Toggle = true,
+                                        Tool = tool,
+                                        Time = 0.5,
+                                        Pos = targetPos
+                                    }
+                                }
+                                remote:FireServer(unpack(args))
+                            end
+                        end
                     end
                 end
             end
