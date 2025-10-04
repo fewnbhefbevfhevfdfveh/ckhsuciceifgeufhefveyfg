@@ -1091,14 +1091,13 @@ task.spawn(function()
     end
 end)
 
-Tabs.Auto:Section({ Title = "Move Plant (Beta)" })
+Tabs.Auto:Section({ Title = "Plant + (Beta)" })
 
 local player = game:GetService("Players").LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 
 local placeItem = remotes:WaitForChild("PlaceItem")
-local removeItem = remotes:WaitForChild("RemoveItem")
 
 local selectedSeed = nil
 local selectedRow = nil
@@ -1198,12 +1197,7 @@ local function plantSingle(seedData, rowFilter)
             local grassFolder = row:FindFirstChild("Grass")
             if grassFolder then
                 for _, grass in ipairs(grassFolder:GetChildren()) do
-                    -- remove item dulu pakai ID tool (bukan grass)
-                    local removeArgs = { seedData.ID }
-                    removeItem:FireServer(unpack(removeArgs))
-                    task.wait(0.15)
-
-                    -- lalu tanam baru
+                    -- langsung tanam (tanpa remove)
                     local args = {
                         {
                             ID = seedData.ID,
@@ -1281,7 +1275,7 @@ Tabs.Auto:Dropdown({
 
 -- Toggle Auto Plant
 Tabs.Auto:Toggle({ 
-    Title = "Auto Plant (Remove Old First)", 
+    Title = "Auto Plant",
     Value = false,
     Callback = function(state) 
         autoMode = state
