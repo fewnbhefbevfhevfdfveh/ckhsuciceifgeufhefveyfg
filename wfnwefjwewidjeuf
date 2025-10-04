@@ -609,7 +609,7 @@ task.spawn(function()
 end)
 
 
-Tabs.Farm:Section({ Title = "Collect" })
+Tabs.Farm:Section({ Title = "Automation" })
 
 -- Variabel global
 getgenv().AutoTPBrainrot = false
@@ -691,6 +691,31 @@ Tabs.Farm:Slider({
     end
 })
 
+
+-- Referensi remote
+local RebirthRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Rebirth")
+
+-- Variabel toggle state
+local AutoRebirthEnabled = false
+
+-- Toggle di WindUI
+Tabs.Farm:Toggle({ 
+    Title = "Auto Rebirth", 
+    Value = false,
+    Callback = function(state)
+        AutoRebirthEnabled = state
+    end
+})
+
+-- Loop untuk Auto Rebirth
+spawn(function()
+    while true do
+        wait(1) -- Bisa disesuaikan, misal 0.5 detik
+        if AutoRebirthEnabled then
+            RebirthRemote:FireServer()
+        end
+    end
+end)
 
 Tabs.Shop:Section({ Title = "Seed" })
 
