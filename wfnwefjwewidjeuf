@@ -586,7 +586,7 @@ Tabs.Farm:Section({ Title = "Collect" })
 
 -- Variabel global
 getgenv().AutoTPBrainrot = false
-getgenv().BrainrotDelay = 1.5
+getgenv().BrainrotDelay = 1.5 -- delay sebelum teleport Brainrot pertama
 
 -- Fungsi deteksi plot milik player
 local function getMyPlot()
@@ -598,6 +598,7 @@ local function getMyPlot()
             if sign and sign:FindFirstChild("BillboardGui") and sign.BillboardGui:FindFirstChild("TextLabel") then
                 local textLabel = sign.BillboardGui.TextLabel
                 if textLabel.Text == player.DisplayName then
+                    print("Plot milik kita ditemukan: " .. i)
                     return plot
                 end
             end
@@ -606,7 +607,7 @@ local function getMyPlot()
     return nil
 end
 
--- Toggle Auto Teleport
+-- Toggle WindUI
 Tabs.Farm:Toggle({
     Title = "Auto Teleport Brainrot",
     Value = false,
@@ -622,17 +623,22 @@ Tabs.Farm:Toggle({
                 if hrp and myPlot then
                     local plantsFolder = myPlot:FindFirstChild("Plants")
                     if plantsFolder then
-                        for i = 1, 7 do -- Brainrot 1 sampai 7
+                        local firstTeleportDone = false
+                        for i = 1, 17 do
                             if not getgenv().AutoTPBrainrot then break end
                             local plant = plantsFolder:FindFirstChild(tostring(i))
                             if plant and plant:FindFirstChild("Brainrot") then
                                 local brainrot = plant.Brainrot
                                 local part = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
                                 if part then
-                                    hrp.CFrame = part.CFrame + Vector3.new(0, 5, 0)
-                                    if i == 1 then
+                                    -- Jika teleport pertama, tunggu sesuai slider
+                                    if not firstTeleportDone then
                                         task.wait(getgenv().BrainrotDelay)
+                                        firstTeleportDone = true
                                     end
+
+                                    hrp.CFrame = part.CFrame + Vector3.new(0, 5, 0)
+                                    task.wait(0.5) -- delay antar Brainrot selanjutnya bisa diatur manual
                                 end
                             end
                         end
@@ -644,9 +650,9 @@ Tabs.Farm:Toggle({
     end
 })
 
--- Slider delay untuk Brainrot pertama
+-- Slider WindUI
 Tabs.Farm:Slider({
-    Title = "Teleport Delay",
+    Title = "Delay sebelum Brainrot pertama",
     Step = 1,
     Value = {
         Min = 1,
@@ -657,6 +663,7 @@ Tabs.Farm:Slider({
         getgenv().BrainrotDelay = value
     end
 })
+
 
 Tabs.Shop:Section({ Title = "Seed" })
 
