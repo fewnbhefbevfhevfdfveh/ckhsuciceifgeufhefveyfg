@@ -609,7 +609,7 @@ end
 
 -- Toggle WindUI
 Tabs.Farm:Toggle({
-    Title = "Auto Teleport Brainrot",
+    Title = "Auto Collect",
     Value = false,
     Callback = function(state)
         getgenv().AutoTPBrainrot = state
@@ -652,7 +652,7 @@ Tabs.Farm:Toggle({
 
 -- Slider WindUI
 Tabs.Farm:Slider({
-    Title = "Delay sebelum Brainrot pertama",
+    Title = "Auto Collect Delay",
     Step = 1,
     Value = {
         Min = 1,
