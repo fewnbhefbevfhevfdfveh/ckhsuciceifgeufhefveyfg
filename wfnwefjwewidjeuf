@@ -588,7 +588,7 @@ Tabs.Farm:Section({ Title = "Collect" })
 getgenv().AutoTPBrainrot = false
 getgenv().BrainrotDelay = 1.5
 
--- Fungsi untuk deteksi plot milik player
+-- Fungsi deteksi plot milik player
 local function getMyPlot()
     local player = game.Players.LocalPlayer
     for i = 1, #workspace.Plots:GetChildren() do
@@ -598,7 +598,6 @@ local function getMyPlot()
             if sign and sign:FindFirstChild("BillboardGui") and sign.BillboardGui:FindFirstChild("TextLabel") then
                 local textLabel = sign.BillboardGui.TextLabel
                 if textLabel.Text == player.DisplayName then
-                    print("Plot milik kita ditemukan: " .. i)
                     return plot
                 end
             end
@@ -607,7 +606,7 @@ local function getMyPlot()
     return nil
 end
 
--- Toggle utama
+-- Toggle Auto Teleport
 Tabs.Farm:Toggle({
     Title = "Auto Teleport Brainrot",
     Value = false,
@@ -623,7 +622,7 @@ Tabs.Farm:Toggle({
                 if hrp and myPlot then
                     local plantsFolder = myPlot:FindFirstChild("Plants")
                     if plantsFolder then
-                        for i = 1, 17 do
+                        for i = 1, 7 do -- Brainrot 1 sampai 7
                             if not getgenv().AutoTPBrainrot then break end
                             local plant = plantsFolder:FindFirstChild(tostring(i))
                             if plant and plant:FindFirstChild("Brainrot") then
@@ -631,7 +630,9 @@ Tabs.Farm:Toggle({
                                 local part = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
                                 if part then
                                     hrp.CFrame = part.CFrame + Vector3.new(0, 5, 0)
-                                    task.wait(getgenv().BrainrotDelay)
+                                    if i == 1 then
+                                        task.wait(getgenv().BrainrotDelay)
+                                    end
                                 end
                             end
                         end
@@ -643,7 +644,7 @@ Tabs.Farm:Toggle({
     end
 })
 
--- Slider pengatur delay teleport
+-- Slider delay untuk Brainrot pertama
 Tabs.Farm:Slider({
     Title = "Teleport Delay",
     Step = 1,
