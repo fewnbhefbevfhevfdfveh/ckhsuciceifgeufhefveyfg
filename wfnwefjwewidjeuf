@@ -109,7 +109,7 @@ local Tabs = {
     Home = Window:Tab({ Title = "Home", Icon = "house"  }),
     Info = Window:Tab({ Title = "Info", Icon = "info"  }),
     Exclusive = Window:Tab({ Title = "Exclusive", Icon = "sparkles"  }),
-    Farm = Window:Tab({ Title = "Farm", Icon = "swords"  }),
+    Farm = Window:Tab({ Title = "Main", Icon = "swords"  }),
     Shop = Window:Tab({ Title = "Shop", Icon = "shopping-cart"  }),
     Inventory = Window:Tab({ Title = "Inventory", Icon = "backpack"  }),
     Auto = Window:Tab({ Title = "Automaticaly", Icon = "repeat-2"  }),
@@ -1091,11 +1091,14 @@ task.spawn(function()
     end
 end)
 
-Tabs.Auto:Section({ Title = "Plant + (Beta)" })
+Tabs.Auto:Section({ Title = "Move Plant (Beta)" })
 
 local player = game:GetService("Players").LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local placeItem = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("PlaceItem")
+local remotes = ReplicatedStorage:WaitForChild("Remotes")
+
+local placeItem = remotes:WaitForChild("PlaceItem")
+local removeItem = remotes:WaitForChild("RemoveItem")
 
 local selectedSeed = nil
 local selectedRow = nil
@@ -1115,13 +1118,45 @@ local function findMyPlot()
     end
 end
 
--- ambil info seed dari backpack atau character
+-- ambil semua tool valid dari backpack & character (hindari "Seed")
+local function getAllSeeds()
+    local tools = {}
+    local backpack = player:WaitForChild("Backpack")
+    local character = player.Character or player.CharacterAdded:Wait()
+
+    local function addIfValid(tool)
+        if tool:IsA("Tool") 
+            and tool:GetAttribute("ID") 
+            and tool:GetAttribute("Plant") 
+            and not string.find(tool.Name:lower(), "seed") then
+            table.insert(tools, {
+                ID = tool:GetAttribute("ID"),
+                Plant = tool:GetAttribute("Plant"),
+                Tool = tool,
+                Name = tool.Name
+            })
+        end
+    end
+
+    for _, tool in ipairs(backpack:GetChildren()) do addIfValid(tool) end
+    for _, tool in ipairs(character:GetChildren()) do addIfValid(tool) end
+
+    return tools
+end
+
+-- ambil tool berdasarkan nama (hindari "Seed")
 local function getSeedData(seedName)
     local backpack = player:WaitForChild("Backpack")
     local character = player.Character or player.CharacterAdded:Wait()
 
+    local function isValidTool(tool)
+        return tool:IsA("Tool")
+            and string.find(tool.Name, seedName)
+            and not string.find(tool.Name:lower(), "seed")
+    end
+
     for _, tool in ipairs(backpack:GetChildren()) do
-        if tool:IsA("Tool") and string.find(tool.Name, seedName) then
+        if isValidTool(tool) then
             return {
                 ID = tool:GetAttribute("ID"),
                 Plant = tool:GetAttribute("Plant"),
@@ -1132,7 +1167,7 @@ local function getSeedData(seedName)
     end
 
     for _, tool in ipairs(character:GetChildren()) do
-        if tool:IsA("Tool") and string.find(tool.Name, seedName) then
+        if isValidTool(tool) then
             return {
                 ID = tool:GetAttribute("ID"),
                 Plant = tool:GetAttribute("Plant"),
@@ -1143,9 +1178,8 @@ local function getSeedData(seedName)
     end
 end
 
--- tanam di plot
-local function plantAll(seedName, rowFilter)
-    local seedData = getSeedData(seedName)
+-- tanam satu jenis seed
+local function plantSingle(seedData, rowFilter)
     if not seedData then return end
 
     local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
@@ -1164,7 +1198,12 @@ local function plantAll(seedName, rowFilter)
             local grassFolder = row:FindFirstChild("Grass")
             if grassFolder then
                 for _, grass in ipairs(grassFolder:GetChildren()) do
-                    -- ganti ke format args remote baru
+                    -- remove item dulu pakai ID tool (bukan grass)
+                    local removeArgs = { seedData.ID }
+                    removeItem:FireServer(unpack(removeArgs))
+                    task.wait(0.15)
+
+                    -- lalu tanam baru
                     local args = {
                         {
                             ID = seedData.ID,
@@ -1174,17 +1213,39 @@ local function plantAll(seedName, rowFilter)
                         }
                     }
                     placeItem:FireServer(unpack(args))
-                    task.wait(0.2)
+                    task.wait(0.25)
                 end
             end
         end
     end
 end
 
--- Dropdown pilih seed
+-- tanam semua tools (All)
+local function plantAllSeeds(rowFilter)
+    local allSeeds = getAllSeeds()
+    for _, seed in ipairs(allSeeds) do
+        plantSingle(seed, rowFilter)
+        task.wait(0.3)
+    end
+end
+
+-- jalankan sistem tanam sesuai pilihan
+local function runAutoPlant()
+    if selectedSeed == "All" then
+        plantAllSeeds(selectedRow)
+    else
+        local seedData = getSeedData(selectedSeed)
+        if seedData then
+            plantSingle(seedData, selectedRow)
+        end
+    end
+end
+
+-- Dropdown Select Plant
 Tabs.Auto:Dropdown({ 
     Title = "Select Plant",  
     Values = { 
+        "All",
         "Cactus",
         "Strawberry",
         "Pumpkin",
@@ -1204,7 +1265,7 @@ Tabs.Auto:Dropdown({
     end
 })
 
--- Dropdown pilih row
+-- Dropdown Select Row
 Tabs.Auto:Dropdown({ 
     Title = "Select Row", 
     Values = { "All","1","2","3","4","5","6","7" },
@@ -1218,20 +1279,19 @@ Tabs.Auto:Dropdown({
     end
 })
 
--- Toggle auto plant
+-- Toggle Auto Plant
 Tabs.Auto:Toggle({ 
-    Title = "Auto Plant", 
+    Title = "Auto Plant (Remove Old First)", 
     Value = false,
     Callback = function(state) 
         autoMode = state
 
         if autoMode then
             if not selectedSeed then return end
-
             task.spawn(function()
                 while autoMode do
-                    plantAll(selectedSeed, selectedRow)
-                    task.wait(0.1)
+                    runAutoPlant()
+                    task.wait(0.3)
                 end
             end)
         end
@@ -2055,6 +2115,72 @@ spawn(function()
 		end
 	end
 end)
+
+Tabs.Player:Section({ Title = "Visual" })
+
+Tabs.Player:Toggle({
+    Title = "View Rows Numbers",
+    Value = false,
+    Callback = function(state)
+        local player = game.Players.LocalPlayer
+        local myPlot
+
+        -- Cari plot milik player
+        for i = 1, #workspace.Plots:GetChildren() do
+            local plot = workspace.Plots:FindFirstChild(tostring(i))
+            if plot then
+                local sign = plot:FindFirstChild("PlayerSign")
+                if sign and sign:FindFirstChild("BillboardGui") and sign.BillboardGui:FindFirstChild("TextLabel") then
+                    local textLabel = sign.BillboardGui.TextLabel
+                    if textLabel.Text == player.DisplayName then
+                        myPlot = plot
+                        break
+                    end
+                end
+            end
+        end
+
+        if not myPlot then
+            return
+        end
+
+        if state then
+            -- Aktifkan: Tampilkan nomor di atas MowerSpawn
+            for _, row in pairs(myPlot.Rows:GetChildren()) do
+                local mowerSpawn = row:FindFirstChild("MowerSpawn")
+                if mowerSpawn and mowerSpawn:IsA("BasePart") then
+                    if not mowerSpawn:FindFirstChild("RowNumber") then
+                        local billboard = Instance.new("BillboardGui")
+                        billboard.Name = "RowNumber"
+                        billboard.Adornee = mowerSpawn
+                        billboard.Size = UDim2.new(0, 100, 0, 50)
+                        billboard.StudsOffset = Vector3.new(0, 3, 0)
+                        billboard.AlwaysOnTop = true
+
+                        local label = Instance.new("TextLabel")
+                        label.Size = UDim2.new(1, 0, 1, 0)
+                        label.BackgroundTransparency = 1
+                        label.Text = row.Name
+                        label.TextColor3 = Color3.fromRGB(255, 255, 0)
+                        label.TextScaled = true
+                        label.Font = Enum.Font.SourceSansBold
+                        label.Parent = billboard
+
+                        billboard.Parent = mowerSpawn
+                    end
+                end
+            end
+        else
+            -- Nonaktifkan: Hapus semua RowNumber dari plot milikmu
+            for _, row in pairs(myPlot.Rows:GetChildren()) do
+                local mowerSpawn = row:FindFirstChild("MowerSpawn")
+                if mowerSpawn and mowerSpawn:FindFirstChild("RowNumber") then
+                    mowerSpawn.RowNumber:Destroy()
+                end
+            end
+        end
+    end
+})
 
 Tabs.Player:Section({ Title = "LocalPlayer" })
 
