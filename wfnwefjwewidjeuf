@@ -221,7 +221,8 @@ local seedList = {
     "Carnivorous Plant Seed",
     "Mr Carrot Seed",
     "Tomatrio Seed",
-    "Shroombino Seed"
+    "Shroombino Seed",
+    "Mango Seed"
 }
 
 -- Buat Paragraph sekali
@@ -734,12 +735,13 @@ local seedList = {
     "Dragon Fruit Seed",
     "Eggplant Seed",
     "Watermelon Seed",
+    "Grape Seed",
     "Cocotank Seed",
     "Carnivorous Plant Seed",
     "Mr Carrot Seed",
     "Tomatrio Seed",
     "Shroombino Seed",
-    "Grape Seed"
+    "Mango Seed"
 }
 
 -- 🔹 Daftar seed berdasarkan rarity
@@ -1303,7 +1305,8 @@ Tabs.Auto:Dropdown({
         "Carnivorous Plant",
         "Mr Carrot", 
         "Tomatrio",
-        "Shroombino"
+        "Shroombino",
+        "Mango"
     },
     Value = "",
     Callback = function(option) 
@@ -1435,7 +1438,7 @@ end
 -- Dropdown pilih seed
 Tabs.Auto:Dropdown({ 
     Title = "Select Seed",  
-    Values = { 
+    Values = {
         "Cactus Seed",
         "Strawberry Seed",
         "Pumpkin Seed",
@@ -1443,14 +1446,16 @@ Tabs.Auto:Dropdown({
         "Dragon Fruit Seed",
         "Eggplant Seed",
         "Watermelon Seed",
+        "Grape Seed",
         "Cocotank Seed",
         "Carnivorous Plant Seed",
-        "Mr Carrot Seed", 
+        "Mr Carrot Seed",
         "Tomatrio Seed",
-        "Shroombino Seed"
+        "Shroombino Seed",
+        "Mango Seed"
     },
     Value = "",
-    Callback = function(option) 
+    Callback = function(option)
         selectedSeed = option
     end
 })
@@ -1544,7 +1549,8 @@ Tabs.Auto:Dropdown({
         "Carnivorous Plant",
         "Mr Carrot",
         "Tomatrio",
-        "Shroombino"
+        "Shroombino",
+        "Mango"
     },
     Value = "",
     Callback = function(option) 
@@ -1683,6 +1689,8 @@ Tabs.Auto:Dropdown({
         "Carnivorous Plant",
         "Mr Carrot",
         "Tomatrio"
+        "Shroombino",
+        "Mango"
     },
     Value = "Cactus",
     Callback = function(option)
