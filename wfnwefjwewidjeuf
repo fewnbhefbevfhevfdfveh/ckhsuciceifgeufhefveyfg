@@ -115,6 +115,7 @@ local Tabs = {
     Auto = Window:Tab({ Title = "Automaticaly", Icon = "repeat-2"  }),
     Server = Window:Tab({ Title = "Server", Icon = "server"  }),
     Player = Window:Tab({ Title = "Player", Icon = "user"  }),
+    Tp = Window:Tab({ Title = "Teleport", Icon = "map-pin"  }),
 }
 
 Tabs.Home:Section({ Title = "Update" })
@@ -122,11 +123,8 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[+] Added Select Rarity to shoot brainrot
-[/] Fixed Auto Collect
-[/] Auto Plant +
-[+] Added View Rows Numbers
-[+] Added Auto Rebirth
+[+] Added Teleport To Prison
+[+] Added Teleport To Plot
     ]]
 })
 
@@ -2395,6 +2393,81 @@ Tabs.Player:Button({
             end
         end
 
+    end
+})
+
+Tabs.Player:Section({ Title = "Plot" })
+
+local selectedPlot = "Plot 1" -- default value
+
+-- Dropdown untuk pilih plot
+Tabs.Tp:Dropdown({ 
+    Title = "Select Plot", 
+    Values = { "Plot 1", "Plot 2", "Plot 3", "Plot 4", "Plot 5", "Plot 6" },
+    Value = "Plot 1",
+    Callback = function(option)
+        selectedPlot = option
+        print("Selected: " .. option)
+    end
+})
+
+-- Button untuk teleport
+Tabs.Tp:Button({ 
+    Title = "Teleport Now", 
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+        
+        local plotNumber = selectedPlot:match("%d+") -- ambil angka dari "Plot X"
+        local plot = workspace.Plots:FindFirstChild(plotNumber)
+        
+        if plot and plot:FindFirstChild("Origin") then
+            hrp.CFrame = plot.Origin.CFrame + Vector3.new(0, 3, 0) -- teleport sedikit di atas origin
+            WindUI:Notify({
+                Title = "Teleport",
+                Content = "Teleported to " .. selectedPlot,
+                Icon = "droplet-off",
+                Duration = 3,
+            })
+        else
+            WindUI:Notify({
+                Title = "Error",
+                Content = "Plot or Origin not found!",
+                Icon = "alert-circle",
+                Duration = 3,
+            })
+        end
+    end
+})
+
+Tabs.Tp:Button({
+    Title = "Teleport To Prison",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:WaitForChild("HumanoidRootPart")
+        
+        local wantedSign = workspace:FindFirstChild("ScriptedMap") 
+                        and workspace.ScriptedMap:FindFirstChild("Prison") 
+                        and workspace.ScriptedMap.Prison:FindFirstChild("WantedSign")
+        
+        if wantedSign then
+            hrp.CFrame = wantedSign.CFrame + Vector3.new(0, 3, 0) -- teleport sedikit di atas part
+            WindUI:Notify({
+                Title = "Teleport",
+                Content = "Teleported to Prison",
+                Icon = "droplet-off",
+                Duration = 3,
+            })
+        else
+            WindUI:Notify({
+                Title = "Error",
+                Content = "Prison WantedSign not found!",
+                Icon = "alert-circle",
+                Duration = 3,
+            })
+        end
     end
 })
 
