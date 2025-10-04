@@ -78,7 +78,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v0.1.3",
+    Title = "v0.1.2",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -123,8 +123,11 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[+] Added Teleport To Prison
-[+] Added Teleport To Plot
+[+] Added Select Rarity to shoot brainrot
+[/] Fixed Auto Collect
+[/] Auto Plant +
+[+] Added View Rows Numbers
+[+] Added Auto Rebirth
     ]]
 })
 
@@ -742,15 +745,29 @@ local seedList = {
     "Mango Seed"
 }
 
+-- 🔹 Daftar seed berdasarkan rarity
+local rarityList = {
+    Rare = {"Cactus Seed", "Strawberry Seed", "Dragon Fruit Seed", "Eggplant Seed"},
+    Epic = {"Pumpkin Seed", "Sunflower Seed"},
+    Legendary = {"Dragon Fruit Seed", "Eggplant Seed"},
+    Mythic = {"Watermelon Seed", "Grape Seed"},
+    Godly = {"Cocotank Seed", "Carnivorous Plant Seed"},
+    Secret = {"Mr Carrot Seed", "Tomatrio Seed", "Shroombino Seed"}
+}
+
 -- 🔹 Status toggle & pilihan seed
 local autoBuyEnabled = false
 local manualSeeds = {}
+local raritySeeds = {}
 local selectedSeeds = {}
 
 -- 🔹 Fungsi update selectedSeeds tanpa duplikasi
 local function updateSelectedSeeds()
     local seedSet = {}
     for _, seed in ipairs(manualSeeds) do
+        seedSet[seed] = true
+    end
+    for _, seed in ipairs(raritySeeds) do
         seedSet[seed] = true
     end
 
@@ -766,7 +783,7 @@ local function startAutoBuy()
         while autoBuyEnabled do
             for _, seedName in ipairs(selectedSeeds) do
                 ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("BuyItem"):FireServer(seedName)
-                task.wait(0.1) -- delay antar pembelian
+                task.wait(0.5) -- delay antar pembelian
             end
             task.wait(1) -- delay per cycle
         end
@@ -786,9 +803,28 @@ Tabs.Shop:Dropdown({
     end
 })
 
+-- 🔹 Dropdown pilih rarity
+Tabs.Shop:Dropdown({
+    Title = "Select Rarity",
+    Values = {"Rare", "Epic", "Legendary", "Mythic", "Godly", "Secret"},
+    Value = {},
+    Multi = true,
+    AllowNone = true,
+    Callback = function(selectedRarities)
+        local seedsToBuy = {}
+        for _, rarity in ipairs(selectedRarities) do
+            for _, seed in ipairs(rarityList[rarity]) do
+                table.insert(seedsToBuy, seed)
+            end
+        end
+        raritySeeds = seedsToBuy
+        updateSelectedSeeds()
+    end
+})
+
 -- 🔹 Toggle auto buy
 Tabs.Shop:Toggle({
-    Title = "Auto Buy Seeds",
+    Title = "Auto Buy Selected Seeds",
     Value = false,
     Callback = function(state)
         autoBuyEnabled = state
@@ -1403,24 +1439,24 @@ end
 -- Dropdown pilih seed
 Tabs.Auto:Dropdown({ 
     Title = "Select Seed",  
-    Values = {
-        "Cactus Seed",
-        "Strawberry Seed",
-        "Pumpkin Seed",
-        "Sunflower Seed",
-        "Dragon Fruit Seed",
-        "Eggplant Seed",
-        "Watermelon Seed",
-        "Grape Seed",
-        "Cocotank Seed",
-        "Carnivorous Plant Seed",
-        "Mr Carrot Seed",
-        "Tomatrio Seed",
-        "Shroombino Seed",
-        "Mango Seed"
-    },
+    Values = { 
+    "Cactus Seed",
+    "Strawberry Seed",
+    "Pumpkin Seed",
+    "Sunflower Seed",
+    "Dragon Fruit Seed",
+    "Eggplant Seed",
+    "Watermelon Seed",
+    "Grape Seed",
+    "Cocotank Seed",
+    "Carnivorous Plant Seed",
+    "Mr Carrot Seed",
+    "Tomatrio Seed",
+    "Shroombino Seed",
+    "Mango Seed"
+},
     Value = "",
-    Callback = function(option)
+    Callback = function(option) 
         selectedSeed = option
     end
 })
@@ -1653,7 +1689,7 @@ Tabs.Auto:Dropdown({
         "Cocotank",
         "Carnivorous Plant",
         "Mr Carrot",
-        "Tomatrio"
+        "Tomatrio",
         "Shroombino",
         "Mango"
     },
@@ -2363,7 +2399,7 @@ Tabs.Player:Button({
     end
 })
 
-Tabs.Player:Section({ Title = "Plot" })
+Tabs.Tp:Section({ Title = "Plot" })
 
 local selectedPlot = "Plot 1" -- default value
 
@@ -2374,7 +2410,6 @@ Tabs.Tp:Dropdown({
     Value = "Plot 1",
     Callback = function(option)
         selectedPlot = option
-        print("Selected: " .. option)
     end
 })
 
@@ -2394,14 +2429,14 @@ Tabs.Tp:Button({
             WindUI:Notify({
                 Title = "Teleport",
                 Content = "Teleported to " .. selectedPlot,
-                Icon = "droplet-off",
+                Icon = "map-pin",
                 Duration = 3,
             })
         else
             WindUI:Notify({
                 Title = "Error",
                 Content = "Plot or Origin not found!",
-                Icon = "alert-circle",
+                Icon = "error",
                 Duration = 3,
             })
         end
@@ -2415,26 +2450,23 @@ Tabs.Tp:Button({
         local character = player.Character or player.CharacterAdded:Wait()
         local hrp = character:WaitForChild("HumanoidRootPart")
         
-        local wantedSign = workspace:FindFirstChild("ScriptedMap") 
-                        and workspace.ScriptedMap:FindFirstChild("Prison") 
-                        and workspace.ScriptedMap.Prison:FindFirstChild("WantedSign")
+        -- CFrame tujuan
+        local prisonCFrame = CFrame.new(
+            -195.36972, 12.5578957, 1000.71521, 
+            0.920761347, 0.0361505374, 0.388447821, 
+            -0.0340628326, 0.999344468, -0.0122618824, 
+            -0.38863647, -0.00194136379, 0.921389103
+        )
         
-        if wantedSign then
-            hrp.CFrame = wantedSign.CFrame + Vector3.new(0, 3, 0) -- teleport sedikit di atas part
-            WindUI:Notify({
-                Title = "Teleport",
-                Content = "Teleported to Prison",
-                Icon = "droplet-off",
-                Duration = 3,
-            })
-        else
-            WindUI:Notify({
-                Title = "Error",
-                Content = "Prison WantedSign not found!",
-                Icon = "alert-circle",
-                Duration = 3,
-            })
-        end
+        -- teleport
+        hrp.CFrame = prisonCFrame
+        
+        WindUI:Notify({
+            Title = "Teleport",
+            Content = "Teleported to Prison",
+            Icon = "droplet-off",
+            Duration = 3,
+        })
     end
 })
 
