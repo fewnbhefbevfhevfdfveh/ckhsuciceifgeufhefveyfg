@@ -2118,7 +2118,7 @@ end)
 
 Tabs.Player:Section({ Title = "Visual" })
 
-Tabs.Player:Toggle({
+Tabs.Farm:Toggle({
     Title = "View Rows Numbers",
     Value = false,
     Callback = function(state)
@@ -2141,6 +2141,7 @@ Tabs.Player:Toggle({
         end
 
         if not myPlot then
+            warn("Plot milikmu tidak ditemukan.")
             return
         end
 
@@ -2162,8 +2163,10 @@ Tabs.Player:Toggle({
                         label.BackgroundTransparency = 1
                         label.Text = row.Name
                         label.TextColor3 = Color3.fromRGB(255, 255, 0)
+                        label.TextStrokeTransparency = 0 -- Outline
+                        label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
                         label.TextScaled = true
-                        label.Font = Enum.Font.SourceSansBold
+                        label.Font = Enum.Font.Arcade -- Gaya kotak/pixel Minecraft
                         label.Parent = billboard
 
                         billboard.Parent = mowerSpawn
