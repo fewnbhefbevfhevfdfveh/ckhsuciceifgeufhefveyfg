@@ -2118,7 +2118,7 @@ end)
 
 Tabs.Player:Section({ Title = "Visual" })
 
-Tabs.Farm:Toggle({
+Tabs.Player:Toggle({
     Title = "View Rows Numbers",
     Value = false,
     Callback = function(state)
