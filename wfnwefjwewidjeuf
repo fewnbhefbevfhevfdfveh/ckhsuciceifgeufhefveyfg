@@ -123,11 +123,7 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[+] Added Select Rarity to shoot brainrot
-[/] Fixed Auto Collect
-[/] Auto Plant +
-[+] Added View Rows Numbers
-[+] Added Auto Rebirth
+[+] Redeem Codes
     ]]
 })
 
@@ -310,6 +306,59 @@ Tabs.Exclusive:Button({
                 pad.Parent = workspace
             end
         end
+    end
+})
+
+Tabs.Info:Section({ Title = "Codes" })
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Pastikan RemoteEvent ada
+local claimCodeRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ClaimCode")
+
+-- Daftar code yang tersedia
+local allCodes = {"stacks", "frozen", "based"}
+
+-- Dropdown multi-select untuk memilih code
+Tabs.Info:Dropdown({ 
+    Title = "Select Codes", 
+    Values = allCodes,  -- tampilkan semua code
+    Value = {},          -- default kosong
+    Multi = true,
+    AllowNone = true,
+    Callback = function(selectedCodes) 
+        -- Tidak perlu print lagi
+    end
+})
+
+-- Tombol untuk redeem code yang dipilih
+Tabs.Info:Button({ 
+    Title = "Redeem Code", 
+    Callback = function() 
+        local dropdown = Tabs.Info:GetDropdown("Select Codes") -- ambil nilai dropdown
+        local selectedCodes = dropdown and dropdown.Value or {}
+        
+        if #selectedCodes == 0 then
+            WindUI:Notify({
+                Title = "Redeem Code",
+                Content = "Please select at least 1 code!",
+                Duration = 3,
+            })
+            return
+        end
+
+        -- Redeem setiap code yang dipilih
+        for _, code in ipairs(selectedCodes) do
+            pcall(function()
+                claimCodeRemote:FireServer(code)
+            end)
+        end
+
+        WindUI:Notify({
+            Title = "Redeem Code",
+            Content = "All selected codes have been sent!",
+            Duration = 5,
+        })
     end
 })
 
