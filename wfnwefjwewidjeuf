@@ -263,14 +263,18 @@ end)
 Tabs.Exclusive:Section({ Title = "Exclusive" })
 
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
 
-local autoSubmitEnabled = false -- flag global untuk toggle
+-- Gui reference
+local shadowTitle = player.PlayerGui.Main.WantedPosterGui.Frame.Main.WantedItem.WantedItem_Title_Shadow
 
--- Fungsi untuk menemukan tool berdasarkan nama belakang
+-- Variabel
+local autoSubmitEnabled = false
+
+-- Fungsi menemukan tool berdasarkan nama belakang
 local function findToolByName(name)
-    for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+    for _, tool in ipairs(player.Backpack:GetChildren()) do
         if tool:IsA("Tool") then
             local toolName = tool.Name:gsub("^%[.-%]%s*", "")
             if toolName == name then
@@ -279,8 +283,8 @@ local function findToolByName(name)
         end
     end
 
-    if LocalPlayer.Character then
-        for _, tool in ipairs(LocalPlayer.Character:GetChildren()) do
+    if player.Character then
+        for _, tool in ipairs(player.Character:GetChildren()) do
             if tool:IsA("Tool") then
                 local toolName = tool.Name:gsub("^%[.-%]%s*", "")
                 if toolName == name then
@@ -293,42 +297,34 @@ local function findToolByName(name)
     return nil
 end
 
--- Fungsi utama auto submit
+-- Fungsi Auto Submit
 local function autoSubmit()
-    local shadowTitle = LocalPlayer.PlayerGui.Main.WantedPosterGui.Frame.Main.WantedItem.WantedItem_Title_Shadow
     local wantedName = shadowTitle.Text
     local toolFound = findToolByName(wantedName)
 
-    if toolFound then
-        LocalPlayer.Character.Humanoid:EquipTool(toolFound)
+    if toolFound and player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid:EquipTool(toolFound)
         local remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Events"):WaitForChild("Prison"):WaitForChild("Interact")
         remote:FireServer("TurnIn")
-    else
-        -- Notify jika tool tidak ditemukan
-        WindUI:Notify({
-            Title = "Nexa Notify",
-            Content = "Tool '" .. wantedName .. "' tidak ditemukan!",
-            Duration = 5,
-        })
     end
 end
 
--- Toggle WindUI
+-- Loop utama untuk Auto Submit
+task.spawn(function()
+    while task.wait(1) do
+        if autoSubmitEnabled then
+            autoSubmit()
+        end
+    end
+end)
+
+-- Toggle WindUI Auto Submit
 Tabs.Exclusive:Toggle({
-    Title = "Auto Submit Prison", 
+    Title = "Auto Submit Prison",
     Desc = "Automatically submit tools that match the Wanted Poster",
     Value = false,
     Callback = function(state)
-        autoSubmitEnabled = state -- update flag
-
-        if state then
-            spawn(function()
-                while autoSubmitEnabled do
-                    autoSubmit()
-                    wait(1)
-                end
-            end)
-        end
+        autoSubmitEnabled = state
     end
 })
 
