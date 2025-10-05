@@ -20,32 +20,47 @@ fullFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 fullFrame.BackgroundTransparency = 0.3
 fullFrame.Parent = screenGui
 
--- Logo (pojok kiri atas)
+-- UIListLayout untuk otomatis posisi label
+local layout = Instance.new("UIListLayout")
+layout.FillDirection = Enum.FillDirection.Vertical
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 10)
+layout.Parent = fullFrame
+
+-------------------------------------------------------
+-- LOGO (kiri atas)
+-------------------------------------------------------
 local logo = Instance.new("ImageLabel")
 logo.Name = "Logo"
-logo.Size = UDim2.new(0, 100, 0, 100)
-logo.Position = UDim2.new(0, 300, 0, 80)
+logo.Size = UDim2.new(0, 80, 0, 80)
+logo.Position = UDim2.new(0, 20, 0, 20)
 logo.BackgroundTransparency = 1
 logo.Image = "rbxassetid://85202089170407" -- ganti ID logo
+logo.AnchorPoint = Vector2.new(0,0)
 logo.Parent = fullFrame
 
--- Foto profil player (pojok kanan atas)
+-------------------------------------------------------
+-- FOTO PROFIL (kanan atas)
+-------------------------------------------------------
 local thumbType = Enum.ThumbnailType.HeadShot
 local thumbSize = Enum.ThumbnailSize.Size100x100
 local content, isReady = Players:GetUserThumbnailAsync(player.UserId, thumbType, thumbSize)
 
 local profilePic = Instance.new("ImageLabel")
 profilePic.Name = "ProfilePic"
-profilePic.Size = UDim2.new(0, 100, 0, 100)
-profilePic.Position = UDim2.new(0, 500, 0.5, -156)
+profilePic.Size = UDim2.new(0, 80, 0, 80)
+profilePic.AnchorPoint = Vector2.new(1,0)
+profilePic.Position = UDim2.new(1, -20, 0, 20)
 profilePic.BackgroundTransparency = 1
 profilePic.Image = content
 profilePic.Parent = fullFrame
 
--- Label Selamat Datang
+-------------------------------------------------------
+-- LABEL SELAMAT DATANG
+-------------------------------------------------------
 local label = Instance.new("TextLabel")
-label.Size = UDim2.new(1, 0, 0.1, 0)
-label.Position = UDim2.new(0, 0, 0.4, -20)
+label.Size = UDim2.new(0.6, 0, 0, 50)
+label.Position = UDim2.new(0.2, 0, 0.15, 0)
 label.BackgroundTransparency = 1
 label.Text = "Nexa Kaitun Fish IT 🐟"
 label.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -53,10 +68,12 @@ label.TextScaled = true
 label.Font = Enum.Font.SourceSansBold
 label.Parent = fullFrame
 
--- Label Coin
+-------------------------------------------------------
+-- LABEL COIN
+-------------------------------------------------------
 local coinLabel = Instance.new("TextLabel")
-coinLabel.Size = UDim2.new(1, 0, 0.1, -10)
-coinLabel.Position = UDim2.new(0, -250, 0.5, 0)
+coinLabel.Size = UDim2.new(0.3, 0, 0, 40)
+coinLabel.Position = UDim2.new(0.05, 0, 0.3, 0)
 coinLabel.BackgroundTransparency = 1
 coinLabel.Text = "Coins: 0"
 coinLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -64,10 +81,12 @@ coinLabel.TextScaled = true
 coinLabel.Font = Enum.Font.SourceSansBold
 coinLabel.Parent = fullFrame
 
--- Label Log (Success & Fail)
+-------------------------------------------------------
+-- LABEL LOG (Success & Fail)
+-------------------------------------------------------
 local logLabel = Instance.new("TextLabel")
-logLabel.Size = UDim2.new(1, 0, 0.1, -10)
-logLabel.Position = UDim2.new(0, -20, 0.5, 0)
+logLabel.Size = UDim2.new(0.3, 0, 0, 40)
+logLabel.Position = UDim2.new(0.05, 0, 0.35, 0)
 logLabel.BackgroundTransparency = 1
 logLabel.Text = "Success: 0 | Fail: 0"
 logLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -75,21 +94,26 @@ logLabel.TextScaled = true
 logLabel.Font = Enum.Font.SourceSansBold
 logLabel.Parent = fullFrame
 
--- Label Deep Sea Tracker
+-------------------------------------------------------
+-- LABEL DEEP SEA TRACKER
+-------------------------------------------------------
 local trackerLabel = Instance.new("TextLabel")
-trackerLabel.Size = UDim2.new(1, 0, 0.2, 0)
-trackerLabel.Position = UDim2.new(0, -250, 0, 300)
+trackerLabel.Size = UDim2.new(0.9, 0, 0.15, 0)
+trackerLabel.Position = UDim2.new(0.05, 0, 0.5, 0)
 trackerLabel.BackgroundTransparency = 1
 trackerLabel.Text = "Deep Sea Quest:\n-"
 trackerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 trackerLabel.TextScaled = true
 trackerLabel.Font = Enum.Font.SourceSansBold
+trackerLabel.TextWrapped = true
 trackerLabel.Parent = fullFrame
 
--- Label ItemName (Backpack)
+-------------------------------------------------------
+-- LABEL ITEMNAME (Backpack)
+-------------------------------------------------------
 local itemLabel = Instance.new("TextLabel")
-itemLabel.Size = UDim2.new(1, 0, 0.1, -10)
-itemLabel.Position = UDim2.new(0, 210, 0.5, 0)
+itemLabel.Size = UDim2.new(0.3, 0, 0, 40)
+itemLabel.Position = UDim2.new(0.65, 0, 0.3, 0)
 itemLabel.BackgroundTransparency = 1
 itemLabel.Text = "Rod: -"
 itemLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -155,6 +179,7 @@ notifFrame.ChildAdded:Connect(function(child)
         end
     end
 end)
+
 
 -------------------------------------------------------
 -- DEEP SEA TRACKER LISTENER
