@@ -124,8 +124,7 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[+] Added Auto Submit Wanted Item Prison
-[+] Added Dupe Item
+[-] Delete Auto Collect
     ]]
 })
 
@@ -733,87 +732,6 @@ end)
 
 
 Tabs.Farm:Section({ Title = "Automation" })
-
--- Variabel global
-getgenv().AutoTPBrainrot = false
-getgenv().BrainrotDelay = 1.5 -- delay sebelum teleport Brainrot pertama
-
--- Fungsi deteksi plot milik player
-local function getMyPlot()
-    local player = game.Players.LocalPlayer
-    for i = 1, #workspace.Plots:GetChildren() do
-        local plot = workspace.Plots:FindFirstChild(tostring(i))
-        if plot then
-            local sign = plot:FindFirstChild("PlayerSign")
-            if sign and sign:FindFirstChild("BillboardGui") and sign.BillboardGui:FindFirstChild("TextLabel") then
-                local textLabel = sign.BillboardGui.TextLabel
-                if textLabel.Text == player.DisplayName then
-                    print("Plot milik kita ditemukan: " .. i)
-                    return plot
-                end
-            end
-        end
-    end
-    return nil
-end
-
--- Toggle WindUI
-Tabs.Farm:Toggle({
-    Title = "Auto Collect",
-    Value = false,
-    Callback = function(state)
-        getgenv().AutoTPBrainrot = state
-
-        task.spawn(function()
-            while getgenv().AutoTPBrainrot do
-                local player = game.Players.LocalPlayer
-                local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                local myPlot = getMyPlot()
-
-                if hrp and myPlot then
-                    local plantsFolder = myPlot:FindFirstChild("Plants")
-                    if plantsFolder then
-                        local firstTeleportDone = false
-                        for i = 1, 17 do
-                            if not getgenv().AutoTPBrainrot then break end
-                            local plant = plantsFolder:FindFirstChild(tostring(i))
-                            if plant and plant:FindFirstChild("Brainrot") then
-                                local brainrot = plant.Brainrot
-                                local part = brainrot.PrimaryPart or brainrot:FindFirstChildWhichIsA("BasePart")
-                                if part then
-                                    -- Jika teleport pertama, tunggu sesuai slider
-                                    if not firstTeleportDone then
-                                        task.wait(getgenv().BrainrotDelay)
-                                        firstTeleportDone = true
-                                    end
-
-                                    hrp.CFrame = part.CFrame + Vector3.new(0, 0, 0)
-                                    task.wait(0.5) -- delay antar Brainrot selanjutnya bisa diatur manual
-                                end
-                            end
-                        end
-                    end
-                end
-                task.wait(0.5)
-            end
-        end)
-    end
-})
-
--- Slider WindUI
-Tabs.Farm:Slider({
-    Title = "Auto Collect Delay",
-    Step = 1,
-    Value = {
-        Min = 1,
-        Max = 100,
-        Default = 1,
-    },
-    Callback = function(value)
-        getgenv().BrainrotDelay = value
-    end
-})
-
 
 -- Referensi remote
 local RebirthRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Rebirth")
