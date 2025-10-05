@@ -262,13 +262,41 @@ end)
 
 Tabs.Exclusive:Section({ Title = "Exclusive" })
 
-local shadowTitle = game:GetService("Players").LocalPlayer.PlayerGui.Main.WantedPosterGui.Frame.Main.WantedItem.WantedItem_Title_Shadow
-local titleText = shadowTitle.Text  -- Ambil teksnya
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local textLabel = player.PlayerGui.Main.WantedPosterGui.Frame.Main.WantedItem.WantedItem_Title_Shadow
 
-Tabs.Exclusive:Paragraph({
+local lastText = ""
+local checkDelay = 1 -- cek tiap 1 detik
+
+-- Buat satu paragraf di awal
+local wantedParagraph = Tabs.Exclusive:Paragraph({
     Title = "Wanted Item",
-    Desc = titleText
+    Desc = textLabel.Text
 })
+
+-- Simpan teks awal
+lastText = textLabel.Text
+
+-- Cek terus setiap 1 detik
+task.spawn(function()
+    while task.wait(checkDelay) do
+        local currentText = textLabel.Text
+        if currentText ~= lastText then
+            lastText = currentText
+
+            -- Update isi paragraf lama
+            wantedParagraph:SetDesc(currentText)
+
+            -- Notify pakai WindUI
+            WindUI:Notify({
+                Title = "Nexa Notify Wanted",
+                Content = "Wanted Item changed to: " .. currentText,
+                Duration = 5,
+            })
+        end
+    end
+end)
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
