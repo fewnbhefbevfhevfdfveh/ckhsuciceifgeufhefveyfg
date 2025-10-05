@@ -78,7 +78,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v0.1.2",
+    Title = "v0.1.3",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -116,6 +116,7 @@ local Tabs = {
     Server = Window:Tab({ Title = "Server", Icon = "server"  }),
     Player = Window:Tab({ Title = "Player", Icon = "user"  }),
     Tp = Window:Tab({ Title = "Teleport", Icon = "map-pin"  }),
+    Visual = Window:Tab({ Title = "Visual", Icon = "eye"  }),
 }
 
 Tabs.Home:Section({ Title = "Update" })
@@ -123,7 +124,8 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[+] Redeem Codes
+[+] Added Auto Submit Wanted Item Prison
+[+] Added Dupe Item
     ]]
 })
 
@@ -259,6 +261,83 @@ task.spawn(function()
 end)
 
 Tabs.Exclusive:Section({ Title = "Exclusive" })
+
+local shadowTitle = game:GetService("Players").LocalPlayer.PlayerGui.Main.WantedPosterGui.Frame.Main.WantedItem.WantedItem_Title_Shadow
+local titleText = shadowTitle.Text  -- Ambil teksnya
+
+Tabs.Exclusive:Paragraph({
+    Title = "Wanted Item",
+    Desc = titleText
+})
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local autoSubmitEnabled = false -- flag global untuk toggle
+
+-- Fungsi untuk menemukan tool berdasarkan nama belakang
+local function findToolByName(name)
+    for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+        if tool:IsA("Tool") then
+            local toolName = tool.Name:gsub("^%[.-%]%s*", "")
+            if toolName == name then
+                return tool
+            end
+        end
+    end
+
+    if LocalPlayer.Character then
+        for _, tool in ipairs(LocalPlayer.Character:GetChildren()) do
+            if tool:IsA("Tool") then
+                local toolName = tool.Name:gsub("^%[.-%]%s*", "")
+                if toolName == name then
+                    return tool
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+-- Fungsi utama auto submit
+local function autoSubmit()
+    local shadowTitle = LocalPlayer.PlayerGui.Main.WantedPosterGui.Frame.Main.WantedItem.WantedItem_Title_Shadow
+    local wantedName = shadowTitle.Text
+    local toolFound = findToolByName(wantedName)
+
+    if toolFound then
+        LocalPlayer.Character.Humanoid:EquipTool(toolFound)
+        local remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Events"):WaitForChild("Prison"):WaitForChild("Interact")
+        remote:FireServer("TurnIn")
+    else
+        -- Notify jika tool tidak ditemukan
+        WindUI:Notify({
+            Title = "Nexa Notify",
+            Content = "Tool '" .. wantedName .. "' tidak ditemukan!",
+            Duration = 5,
+        })
+    end
+end
+
+-- Toggle WindUI
+Tabs.Exclusive:Toggle({
+    Title = "Auto Submit Prison", 
+    Value = false,
+    Callback = function(state)
+        autoSubmitEnabled = state -- update flag
+
+        if state then
+            spawn(function()
+                while autoSubmitEnabled do
+                    autoSubmit()
+                    wait(1)
+                end
+            end)
+        end
+    end
+})
 
 Tabs.Exclusive:Button({
     Title = "Teleport To Daily Island",
@@ -2222,6 +2301,51 @@ end)
 
 Tabs.Player:Section({ Title = "Visual" })
 
+-- Get local player
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+-- Function to duplicate the tool the player is holding
+local function duplicateTool(amount)
+    local tool = character:FindFirstChildOfClass("Tool")
+    if tool then
+        for i = 1, amount do
+            local clone = tool:Clone()
+            clone.Parent = player.Backpack
+        end
+    end
+end
+
+-- Input WindUI: how many duplicates
+local dupeAmount = 1 -- default
+Tabs.Player:Input({ 
+    Title = "Duplicate Amount",
+    Value = "1",
+    Placeholder = "Enter a number...",
+    Callback = function(input)
+        local number = tonumber(input)
+        if number and number > 0 then
+            dupeAmount = number
+        end
+    end
+})
+
+-- Toggle WindUI: activate duplication
+Tabs.Player:Toggle({ 
+    Title = "Dupe Tool", 
+    Value = false,
+    Callback = function(state)
+        if state then
+            spawn(function()
+                while Tabs.Player["Dupe Tool"].Value do
+                    duplicateTool(dupeAmount)
+                    wait(1) -- delay 1 second, can be adjusted
+                end
+            end)
+        end
+    end
+})
+
 Tabs.Player:Toggle({
     Title = "View Rows Numbers",
     Value = false,
@@ -2516,6 +2640,131 @@ Tabs.Tp:Button({
             Icon = "droplet-off",
             Duration = 3,
         })
+    end
+})
+
+Tabs.Visual:Section({ Title = "Dupe" })
+
+-- Variable to store how many duplicates
+local duplicateAmount = 1
+
+-- Input for number of duplicates
+Tabs.Visual:Input({
+    Title = "Amount Duplicate",
+    Value = "",
+    Placeholder = "Enter a number",
+    Callback = function(input)
+        local number = tonumber(input)
+        if number and number > 0 then
+            duplicateAmount = number
+            WindUI:Notify({
+                Title = "Info",
+                Content = "Duplicate amount set to "..duplicateAmount,
+                Duration = 3,
+            })
+        else
+            WindUI:Notify({
+                Title = "Error",
+                Content = "Please enter a valid number!",
+                Duration = 3,
+            })
+        end
+    end
+})
+
+-- Button to execute duplication
+Tabs.Visual:Button({
+    Title = "Dupe Item",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local tool = character:FindFirstChildOfClass("Tool")
+        
+        if tool then
+            for i = 1, duplicateAmount do
+                local clone = tool:Clone()
+                clone.Parent = player.Backpack
+            end
+            WindUI:Notify({
+                Title = "Success",
+                Content = tool.Name.." has been duplicated "..duplicateAmount.." times",
+                Duration = 3,
+            })
+        else
+            WindUI:Notify({
+                Title = "Error",
+                Content = "No Tool is currently equipped!",
+                Duration = 3,
+            })
+        end
+    end
+})
+
+Tabs.Visual:Section({ Title = "View" })
+
+Tabs.Visual:Toggle({
+    Title = "View Rows Numbers",
+    Value = false,
+    Callback = function(state)
+        local player = game.Players.LocalPlayer
+        local myPlot
+
+        -- Cari plot milik player
+        for i = 1, #workspace.Plots:GetChildren() do
+            local plot = workspace.Plots:FindFirstChild(tostring(i))
+            if plot then
+                local sign = plot:FindFirstChild("PlayerSign")
+                if sign and sign:FindFirstChild("BillboardGui") and sign.BillboardGui:FindFirstChild("TextLabel") then
+                    local textLabel = sign.BillboardGui.TextLabel
+                    if textLabel.Text == player.DisplayName then
+                        myPlot = plot
+                        break
+                    end
+                end
+            end
+        end
+
+        if not myPlot then
+            return
+        end
+
+        if state then
+            -- Aktifkan: Tampilkan nomor di atas MowerSpawn
+            for _, row in pairs(myPlot.Rows:GetChildren()) do
+                local mowerSpawn = row:FindFirstChild("MowerSpawn")
+                if mowerSpawn and mowerSpawn:IsA("BasePart") then
+                    if not mowerSpawn:FindFirstChild("RowNumber") then
+                        local billboard = Instance.new("BillboardGui")
+                        billboard.Name = "RowNumber"
+                        billboard.Adornee = mowerSpawn
+                        billboard.Size = UDim2.new(0, 100, 0, 50)
+                        billboard.StudsOffset = Vector3.new(0, 3, 0)
+                        billboard.AlwaysOnTop = true
+
+                        local label = Instance.new("TextLabel")
+                        label.Size = UDim2.new(1, 0, 1, 0)
+                        label.BackgroundTransparency = 1
+                        label.Text = row.Name
+                        label.TextColor3 = Color3.fromRGB(255, 255, 0)
+                        label.TextStrokeTransparency = 0 -- Outline
+                        label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                        label.TextScaled = true
+                        label.Font = Enum.Font.Arcade -- Gaya kotak/pixel Minecraft
+                        label.Parent = billboard
+
+                        billboard.Parent = mowerSpawn
+                    end
+                end
+            end
+        else
+            -- Nonaktifkan: Hapus semua RowNumber dari plot milikmu
+            for _, row in pairs(myPlot.Rows:GetChildren()) do
+                local mowerSpawn = row:FindFirstChild("MowerSpawn")
+                if mowerSpawn and mowerSpawn:FindFirstChild("RowNumber") then
+                    mowerSpawn.RowNumber:Destroy()
+                end
+            end
+        end
     end
 })
 
