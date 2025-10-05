@@ -50,7 +50,7 @@ local playerDisplayName = player.DisplayName
 
 -- Buat Window versi baru
 local Window = WindUI:CreateWindow({
-    Title = "Nexa - Free",
+    Title = "Nexa - Premium",
     Icon = "rbxassetid://107488593993096",
     Author = "Fish IT! Script | @ Han",
     Folder = "Hanzo",
