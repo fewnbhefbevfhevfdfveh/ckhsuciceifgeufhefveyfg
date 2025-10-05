@@ -244,7 +244,7 @@ task.spawn(function()
     while task.wait(1) do
         -- Kalau masih ada !!!FISHING_VIEW_MODEL!!! berarti rod BELUM dipegang → equip slot 1
         if char:FindFirstChild("!!!FISHING_VIEW_MODEL!!!") then
-            EquipRemote:FireServer(1)
+            EquipRemote:FireServer(0.01)
         end
     end
 end)
