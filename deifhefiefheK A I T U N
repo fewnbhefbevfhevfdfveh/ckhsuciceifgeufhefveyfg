@@ -1,254 +1,3 @@
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-
--------------------------------------------------------
--- FULLSCREEN GUI
--------------------------------------------------------
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "FullScreenGui"
-screenGui.ResetOnSpawn = false
-screenGui.IgnoreGuiInset = true
-screenGui.Parent = playerGui
-
--- Frame utama
-local fullFrame = Instance.new("Frame")
-fullFrame.Name = "FullFrame"
-fullFrame.Size = UDim2.new(1, 0, 1, 0)
-fullFrame.Position = UDim2.new(0, 0, 0, 0)
-fullFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-fullFrame.BackgroundTransparency = 0.3
-fullFrame.Parent = screenGui
-
--- UIListLayout untuk otomatis posisi label
-local layout = Instance.new("UIListLayout")
-layout.FillDirection = Enum.FillDirection.Vertical
-layout.SortOrder = Enum.SortOrder.LayoutOrder
-layout.Padding = UDim.new(0, 10)
-layout.Parent = fullFrame
-
--------------------------------------------------------
--- LOGO (kiri atas)
--------------------------------------------------------
-local logo = Instance.new("ImageLabel")
-logo.Name = "Logo"
-logo.Size = UDim2.new(0, 80, 0, 80)
-logo.Position = UDim2.new(0, 20, 0, 20)
-logo.BackgroundTransparency = 1
-logo.Image = "rbxassetid://85202089170407" -- ganti ID logo
-logo.AnchorPoint = Vector2.new(0,0)
-logo.Parent = fullFrame
-
--------------------------------------------------------
--- FOTO PROFIL (kanan atas)
--------------------------------------------------------
-local thumbType = Enum.ThumbnailType.HeadShot
-local thumbSize = Enum.ThumbnailSize.Size100x100
-local content, isReady = Players:GetUserThumbnailAsync(player.UserId, thumbType, thumbSize)
-
-local profilePic = Instance.new("ImageLabel")
-profilePic.Name = "ProfilePic"
-profilePic.Size = UDim2.new(0, 80, 0, 80)
-profilePic.AnchorPoint = Vector2.new(1,0)
-profilePic.Position = UDim2.new(1, -20, 0, 20)
-profilePic.BackgroundTransparency = 1
-profilePic.Image = content
-profilePic.Parent = fullFrame
-
--------------------------------------------------------
--- LABEL SELAMAT DATANG
--------------------------------------------------------
-local label = Instance.new("TextLabel")
-label.Size = UDim2.new(0.6, 0, 0, 50)
-label.Position = UDim2.new(0.2, 0, 0.15, 0)
-label.BackgroundTransparency = 1
-label.Text = "Nexa Kaitun Fish IT 🐟"
-label.TextColor3 = Color3.fromRGB(255, 255, 255)
-label.TextScaled = true
-label.Font = Enum.Font.SourceSansBold
-label.Parent = fullFrame
-
--------------------------------------------------------
--- LABEL COIN
--------------------------------------------------------
-local coinLabel = Instance.new("TextLabel")
-coinLabel.Size = UDim2.new(0.3, 0, 0, 40)
-coinLabel.Position = UDim2.new(0.05, 0, 0.3, 0)
-coinLabel.BackgroundTransparency = 1
-coinLabel.Text = "Coins: 0"
-coinLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-coinLabel.TextScaled = true
-coinLabel.Font = Enum.Font.SourceSansBold
-coinLabel.Parent = fullFrame
-
--------------------------------------------------------
--- LABEL LOG (Success & Fail)
--------------------------------------------------------
-local logLabel = Instance.new("TextLabel")
-logLabel.Size = UDim2.new(0.3, 0, 0, 40)
-logLabel.Position = UDim2.new(0.05, 0, 0.35, 0)
-logLabel.BackgroundTransparency = 1
-logLabel.Text = "Success: 0 | Fail: 0"
-logLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-logLabel.TextScaled = true
-logLabel.Font = Enum.Font.SourceSansBold
-logLabel.Parent = fullFrame
-
--------------------------------------------------------
--- LABEL DEEP SEA TRACKER
--------------------------------------------------------
-local trackerLabel = Instance.new("TextLabel")
-trackerLabel.Size = UDim2.new(0.9, 0, 0.15, 0)
-trackerLabel.Position = UDim2.new(0.05, 0, 0.5, 0)
-trackerLabel.BackgroundTransparency = 1
-trackerLabel.Text = "Deep Sea Quest:\n-"
-trackerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-trackerLabel.TextScaled = true
-trackerLabel.Font = Enum.Font.SourceSansBold
-trackerLabel.TextWrapped = true
-trackerLabel.Parent = fullFrame
-
--------------------------------------------------------
--- LABEL ITEMNAME (Backpack)
--------------------------------------------------------
-local itemLabel = Instance.new("TextLabel")
-itemLabel.Size = UDim2.new(0.3, 0, 0, 40)
-itemLabel.Position = UDim2.new(0.65, 0, 0.3, 0)
-itemLabel.BackgroundTransparency = 1
-itemLabel.Text = "Rod: -"
-itemLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-itemLabel.TextScaled = true
-itemLabel.Font = Enum.Font.SourceSansBold
-itemLabel.Parent = fullFrame
-
--------------------------------------------------------
--- COIN COUNTER
--------------------------------------------------------
-local counterLabel = playerGui:WaitForChild("Events"):WaitForChild("Frame"):WaitForChild("CurrencyCounter"):WaitForChild("Counter")
-
-task.spawn(function()
-    while task.wait(1) do
-        if counterLabel and counterLabel.Text then
-            coinLabel.Text = "Coins: " .. counterLabel.Text
-        end
-    end
-end)
-
--------------------------------------------------------
--- SUCCESS / FAIL DETECTION
--------------------------------------------------------
-local smallNotif = playerGui:WaitForChild("Small Notification")
-local display = smallNotif:WaitForChild("Display")
-local container = display:WaitForChild("Container")
-
-local notifications = playerGui:WaitForChild("Text Notifications")
-local notifFrame = notifications:WaitForChild("Frame")
-
-local successPos = UDim2.new(0.5, 0, 0.100000001, 0)
-
-local successCount = 0
-local failCount = 0
-
-local function updateLog()
-    logLabel.Text = string.format("Success: %d | Fail: %d", successCount, failCount)
-end
-
--- sukses dari posisi container
-container:GetPropertyChangedSignal("Position"):Connect(function()
-    if container.Position == successPos then
-        successCount += 1
-        updateLog()
-    end
-end)
-
--- gagal dari notifikasi text
-notifFrame.ChildAdded:Connect(function(child)
-    if child.Name == "TextTile" then
-        local header = child:WaitForChild("Header", 5)
-        if header and header:IsA("TextLabel") then
-            if header.Text == "The fish got away!" then
-                failCount += 1
-                updateLog()
-            end
-            header:GetPropertyChangedSignal("Text"):Connect(function()
-                if header.Text == "The fish got away!" then
-                    failCount += 1
-                    updateLog()
-                end
-            end)
-        end
-    end
-end)
-
-
--------------------------------------------------------
--- DEEP SEA TRACKER LISTENER
--------------------------------------------------------
-local board = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board
-local surfaceGui = board:WaitForChild("Gui")
-local contentGui = surfaceGui:WaitForChild("Content")
-
-local labelNames = {"Label1", "Label2", "Label3", "Label4"}
-
-local function onLabelChanged()
-    local lines = {}
-    for _, name in ipairs(labelNames) do
-        local l = contentGui:FindFirstChild(name)
-        if l and l:IsA("TextLabel") and l.Text ~= "" then
-            table.insert(lines, l.Text) -- hanya ambil isi text
-        end
-    end
-    trackerLabel.Text = "Deep Sea Quest:\n" .. table.concat(lines, "\n")
-end
-
--- pasang listener untuk tiap label
-for _, name in ipairs(labelNames) do
-    local labelObj = contentGui:FindFirstChild(name)
-    if labelObj then
-        onLabelChanged()
-        labelObj:GetPropertyChangedSignal("Text"):Connect(onLabelChanged)
-    end
-end
-
--------------------------------------------------------
--- BACKPACK ITEM NAME LISTENER
--------------------------------------------------------
-local itemNameLabel = playerGui:WaitForChild("Backpack"):WaitForChild("Display"):WaitForChild("Tile"):WaitForChild("Inner"):WaitForChild("Tags"):WaitForChild("ItemName")
-
-local function updateItem()
-    if itemNameLabel and itemNameLabel.Text then
-        itemLabel.Text = "Rod: " .. itemNameLabel.Text
-    end
-end
-
-updateItem()
-itemNameLabel:GetPropertyChangedSignal("Text"):Connect(updateItem)
-
-
--- Auto Equip Rod
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
--- Remote events
-local Net = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net")
-local EquipRemote = Net:WaitForChild("RE/EquipToolFromHotbar")
-local UnequipRemote = Net:WaitForChild("RE/UnequipToolFromHotbar")
-
--- Character
-local char = workspace:WaitForChild("Characters"):WaitForChild(LocalPlayer.Name)
-
--- Auto equip loop
-task.spawn(function()
-    while task.wait(1) do
-        -- Kalau masih ada !!!FISHING_VIEW_MODEL!!! berarti rod BELUM dipegang → equip slot 1
-        if char:FindFirstChild("!!!FISHING_VIEW_MODEL!!!") then
-            EquipRemote:FireServer(0.01)
-        end
-    end
-end)
-
 -- Auto Sell
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -304,19 +53,35 @@ end
 -- Auto Fishing
 
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
-local Container = LocalPlayer.PlayerGui["Small Notification"].Display.Container
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+-- Remote events
 local Net = ReplicatedStorage:WaitForChild("Packages")
     :WaitForChild("_Index")
     :WaitForChild("sleitnick_net@0.2.0")
     :WaitForChild("net")
 
+local EquipRemote = Net:WaitForChild("RE/EquipToolFromHotbar")
+local UnequipRemote = Net:WaitForChild("RE/UnequipToolFromHotbar")
 local ChargeFishingRod = Net:WaitForChild("RF/ChargeFishingRod")
 local RequestFishingMinigameStarted = Net:WaitForChild("RF/RequestFishingMinigameStarted")
 
-local AutoFishV2 = true -- langsung aktif
+-- Character
+local char = workspace:WaitForChild("Characters"):WaitForChild(LocalPlayer.Name)
+
+-- UI Container
+local Container = LocalPlayer.PlayerGui:WaitForChild("Small Notification"):WaitForChild("Display"):WaitForChild("Container")
+
+-- Auto equip loop
+local function EquipRod()
+    if char:FindFirstChild("!!!FISHING_VIEW_MODEL!!!") == nil then
+        EquipRemote:FireServer(0) -- misal slot 1
+        -- tunggu sebentar sampai rod muncul
+        repeat task.wait(0.1) until char:FindFirstChild("!!!FISHING_VIEW_MODEL!!!")
+        task.wait(0.1)
+    end
+end
 
 -- Step Functions
 local function Step1()
@@ -331,8 +96,9 @@ local function Step3()
     RequestFishingMinigameStarted:InvokeServer(-0.5718746185302734, 0.96170184695718)
 end
 
--- Jalankan sekali di awal
-if AutoFishV2 then
+-- Auto Fish Function
+local function AutoFish()
+    EquipRod()      -- pastikan rod sudah di-equip
     Step1()
     task.wait(0.01)
     Step2()
@@ -340,15 +106,17 @@ if AutoFishV2 then
     Step3()
 end
 
--- Listener Step4
+-- Jalankan sekali di awal
+AutoFish()
+
+-- Listener Step4: kalau UI muncul
 Container:GetPropertyChangedSignal("Position"):Connect(function()
-    if AutoFishV2 and Container.Position == UDim2.new(0.5, 0, 0.100000001, 0) then
+    if Container.Position == UDim2.new(0.5, 0, 0.100000001, 0) then
         task.wait(0.01)
-        Step2()
-        task.wait(0.01)
-        Step3()
+        AutoFish()
     end
 end)
+
 
 -- Auto Fishing Complite
 
