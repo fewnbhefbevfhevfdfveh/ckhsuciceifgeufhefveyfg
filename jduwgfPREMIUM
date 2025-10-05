@@ -1,3 +1,4 @@
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
 --[[
  _   _ _______ __   __    _    
@@ -47,15 +48,42 @@ for _, gameInfo in pairs(games) do
     end
 end
 
+-- Fungsi notifikasi WindUI dengan fallback
+local function NotifyWindUI(title, content, duration)
+    local success, WindUI = pcall(function()
+        return getgenv().WindUI or WindUI
+    end)
+
+    if success and WindUI and WindUI.Notify then
+        WindUI:Notify({
+            Title = title or "Notification",
+            Content = content or "",
+            Duration = duration or 5,
+        })
+    else
+        warn("[WindUI Notify Fallback] " .. (content or "Unknown message"))
+        game.StarterGui:SetCore("SendNotification", {
+            Title = title or "Nexa Notify",
+            Text = content or "Terjadi error!",
+            Duration = duration or 5,
+        })
+    end
+end
+
 -- Jalankan skrip game jika ditemukan
 if scriptUrl then
     local success, err = pcall(function()
         loadstring(game:HttpGet(scriptUrl))()
     end)
-    if not success then
+
+    if success then
+        NotifyWindUI("Nexa Loader", "Script loaded successfully!", 5)
+    else
+        NotifyWindUI("Nexa Loader", "Failed to load script:\n" .. tostring(err), 8)
         warn("Failed to load script:", err)
     end
 else
+    NotifyWindUI("Nexa Loader", "Unsupported game (PlaceId: " .. tostring(placeId) .. ")", 6)
     warn("Unsupported game. PlaceId:", placeId)
 end
 
@@ -71,10 +99,9 @@ local AntiAFKConnection
 local loopThread
 
 local function doVirtualAction()
-    -- simulasi klik ringan, aman untuk mencegah kick AFK
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new(math.random(0,800), math.random(0,600)))
-    wait(0.05)
+    task.wait(0.05)
     VirtualUser:ClickButton2(Vector2.new(math.random(0,800), math.random(0,600)))
 end
 
@@ -85,22 +112,21 @@ local function startLoop()
             local waitTime = math.random(60, 300) -- interval acak 1-5 menit
             local elapsed = 0
             while elapsed < waitTime and AntiAFKEnabled do
-                wait(1)
-                elapsed = elapsed + 1
+                task.wait(1)
+                elapsed += 1
             end
         end
     end)
     coroutine.resume(loopThread)
 end
 
--- pasang listener Idled untuk respon cepat event AFK
 AntiAFKConnection = player.Idled:Connect(function()
     if AntiAFKEnabled then
         pcall(doVirtualAction)
     end
 end)
 
--- jalankan loop berkala
 startLoop()
+
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/Script/refs/heads/main/ha"))()
