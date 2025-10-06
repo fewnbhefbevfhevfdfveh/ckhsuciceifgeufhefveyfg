@@ -271,9 +271,9 @@ local shadowTitle = player.PlayerGui.Main.WantedPosterGui.Frame.Main.WantedItem.
 -- Variabel
 local autoSubmitEnabled = false
 
--- Fungsi membersihkan nama tool (hapus semua tag [ ... ])
-local function cleanToolName(str)
-    return str:gsub("%[.-%]%s*", ""):gsub("^%s*(.-)%s*$", "%1")
+-- Fungsi untuk membersihkan semua prefix di dalam []
+local function cleanToolName(name)
+    return name:gsub("%[.-%]%s*", "")
 end
 
 -- Fungsi menemukan tool berdasarkan nama belakang
@@ -307,16 +307,16 @@ local function autoSubmit()
     local toolFound = findToolByName(wantedName)
 
     if toolFound and player.Character and player.Character:FindFirstChild("Humanoid") then
+        -- Auto Equip tool
         player.Character.Humanoid:EquipTool(toolFound)
-        local remote = ReplicatedStorage:WaitForChild("Remotes")
-            :WaitForChild("Events")
-            :WaitForChild("Prison")
-            :WaitForChild("Interact")
+
+        -- Fire Remote untuk submit
+        local remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Events"):WaitForChild("Prison"):WaitForChild("Interact")
         remote:FireServer("TurnIn")
     end
 end
 
--- Loop utama untuk Auto Submit
+-- Loop utama Auto Submit
 task.spawn(function()
     while task.wait(1) do
         if autoSubmitEnabled then
@@ -325,7 +325,7 @@ task.spawn(function()
     end
 end)
 
--- Toggle WindUI Auto Submit 1
+-- Toggle WindUI Auto Submit
 Tabs.Exclusive:Toggle({
     Title = "Auto Submit Prison",
     Desc = "Automatically submit tools that match the Wanted Poster",
@@ -334,6 +334,7 @@ Tabs.Exclusive:Toggle({
         autoSubmitEnabled = state
     end
 })
+
 
 
 Tabs.Exclusive:Button({
