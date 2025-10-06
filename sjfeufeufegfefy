@@ -579,14 +579,39 @@ Tabs.Farm:Toggle({
 })
 
 -- Listener Step4
+local lastPosition = Container.Position
+local lastChangeTime = tick()
+
 Container:GetPropertyChangedSignal("Position"):Connect(function()
-    if AutoFishV2 and Container.Position == UDim2.new(0.5, 0, 0.100000001, 0) then
-        task.wait(0.01)
-        Step2()
-        task.wait(0.01)
-        Step3()
+    if AutoFishV2 then
+        lastPosition = Container.Position
+        lastChangeTime = tick()
+
+        if Container.Position == UDim2.new(0.5, 0, 0.100000001, 0) then
+            task.wait(0.01)
+            Step2()
+            task.wait(0.01)
+            Step3()
+        end
     end
 end)
+
+-- Watchdog untuk restart jika position tidak berubah 8 detik
+task.spawn(function()
+    while true do
+        task.wait(1)
+        if AutoFishV2 and tick() - lastChangeTime >= 8 then
+            -- ulangi Step1 → Step2 → Step3
+            Step1()
+            task.wait(0.01)
+            Step2()
+            task.wait(0.01)
+            Step3()
+            lastChangeTime = tick() -- reset timer
+        end
+    end
+end)
+
 
 Tabs.Farm:Toggle({
     Title = "Auto Fishing Completed",
