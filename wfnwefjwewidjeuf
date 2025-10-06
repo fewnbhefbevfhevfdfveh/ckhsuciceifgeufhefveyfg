@@ -271,11 +271,16 @@ local shadowTitle = player.PlayerGui.Main.WantedPosterGui.Frame.Main.WantedItem.
 -- Variabel
 local autoSubmitEnabled = false
 
+-- Fungsi membersihkan nama tool (hapus semua tag [ ... ])
+local function cleanToolName(str)
+    return str:gsub("%[.-%]%s*", ""):gsub("^%s*(.-)%s*$", "%1")
+end
+
 -- Fungsi menemukan tool berdasarkan nama belakang
 local function findToolByName(name)
     for _, tool in ipairs(player.Backpack:GetChildren()) do
         if tool:IsA("Tool") then
-            local toolName = tool.Name:gsub("^%[.-%]%s*", "")
+            local toolName = cleanToolName(tool.Name)
             if toolName == name then
                 return tool
             end
@@ -285,7 +290,7 @@ local function findToolByName(name)
     if player.Character then
         for _, tool in ipairs(player.Character:GetChildren()) do
             if tool:IsA("Tool") then
-                local toolName = tool.Name:gsub("^%[.-%]%s*", "")
+                local toolName = cleanToolName(tool.Name)
                 if toolName == name then
                     return tool
                 end
@@ -303,7 +308,10 @@ local function autoSubmit()
 
     if toolFound and player.Character and player.Character:FindFirstChild("Humanoid") then
         player.Character.Humanoid:EquipTool(toolFound)
-        local remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Events"):WaitForChild("Prison"):WaitForChild("Interact")
+        local remote = ReplicatedStorage:WaitForChild("Remotes")
+            :WaitForChild("Events")
+            :WaitForChild("Prison")
+            :WaitForChild("Interact")
         remote:FireServer("TurnIn")
     end
 end
@@ -317,7 +325,7 @@ task.spawn(function()
     end
 end)
 
--- Toggle WindUI Auto Submit
+-- Toggle WindUI Auto Submit 1
 Tabs.Exclusive:Toggle({
     Title = "Auto Submit Prison",
     Desc = "Automatically submit tools that match the Wanted Poster",
@@ -326,6 +334,7 @@ Tabs.Exclusive:Toggle({
         autoSubmitEnabled = state
     end
 })
+
 
 Tabs.Exclusive:Button({
     Title = "Teleport To Daily Island",
