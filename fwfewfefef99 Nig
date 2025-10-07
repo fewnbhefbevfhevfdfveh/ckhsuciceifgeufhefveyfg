@@ -1,23 +1,28 @@
--- ======================= Chop Aura =======================
+-- ======================= Chop Aura & Kill Aura=======================
 
+-- [STATE VARIABLES]
 local chopAuraToggle = false
-local auraRadius = 50
+local killAuraToggle = false
+
+local chopAuraRadius = 50
+local killAuraRadius = 50
 local currentammount = 0
 
+-- [TOOLS CONFIG]
 local toolsDamageIDs = {
     ["Old Axe"] = "3_7367831688",
     ["Good Axe"] = "112_7367831688",
     ["Strong Axe"] = "116_7367831688",
 }
 
-local function getAnyToolWithDamageID(isChopAura)
+local function getAnyToolWithDamageID()
     for toolName, damageID in pairs(toolsDamageIDs) do
-        if isChopAura and toolName ~= "Old Axe" and toolName ~= "Good Axe" and toolName ~= "Strong Axe" then
-            continue
-        end
-        local tool = game.Players.LocalPlayer:FindFirstChild("Inventory") and game.Players.LocalPlayer.Inventory:FindFirstChild(toolName)
-        if tool then
-            return tool, damageID
+        local inv = game.Players.LocalPlayer:FindFirstChild("Inventory")
+        if inv then
+            local tool = inv:FindFirstChild(toolName)
+            if tool then
+                return tool, damageID
+            end
         end
     end
     return nil, nil
@@ -25,28 +30,38 @@ end
 
 local function equipTool(tool)
     if tool then
-        game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents").EquipItemHandle:FireServer("FireAllClients", tool)
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("RemoteEvents")
+            :WaitForChild("EquipItemHandle")
+            :FireServer("FireAllClients", tool)
     end
 end
 
 local function unequipTool(tool)
     if tool then
-        game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents").UnequipItemHandle:FireServer("FireAllClients", tool)
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("RemoteEvents")
+            :WaitForChild("UnequipItemHandle")
+            :FireServer("FireAllClients", tool)
     end
 end
 
 local function chopAuraLoop()
     while chopAuraToggle do
-        local character = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
+        -- Cegah konflik dengan Kill Aura
+        if killAuraToggle then return end
+
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
         local hrp = character:FindFirstChild("HumanoidRootPart")
+
         if hrp then
-            local tool, baseDamageID = getAnyToolWithDamageID(true)
-            if tool and baseDamageID then
+            local tool, _ = getAnyToolWithDamageID()
+            if tool then
                 equipTool(tool)
-                currentammount = currentammount + 1
-                local trees = {}
                 local map = workspace:FindFirstChild("Map")
                 if map then
+                    local trees = {}
                     if map:FindFirstChild("Foliage") then
                         for _, obj in ipairs(map.Foliage:GetChildren()) do
                             if obj:IsA("Model") and (obj.Name == "Small Tree" or obj.Name == "Snowy Small Tree") then
@@ -61,296 +76,208 @@ local function chopAuraLoop()
                             end
                         end
                     end
-                end
-                for _, tree in ipairs(trees) do
-                    local trunk = tree:FindFirstChild("Trunk")
-                    if trunk and trunk:IsA("BasePart") and (trunk.Position - hrp.Position).Magnitude <= auraRadius then
-                        local alreadyammount = false
-                        task.spawn(function()
-                            while chopAuraToggle and tree and tree.Parent and not alreadyammount do
-                                alreadyammount = true
-                                currentammount = currentammount + 1
+
+                    for _, tree in ipairs(trees) do
+                        local trunk = tree:FindFirstChild("Trunk")
+                        if trunk and (trunk.Position - hrp.Position).Magnitude <= chopAuraRadius then
+                            currentammount += 1
+                            task.spawn(function()
                                 pcall(function()
-                                    game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents").ToolDamageObject:InvokeServer(
+                                    local args = {
                                         tree,
                                         tool,
-                                        tostring(currentammount) .. "_7367831688",
-                                        CFrame.new(-2.962610244751, 4.5547881126404, -75.950843811035, 0.89621275663376, -1.3894891459643e-08, 0.44362446665764, -7.994568895775e-10, 1, 3.293635941759e-08, -0.44362446665764, -2.9872644802253e-08, 0.89621275663376)
-                                    )
+                                        tostring(currentammount) .. "_5464154339",
+                                        CFrame.new(hrp.Position)
+                                    }
+                                    game:GetService("ReplicatedStorage")
+                                        :WaitForChild("RemoteEvents")
+                                        :WaitForChild("ToolDamageObject")
+                                        :InvokeServer(unpack(args))
                                 end)
-                                task.wait(0.5)
-                            end
-                        end)
-                    end
-                end
-                task.wait(0.1)
-            else
-                task.wait(1)
-            end
-        else
-            task.wait(0.5)
-        end
-    end
-end
-
--- ======================= Kill Aura =======================
-
--- Kill Aura variables
-local killAuraToggle = false
-local auraRadius = 50
-
--- Function to get any tool with damage ID
-local function getAnyToolWithDamageID(isChopAura)
-    for toolName, damageID in pairs(toolsDamageIDs) do
-        if isChopAura and toolName ~= "Old Axe" and toolName ~= "Good Axe" and toolName ~= "Strong Axe" then
-            continue
-        end
-        local tool = LocalPlayer:FindFirstChild("Inventory") and LocalPlayer.Inventory:FindFirstChild(toolName)
-        if tool then
-            return tool, damageID
-        end
-    end
-    return nil, nil
-end
-
--- Equip tool function
-local function equipTool(tool)
-    if tool then
-        ReplicatedStorage:WaitForChild("RemoteEvents").EquipItemHandle:FireServer("FireAllClients", tool)
-    end
-end
-
--- Unequip tool function
-local function unequipTool(tool)
-    if tool then
-        ReplicatedStorage:WaitForChild("RemoteEvents").UnequipItemHandle:FireServer("FireAllClients", tool)
-    end
-end
-
--- Kill Aura loop
-local function killAuraLoop()
-    while killAuraToggle do
-        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local hrp = character:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            local tool, damageID = getAnyToolWithDamageID(false)
-            if tool and damageID then
-                equipTool(tool)
-                for _, mob in ipairs(Workspace.Characters:GetChildren()) do
-                    if mob:IsA("Model") then
-                        local part = mob:FindFirstChildWhichIsA("BasePart")
-                        if part and (part.Position - hrp.Position).Magnitude <= auraRadius then
-                            pcall(function()
-                                ReplicatedStorage:WaitForChild("RemoteEvents").ToolDamageObject:InvokeServer(
-                                    mob,
-                                    tool,
-                                    damageID,
-                                    CFrame.new(part.Position)
-                                )
                             end)
                         end
                     end
                 end
-                task.wait(0.1)
-            else
-                task.wait(1)
             end
-        else
-            task.wait(0.5)
         end
+        task.wait(0.3)
     end
 end
 
--- ======================= Auto Food =======================
+local function killAuraLoop()
+    while killAuraToggle do
+        -- Cegah konflik dengan Chop Aura
+        if chopAuraToggle then return end
 
--- Auto Food variables
-local autoFeedToggle = false
-local hungerThreshold = 75 -- hunger percentage threshold to start auto feeding
-local alimentos = {
-    "Apple",
-    "Berry",
-    "Carrot",
-    "Cake",
-    "Chili",
-    "Cooked Ribs",
-    "Cooked Mackerel",
-    "Cooked Salmon",
-    "Cooked Morsel",
-    "Cooked Steak"
-}
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local hrp = character:FindFirstChild("HumanoidRootPart")
 
--- Function to get current hunger percentage (assuming a UI element)
-function ghn()
-    return math.floor(LocalPlayer.PlayerGui.Interface.StatBars.HungerBar.Bar.Size.X.Scale * 100)
-end
-
--- Function to feed a specific food item from workspace items
-function feed(nome)
-    for _, item in ipairs(Workspace.Items:GetChildren()) do
-        if item.Name == nome then
-            ReplicatedStorage.RemoteEvents.RequestConsumeItem:InvokeServer(item)
-            break
-        end
-    end
-end
-
--- Notification when food is not available
-function notifeed(nome)
-    WindUI:Notify({
-        Title = "Auto Food Paused",
-        Content = "The food (" .. nome .. ") is gone",
-        Duration = 3
-    })
-end
-
--- Auto feed loop
-local function autoFeedLoop()
-    while autoFeedToggle do
-        local currentHunger = ghn()
-        if currentHunger < hungerThreshold then
-            local fed = false
-            for _, foodName in ipairs(alimentos) do
-                if wiki(foodName) > 0 then
-                    feed(foodName)
-                    fed = true
-                    break
+        if hrp then
+            local tool, _ = getAnyToolWithDamageID()
+            if tool then
+                equipTool(tool)
+                local chars = workspace:FindFirstChild("Characters")
+                if chars then
+                    for _, target in ipairs(chars:GetChildren()) do
+                        if target:IsA("Model") and target:FindFirstChild("HumanoidRootPart") then
+                            local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
+                            if dist <= killAuraRadius then
+                                currentammount += 1
+                                task.spawn(function()
+                                    pcall(function()
+                                        local args = {
+                                            target,
+                                            tool,
+                                            tostring(currentammount) .. "_5464154339",
+                                            CFrame.new(hrp.Position)
+                                        }
+                                        game:GetService("ReplicatedStorage")
+                                            :WaitForChild("RemoteEvents")
+                                            :WaitForChild("ToolDamageObject")
+                                            :InvokeServer(unpack(args))
+                                    end)
+                                end)
+                            end
+                        end
+                    end
                 end
             end
-            if not fed then
-                notifeed("any")
-                autoFeedToggle = false -- stop auto feed if no food found
-            end
         end
-        task.wait(2) -- check every 2 seconds
+        task.wait(0.25)
     end
 end
 
--- Wiki function to count items of specific name in workspace
-function wiki(nome)
-    local count = 0
-    for _, item in ipairs(Workspace.Items:GetChildren()) do
-        if item.Name == nome then
-            count = count + 1
+-- ======================= Auto Submit =======================
+
+local targetCFrames = {
+    ["CampFire"] = CFrame.new(
+        0.0205104575, 14.2929211, -0.172306404,
+        0.901491344, 0, 0.432797134,
+        0, 1, 0,
+        -0.432797134, 0, 0.901491344
+    ),
+
+    ["Scrapper"] = CFrame.new(
+        20.1605988, 16.7862568, -4.60780573,
+        0.954762101, 0.0555610359, -0.292133957,
+        -1.90373467e-10, 0.982390165, 0.186841056,
+        0.297370613, -0.178388759, 0.937948942
+    ),
+}
+
+local folder = workspace:WaitForChild("Items")
+local autoSubmit = false
+local selectedCFrame = "CampFire"
+
+local function dropLog(item, cframe)
+    if not item.PrimaryPart then
+        local primary = item:FindFirstChildWhichIsA("BasePart")
+        if primary then
+            item.PrimaryPart = primary
+        else
+            return
         end
     end
-    return count
+
+    -- Pastikan semua part bisa jatuh
+    for _, part in ipairs(item:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Anchored = false
+            part.CanCollide = true
+        end
+    end
+
+    -- Pindahkan Log ke posisi target
+    item:SetPrimaryPartCFrame(cframe)
+
+    -- Tambahkan gaya dorong kecil agar jatuh natural
+    local bv = Instance.new("BodyVelocity")
+    bv.Velocity = Vector3.new(math.random(-5,5), 10, math.random(-5,5))
+    bv.MaxForce = Vector3.new(4000,4000,4000)
+    bv.P = 2000
+    bv.Parent = item.PrimaryPart
+    game.Debris:AddItem(bv, 0.3)
 end
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if autoSubmit then
+            local cframe = targetCFrames[selectedCFrame]
+            for _, item in ipairs(folder:GetChildren()) do
+                if item:IsA("Model") and item.Name == "Log" then
+                    dropLog(item, cframe)
+                    task.wait(0.5) -- jeda antar Log
+                end
+            end
+        end
+    end
+end)
 
 -- ======================= Auto Cook =======================
 
-local autoCookEnabled = false
-local autocookItems = {"Morsel", "Steak", "Ribs", "Salmon", "Mackerel"}
+-- daftar nama item yang mau di-bring
+local targetItems = {
+    "Carrot", "Corn", "Pumpkin", "Berry", "Apple", "Morsel", "Cooked Morsel",
+    "Steak", "Cooked Steak", "Ribs", "Cooked Ribs", "Cake", "Chili", "Stew",
+    "Hearty Stew", "Meat Sandwich", "Seafood Chowder", "Steak Dinner",
+    "Pumpkin Soup", "BBQ Ribs", "Carrot Cake", "Jar o' Jelly", "Mackerel",
+    "Cooked Mackerel", "Salmon", "Cooked Salmon", "Clownfish",
+    "Cooked Clownfish", "Jellyfish", "Char", "Cooked Char", "Eel",
+    "Cooked Eel", "Swordfish", "Cooked Swordfish", "Shark", "Cooked Shark",
+    "Lava Eel", "Cooked Lava Eel", "Lionfish"
+}
 
-local function autoCookLoop()
-    while autoCookEnabled do
-        for _, foodName in ipairs(autocookItems) do
-            local found = false
-            for _, item in ipairs(Workspace.Items:GetChildren()) do
-                if item.Name == foodName then
-                    found = true
-                    pcall(function()
-                        ReplicatedStorage.RemoteEvents.RequestCookItem:InvokeServer(item)
-                    end)
-                    break
-                end
-            end
-            if found then break end
-        end
-        task.wait(3) -- Wait between cooking attempts
-    end
+-- ubah ke format lookup
+local itemLookup = {}
+for _, name in ipairs(targetItems) do
+    itemLookup[name] = true
 end
 
--- ======================= Auto Upgrade Campfire =======================
+-- posisi target (CFrame)
+local targetCFrame = CFrame.new(
+    1.25811517, 14.5849133, 0.726119816,
+    0.186641589, -0.160326943, 0.969257534,
+    -2.82133117e-09, 0.986593902, 0.163194582,
+    -0.982428074, -0.0304588992, 0.184139445
+)
 
-local autoUpgradeCampfireEnabled = false
-local campfireFuelItems = {"Log", "Coal", "Chair", "Fuel Canister", "Oil Barrel", "Biofuel"}
-local campfireDropPos = Vector3.new(0, 19, 0) -- Change as needed for actual campfire location
+-- variabel global toggle
+local autoCookedToggle = false
 
-local function autoUpgradeCampfireLoop()
-    while autoUpgradeCampfireEnabled do
-        for _, fuelName in ipairs(campfireFuelItems) do
-            local found = false
-            for _, item in ipairs(Workspace.Items:GetChildren()) do
-                if item.Name == fuelName then
-                    found = true
-                    pcall(function()
-                        -- Move item to campfire's fuel position
-                        local part = item:IsA("Model") and (item.PrimaryPart or item:FindFirstChildWhichIsA("BasePart")) or item
-                        if part then
-                            part.CFrame = CFrame.new(campfireDropPos)
-                            -- Optionally fire server event to add fuel or upgrade campfire
-                            ReplicatedStorage.RemoteEvents.RequestAddFuel:InvokeServer(item)
+-- fungsi utama
+local function bringItemsSlow()
+    while autoCookedToggle do
+        for _, v in pairs(workspace.Items:GetChildren()) do
+            if not autoCookedToggle then break end
+            if itemLookup[v.Name] and v:IsA("Model") then
+                -- pastikan ada PrimaryPart
+                if not v.PrimaryPart then
+                    local primary = v:FindFirstChildWhichIsA("BasePart")
+                    if primary then
+                        v.PrimaryPart = primary
+                    end
+                end
+
+                if v.PrimaryPart then
+                    -- teleport ke posisi target
+                    v:SetPrimaryPartCFrame(targetCFrame)
+
+                    -- pastikan semua bagian bisa jatuh
+                    for _, part in pairs(v:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.Anchored = false
                         end
-                    end)
-                    break
+                    end
+
+                    -- delay biar gak lag
+                    task.wait(0.2)
                 end
             end
-            if found then break end
         end
-        task.wait(5) -- wait between attempts
+        task.wait(1) -- tunggu sebentar sebelum ulang scan
     end
 end
-
--- ======================= Auto Plant =======================
-
-local AutoPlantToggle = false
-local PlantPosition = Vector3.new(-41.2053, 1.0633, 29.2236) -- replace with desired planting coordinates
-
-local function autoplant()
-    while AutoPlantToggle do
-        local args = {
-            Instance.new("Model"),
-            PlantPosition
-        }
-        pcall(function()
-            ReplicatedStorage.RemoteEvents.RequestPlantItem:InvokeServer(unpack(args))
-        end)
-        task.wait(1) -- Wait between planting attempts
-    end
-end
-
--- ======================= Auto Scrap =======================
-
-local autoScrapItemsEnabled = false
-local scrapjunkItems = {"Log", "Chair", "Tyre", "Bolt", "Broken Fan", "Broken Microwave", "Sheet Metal", "Old Radio", "Washing Machine", "Old Car Engine"}
-local autoScrapPos = Vector3.new(21, 20, -5) -- set target scrap position
-
-local function autoScrapLoop()
-    while autoScrapItemsEnabled do
-        for _, scrapName in ipairs(scrapjunkItems) do
-            local found = false
-            for _, item in ipairs(Workspace.Items:GetChildren()) do
-                if item.Name == scrapName then
-                    found = true
-                    pcall(function()
-                        -- Move scrap item to scrap position
-                        local part = item:IsA("Model") and (item.PrimaryPart or item:FindFirstChildWhichIsA("BasePart")) or item
-                        if part then
-                            part.CFrame = CFrame.new(autoScrapPos)
-                            -- Fire server event to scrap item if any
-                            ReplicatedStorage.RemoteEvents.RequestScrapItem:InvokeServer(item)
-                        end
-                    end)
-                    break
-                end
-            end
-            if found then break end
-        end
-        task.wait(3) -- cooldown between scrap attempts
-    end
-end
-
--- UI toggle example
-Tabs.Auto:Toggle({
-    Title = "Auto Scrap",
-    Value = false,
-    Callback = function(state)
-        autoScrapItemsEnabled = state
-        if state then
-            task.spawn(autoScrapLoop)
-        end
-    end
-})
 
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
@@ -503,106 +430,100 @@ Tabs.Home:Paragraph({
 
 Tabs.Farm:Section({ Title = "Farm" })
 
+-- Chop Aura Toggle
 Tabs.Farm:Toggle({
     Title = "Chop Aura",
     Value = false,
     Callback = function(state)
+        if killAuraToggle then
+            killAuraToggle = false
+        end
         chopAuraToggle = state
         if state then
             task.spawn(chopAuraLoop)
         else
-            local tool, _ = getAnyToolWithDamageID(true)
+            local tool, _ = getAnyToolWithDamageID()
             unequipTool(tool)
         end
     end
 })
 
-Tabs.Farm:Slider({
-    Title = "Aura Radius",
-    Step = 1,
-    Value = {
-        Min = 1,
-        Max = 500,
-        Default = auraRadius,
-    },
-    Callback = function(value)
-        auraRadius = value
-    end
-})
-
+-- Kill Aura Toggle
 Tabs.Farm:Toggle({
     Title = "Kill Aura",
     Value = false,
     Callback = function(state)
+        if chopAuraToggle then
+            chopAuraToggle = false
+        end
         killAuraToggle = state
         if state then
             task.spawn(killAuraLoop)
         else
-            local tool, _ = getAnyToolWithDamageID(false)
+            local tool, _ = getAnyToolWithDamageID()
             unequipTool(tool)
         end
     end
 })
 
--- Adding the Aura Radius slider to the Farm tab
-Tabs.Farm:Slider({
-    Title = "Aura Radius",
-    Step = 1,
-    Value = {
-        Min = 1,
-        Max = 500,
-        Default = auraRadius,
-    },
-    Callback = function(value) 
-        auraRadius = value
+-- Chop Aura Radius Input
+Tabs.Farm:Input({
+    Title = "Chop Aura Radius",
+    Value = tostring(chopAuraRadius),
+    Placeholder = "Enter Chop Aura Radius (ex: 75)",
+    Callback = function(input)
+        local number = tonumber(input)
+        if number and number > 0 then
+            chopAuraRadius = number
+        end
     end
 })
+
+-- Kill Aura Radius Input
+Tabs.Farm:Input({
+    Title = "Kill Aura Radius",
+    Value = tostring(killAuraRadius),
+    Placeholder = "Enter Kill Aura Radius (ex: 75)",
+    Callback = function(input)
+        local number = tonumber(input)
+        if number and number > 0 then
+            killAuraRadius = number
+        end
+    end
+})
+
 
 Tabs.Auto:Section({ Title = "Automation" })
 
+Tabs.Auto:Dropdown({
+    Title = "Select Submit",
+    Values = { "CampFire", "Scrapper" },
+    Value = "CampFire",
+    Callback = function(option)
+        selectedCFrame = option
+    end
+})
+
 Tabs.Auto:Toggle({
-    Title = "Auto Food",
+    Title = "Auto Submit",
     Value = false,
     Callback = function(state)
-        autoFeedToggle = state
+        autoSubmit = state
         if state then
-            task.spawn(autoFeedLoop)
+        else
         end
     end
 })
 
--- UI toggle example
+-- toggle di UI
 Tabs.Auto:Toggle({
-    Title = "Auto Cook",
+    Title = "Auto Cooked",
     Value = false,
     Callback = function(state)
-        autoCookEnabled = state
+        autoCookedToggle = state
+        print("Auto Cooked: " .. tostring(state))
         if state then
-            task.spawn(autoCookLoop)
-        end
-    end
-})
-
--- UI toggle example
-Tabs.Auto:Toggle({
-    Title = "Auto Upgrade Campfire",
-    Value = false,
-    Callback = function(state)
-        autoUpgradeCampfireEnabled = state
-        if state then
-            task.spawn(autoUpgradeCampfireLoop)
-        end
-    end
-})
-
--- UI toggle example
-Tabs.Auto:Toggle({
-    Title = "Auto Plant",
-    Value = false,
-    Callback = function(state)
-        AutoPlantToggle = state
-        if state then
-            task.spawn(autoplant)
+            task.spawn(bringItemsSlow)
         end
     end
 })
