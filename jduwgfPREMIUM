@@ -33,6 +33,10 @@ local games = {
         placeIds = {127742093697776},
         url = 'https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/wfnwefjwewidjeuf'
     },
+    ["99 Nights"] = {
+        placeIds = {126509999114328},
+        url = 'https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwfewfefef99%20Nig'
+    },
     ["Fisch"] = {
         placeIds = {16732694052, 131716211654599},
         url = 'https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/wjdgydfwydwyFISCH'
