@@ -1251,7 +1251,7 @@ Tabs.Shop:Dropdown({
 
 -- Toggle untuk purchase weather
 local purchasing = false
-Tabs.Farm:Toggle({ 
+Tabs.Shop:Toggle({ 
     Title = "Purchase Weather", 
     Value = false,
     Callback = function(state)
