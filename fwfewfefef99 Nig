@@ -521,7 +521,6 @@ Tabs.Auto:Toggle({
     Value = false,
     Callback = function(state)
         autoCookedToggle = state
-        print("Auto Cooked: " .. tostring(state))
         if state then
             task.spawn(bringItemsSlow)
         end
