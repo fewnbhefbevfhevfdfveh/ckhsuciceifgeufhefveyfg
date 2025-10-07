@@ -1,0 +1,368 @@
+-- ======================= Chop Aura =======================
+
+local chopAuraToggle = false
+local auraRadius = 50
+local currentammount = 0
+
+local toolsDamageIDs = {
+    ["Old Axe"] = "3_7367831688",
+    ["Good Axe"] = "112_7367831688",
+    ["Strong Axe"] = "116_7367831688",
+}
+
+local function getAnyToolWithDamageID(isChopAura)
+    for toolName, damageID in pairs(toolsDamageIDs) do
+        if isChopAura and toolName ~= "Old Axe" and toolName ~= "Good Axe" and toolName ~= "Strong Axe" then
+            continue
+        end
+        local tool = game.Players.LocalPlayer:FindFirstChild("Inventory") and game.Players.LocalPlayer.Inventory:FindFirstChild(toolName)
+        if tool then
+            return tool, damageID
+        end
+    end
+    return nil, nil
+end
+
+local function equipTool(tool)
+    if tool then
+        game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents").EquipItemHandle:FireServer("FireAllClients", tool)
+    end
+end
+
+local function unequipTool(tool)
+    if tool then
+        game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents").UnequipItemHandle:FireServer("FireAllClients", tool)
+    end
+end
+
+local function chopAuraLoop()
+    while chopAuraToggle do
+        local character = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local tool, baseDamageID = getAnyToolWithDamageID(true)
+            if tool and baseDamageID then
+                equipTool(tool)
+                currentammount = currentammount + 1
+                local trees = {}
+                local map = workspace:FindFirstChild("Map")
+                if map then
+                    if map:FindFirstChild("Foliage") then
+                        for _, obj in ipairs(map.Foliage:GetChildren()) do
+                            if obj:IsA("Model") and (obj.Name == "Small Tree" or obj.Name == "Snowy Small Tree") then
+                                table.insert(trees, obj)
+                            end
+                        end
+                    end
+                    if map:FindFirstChild("Landmarks") then
+                        for _, obj in ipairs(map.Landmarks:GetChildren()) do
+                            if obj:IsA("Model") and obj.Name == "Small Tree" then
+                                table.insert(trees, obj)
+                            end
+                        end
+                    end
+                end
+                for _, tree in ipairs(trees) do
+                    local trunk = tree:FindFirstChild("Trunk")
+                    if trunk and trunk:IsA("BasePart") and (trunk.Position - hrp.Position).Magnitude <= auraRadius then
+                        local alreadyammount = false
+                        task.spawn(function()
+                            while chopAuraToggle and tree and tree.Parent and not alreadyammount do
+                                alreadyammount = true
+                                currentammount = currentammount + 1
+                                pcall(function()
+                                    game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents").ToolDamageObject:InvokeServer(
+                                        tree,
+                                        tool,
+                                        tostring(currentammount) .. "_7367831688",
+                                        CFrame.new(-2.962610244751, 4.5547881126404, -75.950843811035, 0.89621275663376, -1.3894891459643e-08, 0.44362446665764, -7.994568895775e-10, 1, 3.293635941759e-08, -0.44362446665764, -2.9872644802253e-08, 0.89621275663376)
+                                    )
+                                end)
+                                task.wait(0.5)
+                            end
+                        end)
+                    end
+                end
+                task.wait(0.1)
+            else
+                task.wait(1)
+            end
+        else
+            task.wait(0.5)
+        end
+    end
+end
+
+-- ======================= Kill Aura =======================
+
+-- Kill Aura variables
+local killAuraToggle = false
+local auraRadius = 50
+
+-- Function to get any tool with damage ID
+local function getAnyToolWithDamageID(isChopAura)
+    for toolName, damageID in pairs(toolsDamageIDs) do
+        if isChopAura and toolName ~= "Old Axe" and toolName ~= "Good Axe" and toolName ~= "Strong Axe" then
+            continue
+        end
+        local tool = LocalPlayer:FindFirstChild("Inventory") and LocalPlayer.Inventory:FindFirstChild(toolName)
+        if tool then
+            return tool, damageID
+        end
+    end
+    return nil, nil
+end
+
+-- Equip tool function
+local function equipTool(tool)
+    if tool then
+        ReplicatedStorage:WaitForChild("RemoteEvents").EquipItemHandle:FireServer("FireAllClients", tool)
+    end
+end
+
+-- Unequip tool function
+local function unequipTool(tool)
+    if tool then
+        ReplicatedStorage:WaitForChild("RemoteEvents").UnequipItemHandle:FireServer("FireAllClients", tool)
+    end
+end
+
+-- Kill Aura loop
+local function killAuraLoop()
+    while killAuraToggle do
+        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local tool, damageID = getAnyToolWithDamageID(false)
+            if tool and damageID then
+                equipTool(tool)
+                for _, mob in ipairs(Workspace.Characters:GetChildren()) do
+                    if mob:IsA("Model") then
+                        local part = mob:FindFirstChildWhichIsA("BasePart")
+                        if part and (part.Position - hrp.Position).Magnitude <= auraRadius then
+                            pcall(function()
+                                ReplicatedStorage:WaitForChild("RemoteEvents").ToolDamageObject:InvokeServer(
+                                    mob,
+                                    tool,
+                                    damageID,
+                                    CFrame.new(part.Position)
+                                )
+                            end)
+                        end
+                    end
+                end
+                task.wait(0.1)
+            else
+                task.wait(1)
+            end
+        else
+            task.wait(0.5)
+        end
+    end
+end
+
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+local Localization = WindUI:Localization({
+    Enabled = true,
+    Prefix = "loc:",
+    DefaultLanguage = "en",
+    Translations = {
+        ["en"] = {
+            ["WINDUI_EXAMPLE"] = "WindUI Example",
+            ["WELCOME"] = "Welcome to WindUI!",
+            ["LIB_DESC"] = "Beautiful UI library for Roblox",
+            ["SETTINGS"] = "Settings",
+            ["APPEARANCE"] = "Appearance",
+            ["FEATURES"] = "Features",
+            ["UTILITIES"] = "Utilities",
+            ["UI_ELEMENTS"] = "UI Elements",
+            ["CONFIGURATION"] = "Configuration",
+            ["SAVE_CONFIG"] = "Save Configuration",
+            ["LOAD_CONFIG"] = "Load Configuration",
+            ["THEME_SELECT"] = "Select Theme",
+            ["TRANSPARENCY"] = "Window Transparency",
+            ["LOCKED_TAB"] = "Locked Tab"
+        }
+    }
+})
+
+WindUI.TransparencyValue = 0.2
+WindUI:SetTheme("Dark")
+
+local function gradient(text, startColor, endColor)
+    local result = ""
+    for i = 1, #text do
+        local t = (i - 1) / (#text - 1)
+        local r = math.floor((startColor.R + (endColor.R - startColor.R) * t) * 255)
+        local g = math.floor((startColor.G + (endColor.G - startColor.G) * t) * 255)
+        local b = math.floor((startColor.B + (endColor.B - startColor.B) * t) * 255)
+        result = result .. string.format('<font color="rgb(%d,%d,%d)">%s</font>', r, g, b, text:sub(i, i))
+    end
+    return result
+end
+
+
+-- Ambil nama player
+local player = game.Players.LocalPlayer
+local playerName = player.Name
+local playerDisplayName = player.DisplayName
+
+-- Buat Window versi baru
+local Window = WindUI:CreateWindow({
+    Title = "Nexa - Premium",
+    Icon = "rbxassetid://107488593993096",
+    Author = "99 Script | @ Han",
+    Folder = "Hanzo",
+    Size = UDim2.fromOffset(540, 420),
+    Transparent = true,
+    Theme = "Dark",
+    
+    HidePanelBackground = true,
+    NewElements = false,
+    Background = "https://i.imgur.com/GsfBtXF.jpeg",
+    User = {
+        Enabled = true,
+        Anonymous = false,           -- false biar muncul nama asli
+        Name = playerDisplayName,    -- Nama tampilan
+        UserName = "@" .. playerName, -- Username Roblox
+        Callback = function()
+            WindUI:Notify({
+                Title = "User Profile",
+                Content = "User profile clicked!",
+                Duration = 3
+            })
+        end
+    },
+    
+    Acrylic = false,
+    HideSearchBar = false,
+    SideBarWidth = 200,
+})
+
+Window:Tag({
+    Title = "v0.1.3",
+    Color = Color3.fromHex("#30ff6a")
+})
+
+
+Window:EditOpenButton({
+    Enabled = false
+})
+
+task.delay(6.5, function()
+    WindUI:Notify({
+        Title = "Bug Report",
+        Content = "If there are any errors, please let the developer know. Join Discord to report bugs.",
+        Icon = "cloud-alert",
+        Duration = 6
+    })
+end)
+
+task.delay(13, function()
+    WindUI:Notify({
+        Title = "Purchase",
+        Content = "If you want to buy this premium script key, join Discord to buy premium.",
+        Icon = "shopping-cart",
+        Duration = 6
+    })
+end)
+
+local Tabs = {
+    Home = Window:Tab({ Title = "Home", Icon = "house"  }),
+    Info = Window:Tab({ Title = "Info", Icon = "info"  }),
+    Exclusive = Window:Tab({ Title = "Exclusive", Icon = "sparkles"  }),
+    Farm = Window:Tab({ Title = "Main", Icon = "swords"  }),
+}
+
+Tabs.Home:Section({ Title = "Update" })
+
+Tabs.Home:Paragraph({
+    Title = "Here's what's new:",
+    Desc = [[
+[+] Added Teleport To Prison
+[+] Added Teleport To Plot
+    ]]
+})
+
+Tabs.Home:Section({ Title = "Server" })
+
+Tabs.Home:Paragraph({
+    Title = "Discord - Nexa | COMMUNITY",
+    Desc = "Indonesia 🇮🇩",
+    Image = "https://images-eds-ssl.xboxlive.com/image?url=4rt9.lXDC4H_93laV1_eHHFT949fUipzkiFOBH3fAiZZUCdYojwUyX2aTonS1aIwMrx6NUIsHfUHSLzjGJFxxsG72wAo9EWJR4yQWyJJaDaK1XdUso6cUMpI9hAdPUU_FNs11cY1X284vsHrnWtRw7oqRpN1m9YAg21d_aNKnIo-&format=source",
+    ImageSize = 20,
+    Color = "Grey",
+    Buttons = {
+        {
+            Title = "Copy Link",
+            Icon = "copy",
+            Variant = "Tertiary",
+            Callback = function()
+                setclipboard("discord.gg/ECxQFc97F5")
+                WindUI:Notify({
+                    Title = "Copied!",
+                    Content = "Discord link copied to clipboard",
+                    Duration = 2
+                })
+            end
+        }
+    }
+})
+
+Tabs.Farm:Section({ Title = "Farm" })
+
+Tabs.Farm:Toggle({
+    Title = "Chop Aura",
+    Value = false,
+    Callback = function(state)
+        chopAuraToggle = state
+        if state then
+            task.spawn(chopAuraLoop)
+        else
+            local tool, _ = getAnyToolWithDamageID(true)
+            unequipTool(tool)
+        end
+    end
+})
+
+Tabs.Farm:Slider({
+    Title = "Aura Radius",
+    Step = 1,
+    Value = {
+        Min = 1,
+        Max = 500,
+        Default = auraRadius,
+    },
+    Callback = function(value)
+        auraRadius = value
+    end
+})
+
+Tabs.Farm:Toggle({
+    Title = "Kill Aura",
+    Value = false,
+    Callback = function(state)
+        killAuraToggle = state
+        if state then
+            task.spawn(killAuraLoop)
+        else
+            local tool, _ = getAnyToolWithDamageID(false)
+            unequipTool(tool)
+        end
+    end
+})
+
+-- Adding the Aura Radius slider to the Farm tab
+Tabs.Farm:Slider({
+    Title = "Aura Radius",
+    Step = 1,
+    Value = {
+        Min = 1,
+        Max = 500,
+        Default = auraRadius,
+    },
+    Callback = function(value) 
+        auraRadius = value
+    end
+})
