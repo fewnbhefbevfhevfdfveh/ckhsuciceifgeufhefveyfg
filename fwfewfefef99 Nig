@@ -161,6 +161,197 @@ local function killAuraLoop()
     end
 end
 
+-- ======================= Auto Food =======================
+
+-- Auto Food variables
+local autoFeedToggle = false
+local hungerThreshold = 75 -- hunger percentage threshold to start auto feeding
+local alimentos = {
+    "Apple",
+    "Berry",
+    "Carrot",
+    "Cake",
+    "Chili",
+    "Cooked Ribs",
+    "Cooked Mackerel",
+    "Cooked Salmon",
+    "Cooked Morsel",
+    "Cooked Steak"
+}
+
+-- Function to get current hunger percentage (assuming a UI element)
+function ghn()
+    return math.floor(LocalPlayer.PlayerGui.Interface.StatBars.HungerBar.Bar.Size.X.Scale * 100)
+end
+
+-- Function to feed a specific food item from workspace items
+function feed(nome)
+    for _, item in ipairs(Workspace.Items:GetChildren()) do
+        if item.Name == nome then
+            ReplicatedStorage.RemoteEvents.RequestConsumeItem:InvokeServer(item)
+            break
+        end
+    end
+end
+
+-- Notification when food is not available
+function notifeed(nome)
+    WindUI:Notify({
+        Title = "Auto Food Paused",
+        Content = "The food (" .. nome .. ") is gone",
+        Duration = 3
+    })
+end
+
+-- Auto feed loop
+local function autoFeedLoop()
+    while autoFeedToggle do
+        local currentHunger = ghn()
+        if currentHunger < hungerThreshold then
+            local fed = false
+            for _, foodName in ipairs(alimentos) do
+                if wiki(foodName) > 0 then
+                    feed(foodName)
+                    fed = true
+                    break
+                end
+            end
+            if not fed then
+                notifeed("any")
+                autoFeedToggle = false -- stop auto feed if no food found
+            end
+        end
+        task.wait(2) -- check every 2 seconds
+    end
+end
+
+-- Wiki function to count items of specific name in workspace
+function wiki(nome)
+    local count = 0
+    for _, item in ipairs(Workspace.Items:GetChildren()) do
+        if item.Name == nome then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+-- ======================= Auto Cook =======================
+
+local autoCookEnabled = false
+local autocookItems = {"Morsel", "Steak", "Ribs", "Salmon", "Mackerel"}
+
+local function autoCookLoop()
+    while autoCookEnabled do
+        for _, foodName in ipairs(autocookItems) do
+            local found = false
+            for _, item in ipairs(Workspace.Items:GetChildren()) do
+                if item.Name == foodName then
+                    found = true
+                    pcall(function()
+                        ReplicatedStorage.RemoteEvents.RequestCookItem:InvokeServer(item)
+                    end)
+                    break
+                end
+            end
+            if found then break end
+        end
+        task.wait(3) -- Wait between cooking attempts
+    end
+end
+
+-- ======================= Auto Upgrade Campfire =======================
+
+local autoUpgradeCampfireEnabled = false
+local campfireFuelItems = {"Log", "Coal", "Chair", "Fuel Canister", "Oil Barrel", "Biofuel"}
+local campfireDropPos = Vector3.new(0, 19, 0) -- Change as needed for actual campfire location
+
+local function autoUpgradeCampfireLoop()
+    while autoUpgradeCampfireEnabled do
+        for _, fuelName in ipairs(campfireFuelItems) do
+            local found = false
+            for _, item in ipairs(Workspace.Items:GetChildren()) do
+                if item.Name == fuelName then
+                    found = true
+                    pcall(function()
+                        -- Move item to campfire's fuel position
+                        local part = item:IsA("Model") and (item.PrimaryPart or item:FindFirstChildWhichIsA("BasePart")) or item
+                        if part then
+                            part.CFrame = CFrame.new(campfireDropPos)
+                            -- Optionally fire server event to add fuel or upgrade campfire
+                            ReplicatedStorage.RemoteEvents.RequestAddFuel:InvokeServer(item)
+                        end
+                    end)
+                    break
+                end
+            end
+            if found then break end
+        end
+        task.wait(5) -- wait between attempts
+    end
+end
+
+-- ======================= Auto Plant =======================
+
+local AutoPlantToggle = false
+local PlantPosition = Vector3.new(-41.2053, 1.0633, 29.2236) -- replace with desired planting coordinates
+
+local function autoplant()
+    while AutoPlantToggle do
+        local args = {
+            Instance.new("Model"),
+            PlantPosition
+        }
+        pcall(function()
+            ReplicatedStorage.RemoteEvents.RequestPlantItem:InvokeServer(unpack(args))
+        end)
+        task.wait(1) -- Wait between planting attempts
+    end
+end
+
+-- ======================= Auto Scrap =======================
+
+local autoScrapItemsEnabled = false
+local scrapjunkItems = {"Log", "Chair", "Tyre", "Bolt", "Broken Fan", "Broken Microwave", "Sheet Metal", "Old Radio", "Washing Machine", "Old Car Engine"}
+local autoScrapPos = Vector3.new(21, 20, -5) -- set target scrap position
+
+local function autoScrapLoop()
+    while autoScrapItemsEnabled do
+        for _, scrapName in ipairs(scrapjunkItems) do
+            local found = false
+            for _, item in ipairs(Workspace.Items:GetChildren()) do
+                if item.Name == scrapName then
+                    found = true
+                    pcall(function()
+                        -- Move scrap item to scrap position
+                        local part = item:IsA("Model") and (item.PrimaryPart or item:FindFirstChildWhichIsA("BasePart")) or item
+                        if part then
+                            part.CFrame = CFrame.new(autoScrapPos)
+                            -- Fire server event to scrap item if any
+                            ReplicatedStorage.RemoteEvents.RequestScrapItem:InvokeServer(item)
+                        end
+                    end)
+                    break
+                end
+            end
+            if found then break end
+        end
+        task.wait(3) -- cooldown between scrap attempts
+    end
+end
+
+-- UI toggle example
+Tabs.Auto:Toggle({
+    Title = "Auto Scrap",
+    Value = false,
+    Callback = function(state)
+        autoScrapItemsEnabled = state
+        if state then
+            task.spawn(autoScrapLoop)
+        end
+    end
+})
+
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
 local Localization = WindUI:Localization({
@@ -271,8 +462,8 @@ end)
 local Tabs = {
     Home = Window:Tab({ Title = "Home", Icon = "house"  }),
     Info = Window:Tab({ Title = "Info", Icon = "info"  }),
-    Exclusive = Window:Tab({ Title = "Exclusive", Icon = "sparkles"  }),
     Farm = Window:Tab({ Title = "Main", Icon = "swords"  }),
+    Auto = Window:Tab({ Title = "Automaticaly", Icon = "repeat-2"  }),
 }
 
 Tabs.Home:Section({ Title = "Update" })
@@ -364,5 +555,54 @@ Tabs.Farm:Slider({
     },
     Callback = function(value) 
         auraRadius = value
+    end
+})
+
+Tabs.Auto:Section({ Title = "Automation" })
+
+Tabs.Auto:Toggle({
+    Title = "Auto Food",
+    Value = false,
+    Callback = function(state)
+        autoFeedToggle = state
+        if state then
+            task.spawn(autoFeedLoop)
+        end
+    end
+})
+
+-- UI toggle example
+Tabs.Auto:Toggle({
+    Title = "Auto Cook",
+    Value = false,
+    Callback = function(state)
+        autoCookEnabled = state
+        if state then
+            task.spawn(autoCookLoop)
+        end
+    end
+})
+
+-- UI toggle example
+Tabs.Auto:Toggle({
+    Title = "Auto Upgrade Campfire",
+    Value = false,
+    Callback = function(state)
+        autoUpgradeCampfireEnabled = state
+        if state then
+            task.spawn(autoUpgradeCampfireLoop)
+        end
+    end
+})
+
+-- UI toggle example
+Tabs.Auto:Toggle({
+    Title = "Auto Plant",
+    Value = false,
+    Callback = function(state)
+        AutoPlantToggle = state
+        if state then
+            task.spawn(autoplant)
+        end
     end
 })
