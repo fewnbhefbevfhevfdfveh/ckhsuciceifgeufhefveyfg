@@ -1266,7 +1266,6 @@ Tabs.Shop:Button({
 Tabs.Shop:Section({ Title = "Weather" })
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local HttpService = game:GetService("HttpService")
 
 local PurchaseWeather = ReplicatedStorage
     :WaitForChild("Packages")
@@ -1287,46 +1286,36 @@ Tabs.Shop:Dropdown({
     AllowNone = true,
     Callback = function(option)
         selectedWeathers = option -- ini table berisi semua pilihan
-        if #selectedWeathers > 0 then
-            WindUI:Notify({
-                Title = "Weather Selected",
-                Content = "You chose: " .. table.concat(selectedWeathers, ", "),
-                Duration = 1,
-            })
-        else
-            WindUI:Notify({
-                Title = "Weather Cleared",
-                Content = "No weather selected",
-                Duration = 1,
-            })
+    end
+})
+
+-- Toggle untuk purchase weather
+local purchasing = false
+Tabs.Farm:Toggle({ 
+    Title = "Purchase Weather", 
+    Value = false,
+    Callback = function(state)
+        purchasing = state
+        if purchasing then
+            if #selectedWeathers == 0 then
+                purchasing = false
+                return
+            end
+
+            task.spawn(function()
+                while purchasing do
+                    for _, weather in ipairs(selectedWeathers) do
+                        PurchaseWeather:InvokeServer(weather)
+                        task.wait(0.3)
+                        if not purchasing then break end
+                    end
+                    task.wait(0.5) -- jeda sebelum loop ulang
+                end
+            end)
         end
     end
 })
 
--- Button buat confirm purchase
-Tabs.Shop:Button({
-    Title = "Purchase Weather",
-    Callback = function()
-        if #selectedWeathers > 0 then
-            for _, weather in ipairs(selectedWeathers) do
-                local args = { weather }
-                PurchaseWeather:InvokeServer(unpack(args))
-                WindUI:Notify({
-                    Title = "Purchase Success",
-                    Content = "You bought weather: " .. weather,
-                    Duration = 1,
-                })
-                task.wait(0.3) -- kasih jeda biar ga terlalu spam
-            end
-        else
-            WindUI:Notify({
-                Title = "Error",
-                Content = "Please select at least one weather first!",
-                Duration = 2,
-            })
-        end
-    end
-})
 
 Tabs.Boat:Section({ Title = "Purchase" })
 
