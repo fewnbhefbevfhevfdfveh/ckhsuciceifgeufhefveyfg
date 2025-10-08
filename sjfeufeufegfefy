@@ -726,7 +726,17 @@ local Net = ReplicatedStorage:WaitForChild("Packages")
 local ChargeFishingRod = Net:WaitForChild("RF/ChargeFishingRod")
 local RequestFishingMinigameStarted = Net:WaitForChild("RF/RequestFishingMinigameStarted")
 
-local AutoFishV2 = false  -- status toggle
+local AutoFishV2 = false
+local selectedVersion = "Perfect" -- default versi
+
+-- Data versi Step3
+local FishingVersions = {
+    ["Amazing"] = {-1.233184814453125, 0.9002424201837305},
+    ["Great"]   = {-1.233184814453125, 0.7065944988657701},
+    ["Good"]    = {-1.233184814453125, 0.47284815807590747},
+    ["Ok"]      = {-1.233184814453125, 0.03616986710429271},
+    ["Perfect"] = {-1.233184814453125, 0.9963770604990823},
+}
 
 -- Step Functions
 local function Step1()
@@ -738,10 +748,24 @@ local function Step2()
 end
 
 local function Step3()
-    RequestFishingMinigameStarted:InvokeServer(-0.5718746185302734, 0.96170184695718)
+    local args = FishingVersions[selectedVersion]
+    if args then
+        RequestFishingMinigameStarted:InvokeServer(unpack(args))
+    else
+    end
 end
 
--- Toggle UI WindUI
+-- Dropdown untuk pilih versi
+Tabs.Farm:Dropdown({
+    Title = "Select Power",
+    Values = {"Amazing", "Great", "Good", "Ok", "Perfect"},
+    Value = selectedVersion,
+    Callback = function(option)
+        selectedVersion = option
+    end
+})
+
+-- Toggle Auto Fish
 Tabs.Farm:Toggle({
     Title = "Auto Fish V2",
     Value = false,
@@ -759,7 +783,7 @@ Tabs.Farm:Toggle({
     end
 })
 
--- Listener Step4
+-- Listener perubahan posisi Container
 local lastPosition = Container.Position
 local lastChangeTime = tick()
 
@@ -777,18 +801,17 @@ Container:GetPropertyChangedSignal("Position"):Connect(function()
     end
 end)
 
--- Watchdog untuk restart jika position tidak berubah 8 detik
+-- Watchdog restart bila tidak berubah 8 detik
 task.spawn(function()
     while true do
         task.wait(1)
         if AutoFishV2 and tick() - lastChangeTime >= 8 then
-            -- ulangi Step1 → Step2 → Step3
             Step1()
             task.wait(0.01)
             Step2()
             task.wait(0.01)
             Step3()
-            lastChangeTime = tick() -- reset timer
+            lastChangeTime = tick()
         end
     end
 end)
