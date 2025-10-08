@@ -2686,99 +2686,84 @@ Tabs.Visual:Toggle({
     end
 })
 
--------------------------------------------------------
--- TOGGLE BUTTON (PUTIH AGAK TRANSPARAN)
--------------------------------------------------------
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = game.CoreGui
-ScreenGui.Name = "WindUIButton"
 
--- 🔘 ImageButton utama
 local ImgBtn = Instance.new("ImageButton")
 ImgBtn.Parent = ScreenGui
 ImgBtn.Size = UDim2.new(0, 60, 0, 60)
-ImgBtn.Position = UDim2.new(0, 100, 1, -300)
-ImgBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- warna putih
-ImgBtn.BackgroundTransparency = 0.3 -- agak transparan
-ImgBtn.Image = "rbxassetid://137184014634632" -- icon planet
-ImgBtn.ImageTransparency = 0.15 -- icon sedikit transparan juga
-ImgBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
-ImgBtn.AutoButtonColor = false
+ImgBtn.Position = UDim2.new( 0, 100, 1, -300)
+ImgBtn.BackgroundTransparency = 1
+ImgBtn.Image = "rbxassetid://137184014634632" -- ganti dengan gambar planet
 
--- 🔲 Sudut membulat
+-- Biar ujung tombol bulat/halus
 local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(1, 0) -- full bulat
+UICorner.CornerRadius = UDim.new(0, 15)
 UICorner.Parent = ImgBtn
 
--- ✏️ Garis pinggir halus
-local UIStroke = Instance.new("UIStroke")
-UIStroke.Color = Color3.fromRGB(200, 200, 200)
-UIStroke.Thickness = 2
-UIStroke.Transparency = 0.4 -- agak transparan
-UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-UIStroke.Parent = ImgBtn
-
+-- Toggle GUI dengan ImageButton
 local isOpen = false
-
--- 🔄 Animasi klik
-local function playClickAnim()
-	local shrink = TweenService:Create(ImgBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Size = UDim2.new(0, 50, 0, 50),
-		BackgroundTransparency = 0.45
-	})
-	local grow = TweenService:Create(ImgBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Size = UDim2.new(0, 60, 0, 60),
-		BackgroundTransparency = 0.3
-	})
-	shrink:Play()
-	shrink.Completed:Wait()
-	grow:Play()
-end
-
--- 🟢 Buka/tutup GUI
 ImgBtn.MouseButton1Click:Connect(function()
-	playClickAnim()
-	isOpen = not isOpen
-	if isOpen then
-		Window:Open()
-	else
-		Window:Close()
-	end
+    -- ANIMASI KLIK (scale kecil dulu baru balik normal)
+    local shrink = TweenService:Create(ImgBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 50, 0, 50)
+    })
+    local grow = TweenService:Create(ImgBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 60, 0, 60)
+    })
+
+    shrink:Play()
+    shrink.Completed:Wait()
+    grow:Play()
+
+    -- Toggle Window
+    if isOpen then
+        Window:Close()
+    else
+        Window:Open()
+    end
+    isOpen = not isOpen
 end)
 
--- 🖱️ Drag agar bisa dipindah
-local dragging, dragInput, dragStart, startPos
+local UserInputService = game:GetService("UserInputService")
+local dragging = false
+local dragInput, dragStart, startPos
 
 local function update(input)
-	local delta = input.Position - dragStart
-	ImgBtn.Position = UDim2.new(
-		startPos.X.Scale, startPos.X.Offset + delta.X,
-		startPos.Y.Scale, startPos.Y.Offset + delta.Y
-	)
+    local delta = input.Position - dragStart
+    ImgBtn.Position = UDim2.new(
+        startPos.X.Scale, startPos.X.Offset + delta.X,
+        startPos.Y.Scale, startPos.Y.Offset + delta.Y
+    )
 end
 
 ImgBtn.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragStart = input.Position
-		startPos = ImgBtn.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then dragging = false end
-		end)
-	end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = ImgBtn.Position
+
+        -- biar bisa lepas drag kalau jari/mouse diangkat
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
 end)
 
 ImgBtn.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		dragInput = input
-	end
+    if input.UserInputType == Enum.UserInputType.MouseMovement 
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		update(input)
-	end
+    if input == dragInput and dragging then
+        update(input)
+    end
 end)
