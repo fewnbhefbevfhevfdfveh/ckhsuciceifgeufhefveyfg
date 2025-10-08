@@ -1195,34 +1195,6 @@ Tabs.Shop:Button({
     end
 })
 
-Tabs.Shop:Section({ Title = "Items" })
-
--- Tombol Buy Diving Gear (menggunakan ProximityPrompt)
-local divingPrompt = workspace["!!! MENU RINGS"]["Diving Gear Display"].Top.ShopPurchasePrompt.ProximityPrompt
-Tabs.Shop:Button({
-    Title = "Purchase Diving Gear",
-    Callback = function()
-        fireproximityprompt(divingPrompt)
-    end
-})
-
--- Tombol Buy Fishing Radar (menggunakan RemoteEvent)
-Tabs.Shop:Button({
-    Title = "Purchase Fishing Radar",
-    Callback = function()
-        local args = {81} -- ganti 81 sesuai ID gear
-        local remote = game:GetService("ReplicatedStorage")
-            :WaitForChild("Packages")
-            :WaitForChild("_Index")
-            :WaitForChild("sleitnick_net@0.2.0")
-            :WaitForChild("net")
-            :WaitForChild("RF/PurchaseGear")
-        pcall(function()
-            remote:InvokeServer(unpack(args))
-        end)
-    end
-})
-
 Tabs.Shop:Section({ Title = "Weather" })
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
