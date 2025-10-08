@@ -41,7 +41,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v1.2.4",
+    Title = "v1.2.5",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -68,7 +68,12 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-
+[+] Added Teleport to Sacred Temple
+[+] Added Buy Bamboo Rod
+[+] Added Teleport to Underground Cellar
+[+] Teleport to Ancient Jungle
+[+] Added New Bait Floral Bait
+[+] Added Super Speed Boat
     ]]
 })
 
@@ -801,7 +806,7 @@ Tabs.Farm:Toggle({
     end
 })
 
-Tabs.Auto:Section({ Title = "Deep Sea Quest" })
+Tabs.Auto:Section({ Title = "View Quests" })
 
 local board = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board
 local surfaceGui = board:WaitForChild("Gui")
@@ -839,6 +844,69 @@ for _, name in ipairs(labelNames) do
         label:GetPropertyChangedSignal("Text"):Connect(updateParagraph)
     end
 end
+ 
+-- Buat paragraph sekali saja
+local auraParagraph = Tabs.Auto:Paragraph({
+    Title = "Aura Boat Quest",
+    Desc = "" 
+})
+
+-- Update teks setiap 1 detik
+spawn(function()
+    while true do
+        local label1Text = workspace["!!! MENU RINGS"]["Aura Tracker"].Board.Gui.Content.Label1.Text
+        local label2Text = workspace["!!! MENU RINGS"]["Aura Tracker"].Board.Gui.Content.Label2.Text
+        local label3Text = workspace["!!! MENU RINGS"]["Aura Tracker"].Board.Gui.Content.Label3.Text
+
+        -- Gabungkan teks tanpa menampilkan "Label1/2/3"
+        local combinedText = label1Text .. "\n" .. label2Text .. "\n" .. label3Text
+
+        -- Update desc paragraph saja
+        auraParagraph:SetDesc(combinedText)
+
+        wait(1)
+    end
+end)
+
+-- Ganti target board
+local board = workspace["!!! MENU RINGS"]["Element Tracker"].Board
+local surfaceGui = board:WaitForChild("Gui")
+local content = surfaceGui:WaitForChild("Content")
+
+local labelNames = {"Label1", "Label2", "Label3", "Label4"}
+
+-- Buat 1 paragraf kosong
+local paragraph = Tabs.Auto:Paragraph({
+    Title = "Element Quest",
+    Desc = ""
+})
+
+-- Fungsi update isi paragraf
+local function updateParagraph()
+    local lines = {}
+
+    for _, name in ipairs(labelNames) do
+        local label = content:FindFirstChild(name)
+        if label then
+            table.insert(lines, label.Text)
+        end
+    end
+
+    paragraph:SetDesc(table.concat(lines, "\n"))
+end
+
+-- Isi pertama kali
+updateParagraph()
+
+-- Update otomatis kalau ada perubahan
+for _, name in ipairs(labelNames) do
+    local label = content:FindFirstChild(name)
+    if label then
+        label:GetPropertyChangedSignal("Text"):Connect(updateParagraph)
+    end
+end
+
+Tabs.Auto:Section({ Title = "Auto Quests" })
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -951,31 +1019,6 @@ Tabs.Auto:Toggle({
     end
 })
 
-Tabs.Auto:Section({ Title = "Aura Boat Quest" })
-
--- Buat paragraph sekali saja
-local auraParagraph = Tabs.Auto:Paragraph({
-    Title = "Aura Boat Quest",
-    Desc = "" 
-})
-
--- Update teks setiap 1 detik
-spawn(function()
-    while true do
-        local label1Text = workspace["!!! MENU RINGS"]["Aura Tracker"].Board.Gui.Content.Label1.Text
-        local label2Text = workspace["!!! MENU RINGS"]["Aura Tracker"].Board.Gui.Content.Label2.Text
-        local label3Text = workspace["!!! MENU RINGS"]["Aura Tracker"].Board.Gui.Content.Label3.Text
-
-        -- Gabungkan teks tanpa menampilkan "Label1/2/3"
-        local combinedText = label1Text .. "\n" .. label2Text .. "\n" .. label3Text
-
-        -- Update desc paragraph saja
-        auraParagraph:SetDesc(combinedText)
-
-        wait(1)
-    end
-end)
-
 -- Target CFrame
 local targetCFrame = CFrame.new(
     88.2434769, 9.53157043, 2685.2605,
@@ -1049,7 +1092,6 @@ Tabs.Auto:Toggle({
     end
 })
 
-
 Tabs.Shop:Section({ Title = "Rod" })
 
 -- Table mapping nama rod ke ID
@@ -1064,7 +1106,11 @@ local rodMap = {
 	["Midnight Rod"] = 80,
 	["Steampunk Rod"] = 6,
 	["Chrome Rod"] = 7,
+	["Fluorescent Rod"] = 255,
 	["Astral Rod"] = 5,
+	["Angler Rod"] = 168,
+	["Ares Rod"] = 126,
+	["Bamboo Rod"] = 258,
 }
 
 local selectedRods = {}
@@ -1110,24 +1156,6 @@ Tabs.Shop:Button({
     end
 })
 
--- Tombol Buy Angler Rod
-local anglerPrompt = workspace["!!! MENU RINGS"]["Ares Rod Stand"].Part.ShopPurchasePrompt.ProximityPrompt
-Tabs.Shop:Button({
-    Title = "Purchase Angler Rod",
-    Callback = function()
-        fireproximityprompt(anglerPrompt)
-    end
-})
-
--- Tombol Buy Ares Rod
-local aresPrompt = workspace["!!! MENU RINGS"]["Ares Rod Stand"].Part.ShopPurchasePrompt.ProximityPrompt
-Tabs.Shop:Button({
-    Title = "Purchase Ares Rod",
-    Callback = function()
-        fireproximityprompt(aresPrompt)
-    end
-})
-
 Tabs.Shop:Section({ Title = "Baits" })
 
 -- Table mapping nama bait ke ID
@@ -1140,6 +1168,7 @@ local BaitID = {
     ["Dark Matter Bait"] = 8,
     ["Corrupt Bait"] = 15,
     ["Aether Bait"] = 16,
+    ["Floral Bait"] = 20,
 }
 
 local selectedBaits = {}
@@ -1248,8 +1277,7 @@ Tabs.Shop:Toggle({
     end
 })
 
-
-Tabs.Boat:Section({ Title = "Purchase" })
+Tabs.Shop:Section({ Title = "Boat" })
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PurchaseBoat = ReplicatedStorage
@@ -1283,7 +1311,7 @@ table.sort(BoatNames) -- biar rapi alfabet
 local selectedBoatID = BoatList[BoatNames[1]]
 
 -- Dropdown Pilih Boat
-Tabs.Boat:Dropdown({ 
+Tabs.Shop:Dropdown({ 
     Title = "Select Boat",
     Values = BoatNames,
     Value = BoatNames[1],
@@ -1296,7 +1324,7 @@ Tabs.Boat:Dropdown({
 })
 
 -- Button Beli Boat
-Tabs.Boat:Button({ 
+Tabs.Shop:Button({ 
     Title = "Purchase Boat",
     Callback = function() 
         local args = {selectedBoatID}
@@ -1398,6 +1426,36 @@ Tabs.Boat:Button({
     end
 })
 
+Tabs.Boat:Toggle({
+    Title = "Super Speed Boats",
+    Default = false,
+    Callback = function(state)
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local BoatsModule = require(ReplicatedStorage.Shared.BoatsHandlingData)
+
+        -- Simpan Speed asli untuk restore
+        if not BoatsModule._OriginalSpeed then
+            BoatsModule._OriginalSpeed = {}
+            for boatName, boatData in pairs(BoatsModule) do
+                BoatsModule._OriginalSpeed[boatName] = boatData.Speed
+            end
+        end
+
+        if state then
+            -- ON: Set semua boat Speed = 1000
+            for _, boatData in pairs(BoatsModule) do
+                boatData.Speed = 1000
+            end
+        else
+            -- OFF: Restore Speed asli
+            for boatName, boatData in pairs(BoatsModule) do
+                if BoatsModule._OriginalSpeed[boatName] then
+                    boatData.Speed = BoatsModule._OriginalSpeed[boatName]
+                end
+            end
+        end
+    end
+})
 Tabs.Player:Section({ Title = "LocalPlayer" })
 
 Tabs.Player:Toggle({
@@ -1726,7 +1784,17 @@ local islands = {
     ["Tropical Grove"] = CFrame.new(-2046.1554, 6.26801682, 3660.56006, -0.739083588, 1.74285066e-08, 0.673613727, -5.79817758e-08, 1, -8.94902854e-08, -0.673613727, -1.05198126e-07, -0.739083588),
     ["Treasure Room"] = CFrame.new(-3599.53491, -266.57373, -1566.98657),
     ["Weather Machine"] = CFrame.new(-1525.72632, 6.49999952, 1892.23645, 0.0615941137, 6.608282509e-10, -0.998101294, -6.8356556e-08, 1, 3.55628549e-09, 0.998101294, 6.84458072e-08, 0.0615941137),
-    ["Sisyphus Statue"] = CFrame.new(-3692.22021, -135.574417, -1026.96167, -0.928567886, 9.83784361e-08, 0.371162564, 1.22746741e-07, 1, 4.20307664e-08, -0.371162564, 8.45874197e-08, -0.928567886)
+    ["Sisyphus Statue"] = CFrame.new(-3692.22021, -135.574417, -1026.96167, -0.928567886, 9.83784361e-08, 0.371162564, 1.22746741e-07, 1, 4.20307664e-08, -0.371162564, 8.45874197e-08, -0.928567886),
+    ["Ancient Jungle"] = CFrame.new(1275.54553, 7.85804176, -193.749756, 0.924119413, 5.65956171e-08, -0.382103801, -3.36512187e-08, 1, 6.67302302e-08, 0.382103801, -4.88084417e-08, 0.924119413),
+    ["Underground Cellar 1"] = CFrame.new(1954.18994, -41.7413597, -577.574768, -0.817980289, 0.573605001, 0.0434255376, 0.572797239, 0.81913203, -0.0304316022, -0.0530269668, -1.84206292e-05, -0.998593211),
+    ["Underground Cellar 2"] = CFrame.new(2120.27417, -93.1985779, -701.552185, -0.998591185, 0, 0.0530693457, 0, 1, 0, -0.0530693457, 0, -0.998591185),
+    ["Second Enchant Altar"] = CFrame.new(1478.29846, 126.044891, -613.519653, -0.117893577, 0, 0.993026376, 0, 1, 0, -0.993026376, 0, -0.117893577),
+    ["Mysterious Door"] = CFrame.new(1899.19629, 13.3589745, -577.593811, -0.0531117916, 0, -0.998588562, 0, 1, 0, 0.998588562, 0, -0.0531117916),
+    ["Temple Lever 1"] = CFrame.new(1485.66541, 5.41373634, -861.165161, -5.01871109e-05, 0.988927424, 0.148400292, -1, -5.01871109e-05, -3.74019146e-06, 3.74019146e-06, -0.148400292, 0.988927364),
+    ["Temple Lever 2"] = CFrame.new(898.490479, 5.41373587, -361.212708, 9.11951065e-06, 0.0998446345, -0.995003104, -1, 9.11951065e-06, -8.2552433e-06, 8.2552433e-06, 0.995003104, 0.0998445749),
+    ["Temple Lever 3"] = CFrame.new(1419.39148, 28.1637344, 79.5802917, 3.55243683e-05, -0.332731277, -0.943021655, -1, -3.55243683e-05, -2.51233578e-05, -2.51233578e-05, 0.943021655, -0.332731247),
+    ["Temple Lever 4"] = CFrame.new(1818.72156, 5.41373634, -285.160828, -1.15633011e-05, -0.192806393, 0.981236815, -1, 1.15633011e-05, -9.53674316e-06, -9.53674316e-06, -0.981236815, -0.192806482),
+    ["Temple"] = CFrame.new(1478.09546, 0.0774269104, -612.817993, 0.993017375, 0, 0.117968373, 0, 1, 0, -0.117968373, 0, 0.993017375),
 }
 
 -- Ambil semua nama Island
