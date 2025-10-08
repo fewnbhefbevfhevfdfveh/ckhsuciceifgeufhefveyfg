@@ -129,8 +129,77 @@ local function createFishingGui()
 	return screenGui
 end
 
--- ================  ================
+-- ================ Auto Fish V1 ================
 
+-- ===== Auto Fish Setup (Fixed by Walvy) =====
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
+local animTracks = nil
+local autoFishEnabled = false
+local isRunning = false
+
+-- ===== Global delay settings =====
+local delayTime = 3
+local minSafeDelay = 1.6
+local delayInputValue = nil
+
+-- Animation IDs
+local animations = {
+    idle = "rbxassetid://96586569072385",
+    cast = "rbxassetid://180435571",
+    wait = "rbxassetid://92624107165273",
+    reel = "rbxassetid://134965425664034"
+}
+
+-- Helper function to get the Animator
+local function getAnimator()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid", 5)
+    if not humanoid then return nil end
+    local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+    return animator
+end
+
+-- Load animations into tracks
+local function loadAnimations()
+    local animator = getAnimator()
+    if not animator then return nil end
+    local newTracks = {}
+    for name, id in pairs(animations) do
+        local success, anim = pcall(function()
+            local animation = Instance.new("Animation")
+            animation.AnimationId = id
+            return animator:LoadAnimation(animation)
+        end)
+        if success and anim then
+            newTracks[name] = anim
+        end
+    end
+    return newTracks
+end
+
+-- Initialize animations when character spawns
+player.CharacterAdded:Connect(function()
+    animTracks = loadAnimations()
+end)
+
+if player.Character then
+    animTracks = loadAnimations()
+end
+
+-- Function to safely stop all animations
+local function stopAllAnimations()
+    if animTracks then
+        for _, track in pairs(animTracks) do
+            if track then
+                track.Looped = false
+                track:Stop(0)
+            end
+        end
+        animTracks = nil
+    end
+end
 
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
@@ -522,6 +591,7 @@ Tabs.Active:Toggle({
 
 Tabs.Farm:Section({ Title = "Fishing" })
 
+-- Auto-fish toggle
 Tabs.Farm:Toggle({
     Title = "Auto Fish V1",
     Desc = "Automatically fish and auto perfect fishing",
@@ -529,10 +599,6 @@ Tabs.Farm:Toggle({
     Callback = function(state)
         autoFishEnabled = state
         if state then
-            if WindUI then
-                WindUI:Notify({Title="Auto Fish", Content="Enabled", Duration=3})
-            end
-
             if not player.Character or not animTracks then
                 animTracks = loadAnimations()
                 if not animTracks then
@@ -591,6 +657,7 @@ Tabs.Farm:Toggle({
 
                             StartMinigame:InvokeServer(-0.7499996423721313, 1)
                         end)
+
                         task.wait(math.max(delayTime, minSafeDelay))
                     end
                     isRunning = false
@@ -600,9 +667,6 @@ Tabs.Farm:Toggle({
             autoFishEnabled = false
             stopAllAnimations()
             isRunning = false
-            if WindUI then
-                WindUI:Notify({Title="Auto Fish", Content="Disabled", Duration=3})
-            end
         end
     end
 })
@@ -623,17 +687,6 @@ Tabs.Farm:Button({
         local value = tonumber(delayInputValue)
         if value and value >= 0.1 and value <= 4 then
             delayTime = value
-            WindUI:Notify({
-                Title = "Auto Fish Delay",
-                Content = "Delay set to "..string.format("%.1f s", delayTime).." (min safe: "..minSafeDelay.." s)",
-                Duration = 2
-            })
-        else
-            WindUI:Notify({
-                Title = "Auto Fish Delay",
-                Content = "Invalid input! Must be between 0.1–4 seconds",
-                Duration = 2
-            })
         end
     end
 })
