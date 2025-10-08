@@ -280,7 +280,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v1.2.6",
+    Title = "v1.2.7",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -307,9 +307,7 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[+] Added Auto Fish v1
-[+] Fishing Completed Auto On
-[-] Improve Fishing Counter Gui
+[+] Select Charge Power Is Back
     ]]
 })
 
