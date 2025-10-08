@@ -1,6 +1,137 @@
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Notify%20Nexa"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Notify%20Fish%20It"))()
 
+-- ================ Fishing Counter Gui ================
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- UI Notif
+local smallNotif = playerGui:WaitForChild("Small Notification")
+local display = smallNotif:WaitForChild("Display")
+local container = display:WaitForChild("Container")
+
+local notifications = playerGui:WaitForChild("Text Notifications")
+local notifFrame = notifications:WaitForChild("Frame")
+
+local successPos = UDim2.new(0.5, 0, 0.100000001, 0)
+
+-- Counter
+local successCount = 0
+local failCount = 0
+
+-- Fungsi update label
+local function updateLabel(successLabel, failLabel)
+	successLabel.Text = "Success: " .. successCount
+	failLabel.Text = "Failed: " .. failCount
+end
+
+-- Fungsi buat ScreenGui yang keren
+local function createFishingGui()
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "FishingCounterGui"
+	screenGui.Parent = playerGui
+	screenGui.ResetOnSpawn = false
+
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(0, 170, 0, 70)
+	frame.Position = UDim2.new(0, 15, 0, 15)
+	frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+	frame.BackgroundTransparency = 0.15
+	frame.BorderSizePixel = 0
+	frame.Parent = screenGui
+
+	-- Rounded corner
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = frame
+
+	-- Gradient background
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 60)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 20))
+	})
+	gradient.Rotation = 45
+	gradient.Parent = frame
+
+	-- UIStroke outline
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 1.5
+	stroke.Color = Color3.fromRGB(120, 120, 255)
+	stroke.Transparency = 0.3
+	stroke.Parent = frame
+
+	-- Title
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.new(1, 0, 0, 22)
+	title.Position = UDim2.new(0, 0, 0, 0)
+	title.BackgroundTransparency = 1
+	title.Text = "🎣 Fishing Counter"
+	title.Font = Enum.Font.GothamBold
+	title.TextColor3 = Color3.fromRGB(200, 200, 255)
+	title.TextSize = 15
+	title.TextXAlignment = Enum.TextXAlignment.Center
+	title.Parent = frame
+
+	-- Success label
+	local successLabel = Instance.new("TextLabel")
+	successLabel.Size = UDim2.new(1, -10, 0, 20)
+	successLabel.Position = UDim2.new(0, 5, 0, 28)
+	successLabel.BackgroundTransparency = 1
+	successLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+	successLabel.Font = Enum.Font.GothamMedium
+	successLabel.TextSize = 14
+	successLabel.Text = "Success: 0"
+	successLabel.TextXAlignment = Enum.TextXAlignment.Left
+	successLabel.Parent = frame
+
+	-- Failed label
+	local failLabel = Instance.new("TextLabel")
+	failLabel.Size = UDim2.new(1, -10, 0, 20)
+	failLabel.Position = UDim2.new(0, 5, 0, 48)
+	failLabel.BackgroundTransparency = 1
+	failLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+	failLabel.Font = Enum.Font.GothamMedium
+	failLabel.TextSize = 14
+	failLabel.Text = "Failed: 0"
+	failLabel.TextXAlignment = Enum.TextXAlignment.Left
+	failLabel.Parent = frame
+
+	-- Success detection
+	container:GetPropertyChangedSignal("Position"):Connect(function()
+		if container.Position == successPos then
+			successCount += 1
+			updateLabel(successLabel, failLabel)
+		end
+	end)
+
+	-- Fail detection
+	notifFrame.ChildAdded:Connect(function(child)
+		if child.Name == "TextTile" then
+			local header = child:WaitForChild("Header", 5)
+			if header and header:IsA("TextLabel") then
+				if header.Text == "The fish got away!" then
+					failCount += 1
+					updateLabel(successLabel, failLabel)
+				end
+				header:GetPropertyChangedSignal("Text"):Connect(function()
+					if header.Text == "The fish got away!" then
+						failCount += 1
+						updateLabel(successLabel, failLabel)
+					end
+				end)
+			end
+		end
+	end)
+
+	return screenGui
+end
+
+-- ================  ================
+
+
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
 -- Ambil nama player
@@ -41,7 +172,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v1.2.5",
+    Title = "v1.2.6",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -68,13 +199,9 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[+] Added Teleport to Sacred Temple
-[+] Added Buy Bamboo Rod
-[+] Added Teleport to Underground Cellar
-[+] Teleport to Ancient Jungle
-[+] Added New Bait Floral Bait
-[+] Added Super Speed Boat
-[+] Added Teleport To Temple Lever 1 - 4
+[+] Added Auto Fish v1
+[+] Fishing Completed Auto On
+[-] Improve Fishing Counter Gui
     ]]
 })
 
@@ -395,106 +522,141 @@ Tabs.Active:Toggle({
 
 Tabs.Farm:Section({ Title = "Fishing" })
 
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+Tabs.Fram:Toggle({
+    Title = "Auto Fish V1",
+    Desc = "Automatically fish and auto perfect fishing",
+    Value = false,
+    Callback = function(state)
+        autoFishEnabled = state
+        if state then
+            if WindUI then
+                WindUI:Notify({Title="Auto Fish", Content="Enabled", Duration=3})
+            end
 
--- UI Notif
-local smallNotif = playerGui:WaitForChild("Small Notification")
-local display = smallNotif:WaitForChild("Display")
-local container = display:WaitForChild("Container")
-
-local notifications = playerGui:WaitForChild("Text Notifications")
-local notifFrame = notifications:WaitForChild("Frame")
-
-local successPos = UDim2.new(0.5, 0, 0.100000001, 0)
-
--- counter
-local successCount = 0
-local failCount = 0
-
--- Fungsi update label
-local function updateLabel(label)
-    label.Text = "Success: " .. successCount .. "\nFailed: " .. failCount
-end
-
--- Fungsi buat ScreenGui
-local function createFishingGui()
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "FishingCounterGui"
-    screenGui.Parent = playerGui
-    screenGui.ResetOnSpawn = false
-
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 100, 0, 35)
-    frame.Position = UDim2.new(0, 10, 0, 10)
-    frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    frame.BackgroundTransparency = 0.5
-    frame.BorderSizePixel = 0
-    frame.Parent = screenGui
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 1, 0)
-    label.Position = UDim2.new(0, 0, 0, 0)
-    label.BackgroundTransparency = 1
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.Font = Enum.Font.SourceSansBold
-    label.TextSize = 14
-    label.Text = "Success: 0\nFailed: 0"
-    label.TextWrapped = true
-    label.Parent = frame
-
-    -- Success detection
-    container:GetPropertyChangedSignal("Position"):Connect(function()
-        if container.Position == successPos then
-            successCount += 1
-            updateLabel(label)
-        end
-    end)
-
-    -- Fail detection
-    notifFrame.ChildAdded:Connect(function(child)
-        if child.Name == "TextTile" then
-            local header = child:WaitForChild("Header", 5)
-            if header and header:IsA("TextLabel") then
-                if header.Text == "The fish got away!" then
-                    failCount += 1
-                    updateLabel(label)
+            if not player.Character or not animTracks then
+                animTracks = loadAnimations()
+                if not animTracks then
+                    autoFishEnabled = false
+                    return
                 end
+            end
 
-                header:GetPropertyChangedSignal("Text"):Connect(function()
-                    if header.Text == "The fish got away!" then
-                        failCount += 1
-                        updateLabel(label)
+            local netFolder = ReplicatedStorage:FindFirstChild("Packages")
+                and ReplicatedStorage.Packages:FindFirstChild("_Index")
+                and ReplicatedStorage.Packages._Index:FindFirstChild("sleitnick_net@0.2.0")
+                and ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"]:FindFirstChild("net")
+            if not netFolder then
+                autoFishEnabled = false
+                return
+            end
+
+            local EquipRod = netFolder:FindFirstChild("RE/EquipToolFromHotbar")
+            local StartMinigame = netFolder:FindFirstChild("RF/RequestFishingMinigameStarted")
+            local ChargeRod = netFolder:FindFirstChild("RF/ChargeFishingRod")
+
+            if not (EquipRod and StartMinigame and ChargeRod) then
+                autoFishEnabled = false
+                return
+            end
+
+            pcall(function()
+                EquipRod:FireServer(1)
+            end)
+
+            if animTracks.idle then
+                animTracks.idle.Looped = true
+                animTracks.idle:Play()
+            end
+
+            if not isRunning then
+                isRunning = true
+                task.spawn(function()
+                    while autoFishEnabled do
+                        pcall(function()
+                            if not player.Character or not player.Character:FindFirstChild("Humanoid") then
+                                animTracks = loadAnimations()
+                                if not animTracks then return end
+                            end
+
+                            if animTracks.cast then animTracks.cast:Play() end
+                            StartMinigame:InvokeServer(-0.7499996423721313, 1)
+                            task.wait(0.2)
+
+                            if animTracks.wait then animTracks.wait:Play() end
+                            task.wait(0.2)
+
+                            if animTracks.reel then animTracks.reel:Play() end
+                            ChargeRod:InvokeServer(workspace:GetServerTimeNow())
+                            task.wait(0.2)
+
+                            StartMinigame:InvokeServer(-0.7499996423721313, 1)
+                        end)
+                        task.wait(math.max(delayTime, minSafeDelay))
                     end
+                    isRunning = false
                 end)
             end
+        else
+            autoFishEnabled = false
+            stopAllAnimations()
+            isRunning = false
+            if WindUI then
+                WindUI:Notify({Title="Auto Fish", Content="Disabled", Duration=3})
+            end
         end
-    end)
+    end
+})
 
-    return screenGui
-end
+-- ===== Delay TextBox + Button =====
+Tabs.Fram:Input({
+    Title = "Auto Fish Delay",
+    Placeholder = "Enter delay (0.1–4 seconds)",
+    Callback = function(text)
+        delayInputValue = text
+    end
+})
+
+Tabs.Fram:Button({
+    Title = "Apply Delay",
+    Desc = "Apply the entered delay value",
+    Callback = function()
+        local value = tonumber(delayInputValue)
+        if value and value >= 0.1 and value <= 4 then
+            delayTime = value
+            WindUI:Notify({
+                Title = "Auto Fish Delay",
+                Content = "Delay set to "..string.format("%.1f s", delayTime).." (min safe: "..minSafeDelay.." s)",
+                Duration = 2
+            })
+        else
+            WindUI:Notify({
+                Title = "Auto Fish Delay",
+                Content = "Invalid input! Must be between 0.1–4 seconds",
+                Duration = 2
+            })
+        end
+    end
+})
+
 
 -- Toggle di Tabs.Farm
 local fishingGui
-Tabs.Farm:Toggle({ 
-    Title = "Fishing Counter Gui", 
-    Value = false,
-    Callback = function(state)
-        if state then
-            -- toggle ON: buat gui
-            if not fishingGui then
-                fishingGui = createFishingGui()
-            end
-            fishingGui.Enabled = true
-        else
-            -- toggle OFF: sembunyikan gui
-            if fishingGui then
-                fishingGui.Enabled = false
-            end
-        end
-        print("Mode activated: " .. tostring(state))
-    end
+Tabs.Farm:Toggle({
+	Title = "Fishing Counter Gui",
+    Desc = "Shows How Many Times You Got Fish Or Failed To Get Fish",
+	Value = false,
+	Callback = function(state)
+		if state then
+			if not fishingGui then
+				fishingGui = createFishingGui()
+			end
+			fishingGui.Enabled = true
+		else
+			if fishingGui then
+				fishingGui.Enabled = false
+			end
+		end
+	end
 })
 
 
@@ -581,11 +743,10 @@ end)
 
 Tabs.Farm:Toggle({
     Title = "Auto Fishing Completed",
-    Value = false,
+    Value = true, -- default langsung ON
     Callback = function(state)
+        getgenv().AutoFishing = state
         if state then
-            -- Aktifkan loop auto fishing
-            getgenv().AutoFishing = true
             task.spawn(function()
                 while getgenv().AutoFishing do
                     pcall(function()
@@ -597,15 +758,29 @@ Tabs.Farm:Toggle({
                             :WaitForChild("RE/FishingCompleted")
                             :FireServer()
                     end)
-                    task.wait(0.1) -- delay biar server nggak ke-spam terlalu cepat
+                    task.wait(0.1)
                 end
             end)
-        else
-            -- Matikan loop auto fishing
-            getgenv().AutoFishing = false
         end
     end
 })
+
+-- jalankan langsung saat script load
+getgenv().AutoFishing = true
+task.spawn(function()
+    while getgenv().AutoFishing do
+        pcall(function()
+            game:GetService("ReplicatedStorage")
+                :WaitForChild("Packages")
+                :WaitForChild("_Index")
+                :WaitForChild("sleitnick_net@0.2.0")
+                :WaitForChild("net")
+                :WaitForChild("RE/FishingCompleted")
+                :FireServer()
+        end)
+        task.wait(0.1)
+    end
+end)
 
 Tabs.Farm:Button({
     Title = "Cancel Fishing",
