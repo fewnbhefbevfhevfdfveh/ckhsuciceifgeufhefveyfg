@@ -522,7 +522,7 @@ Tabs.Active:Toggle({
 
 Tabs.Farm:Section({ Title = "Fishing" })
 
-Tabs.Fram:Toggle({
+Tabs.Farm:Toggle({
     Title = "Auto Fish V1",
     Desc = "Automatically fish and auto perfect fishing",
     Value = false,
@@ -608,7 +608,7 @@ Tabs.Fram:Toggle({
 })
 
 -- ===== Delay TextBox + Button =====
-Tabs.Fram:Input({
+Tabs.Farm:Input({
     Title = "Auto Fish Delay",
     Placeholder = "Enter delay (0.1–4 seconds)",
     Callback = function(text)
@@ -616,7 +616,7 @@ Tabs.Fram:Input({
     end
 })
 
-Tabs.Fram:Button({
+Tabs.Farm:Button({
     Title = "Apply Delay",
     Desc = "Apply the entered delay value",
     Callback = function()
