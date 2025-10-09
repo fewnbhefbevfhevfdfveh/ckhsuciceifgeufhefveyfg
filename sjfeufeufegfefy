@@ -216,9 +216,15 @@ local Localization = WindUI:Localization({
         ["id"] = {
             ["1"] = "Hanya Berfungsi di Auto Fish V2",
             ["2"] = "h"
+        },
+
+        ["vi"] = {
+            ["1"] = "Chỉ hoạt động với Auto Fish V2",
+            ["2"] = "h"
         }
     }
 })
+
 
 WindUI.TransparencyValue = 0.2
 WindUI:SetTheme("Dark")
