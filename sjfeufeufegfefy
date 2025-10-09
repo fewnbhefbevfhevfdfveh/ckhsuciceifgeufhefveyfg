@@ -246,7 +246,7 @@ local Window = WindUI:CreateWindow({
     Icon = "rbxassetid://107488593993096",
     Author = "Fish IT! Script | @ Han",
     Folder = "Hanzo",
-    Size = UDim2.fromOffset(540, 420),
+    Size = UDim2.fromOffset(650, 510),
     Transparent = true,
     Theme = "Dark",
     
