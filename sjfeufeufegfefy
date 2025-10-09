@@ -222,7 +222,9 @@ local Localization = WindUI:Localization({
             ["LOAD_CONFIG"] = "Load Configuration",
             ["THEME_SELECT"] = "Select Theme",
             ["TRANSPARENCY"] = "Window Transparency",
-            ["LOCKED_TAB"] = "Locked Tab"
+            ["LOCKED_TAB"] = "Locked Tab",
+            ["1"] = "Only Works on Auto Fish V2",
+            ["2"] = "Click Toggle to Claim Jungle Event Rewards"
         }
     }
 })
@@ -795,7 +797,7 @@ end
 -- Dropdown untuk pilih versi
 Tabs.Farm:Dropdown({
     Title = "Select Charge Power",
-    Desc = "loc:Hanya Work di Auto Fish V2",
+    Desc = "loc:1",
     Values = {"Amazing", "Great", "Good", "Ok", "Perfect"},
     Value = selectedVersion,
     Callback = function(option)
