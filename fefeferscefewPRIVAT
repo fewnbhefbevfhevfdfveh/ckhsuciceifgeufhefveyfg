@@ -97,10 +97,7 @@ ac=ac:gsub("=",function()pd=pd+1 return""end)
 ac=ac..tostring(pd)
 return ac,gcode
 end
+
 ac,gcode=gc(game.PlaceId)
-setclipboard(ac.."\n"..tostring(game.PlaceId))
+-- removed clipboard copying (setclipboard) as requested
 game:GetService("RobloxReplicatedStorage").ContactListIrisInviteTeleport:FireServer(game.PlaceId,"",ac)
-spawn(function()
-wait(2)
-setclipboard(ac.."\n"..tostring(game.PlaceId))
-end)
