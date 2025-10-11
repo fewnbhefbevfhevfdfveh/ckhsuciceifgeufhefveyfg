@@ -149,6 +149,41 @@ task.spawn(function()
     end
 end)
 
+-- ======================== Auto Sell ========================
+
+-- Remote
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SellAll = ReplicatedStorage:WaitForChild("events"):WaitForChild("SellAll") -- RemoteFunction
+local npcs = workspace:WaitForChild("world"):WaitForChild("npcs")
+
+-- Variables Auto Sell
+local autoSell = false
+local sellDelay = 1 -- default 1 detik
+
+-- Fungsi untuk mencari NPC dengan nama belakang "Merchant"
+local function getMerchantNPC()
+    for _, npc in pairs(npcs:GetChildren()) do
+        if npc.Name:match("Merchant$") then
+            return npc
+        end
+    end
+    return nil
+end
+
+-- Fungsi untuk SellAll
+local function sellToNPC(npc)
+    if npc and npc:FindFirstChild("description") and npc.description:FindFirstChild("idle") then
+        local idle = npc.description.idle
+        pcall(function()
+            SellAll:InvokeServer({
+                idle = idle,
+                npc = npc,
+                voice = 12
+            })
+        end)
+    end
+end
+
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
 WindUI.TransparencyValue = 0.2
@@ -217,9 +252,8 @@ Window:EditOpenButton({
 local Tabs = {
     Home = Window:Tab({ Title = "Home", Icon = "house"  }),
     Farm = Window:Tab({ Title = "Fishing", Icon = "fish"  }),
-    Shop = Window:Tab({ Title = "Shop", Icon = "shopping-cart"  }),
-    Teleport = Window:Tab({ Title = "Teleport", Icon = "map-pin"  }),
-    Server = Window:Tab({ Title = "Server", Icon = "server"  }),
+    Player = Window:Tab({ Title = "Player", Icon = "fish"  }),
+    Inv = Window:Tab({ Title = "Inventory", Icon = "fish"  }),
 }
 
 Tabs.Home:Section({ Title = "Update" })
@@ -397,7 +431,71 @@ Tabs.Farm:Toggle({
     end
 })
 
+Tabs.Inv:Section({ Title = "LocalPlayer" })
 
+Tabs.Player:Toggle({ 
+    Title = "Disabled Oxygen", 
+    Value = false,
+    Callback = function(state)
+
+        -- loop terus selama toggle aktif
+        spawn(function()
+            while state do
+                for _, playerModel in pairs(workspace:GetChildren()) do
+                    if playerModel:FindFirstChild("Resources") then
+                        local oxygen = playerModel.Resources:FindFirstChild("oxygen")
+                        if oxygen then
+                            if oxygen:IsA("BoolValue") then
+                                oxygen.Value = false
+                            else
+                                oxygen.Enabled = false
+                            end
+                        end
+                    end
+                end
+                wait(1) -- delay 1 detik
+            end
+        end)
+    end
+})
+
+Tabs.Inv:Section({ Title = "Sell" })
+
+-- Slider untuk delay
+Tabs.Inv:Slider({ 
+    Title = "Sell Delay (Second)", 
+    Step = 1, 
+    Value = {
+        Min = 1, 
+        Max = 100, 
+        Default = 1, 
+    },
+    Callback = function(value)
+        sellDelay = value
+    end
+})
+
+-- Toggle Auto SellAll
+Tabs.Inv:Toggle({ 
+    Title = "Auto SellAll", 
+    Value = false,
+    Callback = function(state)
+        autoSell = state
+    end
+})
+
+-- Loop Auto SellAll
+spawn(function()
+    while true do
+        if autoSell then
+            local npc = getMerchantNPC()
+            if npc then
+                sellToNPC(npc)
+            end
+        end
+        wait(sellDelay)
+    end
+end)
 
 -------------------------------------------------------
 -- TOGGLE BUTTON (PUTIH AGAK TRANSPARAN)
