@@ -431,7 +431,7 @@ Tabs.Farm:Toggle({
     end
 })
 
-Tabs.Inv:Section({ Title = "LocalPlayer" })
+Tabs.Player:Section({ Title = "LocalPlayer" })
 
 Tabs.Player:Toggle({ 
     Title = "Disabled Oxygen", 
