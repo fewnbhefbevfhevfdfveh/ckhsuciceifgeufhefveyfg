@@ -1,3 +1,20 @@
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+WindUI.TransparencyValue = 0.2
+WindUI:SetTheme("Dark")
+
+local function gradient(text, startColor, endColor)
+    local result = ""
+    for i = 1, #text do
+        local t = (i - 1) / (#text - 1)
+        local r = math.floor((startColor.R + (endColor.R - startColor.R) * t) * 255)
+        local g = math.floor((startColor.G + (endColor.G - startColor.G) * t) * 255)
+        local b = math.floor((startColor.B + (endColor.B - startColor.B) * t) * 255)
+        result = result .. string.format('<font color="rgb(%d,%d,%d)">%s</font>', r, g, b, text:sub(i, i))
+    end
+    return result
+end
+
 -- ======================== Auto Shake ========================
 
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -184,22 +201,38 @@ local function sellToNPC(npc)
     end
 end
 
-local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
-WindUI.TransparencyValue = 0.2
-WindUI:SetTheme("Dark")
+-- ======================== Teleport ========================
 
-local function gradient(text, startColor, endColor)
-    local result = ""
-    for i = 1, #text do
-        local t = (i - 1) / (#text - 1)
-        local r = math.floor((startColor.R + (endColor.R - startColor.R) * t) * 255)
-        local g = math.floor((startColor.G + (endColor.G - startColor.G) * t) * 255)
-        local b = math.floor((startColor.B + (endColor.B - startColor.B) * t) * 255)
-        result = result .. string.format('<font color="rgb(%d,%d,%d)">%s</font>', r, g, b, text:sub(i, i))
-    end
-    return result
-end
+local teleportLocations = {
+    ["Ancient Archives"] = CFrame.new(-3156.37451, -745.713989, 1683.13574, -0.860117316, 1.84150082e-08, -0.510096252, 2.10384705e-08, 1, 6.26265706e-10, 0.510096252, -1.01929825e-08, -0.860117316),
+    ["Ancient Isle"] = CFrame.new(6057.07422, 195.280151, 277.14859, 0.18684645, 2.1313635e-08, 0.982389152, -6.77808432e-08, 1, -8.78668072e-09, -0.982389152, -6.50338237e-08, 0.18684645),
+    ["Ancient Isle 1"] = CFrame.new(-3155.02222, -750.667847, 2193.13696, 1, 0, 0, 0, 1, 0, 0, 0, 1),
+    ["Ancient Isle 2"] = CFrame.new(5948.79053, 157.230042, 482.23584, 0.764405072, 0, 0.644736409, 0, 1, 0, -0.644736409, 0, 0.764405072),
+    ["Atlantis"] = CFrame.new(-4265.13086, -602.574585, 1830.80737, -0.998844504, 0, -0.0480674766, 0, 1, 0, 0.0480674766, 0, -0.998844504),
+    ["Blue Moon Pool"] = CFrame.new(2743.1582, 131.499985, 2514.72388, 0.249071687, 8.3022293e-08, 0.968485057, -6.24669099e-08, 1, -6.96588458e-08, -0.968485057, -3.1482192e-08, 0.249071687),
+    ["Carrot Garden"] = CFrame.new(3716.6062, -1130.4895, -1078.50793, 0.657635927, -0.000371464179, 0.753335834, -5.71158016e-05, 0.999999821, 0.000542952563, -0.753335953, -0.00040009254, 0.657635808),
+    ["Crystal Cove"] = CFrame.new(1350.14526, -604.872681, 2329.95679, -0.408572346, -2.40111309e-08, -0.912725925, 3.4419484e-08, 1, -4.17144292e-08, 0.912725925, -4.84586131e-08, -0.408572346),
+    ["Desolate Deep"] = CFrame.new(-1654.96729, -213.520996, -2845.95215, -1, 0, 0, 0, 1, 0, 0, 0, -1),
+    ["Forsaken Shores"] = CFrame.new(-2573.6189, 145.750015, 1587.65393, 0.356420547, -6.3444922e-08, -0.934325635, 3.09142578e-08, 1, -5.6111538e-08, 0.934325635, -8.88467877e-09, 0.356420547),
+    ["Grand Reef"] = CFrame.new(-3565.76709, 154.360611, 535.246521, -0.457844615, 0, -0.889032245, 0, 1, 0, 0.889032245, 0, -0.457844615),
+    ["Moosewood"] = CFrame.new(436.368713, 154, 247.310532, 0.12572813, 0, 0.992064714, 0, 1, 0, -0.992064714, 0, 0.12572813),
+    ["Mushgrove Swamp"] = CFrame.new(2662.08105, 397.321472, -728.827026, 1, 0, 0, 0, 1, 0, 0, 0, 1),
+    ["Northern Expedition"] = CFrame.new(19526.9629, 140.240601, 5292.56592, -0.457844615, 0, -0.889032245, 0, 1, 0, 0.889032245, 0, -0.457844615),
+    ["Podium 1"] = CFrame.new(-3463.94727, -2254.81885, 3832.91699, -0.431924105, 0, 0.901909947, 0, 1, 0, -0.901909947, 0, -0.431924105),
+    ["Podium 2"] = CFrame.new(-825.645203, -3269.98804, -709.761169, 0.781674981, 0, 0.623686016, 0, 1, 0, -0.623686016, 0, 0.781674981),
+    ["Podium 3"] = CFrame.new(-13488.2939, -11053.1875, 134.38797, -0.27474618, 0.0107955653, -0.96145618, -0.00500683859, 0.999907374, 0.0126580652, 0.961503744, 0.00829161145, -0.274666667),
+    ["Podium 4"] = CFrame.new(-4333.00537, -11185.5732, 3196.40845, 0, 0, -1, 0, 1, 0, 1, 0, 0),
+    ["Roslit Bay"] = CFrame.new(-1597.0321, 134.780853, 604.949524, 0.394952327, 8.52962927e-08, -0.918701589, -4.72752115e-10, 1, 9.26411516e-08, 0.918701589, -3.61545212e-08, 0.394952327),
+    ["Roslit Volcano"] = CFrame.new(-1888.52319, 163.847565, 329.238281, 1, 0, 0, 0, 1, 0, 0, 0, 1),
+    ["Snowcap Island"] = CFrame.new(2628.69263, 142.099411, 2510.4458, -0.159515828, 3.14032782e-08, 0.987195373, -1.86964317e-09, 1, -3.2127409e-08, -0.987195373, -6.96839075e-09, -0.159515828),
+    ["Statue of Sovereignty"] = CFrame.new(32.7750549, 144.493347, -1020.3197, -0.866953373, 2.6253506e-08, -0.498389244, 4.85347975e-08, 1, 3.1570807e-08, 0.498389244, -5.17150696e-08, -0.866953373),
+    ["Sunstone Island"] = CFrame.new(-1046.80713, 134.239044, -1142.7168, 0.129344821, 5.11642035e-08, -0.991599679, 3.86840648e-09, 1, 5.21022378e-08, 0.991599679, -1.05750653e-08, 0.129344821),
+    ["Terrapin Island"] = CFrame.new(-207.215851, 142.213226, 1953.05188, -0.414013892, -1.23624488e-07, 0.910270572, -8.38610177e-08, 1, 9.76668118e-08, -0.910270572, -3.59000545e-08, -0.414013892),
+    ["The Depths"] = CFrame.new(947.417114, -711.63031, 1259.66516, 0.259314388, -8.87096352e-09, 0.965792954, 2.04304911e-08, 1, 3.69959574e-09, -0.965792954, 1.87722655e-08, 0.259314388),
+    ["Vertigo"] = CFrame.new(-112.007278, -492.901093, 1040.32788, -1, 0, 0, 0, 1, 0, 0, 0, -1),
+    ["Volcanic Vents"] = CFrame.new(-3421.24292, -2261.84131, 3839.80054, -0.993602812, -8.73249064e-08, -0.11293108, -7.97883573e-08, 1, -7.1255561e-08, 0.11293108, -6.17891374e-08, -0.993602812)
+}
 
 -- Ambil nama player
 local player = game.Players.LocalPlayer
@@ -245,7 +278,7 @@ Window:Tag({
 
 
 Window:EditOpenButton({
-    Enabled = false
+    Enabled = false,
 })
 
 -- ✅ Tab dan UI
@@ -254,6 +287,7 @@ local Tabs = {
     Farm = Window:Tab({ Title = "Fishing", Icon = "fish"  }),
     Player = Window:Tab({ Title = "Player", Icon = "fish"  }),
     Inv = Window:Tab({ Title = "Inventory", Icon = "fish"  }),
+    Teleport = Window:Tab({ Title = "Teleport", Icon = "map-pin"  }),
 }
 
 Tabs.Home:Section({ Title = "Update" })
@@ -496,6 +530,39 @@ spawn(function()
         wait(sellDelay)
     end
 end)
+
+Tabs.Teleport:Section({ Title = "Island" })
+
+Tabs.Teleport:Dropdown({
+    Title = "Select Location",
+    Values = {
+        "Ancient Archives", "Ancient Isle", "Ancient Isle 1", "Ancient Isle 2", "Atlantis",
+        "Blue Moon Pool", "Carrot Garden", "Crystal Cove", "Desolate Deep", "Forsaken Shores",
+        "Grand Reef", "Moosewood", "Mushgrove Swamp", "Northern Expedition", "Podium 1",
+        "Podium 2", "Podium 3", "Podium 4", "Roslit Bay", "Roslit Volcano",
+        "Snowcap Island", "Statue of Sovereignty", "Sunstone Island", "Terrapin Island",
+        "The Depths", "Vertigo", "Volcanic Vents"
+    },
+    SearchBarEnabled = true,
+    Value = "Ancient Archives",
+    Callback = function(option)
+        selectedLocation = option
+    end
+})
+
+Tabs.Teleport:Button({
+    Title = "Teleport",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+
+        if selectedLocation and teleportLocations[selectedLocation] then
+            character:WaitForChild("HumanoidRootPart").CFrame = teleportLocations[selectedLocation]
+        else
+            warn("Please select a valid location!")
+        end
+    end
+})
 
 -------------------------------------------------------
 -- TOGGLE BUTTON (PUTIH AGAK TRANSPARAN)
