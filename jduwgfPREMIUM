@@ -135,3 +135,60 @@ startLoop()
 
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/Script/refs/heads/main/ha"))()
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- Simpan PlaceId dan JobId server saat ini
+local placeId = game.PlaceId
+local jobId = game.JobId
+
+-- Delay sebelum mencoba reconnect (detik)
+local RECONNECT_DELAY = 5
+
+-- Fungsi reconnect
+local function reconnect()
+    print("Mencoba reconnect ke server yang sama...")
+    pcall(function()
+        TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
+    end)
+end
+
+-- Detect kicked event
+player.OnKick = function(reason)
+    print("Kicked dari server! Alasan: " .. tostring(reason))
+    wait(RECONNECT_DELAY)
+    reconnect()
+end
+
+-- Detect disconnection/crash menggunakan Heartbeat
+local function detectDisconnect()
+    local lastTime = tick()
+    RunService.Heartbeat:Connect(function()
+        lastTime = tick()
+    end)
+end
+
+-- Fungsi utama: Auto reconnect
+local function autoReconnect()
+    -- Jika DC karena koneksi lost
+    local success, result = pcall(function()
+        while true do
+            if not player.Parent then
+                print("Player disconnected, mencoba reconnect...")
+                wait(RECONNECT_DELAY)
+                reconnect()
+                break
+            end
+            wait(1)
+        end
+    end)
+    if not success then
+        warn("Error autoReconnect: " .. tostring(result))
+    end
+end
+
+-- Jalankan auto reconnect
+autoReconnect()
