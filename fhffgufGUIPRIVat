@@ -1,4 +1,4 @@
---// GUI SIMPLE (1 BUTTON + TOGGLE + INPUT)
+--// GUI SIMPLE (1 BUTTON + TOGGLE + INPUT + CLOSE + DESC)
 local TweenService = game:GetService("TweenService")
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -14,11 +14,10 @@ gui.Name = "NexaGui"
 gui.Parent = playerGui
 gui.ResetOnSpawn = false
 
---// TOGGLE BUTTON (tengah atas)
+--// TOGGLE BUTTON (dekat logo Roblox)
 local toggleBtn = Instance.new("TextButton", gui)
 toggleBtn.Size = UDim2.new(0,140,0,28)
-toggleBtn.Position = UDim2.new(0.5,0,0,10)
-toggleBtn.AnchorPoint = Vector2.new(0.5,0)
+toggleBtn.Position = UDim2.new(0,10,0,10) -- kiri atas dekat logo Roblox
 toggleBtn.BackgroundColor3 = Color3.fromRGB(25,25,25)
 toggleBtn.BorderColor3 = Color3.fromRGB(60,60,60)
 toggleBtn.Text = "Open GUI"
@@ -29,7 +28,7 @@ Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0,6)
 
 --// FRAME UTAMA
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,520,0,280)
+frame.Size = UDim2.new(0,520,0,300)
 frame.Position = UDim2.new(0.5,0,0.5,0)
 frame.AnchorPoint = Vector2.new(0.5,0.5)
 frame.BackgroundColor3 = Color3.fromRGB(17,17,17)
@@ -37,9 +36,25 @@ frame.BorderColor3 = Color3.fromRGB(40,40,40)
 frame.BorderSizePixel = 1
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0,6)
 
+-- Tombol X untuk hapus GUI total
+local closeBtn = Instance.new("TextButton", frame)
+closeBtn.Size = UDim2.new(0,25,0,25)
+closeBtn.Position = UDim2.new(1,-35,0,8)
+closeBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+closeBtn.BorderColor3 = Color3.fromRGB(60,60,60)
+closeBtn.Font = Enum.Font.Code
+closeBtn.Text = "✕"
+closeBtn.TextSize = 16
+closeBtn.TextColor3 = Color3.fromRGB(255,80,80)
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(1,0)
+
+closeBtn.MouseButton1Click:Connect(function()
+	gui:Destroy() -- hapus semua GUI
+end)
+
 -- Header
 local header = Instance.new("TextLabel", frame)
-header.Size = UDim2.new(1,-20,0,35)
+header.Size = UDim2.new(1,-50,0,35)
 header.Position = UDim2.new(0,10,0,5)
 header.BackgroundTransparency = 1
 header.Font = Enum.Font.Code
@@ -54,10 +69,23 @@ line.Size = UDim2.new(1,-20,0,1)
 line.Position = UDim2.new(0,10,0,40)
 line.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
+-- Deskripsi di bawah header
+local desc = Instance.new("TextLabel", frame)
+desc.Size = UDim2.new(1,-20,0,40)
+desc.Position = UDim2.new(0,10,0,45)
+desc.BackgroundTransparency = 1
+desc.Font = Enum.Font.Code
+desc.TextSize = 14
+desc.TextColor3 = Color3.fromRGB(200,200,200)
+desc.TextWrapped = true
+desc.Text = "🛈 Klik tombol 'Generate Private Server' untuk membuat private server gratis. \
+Gunakan tombol 'Enter' untuk menyalin teks dari input. \
+Gunakan tombol ✕ untuk menutup GUI sepenuhnya."
+
 -- Panel kiri
 local leftPanel = Instance.new("Frame", frame)
-leftPanel.Size = UDim2.new(0.4,-10,1,-60)
-leftPanel.Position = UDim2.new(0,10,0,50)
+leftPanel.Size = UDim2.new(0.4,-10,1,-100)
+leftPanel.Position = UDim2.new(0,10,0,90)
 leftPanel.BackgroundTransparency = 1
 
 local label = Instance.new("TextLabel", leftPanel)
@@ -116,8 +144,8 @@ Instance.new("UICorner", enterBtn).CornerRadius = UDim.new(0,4)
 
 -- Panel kanan
 local rightPanel = Instance.new("Frame", frame)
-rightPanel.Size = UDim2.new(0.55,-10,1,-60)
-rightPanel.Position = UDim2.new(0.45,10,0,50)
+rightPanel.Size = UDim2.new(0.55,-10,1,-100)
+rightPanel.Position = UDim2.new(0.45,10,0,90)
 rightPanel.BackgroundTransparency = 1
 
 local info1 = Instance.new("TextLabel", rightPanel)
@@ -128,9 +156,9 @@ info1.TextSize = 14
 info1.TextColor3 = Color3.fromRGB(255,130,0)
 info1.TextXAlignment = Enum.TextXAlignment.Left
 info1.TextWrapped = true
-info1.Text = "✦ Click to create a private server for free and it works on all games. Maybe some of them don't work."
+info1.Text = "✦ Klik untuk membuat private server gratis yang bekerja di banyak game"
 
---// LOGIC: Use Script
+--// LOGIC: Tombol utama
 useBtn.MouseButton1Click:Connect(function()
 	useBtn.Text = "Loading..."
 	useBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
@@ -235,7 +263,7 @@ end)
 enterBtn.MouseButton1Click:Connect(function()
 	local inputText = inputBox.Text
 	if inputText ~= "" then
-		setclipboard(inputText) -- copy input ke clipboard
+		setclipboard(inputText)
 		enterBtn.Text = "Copied!"
 		task.delay(1, function()
 			enterBtn.Text = "Enter"
@@ -243,13 +271,15 @@ enterBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
---// LOGIC: Toggle buka/tutup
+--// LOGIC: Toggle buka/tutup frame
 local isOpen = true
 toggleBtn.MouseButton1Click:Connect(function()
 	isOpen = not isOpen
 	if isOpen then
+		toggleBtn.Text = "Close GUI"
 		TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0.5,0,0.5,0)}):Play()
 	else
+		toggleBtn.Text = "Open GUI"
 		TweenService:Create(frame, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position = UDim2.new(0.5,0,1.5,0)}):Play()
 	end
 end)
