@@ -1201,58 +1201,73 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Ambil Label1 dari Workspace
-local questLabel = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content:WaitForChild("Label1")
+-- Konfigurasi Quest
+local Quests = {
+    ["Deep Sea"] = {
+        Label = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content:WaitForChild("Label1"),
+        PosBelum100 = CFrame.new(
+            -3563.65063, -279.074219, -1605.75671,
+            0.707868576,  1.15482976e-07,  0.706344128,
+            -9.39126679e-08, 1,            -6.93785722e-08,
+            -0.706344128,   -1.72237495e-08, 0.707868576
+        ),
+        PosSudah100 = CFrame.new(
+            -3698.01001, -135.073914, -1010.34033,
+            -0.937130094, -7.4511493e-09,  0.348980278,
+            -5.57951241e-09, 1,             6.36803633e-09,
+            -0.348980278,  4.0207917e-09, -0.937130094
+        )
+    },
 
--- Posisi teleport
-local posBelum100 = CFrame.new(
-    -3563.65063, -279.074219, -1605.75671,
-     0.707868576,  1.15482976e-07,  0.706344128,
-    -9.39126679e-08, 1,            -6.93785722e-08,
-    -0.706344128,   -1.72237495e-08, 0.707868576
-)
+    ["Element"] = {
+        Label = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content:WaitForChild("Label2"),
+        PosBelum100 = CFrame.new(
+            1481.49609, 3.05394244, -334.711945,
+            -0.875568659, 3.85030781e-08, -0.483093888,
+            2.46830050e-08, 1.349650904e-08, 0.483093888,
+            1.86901268e-08, -0.875568659, 0
+        ),
+        PosSudah100 = CFrame.new(
+            1524.70227, 5.12503767, -634.379639,
+            0.186757445, 3.27716378e-08, -0.98240608,
+            -6.09756299e-08, 1, -4.49504144e-08,
+            0.98240608, 6.82976022e-08, 0.186757445
+        )
+    }
+}
 
-local posSudah100 = CFrame.new(
-    -3698.01001, -135.073914, -1010.34033,
-    -0.937130094, -7.4511493e-09,  0.348980278,
-    -5.57951241e-09, 1,             6.36803633e-09,
-    -0.348980278,  4.0207917e-09, -0.937130094
-)
-
--- State toggle
+-- Variabel utama
+local selectedQuest = nil
 local autoQuestEnabled = false
 local freezeBV, freezeBG
 local savedCFrame
 
--- Fungsi pasang freeze (BodyVelocity + BodyGyro)
+-- Fungsi Freeze
 local function Freeze(char)
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    -- Hapus dulu kalau sudah ada
     if freezeBV then freezeBV:Destroy() freezeBV = nil end
     if freezeBG then freezeBG:Destroy() freezeBG = nil end
 
-    -- BodyVelocity
     freezeBV = Instance.new("BodyVelocity")
-    freezeBV.Velocity = Vector3.new(0,0,0)
+    freezeBV.Velocity = Vector3.zero
     freezeBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
     freezeBV.Parent = hrp
 
-    -- BodyGyro
     freezeBG = Instance.new("BodyGyro")
     freezeBG.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
     freezeBG.CFrame = hrp.CFrame
     freezeBG.Parent = hrp
 end
 
--- Fungsi lepas freeze
+-- Fungsi Unfreeze
 local function Unfreeze()
     if freezeBV then freezeBV:Destroy() freezeBV = nil end
     if freezeBG then freezeBG:Destroy() freezeBG = nil end
 end
 
--- Fungsi teleport
+-- Fungsi Teleport
 local function TeleportOnce(cf)
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
@@ -1262,24 +1277,34 @@ local function TeleportOnce(cf)
     end
 end
 
--- Fungsi cek quest
+-- Fungsi cek quest aktif
 local function CheckQuest()
-    if not autoQuestEnabled then return end
-    local text = questLabel.Text
-    local persen = text:match("(%d+)%%")
-    persen = tonumber(persen)
+    if not autoQuestEnabled or not selectedQuest then return end
+    local quest = Quests[selectedQuest]
+    if not quest then return end
 
-    if persen and persen < 100 then
-        TeleportOnce(posBelum100)
-    elseif persen and persen >= 100 then
-        TeleportOnce(posSudah100)
+    local text = quest.Label.Text
+    local persen = tonumber(text:match("(%d+)%%"))
+
+    if not persen then return end
+
+    if persen < 100 then
+        TeleportOnce(quest.PosBelum100)
+    else
+        TeleportOnce(quest.PosSudah100)
     end
 end
 
--- Jalankan saat teks berubah
-questLabel:GetPropertyChangedSignal("Text"):Connect(CheckQuest)
+-- Sambungkan sinyal setiap quest
+for name, quest in pairs(Quests) do
+    quest.Label:GetPropertyChangedSignal("Text"):Connect(function()
+        if selectedQuest == name and autoQuestEnabled then
+            CheckQuest()
+        end
+    end)
+end
 
--- Anti geser (balik ke posisi kalau lebih dari 2 stud)
+-- Anti geser
 RunService.Heartbeat:Connect(function()
     if autoQuestEnabled and savedCFrame then
         local char = LocalPlayer.Character
@@ -1292,10 +1317,21 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- Toggle UI
+-- Dropdown pilih quest
+Tabs.Auto:Dropdown({
+    Title = "Select Quest",
+    Values = { "Deep Sea", "Element" },
+    Value = "Deep Sea",
+    Callback = function(option)
+        selectedQuest = option
+        print("Selected Quest: " .. option)
+    end
+})
+
+-- Toggle untuk auto quest
 Tabs.Auto:Toggle({
-    Title = "Auto Deep Sea Quest",
-    Desc = "When Toggle On you can't move because of Freeze",
+    Title = "Auto Quest",
+    Desc = "Teleport otomatis sesuai progress quest yang dipilih",
     Value = false,
     Callback = function(state)
         autoQuestEnabled = state
