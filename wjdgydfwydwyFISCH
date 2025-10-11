@@ -1,29 +1,5 @@
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
-local Localization = WindUI:Localization({
-    Enabled = true,
-    Prefix = "loc:",
-    DefaultLanguage = "en",
-    Translations = {
-        ["en"] = {
-            ["WINDUI_EXAMPLE"] = "WindUI Example",
-            ["WELCOME"] = "Welcome to WindUI!",
-            ["LIB_DESC"] = "Beautiful UI library for Roblox",
-            ["SETTINGS"] = "Settings",
-            ["APPEARANCE"] = "Appearance",
-            ["FEATURES"] = "Features",
-            ["UTILITIES"] = "Utilities",
-            ["UI_ELEMENTS"] = "UI Elements",
-            ["CONFIGURATION"] = "Configuration",
-            ["SAVE_CONFIG"] = "Save Configuration",
-            ["LOAD_CONFIG"] = "Load Configuration",
-            ["THEME_SELECT"] = "Select Theme",
-            ["TRANSPARENCY"] = "Window Transparency",
-            ["LOCKED_TAB"] = "Locked Tab"
-        }
-    }
-})
-
 WindUI.TransparencyValue = 0.2
 WindUI:SetTheme("Dark")
 
@@ -39,7 +15,6 @@ local function gradient(text, startColor, endColor)
     return result
 end
 
-
 -- Ambil nama player
 local player = game.Players.LocalPlayer
 local playerName = player.Name
@@ -49,7 +24,7 @@ local playerDisplayName = player.DisplayName
 local Window = WindUI:CreateWindow({
     Title = "Nexa - Premium",
     Icon = "rbxassetid://107488593993096",
-    Author = "Fisch Script | @ Han",
+    Author = "Fish IT! Script | @ Han",
     Folder = "Hanzo",
     Size = UDim2.fromOffset(540, 420),
     Transparent = true,
@@ -57,7 +32,7 @@ local Window = WindUI:CreateWindow({
     
     HidePanelBackground = true,
     NewElements = false,
-
+    Background = "https://i.imgur.com/GsfBtXF.jpeg",
     User = {
         Enabled = true,
         Anonymous = false,           -- false biar muncul nama asli
@@ -78,7 +53,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v0.0.1",
+    Title = "v1.2.7",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -86,39 +61,6 @@ Window:Tag({
 Window:EditOpenButton({
     Enabled = false
 })
-
--- Ganti dengan UserId target
-local TargetUserId = 5464154339 -- masukkan UserId yang ingin diberi notifikasi
-
--- Event ketika player join
-game.Players.PlayerAdded:Connect(function(player)
-    if player.UserId == TargetUserId then
-        -- Notifikasi WindUI
-        WindUI:Notify({
-            Title = "Nexa Notify",
-            Content = player.Name .. " Developer Script Nexa Hub has joined the game!",
-            Duration = 5,
-        })
-    end
-end)
-
-task.delay(6.5, function()
-    WindUI:Notify({
-        Title = "Bug Report",
-        Content = "If there are any errors, please let the developer know. Join Discord to report bugs.",
-        Icon = "cloud-alert",
-        Duration = 6
-    })
-end)
-
-task.delay(13, function()
-    WindUI:Notify({
-        Title = "Purchase",
-        Content = "If you want to buy this premium script key, join Discord to buy premium.",
-        Icon = "shopping-cart",
-        Duration = 6
-    })
-end)
 
 -- ✅ Tab dan UI
 local Tabs = {
