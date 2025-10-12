@@ -78,7 +78,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v0.1.4",
+    Title = "v0.1.5",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -125,6 +125,8 @@ Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
 [+] Added New Seed
+[-] Delete Submit Prison
+[+] Added Submit Event
     ]]
 })
 
@@ -262,81 +264,65 @@ end)
 
 Tabs.Exclusive:Section({ Title = "Exclusive" })
 
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local player = Players.LocalPlayer
+Tabs.Exclusive:Toggle({ 
+    Title = "Submit Event", 
+    Value = false,
+    Callback = function(state)
+        if state then
+            local player = game.Players.LocalPlayer
+            local myPlot = nil
+            local backpack = player.Backpack
 
--- Gui reference
-local shadowTitle = player.PlayerGui.Main.WantedPosterGui.Frame.Main.WantedItem.WantedItem_Title_Shadow
-
--- Variabel
-local autoSubmitEnabled = false
-
--- Fungsi untuk membersihkan semua prefix di dalam []
-local function cleanToolName(name)
-    return name:gsub("%[.-%]%s*", "")
-end
-
--- Fungsi menemukan tool berdasarkan nama belakang
-local function findToolByName(name)
-    for _, tool in ipairs(player.Backpack:GetChildren()) do
-        if tool:IsA("Tool") then
-            local toolName = cleanToolName(tool.Name)
-            if toolName == name then
-                return tool
+            -- Cari plot milik player
+            for i = 1, #workspace.Plots:GetChildren() do
+                local plot = workspace.Plots:FindFirstChild(tostring(i))
+                if plot then
+                    local sign = plot:FindFirstChild("PlayerSign")
+                    if sign and sign:FindFirstChild("BillboardGui") and sign.BillboardGui:FindFirstChild("TextLabel") then
+                        local textLabel = sign.BillboardGui.TextLabel
+                        if textLabel.Text == player.DisplayName then
+                            myPlot = plot
+                            break
+                        end
+                    end
+                end
             end
-        end
-    end
 
-    if player.Character then
-        for _, tool in ipairs(player.Character:GetChildren()) do
-            if tool:IsA("Tool") then
-                local toolName = cleanToolName(tool.Name)
-                if toolName == name then
-                    return tool
+            if myPlot then
+                -- Loop EventPlatforms -1 sampai -4
+                for i = -1, -4, -1 do
+                    local platform = myPlot.EventPlatforms:FindFirstChild(tostring(i))
+                    if platform then
+                        local titleLabel = platform:FindFirstChild("PlatformEventUI") and platform.PlatformEventUI:FindFirstChild("Title")
+                        local hitbox = platform:FindFirstChild("Hitbox") and platform.Hitbox:FindFirstChildWhichIsA("ProximityPrompt")
+                        
+                        if titleLabel and hitbox then
+                            local lastName = titleLabel.Text
+                            local toolEquipped = false
+
+                            -- Cari Tool di backpack yang diakhiri dengan nama belakang
+                            for _, tool in pairs(backpack:GetChildren()) do
+                                local toolName = tool.Name
+                                if toolName:sub(-#lastName) == lastName then
+                                    player.Character.Humanoid:EquipTool(tool)
+                                    toolEquipped = true
+                                    break
+                                end
+                            end
+
+                            if toolEquipped then
+                                hitbox:InputHoldBegin()
+                                wait(0.1)
+                                hitbox:InputHoldEnd()
+                            end
+                        end
+                    end
+                    wait(0.5)
                 end
             end
         end
     end
-
-    return nil
-end
-
--- Fungsi Auto Submit
-local function autoSubmit()
-    local wantedName = shadowTitle.Text
-    local toolFound = findToolByName(wantedName)
-
-    if toolFound and player.Character and player.Character:FindFirstChild("Humanoid") then
-        -- Auto Equip tool
-        player.Character.Humanoid:EquipTool(toolFound)
-
-        -- Fire Remote untuk submit
-        local remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Events"):WaitForChild("Prison"):WaitForChild("Interact")
-        remote:FireServer("TurnIn")
-    end
-end
-
--- Loop utama Auto Submit
-task.spawn(function()
-    while task.wait(1) do
-        if autoSubmitEnabled then
-            autoSubmit()
-        end
-    end
-end)
-
--- Toggle WindUI Auto Submit
-Tabs.Exclusive:Toggle({
-    Title = "Auto Submit Prison",
-    Desc = "Automatically submit tools that match the Wanted Poster",
-    Value = false,
-    Callback = function(state)
-        autoSubmitEnabled = state
-    end
 })
-
-
 
 Tabs.Exclusive:Button({
     Title = "Teleport To Daily Island",
