@@ -763,7 +763,7 @@ local ChargeFishingRod = Net:WaitForChild("RF/ChargeFishingRod")
 local RequestFishingMinigameStarted = Net:WaitForChild("RF/RequestFishingMinigameStarted")
 
 local AutoFishV2 = false
-local selectedVersion = "Perfect" -- default versi
+local selectedVersion = "Random" -- default versi
 
 -- Data versi Step3
 local FishingVersions = {
@@ -784,18 +784,28 @@ local function Step2()
 end
 
 local function Step3()
-    local args = FishingVersions[selectedVersion]
+    local version = selectedVersion
+
+    -- Jika user pilih Random → ambil versi acak dari FishingVersions
+    if version == "Random" then
+        local keys = {}
+        for k in pairs(FishingVersions) do
+            table.insert(keys, k)
+        end
+        version = keys[math.random(1, #keys)]
+    end
+
+    local args = FishingVersions[version]
     if args then
         RequestFishingMinigameStarted:InvokeServer(unpack(args))
-    else
     end
 end
 
--- Dropdown untuk pilih versi
+-- Dropdown untuk pilih versi (tambahkan "Random")
 Tabs.Farm:Dropdown({
     Title = "Select Charge Power",
     Desc = "loc:1",
-    Values = {"Amazing", "Great", "Good", "Ok", "Perfect"},
+    Values = {"Amazing", "Great", "Good", "Ok", "Perfect", "Random"},
     Value = selectedVersion,
     Callback = function(option)
         selectedVersion = option
@@ -810,7 +820,6 @@ Tabs.Farm:Toggle({
         AutoFishV2 = state
 
         if AutoFishV2 then
-            -- Jalankan Step1 → Step2 → Step3 sekali di awal
             Step1()
             task.wait(0.01)
             Step2()
@@ -852,6 +861,7 @@ task.spawn(function()
         end
     end
 end)
+
 
 
 Tabs.Farm:Toggle({
