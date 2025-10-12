@@ -2687,7 +2687,7 @@ ImgBtn.Parent = ScreenGui
 ImgBtn.Size = UDim2.new(0, 60, 0, 60)
 ImgBtn.Position = UDim2.new( 0, 100, 1, -300)
 ImgBtn.BackgroundTransparency = 1
-ImgBtn.Image = "rbxassetid://137184014634632" -- ganti dengan gambar planet
+ImgBtn.Image = "rbxassetid://131269662643486" -- ganti dengan gambar planet
 
 -- Biar ujung tombol bulat/halus
 local UICorner = Instance.new("UICorner")
