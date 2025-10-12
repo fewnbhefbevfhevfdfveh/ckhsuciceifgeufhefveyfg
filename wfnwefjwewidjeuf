@@ -1,4 +1,3 @@
-
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
 local Localization = WindUI:Localization({
@@ -125,7 +124,7 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[-] Delete Auto Collect
+[+] Added New Seed
     ]]
 })
 
@@ -221,7 +220,8 @@ local seedList = {
     "Mr Carrot Seed",
     "Tomatrio Seed",
     "Shroombino Seed",
-    "Mango Seed"
+    "Mango Seed",
+    "King Limeno Seed"
 }
 
 -- Buat Paragraph sekali
@@ -788,7 +788,8 @@ local seedList = {
     "Mr Carrot Seed",
     "Tomatrio Seed",
     "Shroombino Seed",
-    "Mango Seed"
+    "Mango Seed",
+    "King Limeno Seed"
 }
 
 -- 🔹 Daftar seed berdasarkan rarity
@@ -1353,7 +1354,8 @@ Tabs.Auto:Dropdown({
         "Mr Carrot", 
         "Tomatrio",
         "Shroombino",
-        "Mango"
+        "Mango",
+        "King Limeno"
     },
     Value = "",
     Callback = function(option) 
@@ -1499,7 +1501,8 @@ Tabs.Auto:Dropdown({
     "Mr Carrot Seed",
     "Tomatrio Seed",
     "Shroombino Seed",
-    "Mango Seed"
+    "Mango Seed",
+    "King Limeno Seed"
 },
     Value = "",
     Callback = function(option) 
@@ -1597,7 +1600,8 @@ Tabs.Auto:Dropdown({
         "Mr Carrot",
         "Tomatrio",
         "Shroombino",
-        "Mango"
+        "Mango",
+        "King Limeno"
     },
     Value = "",
     Callback = function(option) 
@@ -1737,7 +1741,8 @@ Tabs.Auto:Dropdown({
         "Mr Carrot",
         "Tomatrio",
         "Shroombino",
-        "Mango"
+        "Mango",
+        "King Limeno"
     },
     Value = "Cactus",
     Callback = function(option)
