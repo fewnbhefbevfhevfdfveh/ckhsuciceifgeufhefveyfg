@@ -249,7 +249,7 @@ local playerDisplayName = player.DisplayName
 -- Buat Window versi baru
 local Window = WindUI:CreateWindow({
     Title = "Nexa - Premium",
-    Icon = "rbxassetid://107488593993096",
+    Icon = "rbxassetid://131269662643486",
     Author = "Fish IT! Script | @ Han",
     Folder = "Hanzo",
     Size = UDim2.fromOffset(650, 510),
