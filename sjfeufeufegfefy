@@ -258,7 +258,6 @@ local Window = WindUI:CreateWindow({
     
     HidePanelBackground = true,
     NewElements = false,
-    Background = "https://i.imgur.com/35Wf5tZ.jpeg",
     User = {
         Enabled = true,
         Anonymous = false,           -- false biar muncul nama asli
