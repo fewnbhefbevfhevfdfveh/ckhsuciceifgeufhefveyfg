@@ -279,7 +279,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v1.2.8",
+    Title = "v1.2.9",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -306,7 +306,8 @@ Tabs.Home:Section({ Title = "Update" })
 Tabs.Home:Paragraph({
     Title = "Here's what's new:",
     Desc = [[
-[+] Added Auto Element (Auto Element Won't Auto Craft transcendent stone)
+[+] Added Auto Claim All Reward Jungle Event
+[+] Added Auto Purchase All Merchant
     ]]
 })
 
