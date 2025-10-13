@@ -1105,6 +1105,35 @@ Tabs.Farm:Toggle({
     end
 })
 
+Tabs.Auto:Section({ Title = "Jungle Event" })
+
+Tabs.Auto:Toggle({
+    Title = "Auto Claim All Reward",
+    Value = false,
+    Callback = function(state)
+        getgenv().AutoClaimReward = state
+
+        task.spawn(function()
+            while getgenv().AutoClaimReward do
+                for i = 1, 13 do
+                    local args = {i}
+                    pcall(function()
+                        game:GetService("ReplicatedStorage")
+                            :WaitForChild("Packages")
+                            :WaitForChild("_Index")
+                            :WaitForChild("sleitnick_net@0.2.0")
+                            :WaitForChild("net")
+                            :WaitForChild("RE/ClaimEventReward")
+                            :FireServer(unpack(args))
+                    end)
+                    task.wait(0.1)
+                end
+                task.wait(1)
+            end
+        end)
+    end
+})
+
 Tabs.Auto:Section({ Title = "View Quests" })
 
 local board = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board
