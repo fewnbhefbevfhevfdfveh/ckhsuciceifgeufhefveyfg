@@ -201,44 +201,19 @@ local function stopAllAnimations()
     end
 end
 
-local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+-- Load Wind Ui
+local WindUI
 
-local Localization = WindUI:Localization({
-    Enabled = true,
-    Prefix = "loc:",
-    DefaultLanguage = "en",
-    Translations = {
-        ["en"] = {
-            ["1"] = "Only Works on Auto Fish V2",
-            ["2"] = "h"
-        },
-
-        ["id"] = {
-            ["1"] = "Hanya Berfungsi di Auto Fish V2",
-            ["2"] = "h"
-        },
-
-        ["vi"] = {
-            ["1"] = "Chỉ hoạt động với Auto Fish V2",
-            ["2"] = "h"
-        }
-    }
-})
-
-
-WindUI.TransparencyValue = 0.2
-WindUI:SetTheme("Plant")
-
-local function gradient(text, startColor, endColor)
-    local result = ""
-    for i = 1, #text do
-        local t = (i - 1) / (#text - 1)
-        local r = math.floor((startColor.R + (endColor.R - startColor.R) * t) * 255)
-        local g = math.floor((startColor.G + (endColor.G - startColor.G) * t) * 255)
-        local b = math.floor((startColor.B + (endColor.B - startColor.B) * t) * 255)
-        result = result .. string.format('<font color="rgb(%d,%d,%d)">%s</font>', r, g, b, text:sub(i, i))
+do
+    local ok, result = pcall(function()
+        return require("./src/init")
+    end)
+    
+    if ok then
+        WindUI = result
+    else 
+        WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
     end
-    return result
 end
 
 -- Ambil nama player
@@ -300,15 +275,23 @@ local Tabs = {
     Server = Window:Tab({ Title = "Server", Icon = "server"  }),
 }
 
-Tabs.Home:Section({ Title = "Update" })
+Tabs.Home:Section({ Title = "Update", Icon = "logs" })
 
-Tabs.Home:Paragraph({
-    Title = "Here's what's new:",
-    Desc = [[
+Tabs.Home:Section({
+        Title = "Here's what's new:",
+        TextSize = 24,
+        FontWeight = Enum.FontWeight.SemiBold,
+    })
+
+Tabs.Home:Section({
+        Title = [[
 [+] Added Auto Claim All Reward Jungle Event
 [+] Added Auto Purchase All Merchant
-    ]]
-})
+		]],
+        TextSize = 18,
+        TextTransparency = .35,
+        FontWeight = Enum.FontWeight.Medium,
+    })
 
 Tabs.Home:Section({ Title = "Server" })
 
