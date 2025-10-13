@@ -618,6 +618,8 @@ Tabs.Active:Toggle({
 
 Tabs.Farm:Section({ Title = "Fishing" })
 
+Tabs.Farm:Space()
+
 -- Auto-fish toggle
 Tabs.Farm:Toggle({
     Title = "Auto Fish V1",
