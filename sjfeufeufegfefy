@@ -227,7 +227,7 @@ local Localization = WindUI:Localization({
 
 
 WindUI.TransparencyValue = 0.2
-WindUI:SetTheme("Dark")
+WindUI:SetTheme("Plant")
 
 local function gradient(text, startColor, endColor)
     local result = ""
@@ -254,7 +254,7 @@ local Window = WindUI:CreateWindow({
     Folder = "Hanzo",
     Size = UDim2.fromOffset(650, 510),
     Transparent = true,
-    Theme = "Dark",
+    Theme = "Plant",
     
     HidePanelBackground = true,
     NewElements = false,
