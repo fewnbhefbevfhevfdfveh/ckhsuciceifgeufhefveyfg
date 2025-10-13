@@ -262,8 +262,7 @@ Window:EditOpenButton({
     Enabled = false
 })
 
-do
- local Tabs = {
+local Tabs = {
     Home = Window:Tab({ Title = "Home", Icon = "house"  }),
     Active = Window:Tab({ Title = "Active", Icon = "info"  }),
     Farm = Window:Tab({ Title = "Farm", Icon = "fish"  }),
@@ -617,8 +616,6 @@ Tabs.Active:Toggle({
 
 
 Tabs.Farm:Section({ Title = "Fishing" })
-
-Tabs.Farm:Space()
 
 -- Auto-fish toggle
 Tabs.Farm:Toggle({
