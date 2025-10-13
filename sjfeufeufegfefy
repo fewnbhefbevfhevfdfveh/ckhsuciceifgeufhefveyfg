@@ -1712,6 +1712,38 @@ Tabs.Shop:Button({
     end
 })
 
+Tabs.Shop:Section({ Title = "Traveling Merchant" })
+
+Tabs.Shop:Toggle({
+    Title = "Auto Purchase All Merchant",
+    Value = false,
+    Callback = function(state)
+        getgenv().AutoClaimEvent = state
+
+        task.spawn(function()
+            while getgenv().AutoClaimEvent do
+                for i = 1, 7 do
+                    local args = {i}
+                    local success, err = pcall(function()
+                        game:GetService("ReplicatedStorage")
+                            :WaitForChild("Packages")
+                            :WaitForChild("_Index")
+                            :WaitForChild("sleitnick_net@0.2.0")
+                            :WaitForChild("net")
+                            :WaitForChild("RF/PurchaseMarketItem")
+                            :InvokeServer(unpack(args))
+                    end)
+                    if not success then
+                        warn("Auto Claim Error (ID " .. i .. "): " .. tostring(err))
+                    end
+                    task.wait(0.5)
+                end
+                task.wait(5)
+            end
+        end)
+    end
+})
+
 Tabs.Boat:Section({ Title = "Boat" })
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
