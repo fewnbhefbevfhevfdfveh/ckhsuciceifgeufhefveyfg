@@ -221,23 +221,28 @@ local player = game.Players.LocalPlayer
 local playerName = player.Name
 local playerDisplayName = player.DisplayName
 
--- Buat Window versi baru
+-- Buat Window
 local Window = WindUI:CreateWindow({
     Title = "Nexa - Premium",
     Icon = "rbxassetid://131269662643486",
     Author = "Fish IT! Script | @ Han",
     Folder = "Hanzo",
     Size = UDim2.fromOffset(650, 510),
-    Transparent = true,
+
     Theme = "Plant",
-    
+    Transparent = true,
+    Acrylic = false,
     HidePanelBackground = true,
-    NewElements = false,
+    HideSearchBar = false,
+    NewElements = true,
+    SideBarWidth = 200,
+
+    -- Profil user di pojok kanan atas
     User = {
         Enabled = true,
-        Anonymous = false,           -- false biar muncul nama asli
-        Name = playerDisplayName,    -- Nama tampilan
-        UserName = "@" .. playerName, -- Username Roblox
+        Anonymous = false,
+        Name = playerDisplayName,
+        UserName = "@" .. playerName,
         Callback = function()
             WindUI:Notify({
                 Title = "User Profile",
@@ -245,11 +250,7 @@ local Window = WindUI:CreateWindow({
                 Duration = 3
             })
         end
-    },
-    
-    Acrylic = false,
-    HideSearchBar = false,
-    SideBarWidth = 200,
+    }
 })
 
 Window:Tag({
