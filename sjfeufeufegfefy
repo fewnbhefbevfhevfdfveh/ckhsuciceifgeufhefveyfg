@@ -2774,6 +2774,15 @@ Tabs.Server:Button({
     end
 })
 
+Tabs.Server:Keybind({
+    Title = "Keybind Example",
+    Desc = "Keybind to open ui",
+    Value = "G",
+    Callback = function(v)
+        Window:SetToggleKey(Enum.KeyCode[v])
+    end
+})
+
 
 -------------------------------------------------------
 -- TOGGLE BUTTON (PUTIH AGAK TRANSPARAN)
