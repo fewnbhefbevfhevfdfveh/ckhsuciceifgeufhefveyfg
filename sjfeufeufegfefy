@@ -202,19 +202,7 @@ local function stopAllAnimations()
 end
 
 -- Load Wind Ui
-local WindUI
-
-do
-    local ok, result = pcall(function()
-        return require("./src/init")
-    end)
-    
-    if ok then
-        WindUI = result
-    else 
-        WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-    end
-end
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
 -- Ambil nama player
 local player = game.Players.LocalPlayer
