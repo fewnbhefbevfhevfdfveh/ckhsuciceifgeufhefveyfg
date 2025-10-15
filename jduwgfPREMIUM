@@ -2,12 +2,14 @@ local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footag
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fhffgufGUIPRIVat"))()
 
 --[[ 
- _   _ _______ __   __    _    
-| \ | |  ____|  \ /  |  / \   
-|  \| | |__     \ V /  / _ \  
-| . ` |  __|     > <  / ___ \ 
-| |\  | |____   / . \/ /   \ \
-|_| \_|______| /_/ \_/_/     \_\
+
+███╗   ██╗███████╗██╗  ██╗ █████╗  
+████╗  ██║██╔════╝╚██╗██╔╝██╔══██╗ 
+██╔██╗ ██║█████╗   ╚███╔╝ ███████║ 
+██║╚██╗██║██╔══╝   ██╔██╗ ██╔══██║ 
+██║ ╚████║███████╗██╔╝ ██╗██║  ██║ 
+╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ 
+
 ]]
 
 -- Tunggu sampai game siap
