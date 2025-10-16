@@ -706,6 +706,7 @@ Tabs.Farm:Button({
     end
 })
 
+Tabs.Farm:Space()
 
 -- Toggle di Tabs.Farm
 local fishingGui
