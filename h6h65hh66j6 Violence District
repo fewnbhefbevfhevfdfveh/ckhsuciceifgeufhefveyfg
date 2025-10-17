@@ -287,7 +287,7 @@ Tabs.Main:Toggle({
         local map = workspace:FindFirstChild("Map")
         if not map then return end
 
-        -- hentikan loop sebelumnya kalau ada
+        -- hentikan loop lama
         if getgenv().ViewGeneratorLoop then
             getgenv().ViewGeneratorLoop = nil
         end
@@ -299,12 +299,16 @@ Tabs.Main:Toggle({
                 while getgenv().ViewGeneratorLoop do
                     for _, generator in pairs(map:GetChildren()) do
                         if string.find(generator.Name, "Generator") then
-                            local point = generator:FindFirstChild("GeneratorPoint1")
-                            local isOff = point ~= nil
+                            local point1 = generator:FindFirstChild("GeneratorPoint1")
+                            local point2 = generator:FindFirstChild("GeneratorPoint2")
+                            local point3 = generator:FindFirstChild("GeneratorPoint3")
+
+                            -- kalau salah satu point ada, generator off
+                            local isOff = (point1 or point2 or point3) ~= nil
                             local color = isOff and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
 
-                            -- cari part untuk BillboardGui
-                            local adorneePart = point or generator:FindFirstChildWhichIsA("BasePart")
+                            -- cari part untuk tempat gui
+                            local adorneePart = point1 or point2 or point3 or generator:FindFirstChildWhichIsA("BasePart")
                             if adorneePart then
                                 local gui = adorneePart:FindFirstChild("StatusGui")
                                 if not gui then
@@ -329,14 +333,14 @@ Tabs.Main:Toggle({
                             end
                         end
                     end
-                    task.wait(1) -- update tiap 1 detik
+                    task.wait(1)
                 end
             end)
 
         else
             getgenv().ViewGeneratorLoop = nil
 
-            -- hapus semua status gui
+            -- hapus semua gui status
             for _, generator in pairs(map:GetChildren()) do
                 if string.find(generator.Name, "Generator") then
                     for _, gui in pairs(generator:GetDescendants()) do
