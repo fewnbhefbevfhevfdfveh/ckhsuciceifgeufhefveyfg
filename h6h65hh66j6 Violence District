@@ -130,6 +130,9 @@ Tabs.Home:Paragraph({
 
 Tabs.Main:Section({ Title = "Main" })
 
+--// ESP Player by Team + HP + Distance + WindUI Notify (Icon Style)
+--// Made by ChatGPT (GPT-5)
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
@@ -149,13 +152,11 @@ local function CreateESP(player)
         Text = Drawing.new("Text")
     }
 
-    -- Box (kotak di sekitar player)
     esp.Box.Thickness = 1.5
     esp.Box.Filled = false
     esp.Box.Color = Color3.fromRGB(255, 255, 255)
     esp.Box.Visible = false
 
-    -- Text (Nama + HP + Jarak)
     esp.Text.Size = 16
     esp.Text.Center = true
     esp.Text.Outline = true
@@ -206,15 +207,16 @@ RunService.RenderStepped:Connect(function()
                 local distance = (rootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
                 local health = math.floor(humanoid.Health)
 
-                -- Notifikasi musuh dekat pakai WindUI
+                -- Notifikasi musuh dekat pakai WindUI (dengan Icon)
                 if NotifyEnabled and player.Team ~= LocalPlayer.Team and distance <= NotifyDistance then
                     if not NotifiedEnemies[player] then
                         NotifiedEnemies[player] = true
                         task.spawn(function()
                             WindUI:Notify({
-                                Title = "⚠️ Musuh Dekat!",
-                                Content = player.Name .. " dalam jarak " .. math.floor(distance) .. " stud!",
-                                Duration = 5,
+                                Title = "🔪 Killer Dekat!",
+                                Content = player.Name .. " dalam jarak " .. math.floor(distance) .. " stud! Berhati Hati lah",
+                                Icon = "slice",
+                                Duration = 1,
                             })
                             task.wait(10)
                             NotifiedEnemies[player] = nil
@@ -261,7 +263,7 @@ end
 
 --// WindUI Toggle ESP utama
 Tabs.Main:Toggle({
-    Title = "ESP (Team + HP + Distance)",
+    Title = "ESP (Team & Killer)",
     Value = false,
     Callback = function(state)
         ESPEnabled = state
@@ -378,6 +380,28 @@ spawn(function()
         task.wait(0.01) -- delay 1 detik
     end
 end)
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local PlayerActionEvent = ReplicatedStorage.Remotes.Game.PlayerActionEvent -- RemoteEvent
+
+-- Variabel kontrol
+local GeneratorV2 = false
+
+-- Toggle WindUI
+Tabs.Main:Toggle({
+    Title = "Generator v2",
+    Value = false,
+    Callback = function(state)
+        GeneratorV2 = state
+
+        task.spawn(function()
+            while GeneratorV2 do
+                firesignal(PlayerActionEvent.OnClientEvent, "Got Chased", 2)
+                task.wait(0.01)
+            end
+        end)
+    end
+})
 
 -------------------------------------------------------
 -- TOGGLE BUTTON (PUTIH AGAK TRANSPARAN) + ANIMASI BARU
