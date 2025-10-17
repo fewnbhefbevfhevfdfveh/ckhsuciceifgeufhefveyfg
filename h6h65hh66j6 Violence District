@@ -130,9 +130,6 @@ Tabs.Home:Paragraph({
 
 Tabs.Main:Section({ Title = "Main" })
 
---// ESP Player by Team + HP + Distance + WindUI Notify Toggle
---// Made by ChatGPT (GPT-5)
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
@@ -140,7 +137,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local ESPEnabled = false
 local NotifyEnabled = true
-local NotifyDistance = 100 -- stud
+local NotifyDistance = 150 -- stud
 local ESPFolder = {}
 local NotifiedEnemies = {}
 
@@ -378,7 +375,7 @@ spawn(function()
         if autoRepair then
             firesignal(PlayerActionEvent.OnClientEvent, "Repaired Generator", 2)
         end
-        task.wait(1) -- delay 1 detik
+        task.wait(0.01) -- delay 1 detik
     end
 end)
 
