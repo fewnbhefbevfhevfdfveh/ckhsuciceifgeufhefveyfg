@@ -1,3 +1,4 @@
+
 local map = workspace:WaitForChild("Map")
 
 -- Fungsi rename generator
@@ -390,9 +391,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- Remote
 local HookEvent = ReplicatedStorage.Remotes.Carry.HookEvent -- RemoteEvent 
 
--- Variables
-local HookPoint = workspace.Map.Hook.HookPoint
-
 -- Variabel kontrol
 local autoHook = false
 
@@ -404,8 +402,13 @@ Tabs.Main:Toggle({
         autoHook = state
 
         if state then
-            -- Loop otomatis
             task.spawn(function()
+                -- Tunggu sampai Map, Hook, dan HookPoint benar-benar muncul
+                local Map = workspace:WaitForChild("Map")
+                local HookFolder = Map:WaitForChild("Hook")
+                local HookPoint = HookFolder:WaitForChild("HookPoint")
+
+                -- Loop otomatis
                 while autoHook do
                     firesignal(HookEvent.OnClientEvent, HookPoint)
                     task.wait(0.1) -- ubah ke 0.001 kalau mau super cepat
@@ -414,6 +417,7 @@ Tabs.Main:Toggle({
         end
     end
 })
+
 
 Tabs.Visual:Section({ Title = "View" })
 
@@ -885,4 +889,3 @@ UserInputService.InputChanged:Connect(function(input)
 		update(input)
 	end
 end)
-
