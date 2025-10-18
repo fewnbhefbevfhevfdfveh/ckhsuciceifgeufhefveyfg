@@ -76,6 +76,7 @@ Window:EditOpenButton({
 local Tabs = {
     Home = Window:Tab({ Title = "Home", Icon = "house"  }),
     Main = Window:Tab({ Title = "Main", Icon = "swords"  }),
+    Visual = Window:Tab({ Title = "Visual", Icon = "eye"  }),
 }
 
 Tabs.Home:Section({ Title = "Update", Icon = "logs" })
@@ -130,8 +131,178 @@ Tabs.Home:Paragraph({
 
 Tabs.Main:Section({ Title = "Main" })
 
---// ESP Player by Team + HP + Distance + WindUI Notify + GUI Arah Musuh
---// Made by ChatGPT (GPT-5)
+-- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Remote
+local PlayerActionEvent = ReplicatedStorage.Remotes.Game.PlayerActionEvent -- RemoteEvent 
+
+-- Variabel untuk toggle
+local autoRepair = false
+
+-- Toggle di WindUI
+Tabs.Main:Toggle({ 
+    Title = "Auto Repaired Generator", 
+    Value = false,
+    Callback = function(state)
+        autoRepair = state
+        if state then
+        else
+        end
+    end
+})
+
+-- Loop untuk firesignal
+spawn(function()
+    while true do
+        if autoRepair then
+            firesignal(PlayerActionEvent.OnClientEvent, "Repaired Generator", 2)
+        end
+        task.wait(0.1) -- delay 1 detik
+    end
+end)
+
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local PlayerActionEvent = ReplicatedStorage.Remotes.Game.PlayerActionEvent -- RemoteEvent
+
+-- Variabel kontrol
+local GeneratorV2 = false
+
+-- Toggle WindUI
+Tabs.Main:Toggle({
+    Title = "Generator v2",
+    Value = false,
+    Callback = function(state)
+        GeneratorV2 = state
+
+        task.spawn(function()
+            while GeneratorV2 do
+                firesignal(PlayerActionEvent.OnClientEvent, "Got Chased", 2)
+                task.wait(0.1)
+            end
+        end)
+    end
+})
+
+
+-- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Remote
+local Phonk1 = ReplicatedStorage.Remotes.Pallet.Jason["Destroy-Global"] -- RemoteEvent 
+
+-- Variabel kontrol
+local autoDestroy = false
+
+-- Toggle GUI
+Tabs.Main:Toggle({
+    Title = "Auto Destroy Global",
+    Value = false,
+    Callback = function(state)
+        autoDestroy = state
+
+        if state then
+            task.spawn(function()
+                while autoDestroy do
+                    Phonk1:FireServer(PalletPointSlide)
+                    task.wait(0.1) -- ubah ke 0.001 kalau mau super cepat
+                end
+            end)
+        end
+    end
+})
+
+
+-- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Remote
+local BasicAttack = ReplicatedStorage.Remotes.Attacks.BasicAttack -- RemoteEvent 
+
+-- Variabel kontrol
+local autoAttack = false
+
+-- Toggle GUI
+Tabs.Main:Toggle({
+    Title = "Auto Basic Attack",
+    Value = false,
+    Callback = function(state)
+        autoAttack = state
+
+        if state then
+            -- Loop otomatis
+            task.spawn(function()
+                while autoAttack do
+                    BasicAttack:FireServer()
+                    task.wait(0.1) -- ganti 0.001 kalau mau super cepat
+                end
+            end)
+        end
+    end
+})
+
+-- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Remote
+local hit = ReplicatedStorage.Remotes.Attacks.hit -- RemoteEvent 
+
+-- Variabel kontrol
+local autoHit = false
+
+-- Toggle GUI
+Tabs.Main:Toggle({
+    Title = "Auto Hit",
+    Value = false,
+    Callback = function(state)
+        autoHit = state
+
+        if state then
+            -- Jalankan loop di thread terpisah
+            task.spawn(function()
+                while autoHit do
+                    firesignal(hit.OnClientEvent)
+                    task.wait(0.1) -- ubah ke 0.001 kalau mau lebih cepat
+                end
+            end)
+        end
+    end
+})
+
+
+-- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Remote
+local HookEvent = ReplicatedStorage.Remotes.Carry.HookEvent -- RemoteEvent 
+
+-- Variables
+local HookPoint = workspace.Map.Hook.HookPoint
+
+-- Variabel kontrol
+local autoHook = false
+
+-- Toggle GUI
+Tabs.Main:Toggle({
+    Title = "Auto Hook",
+    Value = false,
+    Callback = function(state)
+        autoHook = state
+
+        if state then
+            -- Loop otomatis
+            task.spawn(function()
+                while autoHook do
+                    firesignal(HookEvent.OnClientEvent, HookPoint)
+                    task.wait(0.1) -- ubah ke 0.001 kalau mau super cepat
+                end
+            end)
+        end
+    end
+})
+
+Tabs.Visual:Section({ Title = "View" })
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -146,20 +317,32 @@ local MaxIndicatorDistance = 500 -- stud
 local ESPFolder = {}
 local NotifiedEnemies = {}
 
---// GUI container arah musuh
+--// GUI utama
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "EnemyDirectionGui"
+screenGui.Name = "EnemyESPGui"
 screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = PlayerGui
 
--- Container kanan atas
-local directionFrame = Instance.new("Frame")
-directionFrame.Name = "DirectionFrame"
-directionFrame.Size = UDim2.new(0, 250, 0, 120)
-directionFrame.Position = UDim2.new(1, -260, 0, 60) -- di bawah logo Roblox
-directionFrame.BackgroundTransparency = 1
-directionFrame.Parent = screenGui
+--// Kompas bar di bawah logo Roblox (kanan atas)
+local compassFrame = Instance.new("Frame")
+compassFrame.Name = "CompassFrame"
+compassFrame.AnchorPoint = Vector2.new(1, 0)
+compassFrame.Position = UDim2.new(1, -20, 0, 60) -- pojok kanan atas, di bawah logo Roblox
+compassFrame.Size = UDim2.new(0, 250, 0, 10)
+compassFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+compassFrame.BackgroundTransparency = 0.5
+compassFrame.BorderSizePixel = 0
+compassFrame.Parent = screenGui
+
+-- Garis tengah kompas
+local compassLine = Instance.new("Frame")
+compassLine.Name = "CenterLine"
+compassLine.AnchorPoint = Vector2.new(0.5, 0.5)
+compassLine.Position = UDim2.new(0.5, 0, 0.5, 0)
+compassLine.Size = UDim2.new(0, 2, 1, 0)
+compassLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+compassLine.Parent = compassFrame
 
 --// Fungsi buat ESP
 local function CreateESP(player)
@@ -167,7 +350,7 @@ local function CreateESP(player)
 	local esp = {
 		Box = Drawing.new("Square"),
 		Text = Drawing.new("Text"),
-		Indicator = Instance.new("TextLabel"),
+		Indicator = nil, -- frame visual di kompas
 	}
 
 	esp.Box.Thickness = 1.5
@@ -180,17 +363,6 @@ local function CreateESP(player)
 	esp.Text.Outline = true
 	esp.Text.Visible = false
 	esp.Text.Color = Color3.fromRGB(255, 255, 255)
-
-	-- GUI arah musuh
-	local label = esp.Indicator
-	label.Size = UDim2.new(1, 0, 0, 20)
-	label.BackgroundTransparency = 1
-	label.TextColor3 = Color3.fromRGB(255, 100, 100)
-	label.TextStrokeTransparency = 0
-	label.Font = Enum.Font.GothamBold
-	label.TextSize = 14
-	label.Visible = false
-	label.Parent = directionFrame
 
 	ESPFolder[player] = esp
 end
@@ -210,7 +382,7 @@ local function RemoveESP(player)
 	NotifiedEnemies[player] = nil
 end
 
---// Loop utama
+--// Loop utama ESP
 RunService.RenderStepped:Connect(function()
 	if not ESPEnabled then
 		for _, esp in pairs(ESPFolder) do
@@ -244,7 +416,7 @@ RunService.RenderStepped:Connect(function()
 				local distance = (rootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
 				local health = math.floor(humanoid.Health)
 
-				-- Notifikasi musuh dekat (WindUI)
+				-- Notifikasi musuh dekat
 				if NotifyEnabled and player.Team ~= LocalPlayer.Team and distance <= NotifyDistance then
 					if not NotifiedEnemies[player] then
 						NotifiedEnemies[player] = true
@@ -264,6 +436,7 @@ RunService.RenderStepped:Connect(function()
 				local esp = ESPFolder[player]
 				if not esp then continue end
 
+				-- ESP box layar
 				if onScreen then
 					local scale = 1 / (vector.Z * 0.1)
 					local boxSize = Vector2.new(150 * scale, 200 * scale)
@@ -281,36 +454,50 @@ RunService.RenderStepped:Connect(function()
 					esp.Text.Visible = false
 				end
 
-				-- GUI arah musuh
+				-- Kompas arah musuh (pakai Frame)
 				if player.Team ~= LocalPlayer.Team and distance <= MaxIndicatorDistance then
 					local relative = (rootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Unit
 					local lookVector = Camera.CFrame.LookVector
-					local dot = lookVector:Dot(relative)
 					local right = Camera.CFrame.RightVector:Dot(relative)
-					local angle = math.deg(math.atan2(right, dot))
-					local direction = ""
+					local forward = Camera.CFrame.LookVector:Dot(relative)
+					local angle = math.atan2(right, forward)
+					local normalizedAngle = math.deg(angle) / 90 -- -1..1
+					local posX = (normalizedAngle * (compassFrame.AbsoluteSize.X / 2))
 
-					if angle > 45 and angle < 135 then
-						direction = "➡️"
-					elseif angle < -45 and angle > -135 then
-						direction = "⬅️"
-					elseif angle >= 135 or angle <= -135 then
-						direction = "⬇️"
-					else
-						direction = "⬆️"
+					local indicator = esp.Indicator
+					if not indicator or not indicator.Parent then
+						local frame = Instance.new("Frame")
+						frame.Name = player.Name .. "_Indicator"
+						frame.AnchorPoint = Vector2.new(0.5, 0.5)
+						frame.Size = UDim2.new(0, 6, 0, 10)
+						frame.BorderSizePixel = 0
+						frame.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+						frame.Parent = compassFrame
+						esp.Indicator = frame
+						indicator = frame
 					end
 
-					esp.Indicator.Visible = true
-					esp.Indicator.Text = string.format("%s %s (%d stud)", direction, player.Name, distance)
+					indicator.Visible = true
+					indicator.Position = UDim2.new(0.5, posX, 0.5, 0)
+					indicator.BackgroundColor3 = Color3.fromRGB(
+						math.clamp(255 - distance / MaxIndicatorDistance * 100, 150, 255),
+						math.clamp(50 + distance / MaxIndicatorDistance * 100, 50, 150),
+						50
+					)
+					indicator.BackgroundTransparency = math.clamp(distance / MaxIndicatorDistance, 0, 0.6)
 				else
-					esp.Indicator.Visible = false
+					if esp.Indicator and esp.Indicator:IsA("Frame") then
+						esp.Indicator.Visible = false
+					end
 				end
 			else
 				local esp = ESPFolder[player]
 				if esp then
 					esp.Box.Visible = false
 					esp.Text.Visible = false
-					esp.Indicator.Visible = false
+					if esp.Indicator and esp.Indicator:IsA("Frame") then
+						esp.Indicator.Visible = false
+					end
 				end
 			end
 		end
@@ -325,7 +512,7 @@ for _, p in pairs(Players:GetPlayers()) do
 end
 
 --// Toggle ESP
-Tabs.Main:Toggle({
+Tabs.Visual:Toggle({
 	Title = "ESP (Team & Killer)",
 	Value = false,
 	Callback = function(state)
@@ -334,7 +521,7 @@ Tabs.Main:Toggle({
 })
 
 --// Toggle Notify
-Tabs.Main:Toggle({
+Tabs.Visual:Toggle({
 	Title = "Notify Killer Nearby",
 	Value = true,
 	Callback = function(state)
@@ -343,7 +530,7 @@ Tabs.Main:Toggle({
 })
 
 
-Tabs.Main:Toggle({
+Tabs.Visual:Toggle({
     Title = "View Generator",
     Default = false,
     Callback = function(state)
@@ -414,59 +601,6 @@ Tabs.Main:Toggle({
                 end
             end
         end
-    end
-})
-
--- Services
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
--- Remote
-local PlayerActionEvent = ReplicatedStorage.Remotes.Game.PlayerActionEvent -- RemoteEvent 
-
--- Variabel untuk toggle
-local autoRepair = false
-
--- Toggle di WindUI
-Tabs.Main:Toggle({ 
-    Title = "Auto Repaired Generator", 
-    Value = false,
-    Callback = function(state)
-        autoRepair = state
-        if state then
-        else
-        end
-    end
-})
-
--- Loop untuk firesignal
-spawn(function()
-    while true do
-        if autoRepair then
-            firesignal(PlayerActionEvent.OnClientEvent, "Repaired Generator", 2)
-        end
-        task.wait(0.01) -- delay 1 detik
-    end
-end)
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local PlayerActionEvent = ReplicatedStorage.Remotes.Game.PlayerActionEvent -- RemoteEvent
-
--- Variabel kontrol
-local GeneratorV2 = false
-
--- Toggle WindUI
-Tabs.Main:Toggle({
-    Title = "Generator v2",
-    Value = false,
-    Callback = function(state)
-        GeneratorV2 = state
-
-        task.spawn(function()
-            while GeneratorV2 do
-                firesignal(PlayerActionEvent.OnClientEvent, "Got Chased", 2)
-                task.wait(0.01)
-            end
-        end)
     end
 })
 
