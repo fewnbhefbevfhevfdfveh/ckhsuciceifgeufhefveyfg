@@ -131,6 +131,116 @@ Tabs.Home:Paragraph({
 
 Tabs.Main:Section({ Title = "Main" })
 
+-- ========= Speed Lock (WindUI Version) =========
+local speedCurrent, speedHumanoid = 16, nil
+local speedEnforced, speedPaused = false, false
+local speedStunUntil, speedSlowUntil = 0, 0
+local speedTickConn = nil
+local speedLastTick, speedTickInterval = 0, 0.12
+
+local function setWalkSpeed(h, v)
+    if h and h.Parent then
+        pcall(function() h.WalkSpeed = v end)
+    end
+end
+
+local function canEnforce()
+    local h = speedHumanoid
+    if not speedEnforced then return false end
+    if not h or not h.Parent then return false end
+    if speedPaused then return false end
+    if os.clock() < speedStunUntil or os.clock() < speedSlowUntil then return false end
+    if h.Health <= 0 then return false end
+    if h.PlatformStand or h.Sit then return false end
+    local st = h:GetState()
+    if st == Enum.HumanoidStateType.Ragdoll or st == Enum.HumanoidStateType.FallingDown or st == Enum.HumanoidStateType.Physics or st == Enum.HumanoidStateType.GettingUp or st == Enum.HumanoidStateType.Seated then return false end
+    local hrp = h.Parent:FindFirstChild("HumanoidRootPart")
+    if hrp and hrp.Anchored then return false end
+    return true
+end
+
+local function heartbeat()
+    if not speedHumanoid then return end
+    local t = os.clock()
+    if t - speedLastTick < speedTickInterval then return end
+    speedLastTick = t
+    if not canEnforce() then return end
+    if speedHumanoid.WalkSpeed ~= speedCurrent then
+        setWalkSpeed(speedHumanoid, speedCurrent)
+    end
+end
+
+local function disconnectAll()
+    if speedTickConn then
+        speedTickConn:Disconnect()
+        speedTickConn = nil
+    end
+end
+
+local function bindHumanoid(h)
+    speedHumanoid = h
+    if speedTickConn then speedTickConn:Disconnect() end
+    speedTickConn = game:GetService("RunService").Heartbeat:Connect(heartbeat)
+end
+
+-- Bind ke Humanoid saat script dijalankan
+local player = game.Players.LocalPlayer
+if player.Character then
+    bindHumanoid(player.Character:FindFirstChildOfClass("Humanoid"))
+end
+player.CharacterAdded:Connect(function(char)
+    bindHumanoid(char:WaitForChild("Humanoid"))
+end)
+
+-- ========= WindUI Integration =========
+Tabs.Main:Toggle({
+    Title = "Enabled Speed",
+    Value = false,
+    Callback = function(state)
+        speedEnforced = state
+        local h = speedHumanoid
+        if not h or not h.Parent then return end
+        if state then
+            if not speedTickConn then
+                speedTickConn = game:GetService("RunService").Heartbeat:Connect(heartbeat)
+            end
+            if canEnforce() then setWalkSpeed(h, speedCurrent) end
+        else
+            disconnectAll()
+            setWalkSpeed(h, 16) -- Reset ke default
+        end
+    end
+})
+
+Tabs.Main:Slider({
+    Title = "Speed Set",
+    Min = 16,
+    Max = 200,
+    Value = 16,
+    Step = 1,
+    Callback = function(v)
+        speedCurrent = v
+        if speedEnforced and canEnforce() then
+            setWalkSpeed(speedHumanoid, speedCurrent)
+        end
+    end
+})
+
+Tabs.Main:Button({
+    Title = "Reset Speed",
+    Callback = function()
+        speedCurrent = 16
+        if speedHumanoid and speedHumanoid.Parent then
+            if speedEnforced and canEnforce() then
+                setWalkSpeed(speedHumanoid, speedCurrent)
+            else
+                setWalkSpeed(speedHumanoid, 16)
+            end
+        end
+    end
+})
+
+
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
