@@ -212,19 +212,22 @@ Tabs.Main:Toggle({
     end
 })
 
-Tabs.Main:Slider({
-    Title = "Speed Set",
-    Min = 16,
-    Max = 200,
-    Value = 16,
-    Step = 1,
-    Callback = function(v)
-        speedCurrent = v
+Tabs.Main:Slider({ 
+    Title = "Speed Set", 
+    Step = 1, 
+    Value = {
+        Min = 16, 
+        Max = 200, 
+        Default = 16, 
+    },
+    Callback = function(value)
+        speedCurrent = value
         if speedEnforced and canEnforce() then
             setWalkSpeed(speedHumanoid, speedCurrent)
         end
     end
 })
+
 
 Tabs.Main:Button({
     Title = "Reset Speed",
