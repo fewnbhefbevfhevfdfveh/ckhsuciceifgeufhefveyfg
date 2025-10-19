@@ -526,7 +526,7 @@ Tabs.Home:Paragraph({
 
 Tabs.Main:Section({ Title = "Combat" })
 
-Tabs.Combat:Toggle({
+Tabs.Main:Toggle({
     Title = "Kill Aura",
     Value = false,
     Callback = function(state)
@@ -541,7 +541,7 @@ Tabs.Combat:Toggle({
     end
 })
 
-Tabs.Combat:Toggle({
+Tabs.Main:Toggle({
     Title = "Chop Aura",
     Value = false,
     Callback = function(state)
@@ -556,7 +556,7 @@ Tabs.Combat:Toggle({
     end
 })
 
-Tabs.Combat:Toggle({
+Tabs.Main:Toggle({
     Title = "Show Radius Circle",
     Value = false,
     Callback = function(state)
@@ -572,7 +572,7 @@ Tabs.Combat:Toggle({
     end
 })
 
-Tabs.Combat:Slider({
+Tabs.Main:Slider({
     Title = "Aura Radius",
     Step = 1,
     Value = {
