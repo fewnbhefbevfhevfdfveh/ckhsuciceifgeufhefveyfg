@@ -1,28 +1,30 @@
--- ======================= Chop Aura & Kill Aura=======================
+--==========================[ Kill Aura & Chop Aura ]=============================--
 
--- [STATE VARIABLES]
-local chopAuraToggle = false
 local killAuraToggle = false
-
-local chopAuraRadius = 50
-local killAuraRadius = 50
+local chopAuraToggle = false
+local showRadius = false
+local auraRadius = 50
 local currentammount = 0
+local radiusPart = nil
 
--- [TOOLS CONFIG]
 local toolsDamageIDs = {
     ["Old Axe"] = "3_7367831688",
     ["Good Axe"] = "112_7367831688",
     ["Strong Axe"] = "116_7367831688",
+    ["Chainsaw"] = "647_8992824875",
+    ["Infernal Sword"] = "2_4340578793",
+    ["Spear"] = "196_8999010016"
 }
 
-local function getAnyToolWithDamageID()
+--===[ TOOL FUNCTIONS ]===--
+local function getAnyToolWithDamageID(isChopAura)
     for toolName, damageID in pairs(toolsDamageIDs) do
-        local inv = game.Players.LocalPlayer:FindFirstChild("Inventory")
-        if inv then
-            local tool = inv:FindFirstChild(toolName)
-            if tool then
-                return tool, damageID
-            end
+        if isChopAura and toolName ~= "Old Axe" and toolName ~= "Good Axe" and toolName ~= "Strong Axe" then
+            continue
+        end
+        local tool = LocalPlayer:FindFirstChild("Inventory") and LocalPlayer.Inventory:FindFirstChild(toolName)
+        if tool then
+            return tool, damageID
         end
     end
     return nil, nil
@@ -30,38 +32,97 @@ end
 
 local function equipTool(tool)
     if tool then
-        game:GetService("ReplicatedStorage")
-            :WaitForChild("RemoteEvents")
-            :WaitForChild("EquipItemHandle")
-            :FireServer("FireAllClients", tool)
+        ReplicatedStorage:WaitForChild("RemoteEvents").EquipItemHandle:FireServer("FireAllClients", tool)
     end
 end
 
 local function unequipTool(tool)
     if tool then
-        game:GetService("ReplicatedStorage")
-            :WaitForChild("RemoteEvents")
-            :WaitForChild("UnequipItemHandle")
-            :FireServer("FireAllClients", tool)
+        ReplicatedStorage:WaitForChild("RemoteEvents").UnequipItemHandle:FireServer("FireAllClients", tool)
+    end
+end
+
+--===[ VISUAL RADIUS SYSTEM ]===--
+local function createRadiusCircle()
+    if radiusPart then
+        radiusPart:Destroy()
+    end
+    if not showRadius then return end
+
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    radiusPart = Instance.new("Part")
+    radiusPart.Name = "AuraRadiusPart"
+    radiusPart.Anchored = true
+    radiusPart.CanCollide = false
+    radiusPart.Transparency = 0.8
+    radiusPart.Color = Color3.fromRGB(0, 255, 0)
+    radiusPart.Material = Enum.Material.ForceField
+    radiusPart.Shape = Enum.PartType.Cylinder
+    radiusPart.Size = Vector3.new(auraRadius * 2, 0.2, auraRadius * 2)
+    radiusPart.CFrame = hrp.CFrame * CFrame.Angles(math.rad(90), 0, 0)
+    radiusPart.Parent = workspace
+
+    task.spawn(function()
+        while radiusPart and radiusPart.Parent and showRadius do
+            local character = LocalPlayer.Character
+            local hrp = character and character:FindFirstChild("HumanoidRootPart")
+            if not hrp then break end
+            radiusPart.CFrame = hrp.CFrame * CFrame.Angles(math.rad(90), 0, 0)
+            radiusPart.Size = Vector3.new(auraRadius * 2, 0.2, auraRadius * 2)
+            task.wait(0.05)
+        end
+        if radiusPart then radiusPart:Destroy() end
+    end)
+end
+
+--===[ AURA LOGIC ]===--
+local function killAuraLoop()
+    while killAuraToggle do
+        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local tool, damageID = getAnyToolWithDamageID(false)
+            if tool and damageID then
+                equipTool(tool)
+                for _, mob in ipairs(Workspace.Characters:GetChildren()) do
+                    if mob:IsA("Model") then
+                        local part = mob:FindFirstChildWhichIsA("BasePart")
+                        if part and (part.Position - hrp.Position).Magnitude <= auraRadius then
+                            pcall(function()
+                                ReplicatedStorage:WaitForChild("RemoteEvents").ToolDamageObject:InvokeServer(
+                                    mob,
+                                    tool,
+                                    damageID,
+                                    CFrame.new(part.Position)
+                                )
+                            end)
+                        end
+                    end
+                end
+                task.wait(0.1)
+            else
+                task.wait(1)
+            end
+        else
+            task.wait(0.5)
+        end
     end
 end
 
 local function chopAuraLoop()
     while chopAuraToggle do
-        -- Cegah konflik dengan Kill Aura
-        if killAuraToggle then return end
-
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
+        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
         local hrp = character:FindFirstChild("HumanoidRootPart")
-
         if hrp then
-            local tool, _ = getAnyToolWithDamageID()
-            if tool then
+            local tool, baseDamageID = getAnyToolWithDamageID(true)
+            if tool and baseDamageID then
                 equipTool(tool)
-                local map = workspace:FindFirstChild("Map")
+                currentammount = currentammount + 1
+                local trees = {}
+                local map = Workspace:FindFirstChild("Map")
                 if map then
-                    local trees = {}
                     if map:FindFirstChild("Foliage") then
                         for _, obj in ipairs(map.Foliage:GetChildren()) do
                             if obj:IsA("Model") and (obj.Name == "Small Tree" or obj.Name == "Snowy Small Tree") then
@@ -76,274 +137,315 @@ local function chopAuraLoop()
                             end
                         end
                     end
-
-                    for _, tree in ipairs(trees) do
-                        local trunk = tree:FindFirstChild("Trunk")
-                        if trunk and (trunk.Position - hrp.Position).Magnitude <= chopAuraRadius then
-                            currentammount += 1
-                            task.spawn(function()
+                end
+                for _, tree in ipairs(trees) do
+                    local trunk = tree:FindFirstChild("Trunk")
+                    if trunk and trunk:IsA("BasePart") and (trunk.Position - hrp.Position).Magnitude <= auraRadius then
+                        local alreadyammount = false
+                        task.spawn(function()
+                            while chopAuraToggle and tree and tree.Parent and not alreadyammount do
+                                alreadyammount = true
+                                currentammount = currentammount + 1
                                 pcall(function()
-                                    local args = {
+                                    ReplicatedStorage:WaitForChild("RemoteEvents").ToolDamageObject:InvokeServer(
                                         tree,
                                         tool,
-                                        tostring(currentammount) .. "_5464154339",
-                                        CFrame.new(hrp.Position)
-                                    }
-                                    game:GetService("ReplicatedStorage")
-                                        :WaitForChild("RemoteEvents")
-                                        :WaitForChild("ToolDamageObject")
-                                        :InvokeServer(unpack(args))
+                                        tostring(currentammount) .. "_7367831688",
+                                        CFrame.new(trunk.Position)
+                                    )
                                 end)
-                            end)
-                        end
-                    end
-                end
-            end
-        end
-        task.wait(0.3)
-    end
-end
-
-local function killAuraLoop()
-    while killAuraToggle do
-        -- Cegah konflik dengan Chop Aura
-        if chopAuraToggle then return end
-
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local hrp = character:FindFirstChild("HumanoidRootPart")
-
-        if hrp then
-            local tool, _ = getAnyToolWithDamageID()
-            if tool then
-                equipTool(tool)
-                local chars = workspace:FindFirstChild("Characters")
-                if chars then
-                    for _, target in ipairs(chars:GetChildren()) do
-                        if target:IsA("Model") and target:FindFirstChild("HumanoidRootPart") then
-                            local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
-                            if dist <= killAuraRadius then
-                                currentammount += 1
-                                task.spawn(function()
-                                    pcall(function()
-                                        local args = {
-                                            target,
-                                            tool,
-                                            tostring(currentammount) .. "_5464154339",
-                                            CFrame.new(hrp.Position)
-                                        }
-                                        game:GetService("ReplicatedStorage")
-                                            :WaitForChild("RemoteEvents")
-                                            :WaitForChild("ToolDamageObject")
-                                            :InvokeServer(unpack(args))
-                                    end)
-                                end)
+                                task.wait(0.5)
                             end
-                        end
+                        end)
                     end
                 end
+                task.wait(0.1)
+            else
+                task.wait(1)
             end
-        end
-        task.wait(0.25)
-    end
-end
-
--- ======================= Auto Submit =======================
-
-local targetCFrames = {
-    ["CampFire"] = CFrame.new(
-        0.0205104575, 14.2929211, -0.172306404,
-        0.901491344, 0, 0.432797134,
-        0, 1, 0,
-        -0.432797134, 0, 0.901491344
-    ),
-
-    ["Scrapper"] = CFrame.new(
-        20.1605988, 16.7862568, -4.60780573,
-        0.954762101, 0.0555610359, -0.292133957,
-        -1.90373467e-10, 0.982390165, 0.186841056,
-        0.297370613, -0.178388759, 0.937948942
-    ),
-}
-
-local folder = workspace:WaitForChild("Items")
-local autoSubmit = false
-local selectedCFrame = "CampFire"
-
-local function dropLog(item, cframe)
-    if not item.PrimaryPart then
-        local primary = item:FindFirstChildWhichIsA("BasePart")
-        if primary then
-            item.PrimaryPart = primary
         else
-            return
+            task.wait(0.5)
         end
     end
-
-    -- Pastikan semua part bisa jatuh
-    for _, part in ipairs(item:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.Anchored = false
-            part.CanCollide = true
-        end
-    end
-
-    -- Pindahkan Log ke posisi target
-    item:SetPrimaryPartCFrame(cframe)
-
-    -- Tambahkan gaya dorong kecil agar jatuh natural
-    local bv = Instance.new("BodyVelocity")
-    bv.Velocity = Vector3.new(math.random(-5,5), 10, math.random(-5,5))
-    bv.MaxForce = Vector3.new(4000,4000,4000)
-    bv.P = 2000
-    bv.Parent = item.PrimaryPart
-    game.Debris:AddItem(bv, 0.3)
 end
 
-task.spawn(function()
-    while task.wait(0.5) do
-        if autoSubmit then
-            local cframe = targetCFrames[selectedCFrame]
-            for _, item in ipairs(folder:GetChildren()) do
-                if item:IsA("Model") and item.Name == "Log" then
-                    dropLog(item, cframe)
-                    task.wait(0.5) -- jeda antar Log
+
+--==========================[ Auto Campfire, Scrap, Cook ]=============================--
+
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Lokasi posisi
+local campfireDropPos = Vector3.new(0, 19, 0) -- posisi api unggun
+local autoScrapPos = Vector3.new(21, 20, -5)  -- posisi mesin scrap
+
+-- Item pilihan
+local campfireFuelItems = {"Log", "Coal", "Chair", "Fuel Canister", "Oil Barrel", "Biofuel"}
+local scrapJunkItems = {"Log", "Chair", "Tyre", "Bolt", "Broken Fan", "Broken Microwave", "Sheet Metal", "Old Radio", "Washing Machine", "Old Car Engine"}
+local autoCookItems = {"Morsel", "Steak", "Ribs", "Salmon", "Mackerel"}
+
+-- Variabel toggle dan pilihan
+local selectedCampfireItem = nil
+local selectedScrapItem = nil
+local autoUpgradeCampfireEnabled = false
+local autoScrapItemsEnabled = false
+local autoCookEnabledItems = {}
+local autoCookEnabled = false
+
+-- Fungsi umum untuk mindahkan item ke posisi tertentu
+local function moveItemToPos(item, position)
+    if not item or not item:IsDescendantOf(Workspace) then return end
+    local part = item:IsA("Model") and (item.PrimaryPart or item:FindFirstChildWhichIsA("BasePart")) or item
+    if not part then return end
+
+    pcall(function()
+        ReplicatedStorage:WaitForChild("RemoteEvents").RequestStartDraggingItem:FireServer(item)
+        if item:IsA("Model") then
+            item:SetPrimaryPartCFrame(CFrame.new(position))
+        else
+            part.CFrame = CFrame.new(position)
+        end
+        ReplicatedStorage:WaitForChild("RemoteEvents").StopDraggingItem:FireServer(item)
+    end)
+end
+
+--==========================[ Bring ]=============================--
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+-- // Bring Core Functions
+local isCollecting = false
+local originalPosition = nil
+
+local function smoothPullToItem(startPos, endPos, duration)
+    local player = LocalPlayer
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local startTime = tick()
+    spawn(function()
+        while tick() - startTime < duration do
+            local elapsed = tick() - startTime
+            local progress = elapsed / duration
+            local eased = progress < 0.5 and 2 * progress^2 or 1 - ((-2 * progress + 2)^2) / 2
+            local pos = startPos.Position:Lerp(endPos.Position, eased)
+            hrp.CFrame = CFrame.new(pos)
+            task.wait()
+        end
+        hrp.CFrame = endPos
+    end)
+    task.wait(duration)
+end
+
+local function createItemPullEffect(itemPart, targetPos, duration)
+    if not itemPart or not itemPart.Parent then return end
+    local startPos = itemPart.Position
+    local startTime = tick()
+    spawn(function()
+        while tick() - startTime < duration do
+            if not itemPart or not itemPart.Parent then break end
+            local elapsed = tick() - startTime
+            local progress = elapsed / duration
+            local eased = 1 - (1 - progress)^3
+            local pos = startPos:Lerp(targetPos, eased)
+            pcall(function()
+                itemPart.CFrame = CFrame.new(pos)
+                itemPart.Velocity = Vector3.zero
+                itemPart.AngularVelocity = Vector3.zero
+            end)
+            task.wait()
+        end
+    end)
+    task.wait(duration)
+end
+
+local function bypassBringSystem(items, stopFlag)
+    if isCollecting then return end
+    isCollecting = true
+
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then isCollecting = false return end
+
+    originalPosition = hrp.CFrame
+
+    for _, itemName in ipairs(items) do
+        if stopFlag and not stopFlag() then break end
+        for _, item in ipairs(Workspace:GetDescendants()) do
+            if item.Name == itemName and (item:IsA("BasePart") or item:IsA("Model")) then
+                local part = item:IsA("Model") and (item.PrimaryPart or item:FindFirstChildWhichIsA("BasePart")) or item
+                if part and part.Parent ~= LocalPlayer.Character then
+                    smoothPullToItem(hrp.CFrame, part.CFrame + Vector3.new(0, 5, 0), 1)
+                    createItemPullEffect(part, hrp.Position + Vector3.new(0, -1, 0), 0.8)
+                    smoothPullToItem(hrp.CFrame, originalPosition, 1)
+                    createItemPullEffect(part, originalPosition.Position + Vector3.new(math.random(-3,3), 2, math.random(-3,3)), 0.5)
+                    task.wait(0.5)
                 end
             end
         end
     end
-end)
 
--- ======================= Auto Cook =======================
-
--- daftar nama item yang mau di-bring
-local targetItems = {
-    "Carrot", "Corn", "Pumpkin", "Berry", "Apple", "Morsel", "Cooked Morsel",
-    "Steak", "Cooked Steak", "Ribs", "Cooked Ribs", "Cake", "Chili", "Stew",
-    "Hearty Stew", "Meat Sandwich", "Seafood Chowder", "Steak Dinner",
-    "Pumpkin Soup", "BBQ Ribs", "Carrot Cake", "Jar o' Jelly", "Mackerel",
-    "Cooked Mackerel", "Salmon", "Cooked Salmon", "Clownfish",
-    "Cooked Clownfish", "Jellyfish", "Char", "Cooked Char", "Eel",
-    "Cooked Eel", "Swordfish", "Cooked Swordfish", "Shark", "Cooked Shark",
-    "Lava Eel", "Cooked Lava Eel", "Lionfish"
-}
-
--- ubah ke format lookup
-local itemLookup = {}
-for _, name in ipairs(targetItems) do
-    itemLookup[name] = true
+    hrp.CFrame = originalPosition
+    isCollecting = false
 end
 
--- posisi target (CFrame)
-local targetCFrame = CFrame.new(
-    1.25811517, 14.5849133, 0.726119816,
-    0.186641589, -0.160326943, 0.969257534,
-    -2.82133117e-09, 0.986593902, 0.163194582,
-    -0.982428074, -0.0304588992, 0.184139445
-)
+-- // Items Category
+local junkItems = {"Tyre", "Bolt", "Broken Fan", "Broken Microwave", "Sheet Metal", "Old Radio", "Washing Machine", "Old Car Engine"}
+local fuelItems = {"Log", "Chair", "Coal", "Fuel Canister", "Oil Barrel"}
+local foodItems = {"Cake", "Cooked Steak", "Cooked Morsel", "Ribs", "Salmon", "Cooked Salmon", "Cooked Ribs", "Mackerel", "Cooked Mackerel", "Steak", "Morsel", "Berry", "Carrot"}
+local medicalItems = {"Bandage", "MedKit"}
+local equipmentItems = {"Revolver", "Rifle", "Leather Body", "Iron Body", "Revolver Ammo", "Rifle Ammo", "Giant Sack", "Good Sack", "Strong Axe", "Good Axe"}
 
--- variabel global toggle
-local autoCookedToggle = false
+-- Shared vars
+local selectedJunk = {}
+local selectedFuel = {}
+local selectedFood = {}
+local selectedMed = {}
+local selectedEquip = {}
 
--- fungsi utama
-local function bringItemsSlow()
-    while autoCookedToggle do
-        for _, v in pairs(workspace.Items:GetChildren()) do
-            if not autoCookedToggle then break end
-            if itemLookup[v.Name] and v:IsA("Model") then
-                -- pastikan ada PrimaryPart
-                if not v.PrimaryPart then
-                    local primary = v:FindFirstChildWhichIsA("BasePart")
-                    if primary then
-                        v.PrimaryPart = primary
-                    end
-                end
+local junkToggle = false
+local fuelToggle = false
+local foodToggle = false
+local medToggle = false
+local equipToggle = false
 
-                if v.PrimaryPart then
-                    -- teleport ke posisi target
-                    v:SetPrimaryPartCFrame(targetCFrame)
+--==========================[ Dropdown Teleport ]==========================--
 
-                    -- pastikan semua bagian bisa jatuh
-                    for _, part in pairs(v:GetDescendants()) do
-                        if part:IsA("BasePart") then
-                            part.Anchored = false
-                        end
-                    end
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
 
-                    -- delay biar gak lag
-                    task.wait(0.2)
+-- // Teleport Functions
+local function tpCampfire()
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.CFrame = CFrame.new(0.43132782, 15.77634621, -1.88620758)
+    end
+end
+
+local function tpStronghold()
+    local map = Workspace:FindFirstChild("Map")
+    if not map then return end
+    local target = map:FindFirstChild("Landmarks")
+    if not target then return end
+    local stronghold = target:FindFirstChild("Stronghold")
+    if stronghold and stronghold:FindFirstChild("Functional") then
+        local entry = stronghold.Functional:FindFirstChild("EntryDoors")
+        if entry and entry:FindFirstChild("DoorRight") then
+            local door = entry.DoorRight:FindFirstChild("Model")
+            if door and door:FindFirstChildWhichIsA("BasePart") then
+                local pos = door:GetChildren()[5]
+                local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp and pos then
+                    hrp.CFrame = pos.CFrame + Vector3.new(0, 5, 0)
                 end
             end
         end
-        task.wait(1) -- tunggu sebentar sebelum ulang scan
     end
 end
 
-local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
-
-local Localization = WindUI:Localization({
-    Enabled = true,
-    Prefix = "loc:",
-    DefaultLanguage = "en",
-    Translations = {
-        ["en"] = {
-            ["WINDUI_EXAMPLE"] = "WindUI Example",
-            ["WELCOME"] = "Welcome to WindUI!",
-            ["LIB_DESC"] = "Beautiful UI library for Roblox",
-            ["SETTINGS"] = "Settings",
-            ["APPEARANCE"] = "Appearance",
-            ["FEATURES"] = "Features",
-            ["UTILITIES"] = "Utilities",
-            ["UI_ELEMENTS"] = "UI Elements",
-            ["CONFIGURATION"] = "Configuration",
-            ["SAVE_CONFIG"] = "Save Configuration",
-            ["LOAD_CONFIG"] = "Load Configuration",
-            ["THEME_SELECT"] = "Select Theme",
-            ["TRANSPARENCY"] = "Window Transparency",
-            ["LOCKED_TAB"] = "Locked Tab"
-        }
-    }
-})
-
-WindUI.TransparencyValue = 0.2
-WindUI:SetTheme("Dark")
-
-local function gradient(text, startColor, endColor)
-    local result = ""
-    for i = 1, #text do
-        local t = (i - 1) / (#text - 1)
-        local r = math.floor((startColor.R + (endColor.R - startColor.R) * t) * 255)
-        local g = math.floor((startColor.G + (endColor.G - startColor.G) * t) * 255)
-        local b = math.floor((startColor.B + (endColor.B - startColor.B) * t) * 255)
-        result = result .. string.format('<font color="rgb(%d,%d,%d)">%s</font>', r, g, b, text:sub(i, i))
+local function tpSafeZone()
+    if not Workspace:FindFirstChild("SafeZonePart") then
+        local p = Instance.new("Part")
+        p.Name = "SafeZonePart"
+        p.Anchored = true
+        p.CanCollide = true
+        p.Transparency = 0.7
+        p.Color = Color3.fromRGB(255, 0, 0)
+        p.Size = Vector3.new(30, 3, 30)
+        p.Position = Vector3.new(0, 350, 0)
+        p.Parent = Workspace
     end
-    return result
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then hrp.CFrame = CFrame.new(0, 360, 0) end
 end
 
+local function tpTrader()
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then hrp.CFrame = CFrame.new(-37.08, 3.98, -16.33) end
+end
+
+local function tpRandomTree()
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    local map = Workspace:FindFirstChild("Map")
+    if not map then return end
+    local foliage = map:FindFirstChild("Foliage") or map:FindFirstChild("Landmarks")
+    if not foliage then return end
+
+    local trees = {}
+    for _, obj in ipairs(foliage:GetChildren()) do
+        if obj.Name == "Small Tree" and obj:IsA("Model") then
+            local trunk = obj:FindFirstChild("Trunk") or obj.PrimaryPart
+            if trunk then table.insert(trees, trunk) end
+        end
+    end
+
+    if #trees > 0 then
+        local t = trees[math.random(1, #trees)]
+        hrp.CFrame = t.CFrame + Vector3.new(0, 5, 0)
+    end
+end
+
+local function tpLostChild()
+    for _, mob in ipairs(Workspace:WaitForChild("Characters"):GetChildren()) do
+        if mob.Name:match("^Lost Child") and mob:GetAttribute("Lost") then
+            local part = mob.PrimaryPart or mob:FindFirstChildWhichIsA("BasePart")
+            if part then
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then hrp.CFrame = part.CFrame + Vector3.new(0, 5, 0) end
+            end
+            break
+        end
+    end
+end
+
+local function tpChest()
+    for _, item in ipairs(Workspace:WaitForChild("Items"):GetChildren()) do
+        if item.Name:match("^Item Chest") then
+            local part = item.PrimaryPart or item:FindFirstChildWhichIsA("BasePart")
+            if part then
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then hrp.CFrame = part.CFrame + Vector3.new(0, 5, 0) end
+            end
+            break
+        end
+    end
+end
+
+
+--==========================[ WINDUI SETUP ]=============================--
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
 -- Ambil nama player
 local player = game.Players.LocalPlayer
 local playerName = player.Name
 local playerDisplayName = player.DisplayName
 
--- Buat Window versi baru
+-- Buat Window
 local Window = WindUI:CreateWindow({
     Title = "Nexa - Beta",
-    Icon = "rbxassetid://107488593993096",
+    Icon = "rbxassetid://131269662643486",
     Author = "99 Script | @ Han",
     Folder = "Hanzo",
-    Size = UDim2.fromOffset(540, 420),
+    Size = UDim2.fromOffset(650, 510),
+
+    Theme = "Plant",
     Transparent = true,
-    Theme = "Dark",
-    
+    Acrylic = false,
     HidePanelBackground = true,
-    NewElements = false,
-    Background = "https://i.imgur.com/GsfBtXF.jpeg",
+    HideSearchBar = false,
+    NewElements = true,
+    SideBarWidth = 200,
+
+    -- Profil user di pojok kanan atas
     User = {
         Enabled = true,
-        Anonymous = false,           -- false biar muncul nama asli
-        Name = playerDisplayName,    -- Nama tampilan
-        UserName = "@" .. playerName, -- Username Roblox
+        Anonymous = false,
+        Name = playerDisplayName,
+        UserName = "@" .. playerName,
         Callback = function()
             WindUI:Notify({
                 Title = "User Profile",
@@ -351,11 +453,7 @@ local Window = WindUI:CreateWindow({
                 Duration = 3
             })
         end
-    },
-    
-    Acrylic = false,
-    HideSearchBar = false,
-    SideBarWidth = 200,
+    }
 })
 
 Window:Tag({
@@ -368,47 +466,46 @@ Window:EditOpenButton({
     Enabled = false
 })
 
-task.delay(6.5, function()
-    WindUI:Notify({
-        Title = "Bug Report",
-        Content = "If there are any errors, please let the developer know. Join Discord to report bugs.",
-        Icon = "cloud-alert",
-        Duration = 6
-    })
-end)
-
-task.delay(13, function()
-    WindUI:Notify({
-        Title = "Purchase",
-        Content = "If you want to buy this premium script key, join Discord to buy premium.",
-        Icon = "shopping-cart",
-        Duration = 6
-    })
-end)
-
 local Tabs = {
     Home = Window:Tab({ Title = "Home", Icon = "house"  }),
-    Info = Window:Tab({ Title = "Info", Icon = "info"  }),
-    Farm = Window:Tab({ Title = "Main", Icon = "swords"  }),
+    Main = Window:Tab({ Title = "Main", Icon = "sword"  }),
     Auto = Window:Tab({ Title = "Automaticaly", Icon = "repeat-2"  }),
+    Bring = Window:Tab({ Title = "Bring", Icon = "box"  }),
+    Tp = Window:Tab({ Title = "Teleport", Icon = "map-pin"  }),
 }
 
-Tabs.Home:Section({ Title = "Update" })
+Tabs.Home:Section({ Title = "Update", Icon = "logs" })
 
-Tabs.Home:Paragraph({
-    Title = "Here's what's new:",
-    Desc = [[
+Tabs.Home:Section({
+        Title = "Here's what's new:",
+        TextSize = 24,
+        FontWeight = Enum.FontWeight.SemiBold,
+    })
 
-    ]]
-})
+Tabs.Home:Section({
+        Title = [[
+
+		]],
+        TextSize = 18,
+        TextTransparency = .35,
+        FontWeight = Enum.FontWeight.Medium,
+    })
 
 Tabs.Home:Section({ Title = "Server" })
+
+Tabs.Home:Paragraph({
+    Title = "Nexa Hub",
+    Image = "https://i.imgur.com/vl0g8IK.png",
+    ImageSize = 42, -- default 30
+    Thumbnail = "https://i.imgur.com/3m8FV2y.jpeg",
+    ThumbnailSize = 120 -- Thumbnail height
+})
 
 Tabs.Home:Paragraph({
     Title = "Discord - Nexa | COMMUNITY",
     Desc = "Indonesia 🇮🇩",
     Image = "https://images-eds-ssl.xboxlive.com/image?url=4rt9.lXDC4H_93laV1_eHHFT949fUipzkiFOBH3fAiZZUCdYojwUyX2aTonS1aIwMrx6NUIsHfUHSLzjGJFxxsG72wAo9EWJR4yQWyJJaDaK1XdUso6cUMpI9hAdPUU_FNs11cY1X284vsHrnWtRw7oqRpN1m9YAg21d_aNKnIo-&format=source",
-    ImageSize = 20,
+    ImageSize = 40,
     Color = "Grey",
     Buttons = {
         {
@@ -427,101 +524,344 @@ Tabs.Home:Paragraph({
     }
 })
 
-Tabs.Farm:Section({ Title = "Farm" })
+Tabs.Main:Section({ Title = "Combat" })
 
--- Chop Aura Toggle
-Tabs.Farm:Toggle({
-    Title = "Chop Aura",
-    Value = false,
-    Callback = function(state)
-        if killAuraToggle then
-            killAuraToggle = false
-        end
-        chopAuraToggle = state
-        if state then
-            task.spawn(chopAuraLoop)
-        else
-            local tool, _ = getAnyToolWithDamageID()
-            unequipTool(tool)
-        end
-    end
-})
-
--- Kill Aura Toggle
-Tabs.Farm:Toggle({
+Tabs.Combat:Toggle({
     Title = "Kill Aura",
     Value = false,
     Callback = function(state)
-        if chopAuraToggle then
-            chopAuraToggle = false
-        end
         killAuraToggle = state
         if state then
             task.spawn(killAuraLoop)
+            if showRadius then createRadiusCircle() end
         else
-            local tool, _ = getAnyToolWithDamageID()
+            local tool, _ = getAnyToolWithDamageID(false)
             unequipTool(tool)
         end
     end
 })
 
--- Chop Aura Radius Input
-Tabs.Farm:Input({
-    Title = "Chop Aura Radius",
-    Value = tostring(chopAuraRadius),
-    Placeholder = "Enter Chop Aura Radius (ex: 75)",
-    Callback = function(input)
-        local number = tonumber(input)
-        if number and number > 0 then
-            chopAuraRadius = number
+Tabs.Combat:Toggle({
+    Title = "Chop Aura",
+    Value = false,
+    Callback = function(state)
+        chopAuraToggle = state
+        if state then
+            task.spawn(chopAuraLoop)
+            if showRadius then createRadiusCircle() end
+        else
+            local tool, _ = getAnyToolWithDamageID(true)
+            unequipTool(tool)
         end
     end
 })
 
--- Kill Aura Radius Input
-Tabs.Farm:Input({
-    Title = "Kill Aura Radius",
-    Value = tostring(killAuraRadius),
-    Placeholder = "Enter Kill Aura Radius (ex: 75)",
-    Callback = function(input)
-        local number = tonumber(input)
-        if number and number > 0 then
-            killAuraRadius = number
+Tabs.Combat:Toggle({
+    Title = "Show Radius Circle",
+    Value = false,
+    Callback = function(state)
+        showRadius = state
+        if state then
+            createRadiusCircle()
+        else
+            if radiusPart then
+                radiusPart:Destroy()
+                radiusPart = nil
+            end
         end
     end
 })
 
+Tabs.Combat:Slider({
+    Title = "Aura Radius",
+    Step = 1,
+    Value = {
+        Min = 50,
+        Max = 1000,
+        Default = 50,
+    },
+    Callback = function(value)
+        auraRadius = value
+        if radiusPart then
+            radiusPart.Size = Vector3.new(auraRadius * 2, 0.2, auraRadius * 2)
+        end
+    end
+})
 
-Tabs.Auto:Section({ Title = "Automation" })
+Tabs.Auto:Section({ Title = "Campfire" })
 
 Tabs.Auto:Dropdown({
-    Title = "Select Submit",
-    Values = { "CampFire", "Scrapper" },
-    Value = "CampFire",
+    Title = "Select Fuel Item",
+    Desc = "Pilih bahan bakar untuk campfire",
+    Values = campfireFuelItems,
+    Multi = false,
+    AllowNone = true,
     Callback = function(option)
-        selectedCFrame = option
+        selectedCampfireItem = option
     end
 })
 
 Tabs.Auto:Toggle({
-    Title = "Auto Submit",
+    Title = "Auto Upgrade Campfire",
     Value = false,
     Callback = function(state)
-        autoSubmit = state
+        autoUpgradeCampfireEnabled = state
         if state then
-        else
+            task.spawn(function()
+                while autoUpgradeCampfireEnabled do
+                    if selectedCampfireItem then
+                        for _, item in ipairs(Workspace:WaitForChild("Items"):GetChildren()) do
+                            if item.Name == selectedCampfireItem then
+                                moveItemToPos(item, campfireDropPos)
+                            end
+                        end
+                    end
+                    task.wait(2)
+                end
+            end)
         end
     end
 })
 
--- toggle di UI
-Tabs.Auto:Toggle({
-    Title = "Auto Cooked",
+-- SECTION: SCRAP
+Tabs.Auto:Section({ Title = "Scrap Items" })
+
+Tabs.Auto:Dropdown({
+    Title = "Select Scrap Item",
+    Desc = "Pilih item yang mau di-scrap",
+    Values = scrapJunkItems,
+    Multi = false,
+    AllowNone = true,
+    Callback = function(option)
+        selectedScrapItem = option
+    end
+})
+
+AutoTab:Toggle({
+    Title = "Auto Scrap Item",
     Value = false,
     Callback = function(state)
-        autoCookedToggle = state
+        autoScrapItemsEnabled = state
         if state then
-            task.spawn(bringItemsSlow)
+            task.spawn(function()
+                while autoScrapItemsEnabled do
+                    if selectedScrapItem then
+                        for _, item in ipairs(Workspace:WaitForChild("Items"):GetChildren()) do
+                            if item.Name == selectedScrapItem then
+                                moveItemToPos(item, autoScrapPos)
+                            end
+                        end
+                    end
+                    task.wait(2)
+                end
+            end)
         end
+    end
+})
+
+-- SECTION: COOK
+Tabs.Auto:Section({ Title = "Cook Food" })
+
+Tabs.Auto:Dropdown({
+    Title = "Select Cookable Food",
+    Desc = "Pilih makanan yang ingin dimasak",
+    Values = autoCookItems,
+    Multi = true,
+    AllowNone = true,
+    Callback = function(selected)
+        for _, name in ipairs(autoCookItems) do
+            autoCookEnabledItems[name] = table.find(selected, name) ~= nil
+        end
+    end
+})
+
+Tabs.Auto:Toggle({
+    Title = "Auto Cook Food",
+    Value = false,
+    Callback = function(state)
+        autoCookEnabled = state
+        if state then
+            task.spawn(function()
+                while autoCookEnabled do
+                    for name, enabled in pairs(autoCookEnabledItems) do
+                        if enabled then
+                            for _, item in ipairs(Workspace:WaitForChild("Items"):GetChildren()) do
+                                if item.Name == name then
+                                    moveItemToPos(item, campfireDropPos)
+                                end
+                            end
+                        end
+                    end
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end
+})
+
+Tabs.Bring:Section({ Title = "Junk Items" })
+
+Tabs.Bring:Dropdown({
+    Title = "Select Junk Items",
+    Values = junkItems,
+    Multi = true,
+    Callback = function(opt) selectedJunk = opt end
+})
+Tabs.Bring:Toggle({
+    Title = "Bring Junk",
+    Callback = function(v)
+        junkToggle = v
+        if v then
+            task.spawn(function()
+                while junkToggle do
+                    bypassBringSystem(selectedJunk, function() return junkToggle end)
+                    task.wait(3)
+                end
+            end)
+        end
+    end
+})
+
+Tabs.Bring:Section({ Title = "Fuel Items" })
+
+Tabs.Bring:Dropdown({
+    Title = "Select Fuel Items",
+    Values = fuelItems,
+    Multi = true,
+    Callback = function(opt) selectedFuel = opt end
+})
+Tabs.Bring:Toggle({
+    Title = "Bring Fuel",
+    Callback = function(v)
+        fuelToggle = v
+        if v then
+            task.spawn(function()
+                while fuelToggle do
+                    bypassBringSystem(selectedFuel, function() return fuelToggle end)
+                    task.wait(3)
+                end
+            end)
+        end
+    end
+})
+
+Tabs.Bring:Section({ Title = "Food Items" })
+
+Tabs.Bring:Dropdown({
+    Title = "Select Food Items",
+    Values = foodItems,
+    Multi = true,
+    Callback = function(opt) selectedFood = opt end
+})
+Tabs.Bring:Toggle({
+    Title = "Bring Food",
+    Callback = function(v)
+        foodToggle = v
+        if v then
+            task.spawn(function()
+                while foodToggle do
+                    bypassBringSystem(selectedFood, function() return foodToggle end)
+                    task.wait(3)
+                end
+            end)
+        end
+    end
+})
+
+Tabs.Bring:Section({ Title = "Medical Items" })
+
+Tabs.Bring:Dropdown({
+    Title = "Select Medical Items",
+    Values = medicalItems,
+    Multi = true,
+    Callback = function(opt) selectedMed = opt end
+})
+Tabs.Bring:Toggle({
+    Title = "Bring Medical",
+    Callback = function(v)
+        medToggle = v
+        if v then
+            task.spawn(function()
+                while medToggle do
+                    bypassBringSystem(selectedMed, function() return medToggle end)
+                    task.wait(3)
+                end
+            end)
+        end
+    end
+})
+
+Tabs.Bring:Section({ Title = "Equipment Items" })
+
+Tabs.Bring:Dropdown({
+    Title = "Select Equipment Items",
+    Values = equipmentItems,
+    Multi = true,
+    Callback = function(opt) selectedEquip = opt end
+})
+Tabs.Bring:Toggle({
+    Title = "Bring Equipment",
+    Callback = function(v)
+        equipToggle = v
+        if v then
+            task.spawn(function()
+                while equipToggle do
+                    bypassBringSystem(selectedEquip, function() return equipToggle end)
+                    task.wait(3)
+                end
+            end)
+        end
+    end
+})
+
+Tabs.Tp:Section({ Title = "Teleport" })
+
+local locations = {
+    "Campfire",
+    "Stronghold",
+    "Safe Zone",
+    "Trader (Bunny Foot)",
+    "Random Tree",
+    "Lost Child",
+    "Chest"
+}
+
+local selectedLocation = "Campfire"
+
+Tabs.Tp:Dropdown({
+    Title = "Select Teleport Destination",
+    Values = locations,
+    Value = selectedLocation,
+    Callback = function(option)
+        selectedLocation = option
+    end
+})
+
+Tabs.Tp:Button({
+    Title = "Teleport Now",
+    Icon = "navigation",
+    Callback = function()
+        if selectedLocation == "Campfire" then
+            tpCampfire()
+        elseif selectedLocation == "Stronghold" then
+            tpStronghold()
+        elseif selectedLocation == "Safe Zone" then
+            tpSafeZone()
+        elseif selectedLocation == "Trader (Bunny Foot)" then
+            tpTrader()
+        elseif selectedLocation == "Random Tree" then
+            tpRandomTree()
+        elseif selectedLocation == "Lost Child" then
+            tpLostChild()
+        elseif selectedLocation == "Chest" then
+            tpChest()
+        end
+
+        WindUI:Notify({
+            Title = "Teleport Success",
+            Content = "Teleported to " .. selectedLocation,
+            Duration = 3,
+            Icon = "map"
+        })
     end
 })
