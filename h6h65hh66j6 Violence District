@@ -422,12 +422,14 @@ Tabs.Main:Toggle({
 
 Tabs.Visual:Section({ Title = "View" })
 
+--// Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
+--// Variabel
 local ESPEnabled = false
 local NotifyEnabled = true
 local NotifyDistance = 150
@@ -442,32 +444,45 @@ screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = PlayerGui
 
+--// Kompas bulat di tengah atas
 local compassFrame = Instance.new("Frame")
 compassFrame.Name = "CompassFrame"
-compassFrame.AnchorPoint = Vector2.new(0.5, 0) -- tengah atas
-compassFrame.Position = UDim2.new(0.5, 0, 0, 20) -- tengah atas layar, jarak 20px dari atas
-compassFrame.Size = UDim2.new(0, 250, 0, 10)
-compassFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+compassFrame.AnchorPoint = Vector2.new(0.5, 0)
+compassFrame.Position = UDim2.new(0.5, 0, 0, 30)
+compassFrame.Size = UDim2.new(0, 120, 0, 120)
+compassFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 compassFrame.BackgroundTransparency = 0.5
 compassFrame.BorderSizePixel = 0
 compassFrame.Parent = screenGui
 
--- Garis tengah kompas
-local compassLine = Instance.new("Frame")
-compassLine.Name = "CenterLine"
-compassLine.AnchorPoint = Vector2.new(0.5, 0.5)
-compassLine.Position = UDim2.new(0.5, 0, 0.5, 0)
-compassLine.Size = UDim2.new(0, 2, 1, 0)
-compassLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-compassLine.Parent = compassFrame
+-- bulat + outline
+local circleCorner = Instance.new("UICorner")
+circleCorner.CornerRadius = UDim.new(1, 0)
+circleCorner.Parent = compassFrame
 
---// Fungsi buat ESP
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 1
+stroke.Color = Color3.fromRGB(255, 255, 255)
+stroke.Transparency = 0.6
+stroke.Parent = compassFrame
+
+-- garis tengah putih (utara)
+local centerLine = Instance.new("Frame")
+centerLine.AnchorPoint = Vector2.new(0.5, 1)
+centerLine.Position = UDim2.new(0.5, 0, 0.5, 0)
+centerLine.Size = UDim2.new(0, 2, 0, 40)
+centerLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+centerLine.BackgroundTransparency = 0.6
+centerLine.BorderSizePixel = 0
+centerLine.Parent = compassFrame
+
+--// Buat ESP player
 local function CreateESP(player)
 	if player == LocalPlayer then return end
 	local esp = {
 		Box = Drawing.new("Square"),
 		Text = Drawing.new("Text"),
-		Indicator = nil, -- frame visual di kompas
+		Indicator = nil,
 	}
 
 	esp.Box.Thickness = 1.5
@@ -499,16 +514,12 @@ local function RemoveESP(player)
 	NotifiedEnemies[player] = nil
 end
 
---// Loop utama ESP
+--// Loop utama
 RunService.RenderStepped:Connect(function()
 	if not ESPEnabled then
 		for _, esp in pairs(ESPFolder) do
 			for _, obj in pairs(esp) do
-				if typeof(obj) == "Instance" then
-					obj.Visible = false
-				else
-					obj.Visible = false
-				end
+				obj.Visible = false
 			end
 		end
 		return
@@ -553,7 +564,7 @@ RunService.RenderStepped:Connect(function()
 				local esp = ESPFolder[player]
 				if not esp then continue end
 
-				-- ESP box layar
+				-- ESP layar
 				if onScreen then
 					local scale = 1 / (vector.Z * 0.1)
 					local boxSize = Vector2.new(150 * scale, 200 * scale)
@@ -571,37 +582,38 @@ RunService.RenderStepped:Connect(function()
 					esp.Text.Visible = false
 				end
 
-				-- Kompas arah musuh (pakai Frame)
+				-- Kompas indikator garis berwarna
 				if player.Team ~= LocalPlayer.Team and distance <= MaxIndicatorDistance then
 					local relative = (rootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Unit
-					local lookVector = Camera.CFrame.LookVector
-					local right = Camera.CFrame.RightVector:Dot(relative)
-					local forward = Camera.CFrame.LookVector:Dot(relative)
-					local angle = math.atan2(right, forward)
-					local normalizedAngle = math.deg(angle) / 90 -- -1..1
-					local posX = (normalizedAngle * (compassFrame.AbsoluteSize.X / 2))
+					local angle = math.atan2(Camera.CFrame.RightVector:Dot(relative), Camera.CFrame.LookVector:Dot(relative))
 
 					local indicator = esp.Indicator
 					if not indicator or not indicator.Parent then
-						local frame = Instance.new("Frame")
-						frame.Name = player.Name .. "_Indicator"
-						frame.AnchorPoint = Vector2.new(0.5, 0.5)
-						frame.Size = UDim2.new(0, 6, 0, 10)
-						frame.BorderSizePixel = 0
-						frame.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-						frame.Parent = compassFrame
-						esp.Indicator = frame
-						indicator = frame
+						local line = Instance.new("Frame")
+						line.Name = player.Name .. "_Indicator"
+						line.AnchorPoint = Vector2.new(0.5, 1)
+						line.Size = UDim2.new(0, 2, 0, 40)
+						line.Position = UDim2.new(0.5, 0, 0.5, 0)
+						line.BorderSizePixel = 0
+						line.Parent = compassFrame
+						esp.Indicator = line
+						indicator = line
+					end
+
+					-- Warna sesuai jarak
+					local color
+					if distance > 300 then
+						color = Color3.fromRGB(0, 255, 0) -- hijau (jauh)
+					elseif distance > 150 then
+						color = Color3.fromRGB(255, 255, 0) -- kuning (menengah)
+					else
+						color = Color3.fromRGB(255, 0, 0) -- merah (dekat)
 					end
 
 					indicator.Visible = true
-					indicator.Position = UDim2.new(0.5, posX, 0.5, 0)
-					indicator.BackgroundColor3 = Color3.fromRGB(
-						math.clamp(255 - distance / MaxIndicatorDistance * 100, 150, 255),
-						math.clamp(50 + distance / MaxIndicatorDistance * 100, 50, 150),
-						50
-					)
-					indicator.BackgroundTransparency = math.clamp(distance / MaxIndicatorDistance, 0, 0.6)
+					indicator.BackgroundColor3 = color
+					indicator.Rotation = math.deg(angle)
+					indicator.BackgroundTransparency = math.clamp(distance / MaxIndicatorDistance, 0, 0.4)
 				else
 					if esp.Indicator and esp.Indicator:IsA("Frame") then
 						esp.Indicator.Visible = false
@@ -612,7 +624,7 @@ RunService.RenderStepped:Connect(function()
 				if esp then
 					esp.Box.Visible = false
 					esp.Text.Visible = false
-					if esp.Indicator and esp.Indicator:IsA("Frame") then
+					if esp.Indicator then
 						esp.Indicator.Visible = false
 					end
 				end
@@ -628,7 +640,7 @@ for _, p in pairs(Players:GetPlayers()) do
 	CreateESP(p)
 end
 
---// Toggle ESP
+--// Toggle di UI kamu
 Tabs.Visual:Toggle({
 	Title = "ESP (Team & Killer)",
 	Value = false,
@@ -637,7 +649,6 @@ Tabs.Visual:Toggle({
 	end
 })
 
---// Toggle Notify
 Tabs.Visual:Toggle({
 	Title = "Notify Killer Nearby",
 	Value = true,
@@ -645,7 +656,6 @@ Tabs.Visual:Toggle({
 		NotifyEnabled = state
 	end
 })
-
 
 Tabs.Visual:Toggle({
     Title = "View Generator",
