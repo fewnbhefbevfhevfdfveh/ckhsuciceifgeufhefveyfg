@@ -1,4 +1,3 @@
-
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Notify%20Nexa"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Notify%20Fish%20It"))()
 
@@ -202,7 +201,6 @@ local function stopAllAnimations()
     end
 end
 
--- Load Wind Ui
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
 -- Ambil nama player
@@ -212,19 +210,26 @@ local playerDisplayName = player.DisplayName
 
 -- Buat Window
 local Window = WindUI:CreateWindow({
-    Title = "Nexa - Premium",
-    Icon = "rbxassetid://131269662643486",
+    Title = "Nexa | Premium",
+    Icon = "rbxassetid://131269662643486", -- lucide icon
     Author = "Fish IT! Script | @ Han",
     Folder = "Hanzo",
-    Size = UDim2.fromOffset(650, 510),
 
-    Theme = "Plant",
+    -- Ukuran & tampilan
+    Size = UDim2.fromOffset(650, 510),
+    MinSize = Vector2.new(560, 350),
+    MaxSize = Vector2.new(850, 560),
+
+    Theme = "Dark", -- pakai tema dari versi pertama
     Transparent = true,
     Acrylic = false,
     HidePanelBackground = true,
     HideSearchBar = false,
     NewElements = true,
+    Resizable = true,
     SideBarWidth = 200,
+    BackgroundImageTransparency = 0.42,
+    ScrollBarEnabled = true,
 
     -- Profil user di pojok kanan atas
     User = {
