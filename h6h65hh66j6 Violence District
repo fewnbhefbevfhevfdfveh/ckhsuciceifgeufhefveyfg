@@ -1,5 +1,3 @@
-
-
 local map = workspace:WaitForChild("Map")
 
 -- Fungsi rename generator
@@ -479,17 +477,21 @@ centerLine.Parent = compassFrame
 --// Buat ESP player
 local function CreateESP(player)
 	if player == LocalPlayer then return end
+	if ESPFolder[player] then return end
+
 	local esp = {
 		Box = Drawing.new("Square"),
 		Text = Drawing.new("Text"),
 		Indicator = nil,
 	}
 
+	-- Box
 	esp.Box.Thickness = 1.5
 	esp.Box.Filled = false
 	esp.Box.Color = Color3.fromRGB(255, 255, 255)
 	esp.Box.Visible = false
 
+	-- Text
 	esp.Text.Size = 16
 	esp.Text.Center = true
 	esp.Text.Outline = true
@@ -501,13 +503,16 @@ end
 
 --// Hapus ESP
 local function RemoveESP(player)
-	if ESPFolder[player] then
-		for _, obj in pairs(ESPFolder[player]) do
-			if typeof(obj) == "Instance" then
-				obj:Destroy()
-			else
-				obj:Remove()
-			end
+	local esp = ESPFolder[player]
+	if esp then
+		if esp.Box then
+			esp.Box:Remove()
+		end
+		if esp.Text then
+			esp.Text:Remove()
+		end
+		if esp.Indicator and esp.Indicator:IsA("Frame") then
+			esp.Indicator:Destroy()
 		end
 		ESPFolder[player] = nil
 	end
@@ -518,8 +523,10 @@ end
 RunService.RenderStepped:Connect(function()
 	if not ESPEnabled then
 		for _, esp in pairs(ESPFolder) do
-			for _, obj in pairs(esp) do
-				obj.Visible = false
+			if esp.Box then esp.Box.Visible = false end
+			if esp.Text then esp.Text.Visible = false end
+			if esp.Indicator and esp.Indicator:IsA("Frame") then
+				esp.Indicator.Visible = false
 			end
 		end
 		return
@@ -534,11 +541,7 @@ RunService.RenderStepped:Connect(function()
 				local teamColor = Color3.fromRGB(255, 255, 255)
 
 				if player.Team and LocalPlayer.Team then
-					if player.Team == LocalPlayer.Team then
-						teamColor = Color3.fromRGB(0, 255, 0)
-					else
-						teamColor = Color3.fromRGB(255, 0, 0)
-					end
+					teamColor = (player.Team == LocalPlayer.Team) and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
 				end
 
 				local distance = (rootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
@@ -566,7 +569,7 @@ RunService.RenderStepped:Connect(function()
 
 				-- ESP layar
 				if onScreen then
-					local scale = 1 / (vector.Z * 0.1)
+					local scale = math.clamp(1 / (vector.Z * 0.1), 0.5, 2)
 					local boxSize = Vector2.new(150 * scale, 200 * scale)
 					esp.Box.Size = boxSize
 					esp.Box.Position = Vector2.new(vector.X - boxSize.X / 2, vector.Y - boxSize.Y / 2)
@@ -578,8 +581,8 @@ RunService.RenderStepped:Connect(function()
 					esp.Text.Text = string.format("%s | %d HP | %d Stud", player.Name, health, distance)
 					esp.Text.Visible = true
 				else
-					esp.Box.Visible = false
-					esp.Text.Visible = false
+					if esp.Box then esp.Box.Visible = false end
+					if esp.Text then esp.Text.Visible = false end
 				end
 
 				-- Kompas indikator garis berwarna
@@ -600,16 +603,7 @@ RunService.RenderStepped:Connect(function()
 						indicator = line
 					end
 
-					-- Warna sesuai jarak
-					local color
-					if distance > 300 then
-						color = Color3.fromRGB(0, 255, 0) -- hijau (jauh)
-					elseif distance > 150 then
-						color = Color3.fromRGB(255, 255, 0) -- kuning (menengah)
-					else
-						color = Color3.fromRGB(255, 0, 0) -- merah (dekat)
-					end
-
+					local color = (distance > 300 and Color3.fromRGB(0, 255, 0)) or (distance > 150 and Color3.fromRGB(255, 255, 0)) or Color3.fromRGB(255, 0, 0)
 					indicator.Visible = true
 					indicator.BackgroundColor3 = color
 					indicator.Rotation = math.deg(angle)
@@ -622,9 +616,9 @@ RunService.RenderStepped:Connect(function()
 			else
 				local esp = ESPFolder[player]
 				if esp then
-					esp.Box.Visible = false
-					esp.Text.Visible = false
-					if esp.Indicator then
+					if esp.Box then esp.Box.Visible = false end
+					if esp.Text then esp.Text.Visible = false end
+					if esp.Indicator and esp.Indicator:IsA("Frame") then
 						esp.Indicator.Visible = false
 					end
 				end
@@ -640,7 +634,7 @@ for _, p in pairs(Players:GetPlayers()) do
 	CreateESP(p)
 end
 
---// Toggle di UI kamu
+--// Toggle di UI
 Tabs.Visual:Toggle({
 	Title = "ESP (Team & Killer)",
 	Value = false,
@@ -656,6 +650,7 @@ Tabs.Visual:Toggle({
 		NotifyEnabled = state
 	end
 })
+
 
 Tabs.Visual:Toggle({
     Title = "View Generator",
@@ -898,4 +893,87 @@ UserInputService.InputChanged:Connect(function(input)
 	if input == dragInput and dragging then
 		update(input)
 	end
+end)
+
+
+-- LocalScript (StarterPlayerScripts)
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local dashDistance = 6
+local dashSpeed = 0.2 -- waktu per step (lebih kecil = lebih cepat)
+local steps = 10 -- jumlah step dash
+
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+
+-- Buat ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "DashGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- Buat Button
+local dashButton = Instance.new("TextButton")
+dashButton.Size = UDim2.new(0, 100, 0, 50)
+dashButton.Position = UDim2.new(0.5, -50, 0.9, 0)
+dashButton.Text = "Dash"
+dashButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+dashButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+dashButton.Parent = screenGui
+
+-- Fungsi dash smooth
+local function dashSmooth()
+    if not character or not hrp then return end
+    local forwardVector = hrp.CFrame.LookVector
+    local startPos = hrp.Position
+    local endPos = startPos + forwardVector * dashDistance
+
+    for i = 1, steps do
+        local alpha = i / steps
+        local pos = startPos:Lerp(endPos, alpha)
+        hrp.CFrame = CFrame.new(pos, pos + forwardVector)
+        task.wait(dashSpeed / steps)
+    end
+end
+
+-- Koneksi button click
+dashButton.MouseButton1Click:Connect(dashSmooth)
+
+-- ======= Drag Logic =======
+local dragging = false
+local dragInput
+local dragStart
+local startPosButton
+
+local function update(input)
+    local delta = input.Position - dragStart
+    dashButton.Position = UDim2.new(startPosButton.X.Scale, startPosButton.X.Offset + delta.X,
+                                    startPosButton.Y.Scale, startPosButton.Y.Offset + delta.Y)
+end
+
+dashButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPosButton = dashButton.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+dashButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
 end)
