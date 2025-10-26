@@ -22,6 +22,29 @@ map.ChildAdded:Connect(function(child)
 	end
 end)
 
+local map = workspace:WaitForChild("Map")
+
+-- Fungsi rename hook
+local function renameHooks()
+	local count = 0
+	for _, obj in ipairs(map:GetChildren()) do
+		if obj:IsA("Model") and string.find(obj.Name, "Hook") then
+			count += 1
+			obj.Name = "Hook " .. count
+		end
+	end
+end
+
+-- Jalankan saat pertama kali
+renameHooks()
+
+-- Kalau ada model Hook baru ditambahkan ke Map
+map.ChildAdded:Connect(function(child)
+	task.wait(0.5)
+	if child:IsA("Model") and string.find(child.Name, "Hook") then
+		renameHooks()
+	end
+end)
 
 
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
@@ -637,6 +660,59 @@ Tabs.Visual:Toggle({
     end
 })
 
+Tabs.Visual:Toggle({
+    Title = "View Hook",
+    Default = false,
+    Callback = function(state)
+        local hookFolder = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Hook")
+        if not hookFolder then return end
+
+        -- hentikan loop lama
+        if getgenv().ViewHookLoop then
+            getgenv().ViewHookLoop = nil
+        end
+
+        if state then
+            getgenv().ViewHookLoop = true
+
+            task.spawn(function()
+                while getgenv().ViewHookLoop do
+                    for _, hook in pairs(hookFolder:GetChildren()) do
+                        if hook:IsA("Model") then
+                            -- cek apakah sudah ada Highlight
+                            local highlight = hook:FindFirstChild("HookHighlight")
+                            if not highlight then
+                                highlight = Instance.new("Highlight")
+                                highlight.Name = "HookHighlight"
+                                highlight.Adornee = hook
+                                highlight.Parent = hook
+                            end
+
+                            -- kalau hook ada, hijau
+                            highlight.FillColor = Color3.fromRGB(0, 255, 0)
+                            highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
+                            highlight.FillTransparency = 0.5
+                        end
+                    end
+                    task.wait(1)
+                end
+            end)
+
+        else
+            getgenv().ViewHookLoop = nil
+
+            -- hapus semua Highlight
+            for _, hook in pairs(hookFolder:GetChildren()) do
+                if hook:IsA("Model") then
+                    local highlight = hook:FindFirstChild("HookHighlight")
+                    if highlight then
+                        highlight:Destroy()
+                    end
+                end
+            end
+        end
+    end
+})
 
 -------------------------------------------------------
 -- TOGGLE BUTTON (PUTIH AGAK TRANSPARAN) + ANIMASI BARU
