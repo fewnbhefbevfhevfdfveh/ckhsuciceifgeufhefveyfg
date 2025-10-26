@@ -1,5 +1,3 @@
-
-
 local map = workspace:WaitForChild("Map")
 
 -- Fungsi rename generator
@@ -605,30 +603,18 @@ Tabs.Visual:Toggle({
                             local isOff = (point1 or point2 or point3) ~= nil
                             local color = isOff and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
 
-                            -- cari part untuk tempat gui
-                            local adorneePart = point1 or point2 or point3 or generator:FindFirstChildWhichIsA("BasePart")
-                            if adorneePart then
-                                local gui = adorneePart:FindFirstChild("StatusGui")
-                                if not gui then
-                                    gui = Instance.new("BillboardGui")
-                                    gui.Name = "StatusGui"
-                                    gui.Adornee = adorneePart
-                                    gui.Size = UDim2.new(0, 100, 0, 50)
-                                    gui.StudsOffset = Vector3.new(0, 3, 0)
-                                    gui.AlwaysOnTop = true
-                                    gui.Parent = adorneePart
-
-                                    local label = Instance.new("TextLabel")
-                                    label.Size = UDim2.new(1, 0, 1, 0)
-                                    label.BackgroundTransparency = 1
-                                    label.TextScaled = true
-                                    label.Font = Enum.Font.GothamBlack
-                                    label.Text = "!"
-                                    label.Parent = gui
-                                end
-
-                                gui.TextLabel.TextColor3 = color
+                            -- cek apakah sudah ada Highlight
+                            local highlight = generator:FindFirstChild("GeneratorHighlight")
+                            if not highlight then
+                                highlight = Instance.new("Highlight")
+                                highlight.Name = "GeneratorHighlight"
+                                highlight.Adornee = generator
+                                highlight.Parent = generator
                             end
+
+                            highlight.FillColor = color
+                            highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
+                            highlight.FillTransparency = 0.5 -- bisa diatur
                         end
                     end
                     task.wait(1)
@@ -638,19 +624,19 @@ Tabs.Visual:Toggle({
         else
             getgenv().ViewGeneratorLoop = nil
 
-            -- hapus semua gui status
+            -- hapus semua Highlight
             for _, generator in pairs(map:GetChildren()) do
                 if string.find(generator.Name, "Generator") then
-                    for _, gui in pairs(generator:GetDescendants()) do
-                        if gui:IsA("BillboardGui") and gui.Name == "StatusGui" then
-                            gui:Destroy()
-                        end
+                    local highlight = generator:FindFirstChild("GeneratorHighlight")
+                    if highlight then
+                        highlight:Destroy()
                     end
                 end
             end
         end
     end
 })
+
 
 -------------------------------------------------------
 -- TOGGLE BUTTON (PUTIH AGAK TRANSPARAN) + ANIMASI BARU
@@ -824,33 +810,16 @@ end)
 
 -- LocalScript (StarterPlayerScripts)
 local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-local dashDistance = 6
-local dashSpeed = 0.2 -- waktu per step (lebih kecil = lebih cepat)
-local steps = 10 -- jumlah step dash
-
-local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
 
--- Buat ScreenGui
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "DashGUI"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = player:WaitForChild("PlayerGui")
-
--- Buat Button
-local dashButton = Instance.new("TextButton")
-dashButton.Size = UDim2.new(0, 100, 0, 50)
-dashButton.Position = UDim2.new(0.5, -50, 0.9, 0)
-dashButton.Text = "Dash"
-dashButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-dashButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-dashButton.Parent = screenGui
+local dashDistance = 12
+local dashSpeed = 0.2
+local steps = 10
+local guiName = "DashGUI"
 
 -- Fungsi dash smooth
-local function dashSmooth()
-    if not character or not hrp then return end
+local function dashSmooth(hrp)
+    if not hrp then return end
     local forwardVector = hrp.CFrame.LookVector
     local startPos = hrp.Position
     local endPos = startPos + forwardVector * dashDistance
@@ -863,43 +832,89 @@ local function dashSmooth()
     end
 end
 
--- Koneksi button click
-dashButton.MouseButton1Click:Connect(dashSmooth)
+-- Fungsi buat GUI
+local function createDashGUI()
+    -- Cek kalau udah ada, hapus dulu
+    local existing = player:FindFirstChild("PlayerGui"):FindFirstChild(guiName)
+    if existing then
+        existing:Destroy()
+    end
 
--- ======= Drag Logic =======
-local dragging = false
-local dragInput
-local dragStart
-local startPosButton
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = guiName
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = player:WaitForChild("PlayerGui")
 
-local function update(input)
-    local delta = input.Position - dragStart
-    dashButton.Position = UDim2.new(startPosButton.X.Scale, startPosButton.X.Offset + delta.X,
-                                    startPosButton.Y.Scale, startPosButton.Y.Offset + delta.Y)
+    local dashButton = Instance.new("TextButton")
+    dashButton.Size = UDim2.new(0, 100, 0, 50)
+    dashButton.Position = UDim2.new(0.5, -50, 0.9, 0)
+    dashButton.Text = "Dash"
+    dashButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    dashButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    dashButton.Parent = screenGui
+
+    -- Drag logic
+    local dragging, dragInput, dragStart, startPosButton
+    local function update(input)
+        local delta = input.Position - dragStart
+        dashButton.Position = UDim2.new(
+            startPosButton.X.Scale, startPosButton.X.Offset + delta.X,
+            startPosButton.Y.Scale, startPosButton.Y.Offset + delta.Y
+        )
+    end
+
+    dashButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPosButton = dashButton.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    dashButton.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+
+    return dashButton
 end
 
-dashButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPosButton = dashButton.Position
+-- Listener respawn karakter
+local function setupCharacter(char)
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local dashButton = createDashGUI()
+    dashButton.MouseButton1Click:Connect(function()
+        dashSmooth(hrp)
+    end)
 
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
+    -- Loop cek GUI hilang
+    task.spawn(function()
+        while char.Parent do
+            if not player:FindFirstChild("PlayerGui"):FindFirstChild(guiName) then
+                dashButton = createDashGUI()
+                dashButton.MouseButton1Click:Connect(function()
+                    dashSmooth(hrp)
+                end)
             end
-        end)
-    end
-end)
+            task.wait(1) -- cek tiap 1 detik
+        end
+    end)
+end
 
-dashButton.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        update(input)
-    end
-end)
+player.CharacterAdded:Connect(setupCharacter)
+if player.Character then
+    setupCharacter(player.Character)
+end
