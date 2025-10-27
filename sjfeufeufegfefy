@@ -303,7 +303,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v1.3.0",
+    Title = "v1.3.1",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -337,9 +337,10 @@ Tabs.Home:Section({
 
 Tabs.Home:Section({
         Title = [[
-[+] Added Tab Event Halloween
- - Auto Claim All Reward
- - Auto TrickOrTreat
+[+] Added TP:
+ - Mount Hallow
+ - Crystal Cavern 1
+ - Crystal Cavern 2
 		]],
         TextSize = 18,
         TextTransparency = .35,
