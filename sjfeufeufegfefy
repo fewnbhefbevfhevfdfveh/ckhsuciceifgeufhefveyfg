@@ -811,7 +811,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(1)
-        if AutoFishV2 and tick() - lastChangeTime >= 8 then
+        if AutoFishV2 and tick() - lastChangeTime >= 10 then
             Step1()
             task.wait(0.01)
             Step2()
