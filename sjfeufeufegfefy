@@ -2414,44 +2414,111 @@ Tabs.Server:Keybind({
 })
 
 
--------------------------------------------------------
--- TOGGLE BUTTON (PUTIH AGAK TRANSPARAN)
--------------------------------------------------------
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+-- Ambil nama player
+local player = game.Players.LocalPlayer
+local playerName = player.Name
+local playerDisplayName = player.DisplayName
+
+-- Buat Window
+local Window = WindUI:CreateWindow({
+    Title = "Nexa | Premium",
+    Icon = "rbxassetid://131269662643486",
+    Author = "Fish IT! Script | @ Han",
+    Folder = "Hanzo",
+
+    Size = UDim2.fromOffset(650, 510),
+    MinSize = Vector2.new(560, 350),
+    MaxSize = Vector2.new(850, 560),
+
+    Theme = "Dark",
+    Transparent = true,
+    Acrylic = false,
+    HidePanelBackground = true,
+    HideSearchBar = false,
+    NewElements = true,
+    Resizable = true,
+    SideBarWidth = 200,
+    BackgroundImageTransparency = 0.42,
+    ScrollBarEnabled = true,
+
+    User = {
+        Enabled = true,
+        Anonymous = false,
+        Name = playerDisplayName,
+        UserName = "@" .. playerName,
+        Callback = function()
+            WindUI:Notify({
+                Title = "User Profile",
+                Content = "User profile clicked!",
+                Duration = 3
+            })
+        end
+    }
+})
+
+Window:Tag({
+    Title = "v1.2.9",
+    Color = Color3.fromHex("#30ff6a")
+})
+
+Window:EditOpenButton({
+    Enabled = false
+})
+
+-- Tabs
+local Tabs = {
+    Home = Window:Tab({ Title = "Home", Icon = "house" }),
+    Active = Window:Tab({ Title = "Active", Icon = "info" }),
+    Farm = Window:Tab({ Title = "Farm", Icon = "fish" }),
+    Auto = Window:Tab({ Title = "Automaticaly", Icon = "repeat-2" }),
+    Shop = Window:Tab({ Title = "Shop", Icon = "shopping-cart" }),
+    Boat = Window:Tab({ Title = "Boat", Icon = "sailboat" }),
+    Player = Window:Tab({ Title = "Player", Icon = "user" }),
+    Teleport = Window:Tab({ Title = "Teleport", Icon = "map-pin" }),
+    Server = Window:Tab({ Title = "Server", Icon = "server" }),
+}
+
+-- Services
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
+-- ScreenGui untuk ImageButton
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = game.CoreGui
 ScreenGui.Name = "WindUIButton"
 
--- 🔘 ImageButton utama
+-- ImageButton utama
 local ImgBtn = Instance.new("ImageButton")
 ImgBtn.Parent = ScreenGui
 ImgBtn.Size = UDim2.new(0, 60, 0, 60)
 ImgBtn.Position = UDim2.new(0, 100, 1, -300)
-ImgBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- warna putih
-ImgBtn.BackgroundTransparency = 0.3 -- agak transparan
-ImgBtn.Image = "rbxassetid://131269662643486" -- icon planet
-ImgBtn.ImageTransparency = 0.15 -- icon sedikit transparan juga
+ImgBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ImgBtn.BackgroundTransparency = 0.3
+ImgBtn.Image = "rbxassetid://131269662643486"
+ImgBtn.ImageTransparency = 0.15
 ImgBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
 ImgBtn.AutoButtonColor = false
+ImgBtn.Visible = true
 
--- 🔲 Sudut membulat
+-- Sudut bulat
 local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(1, 0) -- full bulat
+UICorner.CornerRadius = UDim.new(1, 0)
 UICorner.Parent = ImgBtn
 
--- ✏️ Garis pinggir halus
+-- Garis pinggir halus
 local UIStroke = Instance.new("UIStroke")
 UIStroke.Color = Color3.fromRGB(200, 200, 200)
 UIStroke.Thickness = 2
-UIStroke.Transparency = 0.4 -- agak transparan
+UIStroke.Transparency = 0.4
 UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 UIStroke.Parent = ImgBtn
 
+-- Toggle Window
 local isOpen = false
 
--- 🔄 Animasi klik
+-- Fungsi animasi klik
 local function playClickAnim()
 	local shrink = TweenService:Create(ImgBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		Size = UDim2.new(0, 50, 0, 50),
@@ -2466,18 +2533,57 @@ local function playClickAnim()
 	grow:Play()
 end
 
--- 🟢 Buka/tutup GUI
+-- Fungsi fade ImageButton
+local function fadeImageButton(show)
+	if show then
+		ImgBtn.Visible = true
+		local tween = TweenService:Create(ImgBtn, TweenInfo.new(0.3), {
+			ImageTransparency = 0.15,
+			BackgroundTransparency = 0.3
+		})
+		tween:Play()
+	else
+		local tween = TweenService:Create(ImgBtn, TweenInfo.new(0.3), {
+			ImageTransparency = 1,
+			BackgroundTransparency = 1
+		})
+		tween:Play()
+		tween.Completed:Wait()
+		ImgBtn.Visible = false
+	end
+end
+
+-- Buka/tutup GUI
 ImgBtn.MouseButton1Click:Connect(function()
 	playClickAnim()
 	isOpen = not isOpen
 	if isOpen then
 		Window:Open()
+		fadeImageButton(false) -- fade out saat Window terbuka
 	else
 		Window:Close()
+		-- fade akan ditangani oleh OnClose
 	end
 end)
 
--- 🖱️ Drag agar bisa dipindah
+-- Force ImageButton muncul saat Window ditutup
+Window:OnClose(function()
+	isOpen = false
+	fadeImageButton(true) -- fade in saat Window ditutup
+end)
+
+-- Hapus ImageButton saat Window di-destroy
+Window:OnDestroy(function()
+	if ImgBtn then
+		ImgBtn:Destroy()
+	end
+	if ScreenGui then
+		ScreenGui:Destroy()
+	end
+	print("Window destroyed (unloaded)")
+end)
+
+-- Drag ImageButton
 local dragging, dragInput, dragStart, startPos
 
 local function update(input)
