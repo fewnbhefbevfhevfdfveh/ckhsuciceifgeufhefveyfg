@@ -450,43 +450,51 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
---// Variabel
+--// Variables
 local ESPEnabled = false
 local NotifyEnabled = true
 local NotifyDistance = 150
 local ESPFolder = {}
 local NotifiedEnemies = {}
 
---// Buat ESP karakter
+--// Buat ESP karakter (Hanya untuk Model dengan Humanoid)
 local function CreateESP(player)
 	if player == LocalPlayer then return end
 	if ESPFolder[player] then return end
+	if not player.Character then return end
+
+	local character = player.Character
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	local root = character:FindFirstChild("HumanoidRootPart")
+
+	if not humanoid or not root then return end
 
 	local esp = {}
 
-	-- Highlight untuk seluruh karakter
+	-- Highlight untuk karakter saja
 	local highlight = Instance.new("Highlight")
-	highlight.Adornee = player.Character
+	highlight.Name = "ESPHighlight"
+	highlight.Adornee = character
 	highlight.FillTransparency = 0.6
 	highlight.OutlineTransparency = 0
-	highlight.OutlineColor = Color3.new(1,1,1)
-	highlight.Parent = workspace
+	highlight.Parent = character
 
-	-- BillboardGui untuk nama + jarak (optional)
+	-- Billboard untuk nama + jarak
 	local billboard = Instance.new("BillboardGui")
-	billboard.Adornee = player.Character:FindFirstChild("HumanoidRootPart")
-	billboard.Size = UDim2.new(0,100,0,30)
-	billboard.StudsOffset = Vector3.new(0,3,0)
+	billboard.Adornee = root
+	billboard.Size = UDim2.new(0, 100, 0, 30)
+	billboard.StudsOffset = Vector3.new(0, 3, 0)
 	billboard.AlwaysOnTop = true
 	billboard.Parent = PlayerGui
 
 	local textLabel = Instance.new("TextLabel")
-	textLabel.Size = UDim2.fromScale(1,1)
+	textLabel.Size = UDim2.fromScale(1, 1)
 	textLabel.BackgroundTransparency = 1
-	textLabel.TextColor3 = Color3.fromRGB(255,255,255)
+	textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 	textLabel.TextStrokeTransparency = 0
 	textLabel.Font = Enum.Font.SourceSansBold
-	textLabel.TextScaled = true
+	textLabel.TextScaled = false
+	textLabel.TextSize = 14
 	textLabel.Text = player.Name
 	textLabel.Parent = billboard
 
@@ -518,37 +526,40 @@ RunService.RenderStepped:Connect(function()
 	end
 
 	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			local rootPart = player.Character.HumanoidRootPart
-			local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-			if humanoid and humanoid.Health > 0 then
-				local distance = (rootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+		if player ~= LocalPlayer and player.Character then
+			local char = player.Character
+			local root = char:FindFirstChild("HumanoidRootPart")
+			local humanoid = char:FindFirstChildOfClass("Humanoid")
 
-				-- Set warna sesuai tim
-				local color = Color3.fromRGB(255,255,255)
+			if root and humanoid and humanoid.Health > 0 then
+				local distance = (root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+				local color = Color3.fromRGB(255, 255, 255)
+
 				if player.Team and LocalPlayer.Team then
-					color = (player.Team == LocalPlayer.Team) and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
+					if player.Team == LocalPlayer.Team then
+						color = Color3.fromRGB(0, 255, 0)
+					else
+						color = Color3.fromRGB(255, 0, 0)
+					end
 				end
 
 				local esp = ESPFolder[player]
-				if not esp then continue end
+				if esp then
+					-- Highlight
+					if esp.Highlight then
+						esp.Highlight.Enabled = true
+						esp.Highlight.FillColor = color
+						esp.Highlight.OutlineColor = color
+					end
 
-				-- Highlight
-				if esp.Highlight then
-					esp.Highlight.Enabled = true
-					esp.Highlight.FillColor = color
-					esp.Highlight.OutlineColor = color
-				end
-
-				-- Billboard
-				if esp.Billboard and esp.TextLabel then
-					esp.Billboard.Enabled = true
-					esp.TextLabel.Text = player.Name .. " | " .. math.floor(distance) .. " Stud"
-					-- ukuran text mengecil saat jauh
-					local scale = math.clamp(200/distance, 0.5, 1)
-					esp.TextLabel.TextScaled = false
-					esp.TextLabel.TextSize = 14 * scale
-					esp.TextLabel.TextColor3 = color
+					-- Billboard
+					if esp.Billboard and esp.TextLabel then
+						esp.Billboard.Enabled = true
+						local scale = math.clamp(200 / distance, 0.5, 1)
+						esp.TextLabel.Text = player.Name .. " | " .. math.floor(distance) .. " Stud"
+						esp.TextLabel.TextSize = 14 * scale
+						esp.TextLabel.TextColor3 = color
+					end
 				end
 
 				-- Notifikasi musuh dekat
@@ -581,7 +592,8 @@ for _, p in pairs(Players:GetPlayers()) do
 	CreateESP(p)
 end
 
---// Toggle UI
+--// === UI TOGGLES ===
+
 Tabs.Visual:Toggle({
 	Title = "ESP (Team & Killer)",
 	Value = false,
@@ -598,121 +610,104 @@ Tabs.Visual:Toggle({
 	end
 })
 
-
+--// === GENERATOR VIEW ===
 Tabs.Visual:Toggle({
-    Title = "View Generator",
-    Default = false,
-    Callback = function(state)
-        local map = workspace:FindFirstChild("Map")
-        if not map then return end
+	Title = "View Generator",
+	Default = false,
+	Callback = function(state)
+		local map = workspace:FindFirstChild("Map")
+		if not map then return end
 
-        -- hentikan loop lama
-        if getgenv().ViewGeneratorLoop then
-            getgenv().ViewGeneratorLoop = nil
-        end
+		if getgenv().ViewGeneratorLoop then
+			getgenv().ViewGeneratorLoop = nil
+		end
 
-        if state then
-            getgenv().ViewGeneratorLoop = true
+		if state then
+			getgenv().ViewGeneratorLoop = true
+			task.spawn(function()
+				while getgenv().ViewGeneratorLoop do
+					for _, generator in pairs(map:GetChildren()) do
+						if generator:IsA("Model") and string.find(generator.Name, "Generator") then
+							local point1 = generator:FindFirstChild("GeneratorPoint1")
+							local point2 = generator:FindFirstChild("GeneratorPoint2")
+							local point3 = generator:FindFirstChild("GeneratorPoint3")
+							local isOff = (point1 or point2 or point3) ~= nil
+							local color = isOff and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
 
-            task.spawn(function()
-                while getgenv().ViewGeneratorLoop do
-                    for _, generator in pairs(map:GetChildren()) do
-                        if string.find(generator.Name, "Generator") then
-                            local point1 = generator:FindFirstChild("GeneratorPoint1")
-                            local point2 = generator:FindFirstChild("GeneratorPoint2")
-                            local point3 = generator:FindFirstChild("GeneratorPoint3")
+							local highlight = generator:FindFirstChild("GeneratorHighlight")
+							if not highlight then
+								highlight = Instance.new("Highlight")
+								highlight.Name = "GeneratorHighlight"
+								highlight.Adornee = generator
+								highlight.Parent = generator
+							end
 
-                            -- kalau salah satu point ada, generator off
-                            local isOff = (point1 or point2 or point3) ~= nil
-                            local color = isOff and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
-
-                            -- cek apakah sudah ada Highlight
-                            local highlight = generator:FindFirstChild("GeneratorHighlight")
-                            if not highlight then
-                                highlight = Instance.new("Highlight")
-                                highlight.Name = "GeneratorHighlight"
-                                highlight.Adornee = generator
-                                highlight.Parent = generator
-                            end
-
-                            highlight.FillColor = color
-                            highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
-                            highlight.FillTransparency = 0.5 -- bisa diatur
-                        end
-                    end
-                    task.wait(1)
-                end
-            end)
-
-        else
-            getgenv().ViewGeneratorLoop = nil
-
-            -- hapus semua Highlight
-            for _, generator in pairs(map:GetChildren()) do
-                if string.find(generator.Name, "Generator") then
-                    local highlight = generator:FindFirstChild("GeneratorHighlight")
-                    if highlight then
-                        highlight:Destroy()
-                    end
-                end
-            end
-        end
-    end
+							highlight.FillColor = color
+							highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
+							highlight.FillTransparency = 0.5
+						end
+					end
+					task.wait(1)
+				end
+			end)
+		else
+			getgenv().ViewGeneratorLoop = nil
+			for _, generator in pairs(map:GetChildren()) do
+				if generator:IsA("Model") and string.find(generator.Name, "Generator") then
+					local highlight = generator:FindFirstChild("GeneratorHighlight")
+					if highlight then highlight:Destroy() end
+				end
+			end
+		end
+	end
 })
 
+--// === HOOK VIEW ===
 Tabs.Visual:Toggle({
-    Title = "View Hook",
-    Default = false,
-    Callback = function(state)
-        local hookFolder = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Hook")
-        if not hookFolder then return end
+	Title = "View Hook",
+	Default = false,
+	Callback = function(state)
+		local map = workspace:FindFirstChild("Map")
+		local hookFolder = map and map:FindFirstChild("Hook")
+		if not hookFolder then return end
 
-        -- hentikan loop lama
-        if getgenv().ViewHookLoop then
-            getgenv().ViewHookLoop = nil
-        end
+		if getgenv().ViewHookLoop then
+			getgenv().ViewHookLoop = nil
+		end
 
-        if state then
-            getgenv().ViewHookLoop = true
-
-            task.spawn(function()
-                while getgenv().ViewHookLoop do
-                    for _, hook in pairs(hookFolder:GetChildren()) do
-                        if hook:IsA("Model") then
-                            -- cek apakah sudah ada Highlight
-                            local highlight = hook:FindFirstChild("HookHighlight")
-                            if not highlight then
-                                highlight = Instance.new("Highlight")
-                                highlight.Name = "HookHighlight"
-                                highlight.Adornee = hook
-                                highlight.Parent = hook
-                            end
-
-                            -- kalau hook ada, hijau
-                            highlight.FillColor = Color3.fromRGB(0, 255, 0)
-                            highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
-                            highlight.FillTransparency = 0.5
-                        end
-                    end
-                    task.wait(1)
-                end
-            end)
-
-        else
-            getgenv().ViewHookLoop = nil
-
-            -- hapus semua Highlight
-            for _, hook in pairs(hookFolder:GetChildren()) do
-                if hook:IsA("Model") then
-                    local highlight = hook:FindFirstChild("HookHighlight")
-                    if highlight then
-                        highlight:Destroy()
-                    end
-                end
-            end
-        end
-    end
+		if state then
+			getgenv().ViewHookLoop = true
+			task.spawn(function()
+				while getgenv().ViewHookLoop do
+					for _, hook in pairs(hookFolder:GetChildren()) do
+						if hook:IsA("Model") then
+							local highlight = hook:FindFirstChild("HookHighlight")
+							if not highlight then
+								highlight = Instance.new("Highlight")
+								highlight.Name = "HookHighlight"
+								highlight.Adornee = hook
+								highlight.Parent = hook
+							end
+							highlight.FillColor = Color3.fromRGB(0, 255, 0)
+							highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
+							highlight.FillTransparency = 0.5
+						end
+					end
+					task.wait(1)
+				end
+			end)
+		else
+			getgenv().ViewHookLoop = nil
+			for _, hook in pairs(hookFolder:GetChildren()) do
+				if hook:IsA("Model") then
+					local highlight = hook:FindFirstChild("HookHighlight")
+					if highlight then highlight:Destroy() end
+				end
+			end
+		end
+	end
 })
+
 
 -------------------------------------------------------
 -- TOGGLE BUTTON (PUTIH AGAK TRANSPARAN) + ANIMASI BARU
