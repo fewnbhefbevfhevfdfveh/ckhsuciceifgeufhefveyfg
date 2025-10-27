@@ -1,3 +1,117 @@
+-- LocalScript (StarterPlayerScripts)
+local player = game.Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+
+local dashDistance = 12
+local dashSpeed = 0.2
+local steps = 10
+local guiName = "DashGUI"
+
+-- Fungsi dash smooth
+local function dashSmooth(hrp)
+    if not hrp then return end
+    local forwardVector = hrp.CFrame.LookVector
+    local startPos = hrp.Position
+    local endPos = startPos + forwardVector * dashDistance
+
+    for i = 1, steps do
+        local alpha = i / steps
+        local pos = startPos:Lerp(endPos, alpha)
+        hrp.CFrame = CFrame.new(pos, pos + forwardVector)
+        task.wait(dashSpeed / steps)
+    end
+end
+
+-- Fungsi buat GUI
+local function createDashGUI()
+    -- Cek kalau udah ada, hapus dulu
+    local existing = player:FindFirstChild("PlayerGui"):FindFirstChild(guiName)
+    if existing then
+        existing:Destroy()
+    end
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = guiName
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = player:WaitForChild("PlayerGui")
+
+    local dashButton = Instance.new("TextButton")
+    dashButton.Size = UDim2.new(0, 100, 0, 50)
+    dashButton.Position = UDim2.new(0.5, -50, 0.9, 0)
+    dashButton.Text = "Dash"
+    dashButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    dashButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    dashButton.Parent = screenGui
+
+    -- Drag logic
+    local dragging, dragInput, dragStart, startPosButton
+    local function update(input)
+        local delta = input.Position - dragStart
+        dashButton.Position = UDim2.new(
+            startPosButton.X.Scale, startPosButton.X.Offset + delta.X,
+            startPosButton.Y.Scale, startPosButton.Y.Offset + delta.Y
+        )
+    end
+
+    dashButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPosButton = dashButton.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    dashButton.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+
+    return dashButton
+end
+
+-- Listener respawn karakter
+local function setupCharacter(char)
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local dashButton = createDashGUI()
+    dashButton.MouseButton1Click:Connect(function()
+        dashSmooth(hrp)
+    end)
+
+    -- Loop cek GUI hilang
+    task.spawn(function()
+        while char.Parent do
+            if not player:FindFirstChild("PlayerGui"):FindFirstChild(guiName) then
+                dashButton = createDashGUI()
+                dashButton.MouseButton1Click:Connect(function()
+                    dashSmooth(hrp)
+                end)
+            end
+            task.wait(1) -- cek tiap 1 detik
+        end
+    end)
+end
+
+player.CharacterAdded:Connect(setupCharacter)
+if player.Character then
+    setupCharacter(player.Character)
+end
+
+
+
+
 local map = workspace:WaitForChild("Map")
 
 -- Fungsi rename generator
@@ -450,38 +564,32 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
---// Variables
+--// Variabel
 local ESPEnabled = false
 local NotifyEnabled = true
 local NotifyDistance = 150
 local ESPFolder = {}
 local NotifiedEnemies = {}
 
---// Buat ESP karakter (Hanya untuk Model dengan Humanoid)
+--// Fungsi buat ESP karakter
 local function CreateESP(player)
 	if player == LocalPlayer then return end
 	if ESPFolder[player] then return end
-	if not player.Character then return end
-
-	local character = player.Character
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	local root = character:FindFirstChild("HumanoidRootPart")
-
-	if not humanoid or not root then return end
+	if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
 
 	local esp = {}
 
-	-- Highlight untuk karakter saja
+	-- Highlight karakter
 	local highlight = Instance.new("Highlight")
-	highlight.Name = "ESPHighlight"
-	highlight.Adornee = character
+	highlight.Adornee = player.Character
 	highlight.FillTransparency = 0.6
 	highlight.OutlineTransparency = 0
-	highlight.Parent = character
+	highlight.OutlineColor = Color3.new(1, 1, 1)
+	highlight.Parent = workspace
 
-	-- Billboard untuk nama + jarak
+	-- Billboard nama + jarak
 	local billboard = Instance.new("BillboardGui")
-	billboard.Adornee = root
+	billboard.Adornee = player.Character:FindFirstChild("HumanoidRootPart")
 	billboard.Size = UDim2.new(0, 100, 0, 30)
 	billboard.StudsOffset = Vector3.new(0, 3, 0)
 	billboard.AlwaysOnTop = true
@@ -493,8 +601,7 @@ local function CreateESP(player)
 	textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 	textLabel.TextStrokeTransparency = 0
 	textLabel.Font = Enum.Font.SourceSansBold
-	textLabel.TextScaled = false
-	textLabel.TextSize = 14
+	textLabel.TextScaled = true
 	textLabel.Text = player.Name
 	textLabel.Parent = billboard
 
@@ -515,51 +622,49 @@ local function RemoveESP(player)
 	NotifiedEnemies[player] = nil
 end
 
+--// Hapus semua ESP (untuk refresh toggle)
+local function ClearAllESP()
+	for player, esp in pairs(ESPFolder) do
+		RemoveESP(player)
+	end
+	table.clear(ESPFolder)
+end
+
 --// Loop utama
 RunService.RenderStepped:Connect(function()
-	if not ESPEnabled then
-		for _, esp in pairs(ESPFolder) do
-			if esp.Highlight then esp.Highlight.Enabled = false end
-			if esp.Billboard then esp.Billboard.Enabled = false end
-		end
-		return
-	end
+	if not ESPEnabled then return end
 
 	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character then
-			local char = player.Character
-			local root = char:FindFirstChild("HumanoidRootPart")
-			local humanoid = char:FindFirstChildOfClass("Humanoid")
+		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			local rootPart = player.Character.HumanoidRootPart
+			local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+			if humanoid and humanoid.Health > 0 then
+				local distance = (rootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
 
-			if root and humanoid and humanoid.Health > 0 then
-				local distance = (root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+				-- Warna sesuai tim
 				local color = Color3.fromRGB(255, 255, 255)
-
 				if player.Team and LocalPlayer.Team then
-					if player.Team == LocalPlayer.Team then
-						color = Color3.fromRGB(0, 255, 0)
-					else
-						color = Color3.fromRGB(255, 0, 0)
-					end
+					color = (player.Team == LocalPlayer.Team) and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
 				end
 
 				local esp = ESPFolder[player]
-				if esp then
-					-- Highlight
-					if esp.Highlight then
-						esp.Highlight.Enabled = true
-						esp.Highlight.FillColor = color
-						esp.Highlight.OutlineColor = color
-					end
+				if not esp then continue end
 
-					-- Billboard
-					if esp.Billboard and esp.TextLabel then
-						esp.Billboard.Enabled = true
-						local scale = math.clamp(200 / distance, 0.5, 1)
-						esp.TextLabel.Text = player.Name .. " | " .. math.floor(distance) .. " Stud"
-						esp.TextLabel.TextSize = 14 * scale
-						esp.TextLabel.TextColor3 = color
-					end
+				-- Update Highlight
+				if esp.Highlight then
+					esp.Highlight.Enabled = true
+					esp.Highlight.FillColor = color
+					esp.Highlight.OutlineColor = color
+				end
+
+				-- Update Billboard
+				if esp.Billboard and esp.TextLabel then
+					esp.Billboard.Enabled = true
+					esp.TextLabel.Text = player.Name .. " | " .. math.floor(distance) .. " Stud"
+					local scale = math.clamp(200 / distance, 0.5, 1)
+					esp.TextLabel.TextScaled = false
+					esp.TextLabel.TextSize = 14 * scale
+					esp.TextLabel.TextColor3 = color
 				end
 
 				-- Notifikasi musuh dekat
@@ -585,23 +690,24 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
---// Player join/leave
-Players.PlayerAdded:Connect(CreateESP)
-Players.PlayerRemoving:Connect(RemoveESP)
-for _, p in pairs(Players:GetPlayers()) do
-	CreateESP(p)
-end
-
---// === UI TOGGLES ===
-
+--// Toggle ESP
 Tabs.Visual:Toggle({
 	Title = "ESP (Team & Killer)",
 	Value = false,
 	Callback = function(state)
 		ESPEnabled = state
+		if state then
+			ClearAllESP()
+			for _, p in pairs(Players:GetPlayers()) do
+				CreateESP(p)
+			end
+		else
+			ClearAllESP()
+		end
 	end
 })
 
+--// Toggle Notifikasi
 Tabs.Visual:Toggle({
 	Title = "Notify Killer Nearby",
 	Value = true,
@@ -610,103 +716,6 @@ Tabs.Visual:Toggle({
 	end
 })
 
---// === GENERATOR VIEW ===
-Tabs.Visual:Toggle({
-	Title = "View Generator",
-	Default = false,
-	Callback = function(state)
-		local map = workspace:FindFirstChild("Map")
-		if not map then return end
-
-		if getgenv().ViewGeneratorLoop then
-			getgenv().ViewGeneratorLoop = nil
-		end
-
-		if state then
-			getgenv().ViewGeneratorLoop = true
-			task.spawn(function()
-				while getgenv().ViewGeneratorLoop do
-					for _, generator in pairs(map:GetChildren()) do
-						if generator:IsA("Model") and string.find(generator.Name, "Generator") then
-							local point1 = generator:FindFirstChild("GeneratorPoint1")
-							local point2 = generator:FindFirstChild("GeneratorPoint2")
-							local point3 = generator:FindFirstChild("GeneratorPoint3")
-							local isOff = (point1 or point2 or point3) ~= nil
-							local color = isOff and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
-
-							local highlight = generator:FindFirstChild("GeneratorHighlight")
-							if not highlight then
-								highlight = Instance.new("Highlight")
-								highlight.Name = "GeneratorHighlight"
-								highlight.Adornee = generator
-								highlight.Parent = generator
-							end
-
-							highlight.FillColor = color
-							highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
-							highlight.FillTransparency = 0.5
-						end
-					end
-					task.wait(1)
-				end
-			end)
-		else
-			getgenv().ViewGeneratorLoop = nil
-			for _, generator in pairs(map:GetChildren()) do
-				if generator:IsA("Model") and string.find(generator.Name, "Generator") then
-					local highlight = generator:FindFirstChild("GeneratorHighlight")
-					if highlight then highlight:Destroy() end
-				end
-			end
-		end
-	end
-})
-
---// === HOOK VIEW ===
-Tabs.Visual:Toggle({
-	Title = "View Hook",
-	Default = false,
-	Callback = function(state)
-		local map = workspace:FindFirstChild("Map")
-		local hookFolder = map and map:FindFirstChild("Hook")
-		if not hookFolder then return end
-
-		if getgenv().ViewHookLoop then
-			getgenv().ViewHookLoop = nil
-		end
-
-		if state then
-			getgenv().ViewHookLoop = true
-			task.spawn(function()
-				while getgenv().ViewHookLoop do
-					for _, hook in pairs(hookFolder:GetChildren()) do
-						if hook:IsA("Model") then
-							local highlight = hook:FindFirstChild("HookHighlight")
-							if not highlight then
-								highlight = Instance.new("Highlight")
-								highlight.Name = "HookHighlight"
-								highlight.Adornee = hook
-								highlight.Parent = hook
-							end
-							highlight.FillColor = Color3.fromRGB(0, 255, 0)
-							highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
-							highlight.FillTransparency = 0.5
-						end
-					end
-					task.wait(1)
-				end
-			end)
-		else
-			getgenv().ViewHookLoop = nil
-			for _, hook in pairs(hookFolder:GetChildren()) do
-				if hook:IsA("Model") then
-					local highlight = hook:FindFirstChild("HookHighlight")
-					if highlight then highlight:Destroy() end
-				end
-			end
-		end
-	end
-})
 
 
 -------------------------------------------------------
@@ -878,114 +887,3 @@ UserInputService.InputChanged:Connect(function(input)
 	end
 end)
 
-
--- LocalScript (StarterPlayerScripts)
-local player = game.Players.LocalPlayer
-local UIS = game:GetService("UserInputService")
-
-local dashDistance = 12
-local dashSpeed = 0.2
-local steps = 10
-local guiName = "DashGUI"
-
--- Fungsi dash smooth
-local function dashSmooth(hrp)
-    if not hrp then return end
-    local forwardVector = hrp.CFrame.LookVector
-    local startPos = hrp.Position
-    local endPos = startPos + forwardVector * dashDistance
-
-    for i = 1, steps do
-        local alpha = i / steps
-        local pos = startPos:Lerp(endPos, alpha)
-        hrp.CFrame = CFrame.new(pos, pos + forwardVector)
-        task.wait(dashSpeed / steps)
-    end
-end
-
--- Fungsi buat GUI
-local function createDashGUI()
-    -- Cek kalau udah ada, hapus dulu
-    local existing = player:FindFirstChild("PlayerGui"):FindFirstChild(guiName)
-    if existing then
-        existing:Destroy()
-    end
-
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = guiName
-    screenGui.ResetOnSpawn = false
-    screenGui.Parent = player:WaitForChild("PlayerGui")
-
-    local dashButton = Instance.new("TextButton")
-    dashButton.Size = UDim2.new(0, 100, 0, 50)
-    dashButton.Position = UDim2.new(0.5, -50, 0.9, 0)
-    dashButton.Text = "Dash"
-    dashButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    dashButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    dashButton.Parent = screenGui
-
-    -- Drag logic
-    local dragging, dragInput, dragStart, startPosButton
-    local function update(input)
-        local delta = input.Position - dragStart
-        dashButton.Position = UDim2.new(
-            startPosButton.X.Scale, startPosButton.X.Offset + delta.X,
-            startPosButton.Y.Scale, startPosButton.Y.Offset + delta.Y
-        )
-    end
-
-    dashButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPosButton = dashButton.Position
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    dashButton.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
-    UIS.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            update(input)
-        end
-    end)
-
-    return dashButton
-end
-
--- Listener respawn karakter
-local function setupCharacter(char)
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    local dashButton = createDashGUI()
-    dashButton.MouseButton1Click:Connect(function()
-        dashSmooth(hrp)
-    end)
-
-    -- Loop cek GUI hilang
-    task.spawn(function()
-        while char.Parent do
-            if not player:FindFirstChild("PlayerGui"):FindFirstChild(guiName) then
-                dashButton = createDashGUI()
-                dashButton.MouseButton1Click:Connect(function()
-                    dashSmooth(hrp)
-                end)
-            end
-            task.wait(1) -- cek tiap 1 detik
-        end
-    end)
-end
-
-player.CharacterAdded:Connect(setupCharacter)
-if player.Character then
-    setupCharacter(player.Character)
-end
