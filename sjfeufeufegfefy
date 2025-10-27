@@ -123,6 +123,77 @@ player.CharacterAdded:Connect(function(newChar)
     end
 end)
 
+-- ======================================[ Auto Fish Script V1 ]======================================
+
+-- ===== Auto Fish Setup (Fixed by Walvy) =====
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
+local animTracks = nil
+local autoFishEnabled = false
+local isRunning = false
+
+-- ===== Global delay settings =====
+local delayTime = 3
+local minSafeDelay = 1.6
+local delayInputValue = nil
+
+-- Animation IDs
+local animations = {
+    idle = "rbxassetid://96586569072385",
+    cast = "rbxassetid://180435571",
+    wait = "rbxassetid://92624107165273",
+    reel = "rbxassetid://134965425664034"
+}
+
+-- Helper function to get the Animator
+local function getAnimator()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid", 5)
+    if not humanoid then return nil end
+    local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+    return animator
+end
+
+-- Load animations into tracks
+local function loadAnimations()
+    local animator = getAnimator()
+    if not animator then return nil end
+    local newTracks = {}
+    for name, id in pairs(animations) do
+        local success, anim = pcall(function()
+            local animation = Instance.new("Animation")
+            animation.AnimationId = id
+            return animator:LoadAnimation(animation)
+        end)
+        if success and anim then
+            newTracks[name] = anim
+        end
+    end
+    return newTracks
+end
+
+-- Initialize animations when character spawns
+player.CharacterAdded:Connect(function()
+    animTracks = loadAnimations()
+end)
+
+if player.Character then
+    animTracks = loadAnimations()
+end
+
+-- Function to safely stop all animations
+local function stopAllAnimations()
+    if animTracks then
+        for _, track in pairs(animTracks) do
+            if track then
+                track.Looped = false
+                track:Stop(0)
+            end
+        end
+        animTracks = nil
+    end
+end
 
 -- ======================================[ Fishing Success & Fail Counter ]======================================
 
@@ -254,7 +325,57 @@ end
 
 --========================================[ Auto Fish Script V2 ]======================================
 
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local Container = LocalPlayer.PlayerGui["Small Notification"].Display.Container
 
+local Net = ReplicatedStorage:WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+
+local ChargeFishingRod = Net:WaitForChild("RF/ChargeFishingRod")
+local RequestFishingMinigameStarted = Net:WaitForChild("RF/RequestFishingMinigameStarted")
+
+local AutoFishV2 = false
+local selectedVersion = "Random" -- default versi
+
+-- Data versi Step3
+local FishingVersions = {
+    ["Amazing"] = {-1.233184814453125, 0.9002424201837305},
+    ["Great"]   = {-1.233184814453125, 0.7065944988657701},
+    ["Good"]    = {-1.233184814453125, 0.47284815807590747},
+    ["Ok"]      = {-1.233184814453125, 0.03616986710429271},
+    ["Perfect"] = {-1.233184814453125, 0.9963770604990823},
+}
+
+-- Step Functions
+local function Step1()
+    Container.Position = UDim2.new(0.5, 0, -1.89999998, 1)
+end
+
+local function Step2()
+    ChargeFishingRod:InvokeServer(1759130348.448756)
+end
+
+local function Step3()
+    local version = selectedVersion
+
+    -- Jika user pilih Random → ambil versi acak dari FishingVersions
+    if version == "Random" then
+        local keys = {}
+        for k in pairs(FishingVersions) do
+            table.insert(keys, k)
+        end
+        version = keys[math.random(1, #keys)]
+    end
+
+    local args = FishingVersions[version]
+    if args then
+        RequestFishingMinigameStarted:InvokeServer(unpack(args))
+    end
+end
 
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
@@ -519,83 +640,106 @@ Tabs.Active:Toggle({
     end
 })
 
-Tabs.Farm:Section({ Title = "Fishing" })
 
--- Services
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-local fishingGui = playerGui:WaitForChild("Fishing")
-local mainFrame = fishingGui:WaitForChild("Main")
-local vim = game:GetService("VirtualInputManager")
-local camera = workspace.CurrentCamera
-
--- Default settings
-local beforePosition = UDim2.new(0.5, 0, 1.5, 0)  -- posisi awal Main
-local delayTime = 0.1  -- default delay klik (detik)
-local toggleState = false  -- status toggle dari UI
-
--- ==========================
--- WindUI Input: Atur Delay Klik
--- ==========================
-Tabs.Farm:Input({
-    Title = "Set Click speed",
-    Value = tostring(delayTime),
-    Placeholder = "example: 0.001",
-    Callback = function(input)
-        local newDelay = tonumber(input)
-        if newDelay and newDelay > 0 then
-            delayTime = newDelay
-        end
-    end
-})
-
--- ==========================
--- WindUI Toggle: Auto Fishing
--- ==========================
-Tabs.Farm:Toggle({ 
-    Title = "Auto Fish v1",
+-- Auto-fish toggle
+Tabs.Farm:Toggle({
+    Title = "Auto Fish V1",
+    Desc = "Automatically fish and auto perfect fishing",
     Value = false,
     Callback = function(state)
-        -- Simpan status toggle
-        toggleState = state
+        autoFishEnabled = state
+        if state then
+            if not player.Character or not animTracks then
+                animTracks = loadAnimations()
+                if not animTracks then
+                    autoFishEnabled = false
+                    return
+                end
+            end
 
-        -- Kirim status Auto Fishing ke server
-        local args = { state }
-        game:GetService("ReplicatedStorage")
-            :WaitForChild("Packages")
-            :WaitForChild("_Index")
-            :WaitForChild("sleitnick_net@0.2.0")
-            :WaitForChild("net")
-            :WaitForChild("RF/UpdateAutoFishingState")
-            :InvokeServer(unpack(args))
+            local netFolder = ReplicatedStorage:FindFirstChild("Packages")
+                and ReplicatedStorage.Packages:FindFirstChild("_Index")
+                and ReplicatedStorage.Packages._Index:FindFirstChild("sleitnick_net@0.2.0")
+                and ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"]:FindFirstChild("net")
+            if not netFolder then
+                autoFishEnabled = false
+                return
+            end
+
+            local EquipRod = netFolder:FindFirstChild("RE/EquipToolFromHotbar")
+            local StartMinigame = netFolder:FindFirstChild("RF/RequestFishingMinigameStarted")
+            local ChargeRod = netFolder:FindFirstChild("RF/ChargeFishingRod")
+
+            if not (EquipRod and StartMinigame and ChargeRod) then
+                autoFishEnabled = false
+                return
+            end
+
+            pcall(function()
+                EquipRod:FireServer(1)
+            end)
+
+            if animTracks.idle then
+                animTracks.idle.Looped = true
+                animTracks.idle:Play()
+            end
+
+            if not isRunning then
+                isRunning = true
+                task.spawn(function()
+                    while autoFishEnabled do
+                        pcall(function()
+                            if not player.Character or not player.Character:FindFirstChild("Humanoid") then
+                                animTracks = loadAnimations()
+                                if not animTracks then return end
+                            end
+
+                            if animTracks.cast then animTracks.cast:Play() end
+                            StartMinigame:InvokeServer(-0.7499996423721313, 1)
+                            task.wait(0.2)
+
+                            if animTracks.wait then animTracks.wait:Play() end
+                            task.wait(0.2)
+
+                            if animTracks.reel then animTracks.reel:Play() end
+                            ChargeRod:InvokeServer(workspace:GetServerTimeNow())
+                            task.wait(0.2)
+
+                            StartMinigame:InvokeServer(-0.7499996423721313, 1)
+                        end)
+
+                        task.wait(math.max(delayTime, minSafeDelay))
+                    end
+                    isRunning = false
+                end)
+            end
+        else
+            autoFishEnabled = false
+            stopAllAnimations()
+            isRunning = false
+        end
     end
 })
 
--- ==========================
--- Loop cek posisi Main & Auto Click ke UDim2 target
--- ==========================
-task.spawn(function()
-    while true do
-        task.wait(delayTime)
+-- ===== Delay TextBox + Button =====
+Tabs.Farm:Input({
+    Title = "Auto Fish V1 Delay",
+    Placeholder = "Example 0.01",
+    Callback = function(text)
+        delayInputValue = text
+    end
+})
 
-        -- Hanya jalan kalau toggle aktif DAN posisi Main berubah
-        if toggleState and mainFrame.Position ~= beforePosition then
-            local screenSize = camera.ViewportSize
-
-            -- target posisi {0.5, 0}, {0.5, 0} (tengah layar)
-            local target = UDim2.new(0.5, 0, 0.5, 0)
-
-            -- konversi ke pixel
-            local targetX = (screenSize.X * target.X.Scale) + target.X.Offset
-            local targetY = (screenSize.Y * target.Y.Scale) + target.Y.Offset
-
-            vim:SendMouseButtonEvent(targetX, targetY, 0, true, game, 0)  -- down
-            vim:SendMouseButtonEvent(targetX, targetY, 0, false, game, 0) -- up
+Tabs.Farm:Button({
+    Title = "Apply Delay",
+    Desc = "Apply the entered delay value",
+    Callback = function()
+        local value = tonumber(delayInputValue)
+        if value and value >= 0.1 and value <= 4 then
+            delayTime = value
         end
     end
-end)
-
+})
 
 Tabs.Farm:Space()
 
@@ -617,6 +761,107 @@ Tabs.Farm:Toggle({
 		end
 	end
 })
+
+Tabs.Farm:Dropdown({
+    Title = "Select Charge Power",
+    Desc = "Only Work Auto Fish V2",
+    Values = {"Amazing", "Great", "Good", "Ok", "Perfect", "Random"},
+    Value = selectedVersion,
+    Callback = function(option)
+        selectedVersion = option
+    end
+})
+
+-- Toggle Auto Fish
+Tabs.Farm:Toggle({
+    Title = "Auto Fish V2",
+    Value = false,
+    Callback = function(state)
+        AutoFishV2 = state
+
+        if AutoFishV2 then
+            Step1()
+            task.wait(0.01)
+            Step2()
+            task.wait(0.01)
+            Step3()
+        end
+    end
+})
+
+-- Listener perubahan posisi Container
+local lastPosition = Container.Position
+local lastChangeTime = tick()
+
+Container:GetPropertyChangedSignal("Position"):Connect(function()
+    if AutoFishV2 then
+        lastPosition = Container.Position
+        lastChangeTime = tick()
+
+        if Container.Position == UDim2.new(0.5, 0, 0.100000001, 0) then
+            task.wait(0.01)
+            Step2()
+            task.wait(0.01)
+            Step3()
+        end
+    end
+end)
+
+-- Watchdog restart bila tidak berubah 8 detik
+task.spawn(function()
+    while true do
+        task.wait(1)
+        if AutoFishV2 and tick() - lastChangeTime >= 8 then
+            Step1()
+            task.wait(0.01)
+            Step2()
+            task.wait(0.01)
+            Step3()
+            lastChangeTime = tick()
+        end
+    end
+end)
+
+Tabs.Farm:Toggle({
+    Title = "Auto Fishing Completed",
+    Value = true, -- default langsung ON
+    Callback = function(state)
+        getgenv().AutoFishing = state
+        if state then
+            task.spawn(function()
+                while getgenv().AutoFishing do
+                    pcall(function()
+                        game:GetService("ReplicatedStorage")
+                            :WaitForChild("Packages")
+                            :WaitForChild("_Index")
+                            :WaitForChild("sleitnick_net@0.2.0")
+                            :WaitForChild("net")
+                            :WaitForChild("RE/FishingCompleted")
+                            :FireServer()
+                    end)
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end
+})
+
+-- jalankan langsung saat script load
+getgenv().AutoFishing = true
+task.spawn(function()
+    while getgenv().AutoFishing do
+        pcall(function()
+            game:GetService("ReplicatedStorage")
+                :WaitForChild("Packages")
+                :WaitForChild("_Index")
+                :WaitForChild("sleitnick_net@0.2.0")
+                :WaitForChild("net")
+                :WaitForChild("RE/FishingCompleted")
+                :FireServer()
+        end)
+        task.wait(0.1)
+    end
+end)
 
 Tabs.Farm:Button({
     Title = "Cancel Fishing",
@@ -1125,7 +1370,6 @@ Tabs.Auto:Dropdown({
     end
 })
 
--- Toggle auto quest
 Tabs.Auto:Toggle({
     Title = "Auto Quest",
     Desc = "Teleport otomatis sesuai progress quest yang dipilih",
@@ -2412,73 +2656,6 @@ Tabs.Server:Keybind({
         Window:SetToggleKey(Enum.KeyCode[v])
     end
 })
-
-
-local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-
--- Ambil nama player
-local player = game.Players.LocalPlayer
-local playerName = player.Name
-local playerDisplayName = player.DisplayName
-
--- Buat Window
-local Window = WindUI:CreateWindow({
-    Title = "Nexa | Premium",
-    Icon = "rbxassetid://131269662643486",
-    Author = "Fish IT! Script | @ Han",
-    Folder = "Hanzo",
-
-    Size = UDim2.fromOffset(650, 510),
-    MinSize = Vector2.new(560, 350),
-    MaxSize = Vector2.new(850, 560),
-
-    Theme = "Dark",
-    Transparent = true,
-    Acrylic = false,
-    HidePanelBackground = true,
-    HideSearchBar = false,
-    NewElements = true,
-    Resizable = true,
-    SideBarWidth = 200,
-    BackgroundImageTransparency = 0.42,
-    ScrollBarEnabled = true,
-
-    User = {
-        Enabled = true,
-        Anonymous = false,
-        Name = playerDisplayName,
-        UserName = "@" .. playerName,
-        Callback = function()
-            WindUI:Notify({
-                Title = "User Profile",
-                Content = "User profile clicked!",
-                Duration = 3
-            })
-        end
-    }
-})
-
-Window:Tag({
-    Title = "v1.2.9",
-    Color = Color3.fromHex("#30ff6a")
-})
-
-Window:EditOpenButton({
-    Enabled = false
-})
-
--- Tabs
-local Tabs = {
-    Home = Window:Tab({ Title = "Home", Icon = "house" }),
-    Active = Window:Tab({ Title = "Active", Icon = "info" }),
-    Farm = Window:Tab({ Title = "Farm", Icon = "fish" }),
-    Auto = Window:Tab({ Title = "Automaticaly", Icon = "repeat-2" }),
-    Shop = Window:Tab({ Title = "Shop", Icon = "shopping-cart" }),
-    Boat = Window:Tab({ Title = "Boat", Icon = "sailboat" }),
-    Player = Window:Tab({ Title = "Player", Icon = "user" }),
-    Teleport = Window:Tab({ Title = "Teleport", Icon = "map-pin" }),
-    Server = Window:Tab({ Title = "Server", Icon = "server" }),
-}
 
 -- Services
 local TweenService = game:GetService("TweenService")
