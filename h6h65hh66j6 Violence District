@@ -2,7 +2,7 @@
 local player = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
 
-local dashDistance = 12
+local dashDistance = 5
 local dashSpeed = 0.2
 local steps = 10
 local guiName = "DashGUI"
