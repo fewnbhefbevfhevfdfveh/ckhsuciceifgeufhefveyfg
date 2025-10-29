@@ -531,7 +531,7 @@ local player = Players.LocalPlayer
 local FuncAutoFish = {
     autofish = false,
     preRecastDelay = 0.6,
-    biteDelay = 1.5
+    biteDelay = 1.5 -- Fishing Delay manual, tidak lagi lewat input
 }
 
 local autoFishLoop
@@ -637,7 +637,7 @@ Tabs.Farm:Toggle({
     end
 })
 
---// Spam Delay Input (default mengikuti nilai sekarang)
+--// Cast Delay Input
 Tabs.Farm:Input({
     Title = "Cast Delay",
     Desc = "Delay before recasting the fishing rod.",
@@ -648,12 +648,12 @@ Tabs.Farm:Input({
         if v then
             FuncAutoFish.preRecastDelay = v
         else
-            warn("Invalid Spam Delay input. Please enter a number.")
+            warn("Invalid Cast Delay input. Please enter a number.")
         end
     end
 })
 
---// Reel Delay Input (default mengikuti nilai sekarang)
+--// Reel Delay Input
 Tabs.Farm:Input({
     Title = "Reel Delay",
     Desc = "Delay after recasting before reeling in.",
@@ -664,26 +664,11 @@ Tabs.Farm:Input({
         if v then
             FuncAutoFish.biteDelay = v
         else
-            warn("Invalid Fishing Delay input. Please enter a number.")
+            warn("Invalid Reel Delay input. Please enter a number.")
         end
     end
 })
 
---// Fishing Delay Input
-Tabs.Farm:Input({
-    Title = "Fishing Delay",
-    Desc = "Delay after recasting before reeling in.",
-    Value = "",
-    Placeholder = "Enter fishing delay (e.g. 1.5)",
-    Callback = function(input)
-        local v = tonumber(input)
-        if v then
-            FuncAutoFish.biteDelay = v
-        else
-            warn("Invalid Fishing Delay input. Please enter a number.")
-        end
-    end
-})
 
 
 Tabs.Farm:Space()
