@@ -1,6 +1,5 @@
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/vgegrege%20TempleLever"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/fgrrrrhh5h5j%20000001%20Hunt"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Notify%20Nexa"))()
 
 -- ======================================[ Hunt Teleport Script ]======================================
 
@@ -522,90 +521,172 @@ Tabs.Active:Toggle({
 
 Tabs.Farm:Section({ Title = "Fishing" })
 
---====================================--
---==  AUTO FISH V1 (Improved & Clean) ==--
---====================================--
-
--- Services
+--// Services
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local Camera = workspace.CurrentCamera
+local Workspace = game:GetService("Workspace")
+local player = Players.LocalPlayer
 
--- Variables
-local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
-local FishingGui = PlayerGui:WaitForChild("Fishing")
-local MainFrame = FishingGui:WaitForChild("Main")
+--// Auto Fish Configuration
+local FuncAutoFish = {
+    autofish = false,
+    preRecastDelay = 0.6,
+    biteDelay = 1.5
+}
 
--- Default settings
-local toggleState = false
-local beforePosition = UDim2.new(0.5, 0, 1.5, 0) -- posisi default sebelum fishing aktif
-local clickDelay = 0.1                            -- kecepatan klik (detik)
-local clickPos = UDim2.new(0.879999995, 0, 0.889999986, -20) -- posisi klik tetap
+local autoFishLoop
 
---============================--
---= WINDUI : INPUT PENGATURAN =--
---============================--
-
--- Ubah kecepatan klik
-Tabs.Farm:Input({
-    Title = "Click Delay (Seconds)",
-    Value = tostring(clickDelay),
-    Placeholder = "contoh: 0.05",
-    Callback = function(input)
-        local num = tonumber(input)
-        if num and num > 0 then
-            clickDelay = num
+--// Get Net Folder
+local function getNetFolder()
+    local packages = ReplicatedStorage:FindFirstChild("Packages")
+    if packages and packages:FindFirstChild("_Index") then
+        for _, child in ipairs(packages._Index:GetChildren()) do
+            if child.Name:find("^sleitnick_net@") then
+                return child:FindFirstChild("net")
+            end
         end
     end
-})
+    return ReplicatedStorage:FindFirstChild("net") or ReplicatedStorage:FindFirstChild("Net")
+end
 
---============================--
---= TOGGLE : AUTO FISHING =--
---============================--
+--// Get Fishing Remotes (tanpa equip)
+local function getFishingRemotes()
+    local net = getNetFolder()
+    if not net then return nil end
+    local charge = net:FindFirstChild("RF/ChargeFishingRod")
+    local mini = net:FindFirstChild("RF/RequestFishingMinigameStarted")
+    local cancelIn = net:FindFirstChild("RF/CancelFishingInputs")
+    local complete = net:FindFirstChild("RE/FishingCompleted")
+    if not (charge and mini and cancelIn and complete) then return nil end
+    return {charge = charge, mini = mini, cancelIn = cancelIn, complete = complete}
+end
+
+--// Single Cast
+local function castOnce()
+    local r = getFishingRemotes()
+    if not r then return end
+    task.spawn(function()
+        r.charge:InvokeServer(Workspace:GetServerTimeNow() - 1)
+        r.mini:InvokeServer(-2, 1)
+    end)
+end
+
+--// Recast Before Bite
+local function recastBeforeBite()
+    local r = getFishingRemotes()
+    if not r then return end
+    task.spawn(function()
+        r.cancelIn:InvokeServer()
+        task.wait(0.05)
+        r.charge:InvokeServer(Workspace:GetServerTimeNow())
+        r.mini:InvokeServer(-2, 1)
+    end)
+end
+
+--// Reel Now
+local function reelNow()
+    local r = getFishingRemotes()
+    if not r then return end
+    task.spawn(function()
+        local batch = 5
+        local repeats = 8
+        local microDelay = 0.0001
+        for _ = 1, repeats do
+            for i = 1, batch do
+                r.complete:FireServer()
+            end
+            task.wait(microDelay)
+        end
+    end)
+end
+
+--// Auto Fish Start
+local function startAutoFish()
+    if autoFishLoop then task.cancel(autoFishLoop) end
+    FuncAutoFish.autofish = true
+    autoFishLoop = task.spawn(function()
+        while FuncAutoFish.autofish do
+            castOnce()
+            task.wait(FuncAutoFish.preRecastDelay)
+            recastBeforeBite()
+            reelNow()
+            task.wait(FuncAutoFish.biteDelay)
+            reelNow()
+        end
+    end)
+end
+
+--// Auto Fish Stop
+local function stopAutoFish()
+    FuncAutoFish.autofish = false
+    if autoFishLoop then
+        task.cancel(autoFishLoop)
+        autoFishLoop = nil
+    end
+end
+
+--// WindUI Integration (Tab: Farm)
 Tabs.Farm:Toggle({
-    Title = "Auto Fish v1",
-    Icon = "fish",
-    Type = "Checkbox",
-    Value = false,
-    Callback = function(state)
-        toggleState = state
-
-        -- Kirim status ke server
-        local args = { state }
-        local rf = ReplicatedStorage:WaitForChild("Packages")
-            :WaitForChild("_Index")
-            :WaitForChild("sleitnick_net@0.2.0")
-            :WaitForChild("net")
-            :WaitForChild("RF/UpdateAutoFishingState")
-
-        rf:InvokeServer(unpack(args))
-
-        -- Jalankan / hentikan loop
-        if state then
-            task.spawn(function()
-                while toggleState do
-                    task.wait(clickDelay)
-
-                    -- Jika posisi Main berubah, lakukan klik
-                    if MainFrame.Position ~= beforePosition then
-                        local screenSize = Camera.ViewportSize
-                        local targetX = (screenSize.X * clickPos.X.Scale) + clickPos.X.Offset
-                        local targetY = (screenSize.Y * clickPos.Y.Scale) + clickPos.Y.Offset
-
-                        -- Klik mouse kiri di posisi target
-                        VirtualInputManager:SendMouseButtonEvent(targetX, targetY, 0, true, game, 0)
-                        VirtualInputManager:SendMouseButtonEvent(targetX, targetY, 0, false, game, 0)
-                    end
-                end
-            end)
+    Title = "Auto Fishing", 
+    Callback = function(value)
+        if value then
+            startAutoFish()
+        else
+            stopAutoFish()
         end
     end
 })
+
+--// Spam Delay Input (default mengikuti nilai sekarang)
+Tabs.Farm:Input({
+    Title = "Cast Delay",
+    Desc = "Delay before recasting the fishing rod.",
+    Value = tostring(FuncAutoFish.preRecastDelay),
+    Placeholder = "Enter cast delay (e.g. 0.6)",
+    Callback = function(input)
+        local v = tonumber(input)
+        if v then
+            FuncAutoFish.preRecastDelay = v
+        else
+            warn("Invalid Spam Delay input. Please enter a number.")
+        end
+    end
+})
+
+--// Reel Delay Input (default mengikuti nilai sekarang)
+Tabs.Farm:Input({
+    Title = "Reel Delay",
+    Desc = "Delay after recasting before reeling in.",
+    Value = tostring(FuncAutoFish.biteDelay),
+    Placeholder = "Enter reel delay (e.g. 1.5)",
+    Callback = function(input)
+        local v = tonumber(input)
+        if v then
+            FuncAutoFish.biteDelay = v
+        else
+            warn("Invalid Fishing Delay input. Please enter a number.")
+        end
+    end
+})
+
+--// Fishing Delay Input
+Tabs.Farm:Input({
+    Title = "Fishing Delay",
+    Desc = "Delay after recasting before reeling in.",
+    Value = "",
+    Placeholder = "Enter fishing delay (e.g. 1.5)",
+    Callback = function(input)
+        local v = tonumber(input)
+        if v then
+            FuncAutoFish.biteDelay = v
+        else
+            warn("Invalid Fishing Delay input. Please enter a number.")
+        end
+    end
+})
+
 
 Tabs.Farm:Space()
-
 
 local fishingGui
 Tabs.Farm:Toggle({
@@ -626,110 +707,6 @@ Tabs.Farm:Toggle({
 	end
 })
 
-Tabs.Farm:Space()
-
--- Auto Fishing V2 + WindUI (Tanpa print)
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-
-local net = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net")
-
-local charge = net:WaitForChild("RF/ChargeFishingRod")
-local request = net:WaitForChild("RF/RequestFishingMinigameStarted")
-local complete = net:WaitForChild("RE/FishingCompleted")
-
--- Animasi Step 1
-local animation = Instance.new("Animation")
-animation.AnimationId = "rbxassetid://134965425664034"
-local track = humanoid:LoadAnimation(animation)
-
--- Data random Step 2
-local FishingResults = {
-    Amazing = {-1.233184814453125, 0.9002424201837305},
-    Great   = {-1.233184814453125, 0.7065944988657701},
-    Perfect = {-1.233184814453125, 0.9963770604990823}
-}
-
-local function getRandomResult()
-    local keys = {"Amazing", "Great", "Perfect"}
-    local randomKey = keys[math.random(1, #keys)]
-    return FishingResults[randomKey], randomKey
-end
-
--- Variabel kontrol
-local autoFish = false
-local castDelay = 0.5
-local completedDelay = 1
-
--- WindUI Inputs
-Tabs.Farm:Input({
-    Title = "Cast Delay",
-    Value = tostring(castDelay),
-    Placeholder = "Enter number",
-    Callback = function(input)
-        local num = tonumber(input)
-        if num then
-            castDelay = num
-        end
-    end
-})
-
-Tabs.Farm:Input({
-    Title = "Completed Delay",
-    Value = tostring(completedDelay),
-    Placeholder = "Enter number",
-    Callback = function(input)
-        local num = tonumber(input)
-        if num then
-            completedDelay = num
-        end
-    end
-})
-
-Tabs.Farm:Toggle({
-    Title = "Auto Fish V2",
-    Icon = "fish",
-    Type = "Checkbox",
-    Value = false,
-    Callback = function(state)
-        autoFish = state
-        if state then
-            task.spawn(function()
-                while autoFish do
-                    -- Step 1: Animasi + Charge Fishing Rod
-                    task.spawn(function()
-                        if track.IsPlaying then
-                            track:Stop()
-                        end
-                        track:Play()
-                    end)
-                    charge:InvokeServer()
-                    task.wait(castDelay)
-
-                    -- Step 2: Request Fishing Minigame Started (random)
-                    local randomArgs = getRandomResult()
-                    local args = {
-                        randomArgs[1][1],
-                        randomArgs[1][2],
-                        os.clock()
-                    }
-                    request:InvokeServer(unpack(args))
-
-                    -- Step 3: Fishing Completed
-                    task.wait(completedDelay)
-                    complete:FireServer()
-
-                    -- Delay 0.5 detik sebelum ulang
-                    task.wait(0.5)
-                end
-            end)
-        end
-    end
-})
-
 Tabs.Farm:Button({
     Title = "Cancel Fishing",
     Desc = "If there is a bug or stuck, click this to cancel and restart Fishv2 auto.",
@@ -746,8 +723,8 @@ Tabs.Farm:Button({
         -- Notifikasi
         WindUI:Notify({
             Title = "Fishing Cancelled",
-            Content = "You can now restart Fishv2 Auto.",
-            Duration = 5,
+            Content = "You can now restart Fish Auto.",
+            Duration = 2,
         })
     end
 })
@@ -792,7 +769,6 @@ Tabs.Farm:Toggle({
         end
     end
 })
-
 
 -- Variabel global
 local savedCFrame = nil
@@ -2247,7 +2223,7 @@ Tabs.Server:Toggle({
                 ["embeds"] = {{
                     ["author"] = {["name"] = "Fishing System"},
                     ["title"] = "Webhook Aktif",
-                    ["description"] = "✅ Webhook berhasil diaktifkan dan siap mengirim data.",
+                    ["Desc"] = "✅ Webhook berhasil diaktifkan dan siap mengirim data.",
                     ["color"] = 5763719,
                     ["timestamp"] = DateTime.now():ToIsoDate()
                 }}
@@ -2523,7 +2499,7 @@ local function makePayload(username, userId, reportText)
         embeds = {
             {
                 title = "New Bug Report",
-                description = reportText,
+                Desc = reportText,
                 fields = {
                     { name = "Player", value = username or "Unknown", inline = true },
                     { name = "UserId", value = tostring(userId or "Unknown"), inline = true },
