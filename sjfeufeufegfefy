@@ -685,7 +685,7 @@ local AutoFishState = {
 }
 
 -- default click speed
-local ClickSpeed = 0.0001
+local ClickSpeed = 0.1
 
 -- klik cepat minigame
 local function performClick()
