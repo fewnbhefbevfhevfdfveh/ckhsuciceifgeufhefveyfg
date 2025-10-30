@@ -265,7 +265,7 @@ local playerDisplayName = player.DisplayName
 
 -- Buat Window
 local Window = WindUI:CreateWindow({
-    Title = "Nexa | Dev",
+    Title = "Nexa | Premium",
     Icon = "rbxassetid://131269662643486", -- lucide icon
     Author = "Fish IT! Script | @ Han",
     Folder = "Hanzo",
