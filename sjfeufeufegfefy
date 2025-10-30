@@ -265,7 +265,7 @@ local playerDisplayName = player.DisplayName
 
 -- Buat Window
 local Window = WindUI:CreateWindow({
-    Title = "Nexa | Premium",
+    Title = "Nexa | Dev",
     Icon = "rbxassetid://131269662643486", -- lucide icon
     Author = "Fish IT! Script | @ Han",
     Folder = "Hanzo",
@@ -314,7 +314,7 @@ Window:EditOpenButton({
 
 local Tabs = {
     Home = Window:Tab({ Title = "Home", Icon = "house"  }),
-    Active = Window:Tab({ Title = "Active", Icon = "info"  }),
+    Active = Window:Tab({ Title = "Info", Icon = "info"  }),
     Farm = Window:Tab({ Title = "Farm", Icon = "fish"  }),
     Event = Window:Tab({ Title = "Event", Icon = "calendar"  }),
     Auto = Window:Tab({ Title = "Automaticaly", Icon = "repeat-2"  }),
@@ -1906,14 +1906,16 @@ Tabs.Player:Button({
     end
 })
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
 Tabs.Player:Toggle({
-    Title = "Disabled Username & Level",
+    Title = "Hide Username & Level",
     Icon = "user",
     Type = "Checkbox",
     Value = false,
     Callback = function(state)
-        local charactersFolder = workspace:WaitForChild("Characters")
-        local savedTexts = {} -- tabel untuk menyimpan teks asli setiap karakter
+        local savedTexts = {}
 
         local function setLabelText(character, text)
             local hrp = character:FindFirstChild("HumanoidRootPart")
@@ -1925,9 +1927,8 @@ Tabs.Player:Toggle({
                 and hrp.Overhead.LevelContainer:FindFirstChild("Label")
 
             if levelLabel and levelLabel:IsA("TextLabel") then
-                if not savedTexts[character] then savedTexts[character] = {} end
-                if not savedTexts[character].LevelLabel then
-                    savedTexts[character].LevelLabel = levelLabel.Text
+                if not savedTexts.LevelLabel then
+                    savedTexts.LevelLabel = levelLabel.Text
                 end
                 levelLabel.Text = text
             end
@@ -1938,50 +1939,47 @@ Tabs.Player:Toggle({
                 and hrp.Overhead.Content:FindFirstChild("Header")
 
             if headerLabel and headerLabel:IsA("TextLabel") then
-                if not savedTexts[character] then savedTexts[character] = {} end
-                if not savedTexts[character].HeaderLabel then
-                    savedTexts[character].HeaderLabel = headerLabel.Text
+                if not savedTexts.HeaderLabel then
+                    savedTexts.HeaderLabel = headerLabel.Text
                 end
                 headerLabel.Text = text
             end
         end
 
         if state then
-            -- toggle aktif: ubah semua teks jadi NexaHub
-            for _, character in pairs(charactersFolder:GetChildren()) do
-                setLabelText(character, "NexaHub")
+            -- Jika toggle aktif: ubah jadi NexaHub
+            if LocalPlayer.Character then
+                setLabelText(LocalPlayer.Character, "NexaHub")
             end
 
-            charactersFolder.ChildAdded:Connect(function(character)
+            -- Kalau respawn, ubah lagi
+            LocalPlayer.CharacterAdded:Connect(function(char)
                 task.wait(1)
-                setLabelText(character, "NexaHub")
+                setLabelText(char, "NexaHub")
             end)
         else
-            -- toggle mati: kembalikan ke teks asli
-            for character, texts in pairs(savedTexts) do
-                if texts.LevelLabel then
-                    local levelLabel = character:FindFirstChild("HumanoidRootPart")
-                        and character.HumanoidRootPart:FindFirstChild("Overhead")
-                        and character.HumanoidRootPart.Overhead:FindFirstChild("LevelContainer")
-                        and character.HumanoidRootPart.Overhead.LevelContainer:FindFirstChild("Label")
-                    if levelLabel and levelLabel:IsA("TextLabel") then
-                        levelLabel.Text = texts.LevelLabel
-                    end
-                end
+            -- Jika toggle mati: kembalikan ke teks semula
+            if LocalPlayer.Character then
+                local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local overhead = hrp:FindFirstChild("Overhead")
+                    if overhead then
+                        local levelLabel = overhead:FindFirstChild("LevelContainer") and overhead.LevelContainer:FindFirstChild("Label")
+                        local headerLabel = overhead:FindFirstChild("Content") and overhead.Content:FindFirstChild("Header")
 
-                if texts.HeaderLabel then
-                    local headerLabel = character:FindFirstChild("HumanoidRootPart")
-                        and character.HumanoidRootPart:FindFirstChild("Overhead")
-                        and character.HumanoidRootPart.Overhead:FindFirstChild("Content")
-                        and character.HumanoidRootPart.Overhead.Content:FindFirstChild("Header")
-                    if headerLabel and headerLabel:IsA("TextLabel") then
-                        headerLabel.Text = texts.HeaderLabel
+                        if levelLabel and savedTexts.LevelLabel then
+                            levelLabel.Text = savedTexts.LevelLabel
+                        end
+                        if headerLabel and savedTexts.HeaderLabel then
+                            headerLabel.Text = savedTexts.HeaderLabel
+                        end
                     end
                 end
             end
         end
     end
 })
+
 
 Tabs.Player:Button({
     Title = "Reduce Lag", -- Nama tombol
@@ -2156,20 +2154,12 @@ local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local Notification = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Small Notification")
 
--- Universal request (bypass HttpService block)
 local Request = (syn and syn.request) or (http_request) or (fluxus and fluxus.request) or (krnl and request)
 
--- Variabel untuk simpan Webhook URL
 local WebhookURL = ""
 local WebhookActive = false
-
--- Variabel filter tier dari dropdown
 local SelectedTiers = {}
 
--- Link Discord
-local DiscordLink = "discord.gg/ECxQFc97F5"
-
--- Mapping Tier → Nama Rarity
 local TierMap = {
     [1] = "Common",
     [2] = "Uncommon",
@@ -2180,7 +2170,6 @@ local TierMap = {
     [7] = "SECRET"
 }
 
--- Counter berapa kali dapat ikan tiap Tier
 local FishCounter = {
     Common = 0,
     Uncommon = 0,
@@ -2191,7 +2180,6 @@ local FishCounter = {
     SECRET = 0
 }
 
--- Fungsi format angka k/m/b
 local function FormatNumber(num)
     num = tonumber(num) or 0
     if num >= 1e9 then
@@ -2205,17 +2193,27 @@ local function FormatNumber(num)
     end
 end
 
--- Fungsi format chance ke persen
 local function FormatChance(chance)
     chance = tonumber(chance) or 0
     return string.format("%.2f%%", chance * 100)
 end
 
--- Fungsi kirim webhook embed + plain message
-local function SendEmbed(data, plainMessage)
+local function GetRobloxImage(assetId)
+    if not assetId then return nil end
+    local url = "https://thumbnails.roblox.com/v1/assets?assetIds=" .. assetId .. "&size=420x420&format=Png&isCircular=false"
+    local success, response = pcall(game.HttpGet, game, url)
+    if success then
+        local data = HttpService:JSONDecode(response)
+        if data and data.data and data.data[1] and data.data[1].imageUrl then
+            return data.data[1].imageUrl
+        end
+    end
+    return nil
+end
+
+local function SendEmbed(data)
     if WebhookURL ~= "" and Request then
         local payload = {
-            ["content"] = plainMessage or "Join Discord Nexa Hub discord.gg/ECxQFc97F5",
             ["embeds"] = data.embeds
         }
 
@@ -2228,7 +2226,6 @@ local function SendEmbed(data, plainMessage)
     end
 end
 
--- Input Webhook URL
 Tabs.Server:Input({
     Title = "Webhook URL",
     Value = "",
@@ -2239,7 +2236,6 @@ Tabs.Server:Input({
     end
 })
 
--- Toggle kirim pesan
 Tabs.Server:Toggle({
     Title = "Enable Webhook",
     Value = false,
@@ -2251,31 +2247,29 @@ Tabs.Server:Toggle({
                 ["embeds"] = {{
                     ["author"] = {["name"] = "Fishing System"},
                     ["title"] = "Webhook Aktif",
-                    ["Desc"] = "✅ Webhook berhasil diaktifkan dan siap mengirim data.",
+                    ["description"] = "✅ Webhook berhasil diaktifkan dan siap mengirim data.",
                     ["color"] = 5763719,
                     ["timestamp"] = DateTime.now():ToIsoDate()
                 }}
-            }, "Join our Discord: " .. DiscordLink)
+            })
         else
             print("Webhook deactivated ❌")
         end
     end
 })
 
--- Dropdown filter tier
 Tabs.Server:Dropdown({
     Title = "Select Tier to Send",
     Values = {"All", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET"},
     Value = {},
     Multi = true,
     AllowNone = true,
-    Callback = function(option) 
+    Callback = function(option)
         SelectedTiers = option
         print("Tier filter selected: " .. HttpService:JSONEncode(option))
     end
 })
 
--- Fungsi cari module ikan (fuzzy match)
 local function FindFishModule(fishName)
     local Items = ReplicatedStorage:WaitForChild("Items")
     for _, moduleScript in ipairs(Items:GetChildren()) do
@@ -2292,51 +2286,68 @@ local function FindFishModule(fishName)
     return nil
 end
 
--- Detect ikan dari GUI
+-- Data terakhir (untuk hindari duplikat persis)
+local LastFishData = nil
+
 local Container = Notification.Display.Container
 local ItemName = Container:WaitForChild("ItemName")
 local NewLabel = Notification.Display.NewFrame.Frame:WaitForChild("NewLabel")
+local VectorFrame = Notification.Display.VectorFrame.Vector
 
 ItemName:GetPropertyChangedSignal("Text"):Connect(function()
     if WebhookActive and WebhookURL ~= "" and Request then
         local rawText = ItemName.Text
         if rawText ~= "" then
-            -- Pisahkan nama ikan & berat
             local fishName, fishWeight = rawText:match("^(.-)%s*%((.-)%)$")
             fishName = (fishName and fishName:gsub("^%s+", ""):gsub("%s+$", "")) or rawText
             fishWeight = fishWeight or "Unknown"
 
-            -- Cari data ikan
             local fishData = FindFishModule(fishName)
-
             local tierNum = fishData and fishData.Data.Tier or 0
             local tierName = TierMap[tierNum] or "Unknown"
             local sellPrice = fishData and fishData.SellPrice or "Unknown"
             local chance = fishData and fishData.Probability and fishData.Probability.Chance or 0
 
             local newLabelText = NewLabel.Text or ""
-
-            -- Ambil Rarity GUI
             local RarityLabel = Container:WaitForChild("Rarity")
             local rarityText = RarityLabel.Text or "Unknown"
 
-            -- Ambil BagSize dari Inventory
             local BagSizeLabel = Players.LocalPlayer.PlayerGui.Inventory.Main.Top.Options.Fish.Label:WaitForChild("BagSize")
             local bagSizeText = BagSizeLabel.Text or "Unknown"
 
-            -- Cek filter tier
+            local assetId = string.match(VectorFrame.Image, "%d+")
+            local imageUrl = GetRobloxImage(assetId)
+
+            -- Data sekarang untuk banding
+            local currentData = {
+                Fish = fishName,
+                Weight = fishWeight,
+                Bag = bagSizeText,
+                Rarity = rarityText
+            }
+
+            -- Cek apakah sama persis dengan ikan terakhir
+            if LastFishData
+                and LastFishData.Fish == currentData.Fish
+                and LastFishData.Weight == currentData.Weight
+                and LastFishData.Bag == currentData.Bag
+                and LastFishData.Rarity == currentData.Rarity then
+                return -- Sama persis → tidak kirim lagi
+            end
+
+            -- Simpan data terakhir
+            LastFishData = currentData
+
             if #SelectedTiers > 0 then
                 if not table.find(SelectedTiers, "All") and not table.find(SelectedTiers, tierName) then
-                    return -- skip kirim kalau tier tidak sesuai filter
+                    return
                 end
             end
 
-            -- Update counter Tier
             if FishCounter[tierName] ~= nil then
                 FishCounter[tierName] = FishCounter[tierName] + 1
             end
 
-            -- Buat field counter semua tier
             local counterFields = {}
             for _, name in ipairs({"Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET"}) do
                 table.insert(counterFields, {
@@ -2346,7 +2357,6 @@ ItemName:GetPropertyChangedSignal("Text"):Connect(function()
                 })
             end
 
-            -- Buat embed
             local Data = {
                 ["embeds"] = {{
                     ["author"] = {["name"] = "Nexa Fishing Info"},
@@ -2362,11 +2372,11 @@ ItemName:GetPropertyChangedSignal("Text"):Connect(function()
                         {["name"] = "Chance 📈", ["value"] = "```" .. FormatChance(chance) .. "```", ["inline"] = true},
                     },
                     ["footer"] = {["text"] = "Nexa | Fishing Logger • Fish It! 🐟"},
-                    ["timestamp"] = DateTime.now():ToIsoDate()
+                    ["timestamp"] = DateTime.now():ToIsoDate(),
+                    ["image"] = {["url"] = imageUrl or "https://i.imgur.com/zwCkN8P.png"}
                 }}
             }
 
-            -- Tambahin semua counter ke fields
             for _, f in ipairs(counterFields) do
                 table.insert(Data.embeds[1].fields, f)
             end
@@ -2375,11 +2385,11 @@ ItemName:GetPropertyChangedSignal("Text"):Connect(function()
                 table.insert(Data.embeds[1].fields, {["name"] = "Info", ["value"] = "```" .. newLabelText .. "```", ["inline"] = false})
             end
 
-            -- Kirim webhook + link Discord plain message
-            SendEmbed(Data, "Join our Discord: " .. DiscordLink)
+            SendEmbed(Data)
         end
     end
 end)
+
 
 Tabs.Server:Section({ Title = "Staff" })
 
