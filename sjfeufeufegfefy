@@ -253,7 +253,7 @@ end
 
 --========================================[ Auto Fish Script V2 ]======================================
 
-
+loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
 
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
@@ -312,7 +312,7 @@ Window:EditOpenButton({
     Enabled = false
 })
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
+
 
 local Tabs = {
     Home = Window:Tab({ Title = "Home", Icon = "house"  }),
@@ -383,8 +383,6 @@ Tabs.Home:Paragraph({
         }
     }
 })
-
-Tabs.Active:Section({ Title = "Info Event" })
 
 -- === HUNT STATUS SECTION ===
 
