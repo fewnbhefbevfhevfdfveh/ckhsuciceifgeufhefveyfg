@@ -2498,3 +2498,142 @@ ItemName:GetPropertyChangedSignal("Text"):Connect(function()
         end
     end
 end)
+
+-- Services
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+-- ScreenGui untuk ImageButton
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.CoreGui
+ScreenGui.Name = "WindUIButton"
+
+-- ImageButton utama
+local ImgBtn = Instance.new("ImageButton")
+ImgBtn.Parent = ScreenGui
+ImgBtn.Size = UDim2.new(0, 60, 0, 60)
+ImgBtn.Position = UDim2.new(0, 100, 1, -300)
+ImgBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ImgBtn.BackgroundTransparency = 0.3
+ImgBtn.Image = "rbxassetid://131269662643486"
+ImgBtn.ImageTransparency = 0.15
+ImgBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
+ImgBtn.AutoButtonColor = false
+ImgBtn.Visible = false
+
+-- Sudut bulat
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(1, 0)
+UICorner.Parent = ImgBtn
+
+-- Garis pinggir halus
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(200, 200, 200)
+UIStroke.Thickness = 2
+UIStroke.Transparency = 0.4
+UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+UIStroke.Parent = ImgBtn
+
+-- Toggle Window
+local isOpen = false
+
+-- Fungsi animasi klik
+local function playClickAnim()
+	local shrink = TweenService:Create(ImgBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = UDim2.new(0, 50, 0, 50),
+		BackgroundTransparency = 0.45
+	})
+	local grow = TweenService:Create(ImgBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = UDim2.new(0, 60, 0, 60),
+		BackgroundTransparency = 0.3
+	})
+	shrink:Play()
+	shrink.Completed:Wait()
+	grow:Play()
+end
+
+-- Fungsi fade ImageButton
+local function fadeImageButton(show)
+	if show then
+		ImgBtn.Visible = true
+		local tween = TweenService:Create(ImgBtn, TweenInfo.new(0.3), {
+			ImageTransparency = 0.15,
+			BackgroundTransparency = 0.3
+		})
+		tween:Play()
+	else
+		local tween = TweenService:Create(ImgBtn, TweenInfo.new(0.3), {
+			ImageTransparency = 1,
+			BackgroundTransparency = 1
+		})
+		tween:Play()
+		tween.Completed:Wait()
+		ImgBtn.Visible = false
+	end
+end
+
+-- Buka/tutup GUI
+ImgBtn.MouseButton1Click:Connect(function()
+	playClickAnim()
+	isOpen = not isOpen
+	if isOpen then
+		Window:Open()
+		fadeImageButton(false) -- fade out saat Window terbuka
+	else
+		Window:Close()
+		-- fade akan ditangani oleh OnClose
+	end
+end)
+
+-- Force ImageButton muncul saat Window ditutup
+Window:OnClose(function()
+	isOpen = false
+	fadeImageButton(true) -- fade in saat Window ditutup
+end)
+
+-- Hapus ImageButton saat Window di-destroy
+Window:OnDestroy(function()
+	if ImgBtn then
+		ImgBtn:Destroy()
+	end
+	if ScreenGui then
+		ScreenGui:Destroy()
+	end
+	print("Window destroyed (unloaded)")
+end)
+
+-- Drag ImageButton
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+	local delta = input.Position - dragStart
+	ImgBtn.Position = UDim2.new(
+		startPos.X.Scale, startPos.X.Offset + delta.X,
+		startPos.Y.Scale, startPos.Y.Offset + delta.Y
+	)
+end
+
+ImgBtn.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = ImgBtn.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then dragging = false end
+		end)
+	end
+end)
+
+ImgBtn.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
+end)
+
+
