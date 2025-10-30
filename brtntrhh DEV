@@ -337,7 +337,12 @@ Tabs.Home:Section({
 
 Tabs.Home:Section({
         Title = [[
-[+] Added TempleLever Quest
+[+] Tab Automaticaly:
+ - Added TempleLever Quest
+[+] Tab Farm
+ - Added Auto Fish Legit
+[+] Tab Player
+ - Added Disabled Username & Level
 		]],
         TextSize = 18,
         TextTransparency = .35,
@@ -521,155 +526,116 @@ Tabs.Active:Toggle({
 
 Tabs.Farm:Section({ Title = "Fishing" })
 
---// Services
-local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Workspace = game:GetService("Workspace")
-local player = Players.LocalPlayer
+local FishingController = require(ReplicatedStorage.Controllers.FishingController)
+local AutoFishingController = require(ReplicatedStorage.Controllers.AutoFishingController)
+local Replion = require(ReplicatedStorage.Packages.Replion)
 
---// Auto Fish Configuration
-local FuncAutoFish = {
-    autofish = false,
-    preRecastDelay = 0.6,
-    biteDelay = 1.5 -- Fishing Delay manual, tidak lagi lewat input
+local AutoFishState = {
+    IsActive = false,
+    MinigameActive = false
 }
 
-local autoFishLoop
+-- default click speed
+local ClickSpeed = 0.01
 
---// Get Net Folder
-local function getNetFolder()
-    local packages = ReplicatedStorage:FindFirstChild("Packages")
-    if packages and packages:FindFirstChild("_Index") then
-        for _, child in ipairs(packages._Index:GetChildren()) do
-            if child.Name:find("^sleitnick_net@") then
-                return child:FindFirstChild("net")
-            end
-        end
-    end
-    return ReplicatedStorage:FindFirstChild("net") or ReplicatedStorage:FindFirstChild("Net")
+-- klik cepat minigame
+local function performClick()
+    FishingController:RequestFishingMinigameClick()
+    task.wait(ClickSpeed + math.random() * ClickSpeed)
 end
 
---// Get Fishing Remotes (tanpa equip)
-local function getFishingRemotes()
-    local net = getNetFolder()
-    if not net then return nil end
-    local charge = net:FindFirstChild("RF/ChargeFishingRod")
-    local mini = net:FindFirstChild("RF/RequestFishingMinigameStarted")
-    local cancelIn = net:FindFirstChild("RF/CancelFishingInputs")
-    local complete = net:FindFirstChild("RE/FishingCompleted")
-    if not (charge and mini and cancelIn and complete) then return nil end
-    return {charge = charge, mini = mini, cancelIn = cancelIn, complete = complete}
+-- hook visual
+local originalAutoFishingStateChanged = AutoFishingController.AutoFishingStateChanged
+AutoFishingController.AutoFishingStateChanged = function(...)
+    return originalAutoFishingStateChanged(true)
 end
 
---// Single Cast
-local function castOnce()
-    local r = getFishingRemotes()
-    if not r then return end
-    task.spawn(function()
-        r.charge:InvokeServer(Workspace:GetServerTimeNow() - 1)
-        r.mini:InvokeServer(-2, 1)
-    end)
-end
-
---// Recast Before Bite
-local function recastBeforeBite()
-    local r = getFishingRemotes()
-    if not r then return end
-    task.spawn(function()
-        r.cancelIn:InvokeServer()
-        task.wait(0.05)
-        r.charge:InvokeServer(Workspace:GetServerTimeNow())
-        r.mini:InvokeServer(-2, 1)
-    end)
-end
-
---// Reel Now
-local function reelNow()
-    local r = getFishingRemotes()
-    if not r then return end
-    task.spawn(function()
-        local batch = 5
-        local repeats = 8
-        local microDelay = 0.0001
-        for _ = 1, repeats do
-            for i = 1, batch do
-                r.complete:FireServer()
-            end
-            task.wait(microDelay)
-        end
-    end)
-end
-
---// Auto Fish Start
-local function startAutoFish()
-    if autoFishLoop then task.cancel(autoFishLoop) end
-    FuncAutoFish.autofish = true
-    autoFishLoop = task.spawn(function()
-        while FuncAutoFish.autofish do
-            castOnce()
-            task.wait(FuncAutoFish.preRecastDelay)
-            recastBeforeBite()
-            reelNow()
-            task.wait(FuncAutoFish.biteDelay)
-            reelNow()
-        end
-    end)
-end
-
---// Auto Fish Stop
-local function stopAutoFish()
-    FuncAutoFish.autofish = false
-    if autoFishLoop then
-        task.cancel(autoFishLoop)
-        autoFishLoop = nil
+-- aktifkan auto-fishing di server
+local function ensureServerAutoFishingOn()
+    local replionData = Replion.Client:WaitReplion("Data")
+    local currentAutoFishingState = replionData:GetExpect("AutoFishing")
+    
+    if not currentAutoFishingState then
+        local Net = require(ReplicatedStorage.Packages.Net)
+        local UpdateAutoFishingRemote = Net:RemoteFunction("UpdateAutoFishingState")
+        
+        pcall(function()
+            UpdateAutoFishingRemote:InvokeServer(true)
+        end)
     end
 end
 
---// WindUI Integration (Tab: Farm)
+-- Hook minigame
+local originalRodStarted = FishingController.FishingRodStarted
+local originalFishingStopped = FishingController.FishingStopped
+local clickThread = nil
+
+FishingController.FishingRodStarted = function(self, ...)
+    originalRodStarted(self, ...)
+    
+    if AutoFishState.IsActive and not AutoFishState.MinigameActive then
+        AutoFishState.MinigameActive = true
+        
+        if clickThread then
+            task.cancel(clickThread)
+        end
+        
+        clickThread = task.spawn(function()
+            while AutoFishState.IsActive and AutoFishState.MinigameActive do
+                performClick()
+            end
+        end)
+    end
+end
+
+FishingController.FishingStopped = function(self, ...)
+    originalFishingStopped(self, ...)
+    
+    if AutoFishState.MinigameActive then
+        AutoFishState.MinigameActive = false
+        task.wait(1)
+        ensureServerAutoFishingOn()
+    end
+end
+
+-- fungsi toggle utama
+local function ToggleAutoClick(shouldActivate)
+    AutoFishState.IsActive = shouldActivate
+    
+    if shouldActivate then
+        ensureServerAutoFishingOn()
+    else
+        if clickThread then
+            task.cancel(clickThread)
+            clickThread = nil
+        end
+        AutoFishState.MinigameActive = false
+    end
+end
+
+-- UI Toggle WindUI
 Tabs.Farm:Toggle({
-    Title = "Auto Fishing", 
-    Callback = function(value)
-        if value then
-            startAutoFish()
-        else
-            stopAutoFish()
-        end
+    Title = "Auto Fish Legit",
+    Value = false,
+    Callback = function(state)
+        ToggleAutoClick(state)
     end
 })
 
---// Cast Delay Input
+-- Input untuk kecepatan klik
 Tabs.Farm:Input({
-    Title = "Cast Delay",
-    Desc = "Delay before recasting the fishing rod.",
-    Value = tostring(FuncAutoFish.preRecastDelay),
-    Placeholder = "Enter cast delay (e.g. 0.6)",
+    Title = "Click Speed",
+    Value = tostring(ClickSpeed),
+    Placeholder = "Example: 0.0005",
     Callback = function(input)
-        local v = tonumber(input)
-        if v then
-            FuncAutoFish.preRecastDelay = v
-        else
-            warn("Invalid Cast Delay input. Please enter a number.")
+        local num = tonumber(input)
+        if num and num > 0 then
+            ClickSpeed = num
         end
     end
 })
-
---// Reel Delay Input
-Tabs.Farm:Input({
-    Title = "Reel Delay",
-    Desc = "Delay after recasting before reeling in.",
-    Value = tostring(FuncAutoFish.biteDelay),
-    Placeholder = "Enter reel delay (e.g. 1.5)",
-    Callback = function(input)
-        local v = tonumber(input)
-        if v then
-            FuncAutoFish.biteDelay = v
-        else
-            warn("Invalid Reel Delay input. Please enter a number.")
-        end
-    end
-})
-
-
 
 Tabs.Farm:Space()
 
@@ -1937,6 +1903,83 @@ Tabs.Player:Button({
                 end
             end
         end)
+    end
+})
+
+Tabs.Player:Toggle({
+    Title = "Disabled Username & Level",
+    Icon = "user",
+    Type = "Checkbox",
+    Value = false,
+    Callback = function(state)
+        local charactersFolder = workspace:WaitForChild("Characters")
+        local savedTexts = {} -- tabel untuk menyimpan teks asli setiap karakter
+
+        local function setLabelText(character, text)
+            local hrp = character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+
+            -- LevelContainer.Label
+            local levelLabel = hrp:FindFirstChild("Overhead")
+                and hrp.Overhead:FindFirstChild("LevelContainer")
+                and hrp.Overhead.LevelContainer:FindFirstChild("Label")
+
+            if levelLabel and levelLabel:IsA("TextLabel") then
+                if not savedTexts[character] then savedTexts[character] = {} end
+                if not savedTexts[character].LevelLabel then
+                    savedTexts[character].LevelLabel = levelLabel.Text
+                end
+                levelLabel.Text = text
+            end
+
+            -- Content.Header
+            local headerLabel = hrp:FindFirstChild("Overhead")
+                and hrp.Overhead:FindFirstChild("Content")
+                and hrp.Overhead.Content:FindFirstChild("Header")
+
+            if headerLabel and headerLabel:IsA("TextLabel") then
+                if not savedTexts[character] then savedTexts[character] = {} end
+                if not savedTexts[character].HeaderLabel then
+                    savedTexts[character].HeaderLabel = headerLabel.Text
+                end
+                headerLabel.Text = text
+            end
+        end
+
+        if state then
+            -- toggle aktif: ubah semua teks jadi NexaHub
+            for _, character in pairs(charactersFolder:GetChildren()) do
+                setLabelText(character, "NexaHub")
+            end
+
+            charactersFolder.ChildAdded:Connect(function(character)
+                task.wait(1)
+                setLabelText(character, "NexaHub")
+            end)
+        else
+            -- toggle mati: kembalikan ke teks asli
+            for character, texts in pairs(savedTexts) do
+                if texts.LevelLabel then
+                    local levelLabel = character:FindFirstChild("HumanoidRootPart")
+                        and character.HumanoidRootPart:FindFirstChild("Overhead")
+                        and character.HumanoidRootPart.Overhead:FindFirstChild("LevelContainer")
+                        and character.HumanoidRootPart.Overhead.LevelContainer:FindFirstChild("Label")
+                    if levelLabel and levelLabel:IsA("TextLabel") then
+                        levelLabel.Text = texts.LevelLabel
+                    end
+                end
+
+                if texts.HeaderLabel then
+                    local headerLabel = character:FindFirstChild("HumanoidRootPart")
+                        and character.HumanoidRootPart:FindFirstChild("Overhead")
+                        and character.HumanoidRootPart.Overhead:FindFirstChild("Content")
+                        and character.HumanoidRootPart.Overhead.Content:FindFirstChild("Header")
+                    if headerLabel and headerLabel:IsA("TextLabel") then
+                        headerLabel.Text = texts.HeaderLabel
+                    end
+                end
+            end
+        end
     end
 })
 
