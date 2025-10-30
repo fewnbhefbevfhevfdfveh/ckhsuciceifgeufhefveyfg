@@ -1,5 +1,4 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/vgegrege%20TempleLever"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/fgrrrrhh5h5j%20000001%20Hunt"))()
+
 
 -- ======================================[ Hunt Teleport Script ]======================================
 
@@ -258,6 +257,7 @@ end
 
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
+
 -- Ambil nama player
 local player = game.Players.LocalPlayer
 local playerName = player.Name
@@ -303,8 +303,8 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v1.3.2",
-    Color = Color3.fromHex("#30ff6a")
+    Title = "v1.3.3",
+    Color = Color3.fromHex("#c61818ff")
 })
 
 
@@ -312,9 +312,11 @@ Window:EditOpenButton({
     Enabled = false
 })
 
+loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
+
 local Tabs = {
     Home = Window:Tab({ Title = "Home", Icon = "house"  }),
-    Active = Window:Tab({ Title = "Active", Icon = "info"  }),
+    Active = Window:Tab({ Title = "Info", Icon = "info"  }),
     Farm = Window:Tab({ Title = "Farm", Icon = "fish"  }),
     Event = Window:Tab({ Title = "Event", Icon = "calendar"  }),
     Auto = Window:Tab({ Title = "Automaticaly", Icon = "repeat-2"  }),
@@ -324,6 +326,7 @@ local Tabs = {
     Teleport = Window:Tab({ Title = "Teleport", Icon = "map-pin"  }),
     Server = Window:Tab({ Title = "Server", Icon = "server"  }),
 }
+
 
 Tabs.Home:Select() -- Select Tab
 
@@ -337,12 +340,11 @@ Tabs.Home:Section({
 
 Tabs.Home:Section({
         Title = [[
-[+] Tab Automaticaly:
- - Added TempleLever Quest
-[+] Tab Farm
- - Added Auto Fish Legit
-[+] Tab Player
- - Added Disabled Username & Level
+[-] Delete Anti Satf
+[-] Delete Traveling Method
+[/] Rename Active Tab to Info Tab
+[/] Move Position Save & Teleport to Teleport Tab
+
 		]],
         TextSize = 18,
         TextTransparency = .35,
@@ -721,82 +723,6 @@ Tabs.Farm:Toggle({
     end
 })
 
--- Variabel global
-local savedCFrame = nil
-local teleportEnabled = false
-
-    local HighlightButton
-    HighlightButton = Tabs.Farm:Button({
-    Title = "Save Position", 
-    Justify = "Center", -- align items in the center (Center or Between or Left or Right)
-    IconAlign = "Left", -- Left or Right of the text
-    Icon = "save", -- removing icon
-    Callback = function() 
-         HighlightButton:Highlight()
-        local player = game.Players.LocalPlayer
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            savedCFrame = hrp.CFrame -- simpan CFrame lengkap (posisi + arah)
-            WindUI:Notify({
-                Title = "Saved",
-                Content = "Posisi berhasil disimpan!",
-                Duration = 5,
-            })
-        else
-            WindUI:Notify({
-                Title = "Error",
-                Content = "Karakter belum siap!",
-                Duration = 5,
-            })
-        end
-    end
-})
-
--- Fungsi Freeze dan kembalikan ke posisi
-local function freezeCharacter()
-    local player = game.Players.LocalPlayer
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp or not savedCFrame then return end
-
-    -- BodyVelocity & BodyGyro
-    local bv = Instance.new("BodyVelocity")
-    bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-    bv.Velocity = Vector3.new(0,0,0)
-    bv.Parent = hrp
-
-    local bg = Instance.new("BodyGyro")
-    bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
-    bg.CFrame = savedCFrame
-    bg.Parent = hrp
-
-    -- Loop freeze & check distance
-    spawn(function()
-        while teleportEnabled and hrp and hrp.Parent do
-            local distance = (hrp.Position - savedCFrame.Position).Magnitude
-            if distance > 2 then
-                hrp.CFrame = savedCFrame
-            end
-            task.wait(0.1)
-        end
-        -- Hapus BV & BG saat toggle dimatikan
-        if bv then bv:Destroy() end
-        if bg then bg:Destroy() end
-    end)
-end
-
--- Toggle Teleport + Freeze
-Tabs.Farm:Toggle({ 
-    Title = "Teleport to Saved Position", 
-    Icon = "map-pin-check",
-    Type = "Checkbox",
-    Value = false,
-    Callback = function(state) 
-        teleportEnabled = state
-        if teleportEnabled then
-            freezeCharacter()
-        end
-    end
-})
 
 Tabs.Farm:Section({ Title = "Sell" })
 
@@ -1584,38 +1510,6 @@ Tabs.Shop:Dropdown({
     end
 })
 
-Tabs.Shop:Section({ Title = "Traveling Merchant" })
-
-Tabs.Shop:Toggle({
-    Title = "Auto Purchase All Merchant",
-    Value = false,
-    Callback = function(state)
-        getgenv().AutoClaimEvent = state
-
-        task.spawn(function()
-            while getgenv().AutoClaimEvent do
-                for i = 1, 7 do
-                    local args = {i}
-                    local success, err = pcall(function()
-                        game:GetService("ReplicatedStorage")
-                            :WaitForChild("Packages")
-                            :WaitForChild("_Index")
-                            :WaitForChild("sleitnick_net@0.2.0")
-                            :WaitForChild("net")
-                            :WaitForChild("RF/PurchaseMarketItem")
-                            :InvokeServer(unpack(args))
-                    end)
-                    if not success then
-                        warn("Auto Claim Error (ID " .. i .. "): " .. tostring(err))
-                    end
-                    task.wait(0.5)
-                end
-                task.wait(5)
-            end
-        end)
-    end
-})
-
 Tabs.Boat:Section({ Title = "Boat" })
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -2147,6 +2041,85 @@ HighlightButton = Tabs.Teleport:Button({
     end
 })
 
+Tabs.Teleport:Section({ Title = "Position" })
+
+-- Variabel global
+local savedCFrame = nil
+local teleportEnabled = false
+
+    local HighlightButton
+    HighlightButton = Tabs.Teleport:Button({
+    Title = "Save Position", 
+    Justify = "Center", -- align items in the center (Center or Between or Left or Right)
+    IconAlign = "Left", -- Left or Right of the text
+    Icon = "save", -- removing icon
+    Callback = function() 
+         HighlightButton:Highlight()
+        local player = game.Players.LocalPlayer
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            savedCFrame = hrp.CFrame -- simpan CFrame lengkap (posisi + arah)
+            WindUI:Notify({
+                Title = "Saved",
+                Content = "Posisi berhasil disimpan!",
+                Duration = 5,
+            })
+        else
+            WindUI:Notify({
+                Title = "Error",
+                Content = "Karakter belum siap!",
+                Duration = 5,
+            })
+        end
+    end
+})
+
+-- Fungsi Freeze dan kembalikan ke posisi
+local function freezeCharacter()
+    local player = game.Players.LocalPlayer
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp or not savedCFrame then return end
+
+    -- BodyVelocity & BodyGyro
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+    bv.Velocity = Vector3.new(0,0,0)
+    bv.Parent = hrp
+
+    local bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
+    bg.CFrame = savedCFrame
+    bg.Parent = hrp
+
+    -- Loop freeze & check distance
+    spawn(function()
+        while teleportEnabled and hrp and hrp.Parent do
+            local distance = (hrp.Position - savedCFrame.Position).Magnitude
+            if distance > 2 then
+                hrp.CFrame = savedCFrame
+            end
+            task.wait(0.1)
+        end
+        -- Hapus BV & BG saat toggle dimatikan
+        if bv then bv:Destroy() end
+        if bg then bg:Destroy() end
+    end)
+end
+
+-- Toggle Teleport + Freeze
+Tabs.Teleport:Toggle({ 
+    Title = "Teleport to Saved Position", 
+    Icon = "map-pin-check",
+    Type = "Checkbox",
+    Value = false,
+    Callback = function(state) 
+        teleportEnabled = state
+        if teleportEnabled then
+            freezeCharacter()
+        end
+    end
+})
+
 Tabs.Server:Section({ Title = "Fish" })
 
 local Players = game:GetService("Players")
@@ -2380,86 +2353,6 @@ ItemName:GetPropertyChangedSignal("Text"):Connect(function()
         end
     end
 end)
-
-Tabs.Server:Section({ Title = "Staff" })
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
--- 🔒 List of Staff UserIds
-local staffIds = {
-    75974130,
-    33372493,
-    30944240,
-}
-
--- 🌐 Global Flags
-getgenv().StaffDetectionEnabled = false
-getgenv().StaffActions = { "Notify" } -- default: Notify
-
--- ✅ Check if player is staff
-local function isStaff(player)
-    for _, id in ipairs(staffIds) do
-        if player.UserId == id then
-            return true
-        end
-    end
-    return false
-end
-
--- ⚠️ Handle detected staff
-local function handleStaff(player)
-    if not getgenv().StaffDetectionEnabled then return end
-    if not isStaff(player) then return end
-
-    for _, action in ipairs(getgenv().StaffActions) do
-        if action == "Kick" then
-            LocalPlayer:Kick("Staff detected: " .. player.Name)
-        elseif action == "Notify" then
-            UI:Notify({
-                Title = "⚠️ Staff Detected",
-                Content = player.Name .. " (UserId: " .. player.UserId .. ") joined!",
-                Duration = 6.5
-            })
-        end
-    end
-end
-
--- 🔁 Detect staff on join
-Players.PlayerAdded:Connect(function(player)
-    handleStaff(player)
-end)
-
--- 🔘 Main Toggle
-Tabs.Server:Toggle({
-    Title = "Anti Staff",
-    Value = true,
-    Callback = function(state)
-        getgenv().StaffDetectionEnabled = state
-        print("Anti Staff Enabled: " .. tostring(state))
-
-        -- Scan current players if enabled
-        if state then
-            for _, player in ipairs(Players:GetPlayers()) do
-                handleStaff(player)
-            end
-        end
-    end
-})
-
--- 🔽 Multi-Select Dropdown for Actions
-Tabs.Server:Dropdown({
-    Title = "Staff Actions",
-    Desc = "Choose actions to execute when staff is detected",
-    Values = { "Kick", "Notify" },
-    Value = { "Notify" },
-    Multi = true,
-    AllowNone = false,
-    Callback = function(option)
-        getgenv().StaffActions = option
-        print("Selected staff actions: " .. game:GetService("HttpService"):JSONEncode(option))
-    end
-})
 
 Tabs.Server:Section({ Title = "Server" })
 
