@@ -339,6 +339,7 @@ Tabs.Home:Section({
         Title = [[
 [-] Delete Report Bug, Job Id, Rejoin, Server Hop
 [/] Rename Server Tab to Webhook Tab
+[+] Added Auto Fishing, Reel Delay, Cast Delay
 
 		]],
         TextSize = 18,
@@ -640,7 +641,7 @@ Tabs.Farm:Toggle({
 
 --// Spam Delay Input (default mengikuti nilai sekarang)
 Tabs.Farm:Input({
-    Title = "Spam Delay",
+    Title = "Cast Delay",
     Desc = "Delay before recasting the fishing rod.",
     Value = tostring(FuncAutoFish.preRecastDelay),
     Placeholder = "Enter spam delay (e.g. 0.6)",
@@ -654,9 +655,9 @@ Tabs.Farm:Input({
     end
 })
 
---// Fishing Delay Input (default mengikuti nilai sekarang)
+--// Reel Delay Input (default mengikuti nilai sekarang)
 Tabs.Farm:Input({
-    Title = "Fishing Delay",
+    Title = "Reel Delay",
     Desc = "Delay after recasting before reeling in.",
     Value = tostring(FuncAutoFish.biteDelay),
     Placeholder = "Enter fishing delay (e.g. 1.5)",
