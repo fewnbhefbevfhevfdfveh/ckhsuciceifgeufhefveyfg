@@ -1,5 +1,3 @@
-
-
 -- ======================================[ Hunt Teleport Script ]======================================
 
 local Players = game:GetService("Players")
@@ -252,7 +250,6 @@ local function createFishingGui()
 end
 
 --========================================[ Auto Fish Script V2 ]======================================
-
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
 
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
@@ -304,7 +301,7 @@ local Window = WindUI:CreateWindow({
 
 Window:Tag({
     Title = "v1.3.3",
-    Color = Color3.fromHex("#c61818ff")
+    Color = Color3.fromHex("#30ff6a")
 })
 
 
@@ -324,7 +321,7 @@ local Tabs = {
     Boat = Window:Tab({ Title = "Boat", Icon = "sailboat"  }),
     Player = Window:Tab({ Title = "Player", Icon = "user"  }),
     Teleport = Window:Tab({ Title = "Teleport", Icon = "map-pin"  }),
-    Server = Window:Tab({ Title = "Server", Icon = "server"  }),
+    Webhook = Window:Tab({ Title = "Webhook", Icon = "webhook"  }),
 }
 
 
@@ -526,6 +523,157 @@ Tabs.Active:Toggle({
 
 Tabs.Farm:Section({ Title = "Fishing" })
 
+--// Services
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local player = Players.LocalPlayer
+
+--// Auto Fish Configuration
+local FuncAutoFish = {
+    autofish = false,
+    preRecastDelay = 0.6,
+    biteDelay = 1.5
+}
+
+local autoFishLoop
+
+--// Get Net Folder
+local function getNetFolder()
+    local packages = ReplicatedStorage:FindFirstChild("Packages")
+    if packages and packages:FindFirstChild("_Index") then
+        for _, child in ipairs(packages._Index:GetChildren()) do
+            if child.Name:find("^sleitnick_net@") then
+                return child:FindFirstChild("net")
+            end
+        end
+    end
+    return ReplicatedStorage:FindFirstChild("net") or ReplicatedStorage:FindFirstChild("Net")
+end
+
+--// Get Fishing Remotes (tanpa equip)
+local function getFishingRemotes()
+    local net = getNetFolder()
+    if not net then return nil end
+    local charge = net:FindFirstChild("RF/ChargeFishingRod")
+    local mini = net:FindFirstChild("RF/RequestFishingMinigameStarted")
+    local cancelIn = net:FindFirstChild("RF/CancelFishingInputs")
+    local complete = net:FindFirstChild("RE/FishingCompleted")
+    if not (charge and mini and cancelIn and complete) then return nil end
+    return {charge = charge, mini = mini, cancelIn = cancelIn, complete = complete}
+end
+
+--// Single Cast
+local function castOnce()
+    local r = getFishingRemotes()
+    if not r then return end
+    task.spawn(function()
+        r.charge:InvokeServer(Workspace:GetServerTimeNow() - 1)
+        r.mini:InvokeServer(-2, 1)
+    end)
+end
+
+--// Recast Before Bite
+local function recastBeforeBite()
+    local r = getFishingRemotes()
+    if not r then return end
+    task.spawn(function()
+        r.cancelIn:InvokeServer()
+        task.wait(0.05)
+        r.charge:InvokeServer(Workspace:GetServerTimeNow())
+        r.mini:InvokeServer(-2, 1)
+    end)
+end
+
+--// Reel Now
+local function reelNow()
+    local r = getFishingRemotes()
+    if not r then return end
+    task.spawn(function()
+        local batch = 5
+        local repeats = 8
+        local microDelay = 0.0001
+        for _ = 1, repeats do
+            for i = 1, batch do
+                r.complete:FireServer()
+            end
+            task.wait(microDelay)
+        end
+    end)
+end
+
+--// Auto Fish Start
+local function startAutoFish()
+    if autoFishLoop then task.cancel(autoFishLoop) end
+    FuncAutoFish.autofish = true
+    autoFishLoop = task.spawn(function()
+        while FuncAutoFish.autofish do
+            castOnce()
+            task.wait(FuncAutoFish.preRecastDelay)
+            recastBeforeBite()
+            reelNow()
+            task.wait(FuncAutoFish.biteDelay)
+            reelNow()
+        end
+    end)
+end
+
+--// Auto Fish Stop
+local function stopAutoFish()
+    FuncAutoFish.autofish = false
+    if autoFishLoop then
+        task.cancel(autoFishLoop)
+        autoFishLoop = nil
+    end
+end
+
+--// WindUI Integration (Tab: Farm)
+Tabs.Farm:Toggle({
+    Title = "Auto Fishing", 
+    Desc = "Only Work Element Rod",
+    Callback = function(value)
+        if value then
+            startAutoFish()
+        else
+            stopAutoFish()
+        end
+    end
+})
+
+--// Spam Delay Input (default mengikuti nilai sekarang)
+Tabs.Farm:Input({
+    Title = "Spam Delay",
+    Desc = "Delay before recasting the fishing rod.",
+    Value = tostring(FuncAutoFish.preRecastDelay),
+    Placeholder = "Enter spam delay (e.g. 0.6)",
+    Callback = function(input)
+        local v = tonumber(input)
+        if v then
+            FuncAutoFish.preRecastDelay = v
+        else
+            warn("Invalid Spam Delay input. Please enter a number.")
+        end
+    end
+})
+
+--// Fishing Delay Input (default mengikuti nilai sekarang)
+Tabs.Farm:Input({
+    Title = "Fishing Delay",
+    Desc = "Delay after recasting before reeling in.",
+    Value = tostring(FuncAutoFish.biteDelay),
+    Placeholder = "Enter fishing delay (e.g. 1.5)",
+    Callback = function(input)
+        local v = tonumber(input)
+        if v then
+            FuncAutoFish.biteDelay = v
+        else
+            warn("Invalid Fishing Delay input. Please enter a number.")
+        end
+    end
+})
+
+Tabs.Farm:Space()
+
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local FishingController = require(ReplicatedStorage.Controllers.FishingController)
@@ -538,7 +686,7 @@ local AutoFishState = {
 }
 
 -- default click speed
-local ClickSpeed = 0.01
+local ClickSpeed = 0.0001
 
 -- klik cepat minigame
 local function performClick()
@@ -2118,7 +2266,7 @@ Tabs.Teleport:Toggle({
     end
 })
 
-Tabs.Server:Section({ Title = "Fish" })
+Tabs.Webhook:Section({ Title = "Fish" })
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -2200,7 +2348,7 @@ local function SendEmbed(data, plainMessage)
 end
 
 -- Input Webhook URL
-Tabs.Server:Input({
+Tabs.Webhook:Input({
     Title = "Webhook URL",
     Value = "",
     Placeholder = "Url",
@@ -2211,7 +2359,7 @@ Tabs.Server:Input({
 })
 
 -- Toggle kirim pesan
-Tabs.Server:Toggle({
+Tabs.Webhook:Toggle({
     Title = "Enable Webhook",
     Value = false,
     Callback = function(state)
@@ -2234,7 +2382,7 @@ Tabs.Server:Toggle({
 })
 
 -- Dropdown filter tier
-Tabs.Server:Dropdown({
+Tabs.Webhook:Dropdown({
     Title = "Select Tier to Send",
     Values = {"All", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET"},
     Value = {},
@@ -2350,346 +2498,4 @@ ItemName:GetPropertyChangedSignal("Text"):Connect(function()
             SendEmbed(Data, "Join our Discord: " .. DiscordLink)
         end
     end
-end)
-
-Tabs.Server:Section({ Title = "Server" })
-
--- WindUI + Executor-friendly Discord webhook sender (prints removed)
-local HttpService = game:GetService("HttpService")
-
-local webhookURL = "https://discord.com/api/webhooks/1421786317322457088/b6Xj6NHry0-wv-zKV8WftRQ9cgAGBZ6gAG1JsI7GfqFv50v1F25QFoSSNEgyXLQTN110" -- <-- ganti di sini
-
--- helper: kirim request via berbagai executor
-local function sendWebhook(payloadTable)
-    local body = HttpService:JSONEncode(payloadTable)
-
-    -- syn.request (Synapse)
-    if syn and syn.request then
-        local ok, res = pcall(function()
-            return syn.request({
-                Url = webhookURL,
-                Method = "POST",
-                Headers = {
-                    ["Content-Type"] = "application/json"
-                },
-                Body = body
-            })
-        end)
-        return ok, res
-    end
-
-    -- http_request / request (other executors)
-    if http_request or request then
-        local req = http_request or request
-        local ok, res = pcall(function()
-            return req({
-                Url = webhookURL,
-                Method = "POST",
-                Headers = {
-                    ["Content-Type"] = "application/json"
-                },
-                Body = body
-            })
-        end)
-        return ok, res
-    end
-
-    -- fallback ke HttpService:PostAsync (Studio)
-    local ok, res = pcall(function()
-        return HttpService:PostAsync(webhookURL, body, Enum.HttpContentType.ApplicationJson)
-    end)
-    return ok, res
-end
-
--- Contoh payload embed
-local function makePayload(username, userId, reportText)
-    local gameName = tostring(game.PlaceId)
-    pcall(function()
-        -- GetProductInfo bisa error di executor; bungkus dengan pcall
-        local ms = game:GetService("MarketplaceService")
-        local info = ms:GetProductInfo(game.PlaceId)
-        if info and info.Name then
-            gameName = info.Name
-        end
-    end)
-
-    return {
-        username = "Roblox Bug Reporter",
-        embeds = {
-            {
-                title = "New Bug Report",
-                Desc = reportText,
-                fields = {
-                    { name = "Player", value = username or "Unknown", inline = true },
-                    { name = "UserId", value = tostring(userId or "Unknown"), inline = true },
-                    { name = "Game", value = gameName, inline = true }
-                },
-                footer = { text = "Report Sand Nexa Hub" },
-                timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ", os.time())
-            }
-        }
-    }
-end
-
--- WindUI Input
-Tabs.Server:Input({ 
-    Title = "Report Bug", 
-    Value = "",
-    Placeholder = "Enter Bug", 
-    Callback = function(input)
-        -- validasi
-        if not input or input:match("^%s*$") then
-            warn("Report kosong. Mohon isi laporan bug terlebih dahulu.")
-            return
-        end
-
-        -- ambil info user (bila dijalankan client/executor)
-        local playerName = "ExecutorUser"
-        local playerId = "N/A"
-        if type(game) == "userdata" and game.Players then
-            local localPlayer = game.Players.LocalPlayer
-            if localPlayer then
-                playerName = localPlayer.Name
-                playerId = localPlayer.UserId
-            end
-        end
-
-        local payload = makePayload(playerName, playerId, input)
-
-        local ok, res = sendWebhook(payload)
-        if not ok then
-            warn("Gagal mengirim bug report. Response/Error:", res)
-        end
-        -- sukses: silent (sesuai permintaan, print dihapus)
-    end 
-})
-
--- 📦 Services
-local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-
--- 👤 Pemain lokal
-local LocalPlayer = Players.LocalPlayer
-
--- 🔘 Tombol WindUI untuk Rejoin
-Tabs.Server:Button({
-    Title = "Rejoin Server",
-    Callback = function()
-        local placeId = game.PlaceId
-        local jobId = game.JobId
-        TeleportService:TeleportToPlaceInstance(placeId, jobId, LocalPlayer)
-    end
-})
-
--- 📦 Roblox Services
-local TeleportService = game:GetService("TeleportService")
-local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
-
-local LocalPlayer = Players.LocalPlayer
-
--- 🌐 Server Hop dengan WindUI
-Tabs.Server:Button({
-    Title = "Server Hop",
-    Callback = function()
-        local success, response = pcall(function()
-            local url = ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100"):format(game.PlaceId)
-            return game:HttpGet(url)
-        end)
-
-        if not success then
-            warn("Gagal ambil data server.")
-            return
-        end
-
-        local servers = HttpService:JSONDecode(response)
-        for _, server in ipairs(servers.data) do
-            if server.playing < server.maxPlayers and server.id ~= game.JobId then
-                TeleportService:TeleportToPlaceInstance(game.PlaceId, server.id, LocalPlayer)
-                return
-            end
-        end
-
-        warn("Tidak ada server lain yang tersedia.")
-    end
-})
-
-Tabs.Server:Button({
-    Title = "Copy Job ID",
-    Desc = "Copy the server JobId to the clipboard",
-    Callback = function()
-        setclipboard(game.JobId)
-    end
-})
-
-local TeleportService = game:GetService("TeleportService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local PlaceId = game.PlaceId
-
-local targetJobId = ""
-
-Tabs.Server:Input({
-    Title = "Enter Job ID",
-    PlaceholderText = "Enter the JobId here...",
-    Default = "",
-    Callback = function(text)
-        targetJobId = text
-    end
-})
-
-Tabs.Server:Button({
-    Title = "Teleport to Job ID",
-    Desc = "Teleport to the server using the provided JobId",
-    Callback = function()
-        if targetJobId ~= "" then
-            TeleportService:TeleportToPlaceInstance(PlaceId, targetJobId, LocalPlayer)
-        end
-    end
-})
-
-Tabs.Server:Keybind({
-    Title = "Keybind Example",
-    Desc = "Keybind to open ui",
-    Value = "G",
-    Callback = function(v)
-        Window:SetToggleKey(Enum.KeyCode[v])
-    end
-})
-
--- Services
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-
--- ScreenGui untuk ImageButton
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Parent = game.CoreGui
-ScreenGui.Name = "WindUIButton"
-
--- ImageButton utama
-local ImgBtn = Instance.new("ImageButton")
-ImgBtn.Parent = ScreenGui
-ImgBtn.Size = UDim2.new(0, 60, 0, 60)
-ImgBtn.Position = UDim2.new(0, 100, 1, -300)
-ImgBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-ImgBtn.BackgroundTransparency = 0.3
-ImgBtn.Image = "rbxassetid://131269662643486"
-ImgBtn.ImageTransparency = 0.15
-ImgBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
-ImgBtn.AutoButtonColor = false
-ImgBtn.Visible = false
-
--- Sudut bulat
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(1, 0)
-UICorner.Parent = ImgBtn
-
--- Garis pinggir halus
-local UIStroke = Instance.new("UIStroke")
-UIStroke.Color = Color3.fromRGB(200, 200, 200)
-UIStroke.Thickness = 2
-UIStroke.Transparency = 0.4
-UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-UIStroke.Parent = ImgBtn
-
--- Toggle Window
-local isOpen = false
-
--- Fungsi animasi klik
-local function playClickAnim()
-	local shrink = TweenService:Create(ImgBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Size = UDim2.new(0, 50, 0, 50),
-		BackgroundTransparency = 0.45
-	})
-	local grow = TweenService:Create(ImgBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Size = UDim2.new(0, 60, 0, 60),
-		BackgroundTransparency = 0.3
-	})
-	shrink:Play()
-	shrink.Completed:Wait()
-	grow:Play()
-end
-
--- Fungsi fade ImageButton
-local function fadeImageButton(show)
-	if show then
-		ImgBtn.Visible = true
-		local tween = TweenService:Create(ImgBtn, TweenInfo.new(0.3), {
-			ImageTransparency = 0.15,
-			BackgroundTransparency = 0.3
-		})
-		tween:Play()
-	else
-		local tween = TweenService:Create(ImgBtn, TweenInfo.new(0.3), {
-			ImageTransparency = 1,
-			BackgroundTransparency = 1
-		})
-		tween:Play()
-		tween.Completed:Wait()
-		ImgBtn.Visible = false
-	end
-end
-
--- Buka/tutup GUI
-ImgBtn.MouseButton1Click:Connect(function()
-	playClickAnim()
-	isOpen = not isOpen
-	if isOpen then
-		Window:Open()
-		fadeImageButton(false) -- fade out saat Window terbuka
-	else
-		Window:Close()
-		-- fade akan ditangani oleh OnClose
-	end
-end)
-
--- Force ImageButton muncul saat Window ditutup
-Window:OnClose(function()
-	isOpen = false
-	fadeImageButton(true) -- fade in saat Window ditutup
-end)
-
--- Hapus ImageButton saat Window di-destroy
-Window:OnDestroy(function()
-	if ImgBtn then
-		ImgBtn:Destroy()
-	end
-	if ScreenGui then
-		ScreenGui:Destroy()
-	end
-	print("Window destroyed (unloaded)")
-end)
-
--- Drag ImageButton
-local dragging, dragInput, dragStart, startPos
-
-local function update(input)
-	local delta = input.Position - dragStart
-	ImgBtn.Position = UDim2.new(
-		startPos.X.Scale, startPos.X.Offset + delta.X,
-		startPos.Y.Scale, startPos.Y.Offset + delta.Y
-	)
-end
-
-ImgBtn.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragStart = input.Position
-		startPos = ImgBtn.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then dragging = false end
-		end)
-	end
-end)
-
-ImgBtn.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		dragInput = input
-	end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		update(input)
-	end
 end)
