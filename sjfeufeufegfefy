@@ -1,3 +1,4 @@
+
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/fgrrrrhh5h5j%20000001%20Hunt"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Notify%20Nexa"))()
 
@@ -524,85 +525,117 @@ Tabs.Active:Toggle({
 
 Tabs.Farm:Section({ Title = "Fishing" })
 
---====================================--
---==  AUTO FISH V1 (Improved & Clean) ==--
---====================================--
-
--- Services
-local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local Camera = workspace.CurrentCamera
+local FishingController = require(ReplicatedStorage.Controllers.FishingController)
+local AutoFishingController = require(ReplicatedStorage.Controllers.AutoFishingController)
+local Replion = require(ReplicatedStorage.Packages.Replion)
 
--- Variables
-local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
-local FishingGui = PlayerGui:WaitForChild("Fishing")
-local MainFrame = FishingGui:WaitForChild("Main")
+local AutoFishState = {
+    IsActive = false,
+    MinigameActive = false
+}
 
--- Default settings
-local toggleState = false
-local beforePosition = UDim2.new(0.5, 0, 1.5, 0) -- posisi default sebelum fishing aktif
-local clickDelay = 0.1                            -- kecepatan klik (detik)
-local clickPos = UDim2.new(0.879999995, 0, 0.889999986, -20) -- posisi klik tetap
+-- default click speed
+local ClickSpeed = 0.1
 
---============================--
---= WINDUI : INPUT PENGATURAN =--
---============================--
+-- klik cepat minigame
+local function performClick()
+    FishingController:RequestFishingMinigameClick()
+    task.wait(ClickSpeed + math.random() * ClickSpeed)
+end
 
--- Ubah kecepatan klik
+-- hook visual
+local originalAutoFishingStateChanged = AutoFishingController.AutoFishingStateChanged
+AutoFishingController.AutoFishingStateChanged = function(...)
+    return originalAutoFishingStateChanged(true)
+end
+
+-- aktifkan auto-fishing di server
+local function ensureServerAutoFishingOn()
+    local replionData = Replion.Client:WaitReplion("Data")
+    local currentAutoFishingState = replionData:GetExpect("AutoFishing")
+    
+    if not currentAutoFishingState then
+        local Net = require(ReplicatedStorage.Packages.Net)
+        local UpdateAutoFishingRemote = Net:RemoteFunction("UpdateAutoFishingState")
+        
+        pcall(function()
+            UpdateAutoFishingRemote:InvokeServer(true)
+        end)
+    end
+end
+
+-- Hook minigame
+local originalRodStarted = FishingController.FishingRodStarted
+local originalFishingStopped = FishingController.FishingStopped
+local clickThread = nil
+
+FishingController.FishingRodStarted = function(self, ...)
+    originalRodStarted(self, ...)
+    
+    if AutoFishState.IsActive and not AutoFishState.MinigameActive then
+        AutoFishState.MinigameActive = true
+        
+        if clickThread then
+            task.cancel(clickThread)
+        end
+        
+        clickThread = task.spawn(function()
+            while AutoFishState.IsActive and AutoFishState.MinigameActive do
+                performClick()
+            end
+        end)
+    end
+end
+
+FishingController.FishingStopped = function(self, ...)
+    originalFishingStopped(self, ...)
+    
+    if AutoFishState.MinigameActive then
+        AutoFishState.MinigameActive = false
+        task.wait(1)
+        ensureServerAutoFishingOn()
+    end
+end
+
+-- fungsi toggle utama
+local function ToggleAutoClick(shouldActivate)
+    AutoFishState.IsActive = shouldActivate
+    
+    if shouldActivate then
+        ensureServerAutoFishingOn()
+    else
+        if clickThread then
+            task.cancel(clickThread)
+            clickThread = nil
+        end
+        AutoFishState.MinigameActive = false
+    end
+end
+
+-- UI Toggle WindUI
+Tabs.Farm:Toggle({
+    Title = "Auto Fish Legit",
+    Value = false,
+    Callback = function(state)
+        ToggleAutoClick(state)
+    end
+})
+
+-- Input untuk kecepatan klik
 Tabs.Farm:Input({
-    Title = "Click Delay (detik)",
-    Value = tostring(clickDelay),
-    Placeholder = "contoh: 0.05",
+    Title = "Click Speed",
+    Value = tostring(ClickSpeed),
+    Placeholder = "Example: 0.0005",
     Callback = function(input)
         local num = tonumber(input)
         if num and num > 0 then
-            clickDelay = num
+            ClickSpeed = num
         end
     end
 })
 
---============================--
---= TOGGLE : AUTO FISHING =--
---============================--
-Tabs.Farm:Toggle({
-    Title = "Auto Fish v1",
-    Value = false,
-    Callback = function(state)
-        toggleState = state
-
-        -- Kirim status ke server
-        local args = { state }
-        local rf = ReplicatedStorage:WaitForChild("Packages")
-            :WaitForChild("_Index")
-            :WaitForChild("sleitnick_net@0.2.0")
-            :WaitForChild("net")
-            :WaitForChild("RF/UpdateAutoFishingState")
-
-        rf:InvokeServer(unpack(args))
-
-        -- Jalankan / hentikan loop
-        if state then
-            task.spawn(function()
-                while toggleState do
-                    task.wait(clickDelay)
-
-                    -- Jika posisi Main berubah, lakukan klik
-                    if MainFrame.Position ~= beforePosition then
-                        local screenSize = Camera.ViewportSize
-                        local targetX = (screenSize.X * clickPos.X.Scale) + clickPos.X.Offset
-                        local targetY = (screenSize.Y * clickPos.Y.Scale) + clickPos.Y.Offset
-
-                        -- Klik mouse kiri di posisi target
-                        VirtualInputManager:SendMouseButtonEvent(targetX, targetY, 0, true, game, 0)
-                        VirtualInputManager:SendMouseButtonEvent(targetX, targetY, 0, false, game, 0)
-                    end
-                end
-            end)
-        end
-    end
-})
 
 Tabs.Farm:Space()
 
