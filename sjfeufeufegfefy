@@ -1,6 +1,5 @@
-
+loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/vgegrege%20TempleLever"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/fgrrrrhh5h5j%20000001%20Hunt"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Notify%20Nexa"))()
 
 -- ======================================[ Hunt Teleport Script ]======================================
 
@@ -266,7 +265,7 @@ local playerDisplayName = player.DisplayName
 
 -- Buat Window
 local Window = WindUI:CreateWindow({
-    Title = "Nexa | Premium",
+    Title = "Nexa | Dev",
     Icon = "rbxassetid://131269662643486", -- lucide icon
     Author = "Fish IT! Script | @ Han",
     Folder = "Hanzo",
@@ -304,7 +303,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v1.3.1",
+    Title = "v1.3.2",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -338,10 +337,12 @@ Tabs.Home:Section({
 
 Tabs.Home:Section({
         Title = [[
-[+] Added TP:
- - Mount Hallow
- - Crystal Cavern 1
- - Crystal Cavern 2
+[+] Tab Automaticaly:
+ - Added TempleLever Quest
+[+] Tab Farm
+ - Added Auto Fish Legit
+[+] Tab Player
+ - Added Disabled Username & Level
 		]],
         TextSize = 18,
         TextTransparency = .35,
@@ -537,7 +538,7 @@ local AutoFishState = {
 }
 
 -- default click speed
-local ClickSpeed = 0.1
+local ClickSpeed = 0.01
 
 -- klik cepat minigame
 local function performClick()
@@ -636,7 +637,6 @@ Tabs.Farm:Input({
     end
 })
 
-
 Tabs.Farm:Space()
 
 local fishingGui
@@ -674,8 +674,8 @@ Tabs.Farm:Button({
         -- Notifikasi
         WindUI:Notify({
             Title = "Fishing Cancelled",
-            Content = "You can now restart Fishv2 Auto.",
-            Duration = 5,
+            Content = "You can now restart Fish Auto.",
+            Duration = 2,
         })
     end
 })
@@ -720,7 +720,6 @@ Tabs.Farm:Toggle({
         end
     end
 })
-
 
 -- Variabel global
 local savedCFrame = nil
@@ -937,7 +936,7 @@ local labelNames = {"Label1", "Label2", "Label3", "Label4"}
 -- Section judul
 Tabs.Auto:Section({
     Title = "Deep Sea Quest",
-    TextSize = 24,
+    TextSize = 20,
     FontWeight = Enum.FontWeight.SemiBold,
 })
 
@@ -946,7 +945,7 @@ local deepSeaSection = Tabs.Auto:Section({
     Title = [[
 Checking...
     ]],
-    TextSize = 18,
+    TextSize = 15,
     TextTransparency = 0.35,
     FontWeight = Enum.FontWeight.Medium,
 })
@@ -975,7 +974,7 @@ end
 -- === AURA BOAT QUEST ===
 Tabs.Auto:Section({
     Title = "Aura Boat Quest",
-    TextSize = 24,
+    TextSize = 20,
     FontWeight = Enum.FontWeight.SemiBold,
 })
 
@@ -983,7 +982,7 @@ local auraSection = Tabs.Auto:Section({
     Title = [[
 Checking...
     ]],
-    TextSize = 18,
+    TextSize = 15,
     TextTransparency = 0.35,
     FontWeight = Enum.FontWeight.Medium,
 })
@@ -1005,7 +1004,7 @@ local labelNames = {"Label1", "Label2", "Label3", "Label4"}
 
 Tabs.Auto:Section({
     Title = "Element Quest",
-    TextSize = 24,
+    TextSize = 20,
     FontWeight = Enum.FontWeight.SemiBold,
 })
 
@@ -1013,7 +1012,7 @@ local elementSection = Tabs.Auto:Section({
     Title = [[
 Checking...
     ]],
-    TextSize = 18,
+    TextSize = 15,
     TextTransparency = 0.35,
     FontWeight = Enum.FontWeight.Medium,
 })
@@ -1037,6 +1036,60 @@ for _, name in ipairs(labelNames) do
         label:GetPropertyChangedSignal("Text"):Connect(updateElement)
     end
 end
+
+
+-- TempleLever Status Display
+local Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS")
+
+local Steps = {
+    "TempleLever 1",
+    "TempleLever 2",
+    "TempleLever 3",
+    "TempleLever 4",
+}
+
+local statusText = ""
+local statusSection = Tabs.Auto:Section({ 
+    Title = "Temple Lever Status",
+    TextSize = 20,
+    FontWeight = Enum.FontWeight.SemiBold,
+})
+
+local statusDetails = Tabs.Auto:Section({ 
+    Title = "",
+    TextSize = 18,
+    TextTransparency = .35,
+    FontWeight = Enum.FontWeight.Medium,
+})
+
+local function updateStatus()
+    statusText = ""
+    for _, name in ipairs(Steps) do
+        local lever = Jungle:FindFirstChild(name)
+        local mark = "0%"
+
+        if lever and lever:FindFirstChild("RootPart") then
+            local root = lever.RootPart
+            -- kalau RootPart masih ada tapi ProximityPrompt hilang, berarti ✔️
+            if not root:FindFirstChild("ProximityPrompt") then
+                mark = "100%"
+            end
+        end
+
+        statusText = statusText .. name .. ": " .. mark .. "\n"
+    end
+
+    -- update teks status di UI
+    statusDetails:SetTitle(statusText)
+end
+
+-- jalankan pembaruan status tiap 1 detik
+task.spawn(function()
+    while task.wait(1) do
+        pcall(updateStatus)
+    end
+end)
+
 
 Tabs.Auto:Section({ Title = "Auto Quests" })
 
@@ -1178,6 +1231,87 @@ Tabs.Auto:Toggle({
         else
             Unfreeze()
             savedCFrame = nil
+        end
+    end
+})
+
+-- Auto Temple Lever System (WindUI Clean Version)
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+local Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS")
+
+local Steps = {
+    {
+        Name = "TempleLever 1",
+        CFrame = CFrame.new(1837.76038, 6.46929169, -289.37793, 
+            0.209234059, -5.19205168e-09, -0.977865577,
+            -1.23823077e-10, 1, -5.33607025e-09,
+            0.977865577, 1.23757005e-09, 0.209234059)
+    },
+    {
+        Name = "TempleLever 2",
+        CFrame = CFrame.new(1407.78601, 6.59558344, 118.577896, 
+            -0.919609904, -9.32684685e-08, 0.392832845,
+            -8.06826606e-08, 1, 4.85496443e-08,
+            -0.392832845, 1.29519346e-08, -0.919609904)
+    },
+    {
+        Name = "TempleLever 3",
+        CFrame = CFrame.new(877.883911, 4.8866396, -358.809021,
+            -0.169639081, 7.49071702e-08, 0.985506237,
+            -4.26608402e-08, 1, -8.3352198e-08,
+            -0.985506237, -5.61823157e-08, -0.169639081)
+    },
+    {
+        Name = "TempleLever 4",
+        CFrame = CFrame.new(1837.76038, 6.46929169, -289.37793,
+            0.209234059, -5.19205168e-09, -0.977865577,
+            -1.23823077e-10, 1, -5.33607025e-09,
+            0.977865577, 1.23757005e-09, 0.209234059)
+    },
+}
+
+local AutoTempleLever = false
+
+local function runTempleLeverQuest()
+    task.spawn(function()
+        while AutoTempleLever do
+            for _, step in ipairs(Steps) do
+                if not AutoTempleLever then break end
+                local lever = Jungle:FindFirstChild(step.Name)
+
+                if lever and lever:FindFirstChild("RootPart") then
+                    local root = lever.RootPart
+
+                    if root:FindFirstChild("ProximityPrompt") then
+                        hrp.CFrame = step.CFrame
+                        task.wait(0.5)
+
+                        while AutoTempleLever and lever and lever:FindFirstChild("RootPart") and root:FindFirstChild("ProximityPrompt") do
+                            fireproximityprompt(root.ProximityPrompt)
+                            task.wait(5)
+                        end
+                    end
+                end
+                task.wait(1)
+            end
+            AutoTempleLever = false
+        end
+    end)
+end
+
+Tabs.Auto:Toggle({
+    Title = "Auto TempleLever Quest",
+    Icon = "play",
+    Type = "Checkbox",
+    Value = false,
+    Callback = function(state)
+        AutoTempleLever = state
+        if state then
+            runTempleLeverQuest()
         end
     end
 })
@@ -1772,6 +1906,83 @@ Tabs.Player:Button({
     end
 })
 
+Tabs.Player:Toggle({
+    Title = "Disabled Username & Level",
+    Icon = "user",
+    Type = "Checkbox",
+    Value = false,
+    Callback = function(state)
+        local charactersFolder = workspace:WaitForChild("Characters")
+        local savedTexts = {} -- tabel untuk menyimpan teks asli setiap karakter
+
+        local function setLabelText(character, text)
+            local hrp = character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+
+            -- LevelContainer.Label
+            local levelLabel = hrp:FindFirstChild("Overhead")
+                and hrp.Overhead:FindFirstChild("LevelContainer")
+                and hrp.Overhead.LevelContainer:FindFirstChild("Label")
+
+            if levelLabel and levelLabel:IsA("TextLabel") then
+                if not savedTexts[character] then savedTexts[character] = {} end
+                if not savedTexts[character].LevelLabel then
+                    savedTexts[character].LevelLabel = levelLabel.Text
+                end
+                levelLabel.Text = text
+            end
+
+            -- Content.Header
+            local headerLabel = hrp:FindFirstChild("Overhead")
+                and hrp.Overhead:FindFirstChild("Content")
+                and hrp.Overhead.Content:FindFirstChild("Header")
+
+            if headerLabel and headerLabel:IsA("TextLabel") then
+                if not savedTexts[character] then savedTexts[character] = {} end
+                if not savedTexts[character].HeaderLabel then
+                    savedTexts[character].HeaderLabel = headerLabel.Text
+                end
+                headerLabel.Text = text
+            end
+        end
+
+        if state then
+            -- toggle aktif: ubah semua teks jadi NexaHub
+            for _, character in pairs(charactersFolder:GetChildren()) do
+                setLabelText(character, "NexaHub")
+            end
+
+            charactersFolder.ChildAdded:Connect(function(character)
+                task.wait(1)
+                setLabelText(character, "NexaHub")
+            end)
+        else
+            -- toggle mati: kembalikan ke teks asli
+            for character, texts in pairs(savedTexts) do
+                if texts.LevelLabel then
+                    local levelLabel = character:FindFirstChild("HumanoidRootPart")
+                        and character.HumanoidRootPart:FindFirstChild("Overhead")
+                        and character.HumanoidRootPart.Overhead:FindFirstChild("LevelContainer")
+                        and character.HumanoidRootPart.Overhead.LevelContainer:FindFirstChild("Label")
+                    if levelLabel and levelLabel:IsA("TextLabel") then
+                        levelLabel.Text = texts.LevelLabel
+                    end
+                end
+
+                if texts.HeaderLabel then
+                    local headerLabel = character:FindFirstChild("HumanoidRootPart")
+                        and character.HumanoidRootPart:FindFirstChild("Overhead")
+                        and character.HumanoidRootPart.Overhead:FindFirstChild("Content")
+                        and character.HumanoidRootPart.Overhead.Content:FindFirstChild("Header")
+                    if headerLabel and headerLabel:IsA("TextLabel") then
+                        headerLabel.Text = texts.HeaderLabel
+                    end
+                end
+            end
+        end
+    end
+})
+
 Tabs.Player:Button({
     Title = "Reduce Lag", -- Nama tombol
     Callback = function()
@@ -2040,7 +2251,7 @@ Tabs.Server:Toggle({
                 ["embeds"] = {{
                     ["author"] = {["name"] = "Fishing System"},
                     ["title"] = "Webhook Aktif",
-                    ["description"] = "✅ Webhook berhasil diaktifkan dan siap mengirim data.",
+                    ["Desc"] = "✅ Webhook berhasil diaktifkan dan siap mengirim data.",
                     ["color"] = 5763719,
                     ["timestamp"] = DateTime.now():ToIsoDate()
                 }}
@@ -2316,7 +2527,7 @@ local function makePayload(username, userId, reportText)
         embeds = {
             {
                 title = "New Bug Report",
-                description = reportText,
+                Desc = reportText,
                 fields = {
                     { name = "Player", value = username or "Unknown", inline = true },
                     { name = "UserId", value = tostring(userId or "Unknown"), inline = true },
@@ -2475,7 +2686,7 @@ ImgBtn.Image = "rbxassetid://131269662643486"
 ImgBtn.ImageTransparency = 0.15
 ImgBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
 ImgBtn.AutoButtonColor = false
-ImgBtn.Visible = true
+ImgBtn.Visible = false
 
 -- Sudut bulat
 local UICorner = Instance.new("UICorner")
