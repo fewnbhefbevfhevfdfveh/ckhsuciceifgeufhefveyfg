@@ -300,7 +300,7 @@ local Window = WindUI:CreateWindow({
 })
 
 Window:Tag({
-    Title = "v1.3.3",
+    Title = "v1.3.4",
     Color = Color3.fromHex("#30ff6a")
 })
 
@@ -337,10 +337,8 @@ Tabs.Home:Section({
 
 Tabs.Home:Section({
         Title = [[
-[-] Delete Anti Satf
-[-] Delete Traveling Method
-[/] Rename Active Tab to Info Tab
-[/] Move Position Save & Teleport to Teleport Tab
+[-] Delete Report Bug, Job Id, Rejoin, Server Hop
+[/] Rename Server Tab to Webhook Tab
 
 		]],
         TextSize = 18,
