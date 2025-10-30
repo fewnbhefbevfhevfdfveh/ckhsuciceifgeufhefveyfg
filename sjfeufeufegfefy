@@ -531,8 +531,8 @@ local player = Players.LocalPlayer
 --// Auto Fish Configuration
 local FuncAutoFish = {
     autofish = false,
-    preRecastDelay = 0.6,
-    biteDelay = 1.5
+    preRecastDelay = 0.05,
+    biteDelay = 1.70
 }
 
 local autoFishLoop
