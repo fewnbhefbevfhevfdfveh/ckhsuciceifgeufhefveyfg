@@ -1501,6 +1501,7 @@ LeftGroupBox:AddDropdown("SelectRods", {
     Default = {},
     Multi = true,
     Text = "Select Rods to Purchase",
+    Searchable = true,
     Callback = function(values)
         selectedRods = {}
 
@@ -1635,6 +1636,7 @@ RightGroupBox:AddDropdown("SelectBaits", {
     Default = {},
     Multi = true,
     Text = "Select Baits to Purchase",
+    Searchable = true,
     Callback = function(values)
         selectedBaits = {}
 
@@ -1756,6 +1758,7 @@ LeftGroupBox:AddDropdown("SelectWeather", {
     Default = {},
     Multi = true,
     Text = "Select Weather Events",
+    Searchable = true,
     Callback = function(values)
         selectedWeathers = {}
 
@@ -2561,6 +2564,7 @@ LeftGroupBox:AddDropdown("MyDropdown", {
     Default = selectedIsland,
     Multi = false,
     Text = "Select Island",
+    Searchable = true,
     Callback = function(value)
         selectedIsland = value
     end,
