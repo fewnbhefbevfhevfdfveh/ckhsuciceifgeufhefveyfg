@@ -1,0 +1,387 @@
+--// GUI Webhook Setting (Upgraded Premium Style v2 - Multi Select Tier)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "WebhookGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 340, 0, 340)
+MainFrame.Position = UDim2.new(0.75, -170, 0.5, -170)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+-- Drop Shadow
+local Shadow = Instance.new("ImageLabel")
+Shadow.BackgroundTransparency = 1
+Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+Shadow.Position = UDim2.new(0.5, 0, 0.5, 4)
+Shadow.Size = UDim2.new(1, 60, 1, 60)
+Shadow.ZIndex = -1
+Shadow.Image = "rbxassetid://6014261993"
+Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.ImageTransparency = 0.6
+Shadow.Parent = MainFrame
+
+-- Header
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 38)
+Header.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+Header.BorderSizePixel = 0
+Header.Parent = MainFrame
+Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 12)
+
+local Accent = Instance.new("Frame")
+Accent.Size = UDim2.new(1, 0, 0, 2)
+Accent.Position = UDim2.new(0, 0, 1, -2)
+Accent.BackgroundColor3 = Color3.fromRGB(80, 140, 255)
+Accent.Parent = Header
+
+local Title = Instance.new("TextLabel")
+Title.Text = "Webhook Configuration ⚙️"
+Title.Size = UDim2.new(1, -20, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Header
+
+-- Helper: Button
+local function CreateButton(text, color, yPos)
+	local btn = Instance.new("TextButton")
+	btn.Text = text
+	btn.Size = UDim2.new(1, -20, 0, 30)
+	btn.Position = UDim2.new(0, 10, 0, yPos)
+	btn.BackgroundColor3 = color
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
+	btn.AutoButtonColor = false
+	btn.Parent = MainFrame
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+	btn.MouseEnter:Connect(function()
+		btn.BackgroundColor3 = color:Lerp(Color3.new(1,1,1), 0.15)
+	end)
+	btn.MouseLeave:Connect(function()
+		btn.BackgroundColor3 = color
+	end)
+	return btn
+end
+
+-- Helper: TextBox
+local function CreateBox(placeholder, yPos)
+	local box = Instance.new("TextBox")
+	box.PlaceholderText = placeholder
+	box.Size = UDim2.new(1, -20, 0, 30)
+	box.Position = UDim2.new(0, 10, 0, yPos)
+	box.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+	box.TextColor3 = Color3.fromRGB(255, 255, 255)
+	box.PlaceholderColor3 = Color3.fromRGB(140, 140, 140)
+	box.Font = Enum.Font.Gotham
+	box.TextSize = 14
+	box.ClearTextOnFocus = false
+	box.Parent = MainFrame
+	Instance.new("UICorner", box).CornerRadius = UDim.new(0, 8)
+	return box
+end
+
+-- UI
+local WebhookBox = CreateBox("Masukkan Webhook URL", 55)
+local SetButton = CreateButton("Set Webhook 🔗", Color3.fromRGB(60, 120, 255), 95)
+local ToggleButton = CreateButton("Webhook: OFF ❌", Color3.fromRGB(170, 60, 60), 135)
+
+-- Multi-select Tiers
+local DropdownLabel = Instance.new("TextLabel")
+DropdownLabel.Text = "Filter Tier yang dikirim:"
+DropdownLabel.Size = UDim2.new(1, -20, 0, 22)
+DropdownLabel.Position = UDim2.new(0, 10, 0, 175)
+DropdownLabel.BackgroundTransparency = 1
+DropdownLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+DropdownLabel.Font = Enum.Font.GothamBold
+DropdownLabel.TextSize = 14
+DropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+DropdownLabel.Parent = MainFrame
+
+local Scroll = Instance.new("ScrollingFrame")
+Scroll.Size = UDim2.new(1, -20, 0, 100)
+Scroll.Position = UDim2.new(0, 10, 0, 200)
+Scroll.CanvasSize = UDim2.new(0,0,0,0)
+Scroll.ScrollBarThickness = 4
+Scroll.BackgroundColor3 = Color3.fromRGB(30,30,35)
+Scroll.BorderSizePixel = 0
+Scroll.Parent = MainFrame
+Instance.new("UICorner", Scroll).CornerRadius = UDim.new(0,8)
+
+local TierList = {"All","Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET"}
+local SelectedTiers = {}
+
+local function AddTierCheck(name, index)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -10, 0, 25)
+	btn.Position = UDim2.new(0, 5, 0, (index-1)*28)
+	btn.BackgroundColor3 = Color3.fromRGB(40,40,50)
+	btn.TextColor3 = Color3.fromRGB(200,200,200)
+	btn.Text = "☐ "..name
+	btn.Font = Enum.Font.Gotham
+	btn.TextSize = 14
+	btn.AutoButtonColor = false
+	btn.Parent = Scroll
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+
+	btn.MouseButton1Click:Connect(function()
+		if table.find(SelectedTiers,name) then
+			for i,v in ipairs(SelectedTiers) do
+				if v==name then table.remove(SelectedTiers,i) break end
+			end
+			btn.Text = "☐ "..name
+			btn.TextColor3 = Color3.fromRGB(200,200,200)
+		else
+			table.insert(SelectedTiers,name)
+			btn.Text = "☑ "..name
+			btn.TextColor3 = Color3.fromRGB(80,180,255)
+		end
+		print("Selected Tiers:", table.concat(SelectedTiers,", "))
+	end)
+end
+
+for i,name in ipairs(TierList) do AddTierCheck(name,i) end
+Scroll.CanvasSize = UDim2.new(0,0,0,#TierList*28)
+
+local Footer = Instance.new("TextLabel")
+Footer.Text = "Made with ❤️ by Nexa"
+Footer.Size = UDim2.new(1, 0, 0, 22)
+Footer.Position = UDim2.new(0, 0, 1, -24)
+Footer.BackgroundTransparency = 1
+Footer.TextColor3 = Color3.fromRGB(130, 130, 130)
+Footer.Font = Enum.Font.GothamSemibold
+Footer.TextSize = 12
+Footer.Parent = MainFrame
+
+-- Glow
+local Glow = Instance.new("Frame")
+Glow.Size = UDim2.new(1, 0, 0, 2)
+Glow.Position = UDim2.new(0, 0, 1, -2)
+Glow.BackgroundColor3 = Color3.fromRGB(80, 140, 255)
+Glow.BorderSizePixel = 0
+Glow.Parent = MainFrame
+
+--========================================================--
+-- VARIABLES & EVENT
+--========================================================--
+
+WebhookURL = ""
+WebhookActive = false
+
+SetButton.MouseButton1Click:Connect(function()
+	if WebhookBox.Text ~= "" then
+		WebhookURL = WebhookBox.Text
+		print("Webhook set ke:", WebhookURL)
+	end
+end)
+
+ToggleButton.MouseButton1Click:Connect(function()
+	WebhookActive = not WebhookActive
+	if WebhookActive then
+		ToggleButton.Text = "Webhook: ON ✅"
+		ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 170, 60)
+	else
+		ToggleButton.Text = "Webhook: OFF ❌"
+		ToggleButton.BackgroundColor3 = Color3.fromRGB(170, 60, 60)
+	end
+end)
+
+--========================================================--
+-- SCRIPT LAMA (TIDAK DIUBAH)
+--========================================================--
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
+
+local Notification = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Small Notification")
+local Request = (syn and syn.request) or (http_request) or (fluxus and fluxus.request) or (krnl and request)
+
+local TierMap = {
+    [1] = "Common",
+    [2] = "Uncommon",
+    [3] = "Rare",
+    [4] = "Epic",
+    [5] = "Legendary",
+    [6] = "Mythic",
+    [7] = "SECRET"
+}
+
+local FishCounter = {
+    Common = 0,
+    Uncommon = 0,
+    Rare = 0,
+    Epic = 0,
+    Legendary = 0,
+    Mythic = 0,
+    SECRET = 0
+}
+
+local function FormatNumber(num)
+    num = tonumber(num) or 0
+    if num >= 1e9 then
+        return string.format("%.2fb", num / 1e9)
+    elseif num >= 1e6 then
+        return string.format("%.2fm", num / 1e6)
+    elseif num >= 1e3 then
+        return string.format("%.2fk", num / 1e3)
+    else
+        return tostring(num)
+    end
+end
+
+local function FormatChance(chance)
+    chance = tonumber(chance) or 0
+    return string.format("%.2f%%", chance * 100)
+end
+
+local function GetRobloxImage(assetId)
+    if not assetId then return nil end
+    local url = "https://thumbnails.roblox.com/v1/assets?assetIds=" .. assetId .. "&size=420x420&format=Png&isCircular=false"
+    local success, response = pcall(game.HttpGet, game, url)
+    if success then
+        local data = HttpService:JSONDecode(response)
+        if data and data.data and data.data[1] and data.data[1].imageUrl then
+            return data.data[1].imageUrl
+        end
+    end
+    return nil
+end
+
+local function SendEmbed(data)
+    if WebhookURL ~= "" and Request then
+        local payload = {["embeds"] = data.embeds}
+        Request({
+            Url = WebhookURL,
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = HttpService:JSONEncode(payload)
+        })
+    end
+end
+
+local function FindFishModule(fishName)
+    local Items = ReplicatedStorage:WaitForChild("Items")
+    for _, moduleScript in ipairs(Items:GetChildren()) do
+        if moduleScript:IsA("ModuleScript") then
+            local ok, data = pcall(require, moduleScript)
+            if ok and data and data.Data and data.Data.Name then
+                local realName = data.Data.Name
+                if string.find(string.lower(fishName), string.lower(realName)) then
+                    return data
+                end
+            end
+        end
+    end
+    return nil
+end
+
+local LastFishData = nil
+local Container = Notification.Display.Container
+local ItemName = Container:WaitForChild("ItemName")
+local NewLabel = Notification.Display.NewFrame.Frame:WaitForChild("NewLabel")
+local VectorFrame = Notification.Display.VectorFrame.Vector
+
+ItemName:GetPropertyChangedSignal("Text"):Connect(function()
+    if WebhookActive and WebhookURL ~= "" and Request then
+        local rawText = ItemName.Text
+        if rawText ~= "" then
+            local fishName, fishWeight = rawText:match("^(.-)%s*%((.-)%)$")
+            fishName = (fishName and fishName:gsub("^%s+", ""):gsub("%s+$", "")) or rawText
+            fishWeight = fishWeight or "Unknown"
+
+            local fishData = FindFishModule(fishName)
+            local tierNum = fishData and fishData.Data.Tier or 0
+            local tierName = TierMap[tierNum] or "Unknown"
+            local sellPrice = fishData and fishData.SellPrice or "Unknown"
+            local chance = fishData and fishData.Probability and fishData.Probability.Chance or 0
+
+            local newLabelText = NewLabel.Text or ""
+            local RarityLabel = Container:WaitForChild("Rarity")
+            local rarityText = RarityLabel.Text or "Unknown"
+
+            local BagSizeLabel = Players.LocalPlayer.PlayerGui.Inventory.Main.Top.Options.Fish.Label:WaitForChild("BagSize")
+            local bagSizeText = BagSizeLabel.Text or "Unknown"
+
+            local assetId = string.match(VectorFrame.Image, "%d+")
+            local imageUrl = GetRobloxImage(assetId)
+
+            local currentData = {
+                Fish = fishName,
+                Weight = fishWeight,
+                Bag = bagSizeText,
+                Rarity = rarityText
+            }
+
+            if LastFishData
+                and LastFishData.Fish == currentData.Fish
+                and LastFishData.Weight == currentData.Weight
+                and LastFishData.Bag == currentData.Bag
+                and LastFishData.Rarity == currentData.Rarity then
+                return
+            end
+            LastFishData = currentData
+
+            if #SelectedTiers > 0 then
+                if not table.find(SelectedTiers, "All") and not table.find(SelectedTiers, tierName) then
+                    return
+                end
+            end
+
+            if FishCounter[tierName] ~= nil then
+                FishCounter[tierName] = FishCounter[tierName] + 1
+            end
+
+            local counterFields = {}
+            for _, name in ipairs({"Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET"}) do
+                table.insert(counterFields, {
+                    ["name"] = "X :  " .. name .. " 🎣",
+                    ["value"] = "```" .. tostring(FishCounter[name]) .. "```",
+                    ["inline"] = true
+                })
+            end
+
+            local Data = {
+                ["embeds"] = {{
+                    ["author"] = {["name"] = "Nexa Fishing Info"},
+                    ["title"] = "New Fish Caught!❗",
+                    ["color"] = math.random(1000000, 16777215),
+                    ["fields"] = {
+                        {["name"] = "Fish 🐟", ["value"] = "```" .. fishName .. "```", ["inline"] = true},
+                        {["name"] = "KG ⚖️", ["value"] = "```" .. fishWeight .. "```", ["inline"] = true},
+                        {["name"] = "Tier 🥇", ["value"] = "```" .. tierName .. "```", ["inline"] = true},
+                        {["name"] = "Rarity 🚀", ["value"] = "```" .. rarityText .. "```", ["inline"] = true},
+                        {["name"] = "Bag Size 💼", ["value"] = "```" .. bagSizeText .. "```", ["inline"] = true},
+                        {["name"] = "Sell Price 🪙", ["value"] = "```" .. FormatNumber(sellPrice) .. "```", ["inline"] = true},
+                        {["name"] = "Chance 📈", ["value"] = "```" .. FormatChance(chance) .. "```", ["inline"] = true},
+                    },
+                    ["footer"] = {["text"] = "Nexa | Fishing Logger • Fish It! 🐟"},
+                    ["timestamp"] = DateTime.now():ToIsoDate(),
+                    ["image"] = {["url"] = imageUrl or "https://i.imgur.com/zwCkN8P.png"}
+                }}
+            }
+
+            for _, f in ipairs(counterFields) do
+                table.insert(Data.embeds[1].fields, f)
+            end
+
+            if newLabelText ~= "" then
+                table.insert(Data.embeds[1].fields, {["name"] = "Info", ["value"] = "```" .. newLabelText .. "```", ["inline"] = false})
+            end
+
+            SendEmbed(Data)
+        end
+    end
+end)
