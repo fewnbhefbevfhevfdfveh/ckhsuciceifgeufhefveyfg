@@ -1,5 +1,6 @@
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
 
 local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
@@ -14,13 +15,14 @@ Library.ShowToggleFrameInKeybinds = true
 
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.3.5 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.3.6 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
 })
 
 local Tabs = {
+    Home = Window:AddTab("Home", "house"),
 	Info = Window:AddTab("Info", "info"),
 	Farm = Window:AddTab("Farm", "fish"),
 	Event = Window:AddTab("Event", "calendar"),
@@ -29,10 +31,50 @@ local Tabs = {
 	Boat = Window:AddTab("Boat", "sailboat"),
 	Player = Window:AddTab("Player", "user"),
 	Tp = Window:AddTab("Teleport", "map-pin"),
-	Webhook = Window:AddTab("Webhook", "webhook"),
 }
 
-local LeftGroupBox = Tabs.Info:AddLeftGroupbox("Event Status")
+local LeftGroupBox = Tabs.Home:AddLeftGroupbox("Account Info", "circle-user-round")
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Tunggu karakter muncul
+local function getCharacter()
+    return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+end
+
+local char = getCharacter()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+-- Pastikan Overhead ada
+local overhead = hrp:WaitForChild("Overhead")
+local header = overhead.Content.Header
+local level = overhead.LevelContainer.Label
+
+-- Tambahkan Label di WindUI
+local InfoLabel = LeftGroupBox:AddLabel({
+    Text = "Name: " .. header.Text .. "\n" .. level.Text,
+    DoesWrap = true
+})
+
+-- Loop update setiap 1 detik
+task.spawn(function()
+    while task.wait(1) do
+        -- Cek jika karakter respawn atau overhead hilang
+        if not hrp or not hrp.Parent then
+            char = getCharacter()
+            hrp = char:WaitForChild("HumanoidRootPart")
+            overhead = hrp:WaitForChild("Overhead")
+            header = overhead.Content.Header
+            level = overhead.LevelContainer.Label
+        end
+
+        InfoLabel:SetText("Name: " .. header.Text .. "\n" .. level.Text)
+    end
+end)
+
+
+local LeftGroupBox = Tabs.Info:AddLeftGroupbox("Event Status", "compass")
 
 -- === HUNT STATUS ===
 
@@ -124,7 +166,7 @@ task.spawn(function()
     end
 end)
 
-local RightGroupBox = Tabs.Info:AddRightGroupbox("Event Hunt")
+local RightGroupBox = Tabs.Info:AddRightGroupbox("Event Hunt", "anchor")
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -288,7 +330,7 @@ toggle:OnChanged(function(state)
 end)
 
 
-local LeftGroupBox = Tabs.Farm:AddLeftGroupbox("Fishing")
+local LeftGroupBox = Tabs.Farm:AddLeftGroupbox("Fishing", "fish")
 
 -- ====================[ Auto Fishing Legit ]==================== --
 
@@ -623,7 +665,7 @@ LeftGroupBox:AddToggle("AutoEquipRodToggle", {
 	end
 })
 
-local RightGroupBox = Tabs.Farm:AddRightGroupbox("Sell")
+local RightGroupBox = Tabs.Farm:AddRightGroupbox("Sell", "landmark")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
@@ -708,7 +750,7 @@ RightGroupBox:AddToggle("AutoSellToggle", {
     end,
 })
 
-local LeftGroupBox = Tabs.Farm:AddLeftGroupbox("5X Speed")
+local LeftGroupBox = Tabs.Farm:AddLeftGroupbox("5X Speed", "chevrons-up")
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -1003,7 +1045,7 @@ Belum Ada
 })
 
 
-local LeftGroupBox = Tabs.Event:AddLeftGroupbox("Halloween")
+local LeftGroupBox = Tabs.Event:AddLeftGroupbox("Halloween", "candy")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -1078,7 +1120,7 @@ LeftGroupBox:AddButton({
     end
 })
 
-local LeftGroupBox = Tabs.Auto:AddLeftGroupbox("Deep Sea Status")
+local LeftGroupBox = Tabs.Auto:AddLeftGroupbox("Deep Sea Status", "ghost")
 
 -- === DEEP SEA QUEST ===
 local board = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board
@@ -1121,7 +1163,7 @@ for _, name in ipairs(labelNames) do
     end
 end
 
-local LeftGroupBox = Tabs.Auto:AddLeftGroupbox("Aura Boat Status")
+local LeftGroupBox = Tabs.Auto:AddLeftGroupbox("Aura Boat Status", "kayak")
 
 -- === AURA BOAT QUEST ===
 -- Buat label utama di LeftGroupBox
@@ -1154,7 +1196,7 @@ task.spawn(function()
 end)
 
 
-local LeftGroupBox = Tabs.Auto:AddLeftGroupbox("Element Status")
+local LeftGroupBox = Tabs.Auto:AddLeftGroupbox("Element Status", "atom")
 
 -- === ELEMENT QUEST ===
 local board = workspace["!!! MENU RINGS"]["Element Tracker"].Board
@@ -1194,7 +1236,7 @@ for _, name in ipairs(labelNames) do
     end
 end
 
-local LeftGroupBox = Tabs.Auto:AddLeftGroupbox("TempleLever Status")
+local LeftGroupBox = Tabs.Auto:AddLeftGroupbox("TempleLever Status", "toggle-right")
 
 -- === TEMPLE LEVER STATUS ===
 local Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS")
@@ -1243,7 +1285,7 @@ task.spawn(function()
     end
 end)
 
-local RightGroupBox = Tabs.Auto:AddRightGroupbox("Auto Quest")
+local RightGroupBox = Tabs.Auto:AddRightGroupbox("Auto Quest", "crosshair")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -1425,7 +1467,7 @@ Toggles.AutoQuestToggle:OnChanged(function(state)
     end
 end)
 
-local LeftGroupBox = Tabs.Shop:AddLeftGroupbox("Rod Purchaser")
+local LeftGroupBox = Tabs.Shop:AddLeftGroupbox("Rod Purchaser", "fish-symbol")
 
 local rodMap = {
 	["Starter Rod"] = 1,
@@ -1559,7 +1601,7 @@ Toggles.AutoBuyRodToggle:OnChanged(function(state)
 end)
 
 
-local RightGroupBox = Tabs.Shop:AddRightGroupbox("Bait Purchaser")
+local RightGroupBox = Tabs.Shop:AddRightGroupbox("Bait Purchaser", "shrimp")
 
 local BaitID = {
     ["Topwater Bait"] = 10,
@@ -1692,7 +1734,7 @@ Toggles.AutoBuyBaitToggle:OnChanged(function(state)
     end
 end)
 
-local LeftGroupBox = Tabs.Shop:AddLeftGroupbox("Weather Purchaser")
+local LeftGroupBox = Tabs.Shop:AddLeftGroupbox("Weather Purchaser", "cloud")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -1801,7 +1843,7 @@ Toggles.AutoWeatherPurchaseToggle:OnChanged(function(state)
     end
 end)
 
-local RightGroupBox = Tabs.Shop:AddRightGroupbox("Boat Purchaser")
+local RightGroupBox = Tabs.Shop:AddRightGroupbox("Boat Purchaser", "sailboat")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -1919,7 +1961,85 @@ Toggles.AutoBuyBoatToggle:OnChanged(function(state)
     end
 end)
 
-local RightGroupBox = Tabs.Boat:AddRightGroupbox("Speed Boat")
+local LeftGroupBox = Tabs.Boat:AddLeftGroupbox("Spawn Boat", "ship")
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SpawnBoat = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/SpawnBoat")
+
+-- Daftar Boat
+local BoatList = {
+    ["Small Boat"] = 1,
+    ["Kayak"] = 2,
+    ["Jetski"] = 3,
+    ["Highfield Boat"] = 4,
+    ["Speed Boat"] = 5,
+    ["Fishing Boat"] = 6,
+    ["Mini Yacht"] = 14,
+    ["Mini Hoverboat"] = 15,
+    ["Hyper Boat"] = 7,
+    ["Dinky Fishing Boat"] = 20,
+    ["Aura Boat"] = 17,
+    ["Burger Boat"] = 18,
+    ["Mega Hovercraft"] = 19,
+    ["Froen Boat"] = 11,
+    ["Cruiser Boat"] = 13,
+    ["Rubber Ducky"] = 16,
+}
+
+-- Convert ke nama boat untuk dropdown
+local BoatNames = {}
+for name,_ in pairs(BoatList) do
+    table.insert(BoatNames, name)
+end
+table.sort(BoatNames)
+
+-- Default pilihan
+local selectedBoatID = BoatList[BoatNames[1]]
+
+-- Dropdown Pilih Boat
+LeftGroupBox:AddDropdown("SelectBoatDropdown", {
+    Values = BoatNames,
+    Default = BoatNames[1],
+    Multi = false,
+    Text = "Select Boat to Spawn",
+    Searchable = true,
+    Callback = function(option)
+        selectedBoatID = BoatList[option]
+        print("Selected Boat to Spawn:", option, "ID:", selectedBoatID)
+    end
+})
+
+-- Button Spawn Boat
+LeftGroupBox:AddButton({
+    Text = "Spawn Boat",
+    Func = function()
+        local args = {selectedBoatID}
+        local success, result = pcall(function()
+            return SpawnBoat:InvokeServer(unpack(args))
+        end)
+
+        if success then
+            Library:Notify({
+                Title = "Boat Spawned",
+                Description = "Spawned Boat: " .. tostring(result),
+                Time = 4,
+            })
+        else
+            Library:Notify({
+                Title = "Spawn Failed",
+                Description = tostring(result),
+                Time = 4,
+            })
+        end
+    end
+})
+
+local RightGroupBox = Tabs.Boat:AddRightGroupbox("Speed Boat", "gauge")
 
 -- Input untuk set kecepatan
 local customSpeed = 1000
@@ -1979,7 +2099,7 @@ Toggles.SuperSpeedToggle:OnChanged(function(state)
     end
 end)
 
-local LeftGroupBox = Tabs.Player:AddLeftGroupbox("LocalPlayer")
+local LeftGroupBox = Tabs.Player:AddLeftGroupbox("LocalPlayer", "user")
 
 -- Bypass Oxygen Tank Toggle
 LeftGroupBox:AddToggle("BypassOxygenTank", {
@@ -2249,7 +2369,152 @@ Toggles.AntiLavaToggle:OnChanged(function(state)
     end
 end)
 
-local LeftGroupBox = Tabs.Tp:AddLeftGroupbox("Islands")
+LeftGroupBox:AddButton({
+    Text = "Destroy Window",
+    Func = function()
+        local CoreGui = game:GetService("CoreGui")
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+
+        -- Remove old confirmation GUI if it exists
+        if CoreGui:FindFirstChild("ConfirmDestroyGUI") then
+            CoreGui.ConfirmDestroyGUI:Destroy()
+        end
+
+        -- Create confirmation GUI (directly in CoreGui)
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "ConfirmDestroyGUI"
+        ScreenGui.ResetOnSpawn = false
+        ScreenGui.Parent = CoreGui
+
+        -- Main frame
+        local Frame = Instance.new("Frame")
+        Frame.Size = UDim2.new(0, 260, 0, 140)
+        Frame.Position = UDim2.new(0.5, -130, 0.5, -70)
+        Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        Frame.BorderSizePixel = 0
+        Frame.Active = true
+        Frame.Draggable = true
+        Frame.Parent = ScreenGui
+
+        local UICorner = Instance.new("UICorner")
+        UICorner.CornerRadius = UDim.new(0, 10)
+        UICorner.Parent = Frame
+
+        -- Title
+        local Title = Instance.new("TextLabel")
+        Title.Text = "Confirmation"
+        Title.Size = UDim2.new(1, 0, 0, 30)
+        Title.BackgroundTransparency = 1
+        Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Title.Font = Enum.Font.GothamBold
+        Title.TextSize = 20
+        Title.Parent = Frame
+
+        -- Message
+        local Message = Instance.new("TextLabel")
+        Message.Text = "Do you want to destroy all Obsidian and WebhookGUI windows?"
+        Message.Size = UDim2.new(1, -20, 0, 40)
+        Message.Position = UDim2.new(0, 10, 0, 40)
+        Message.BackgroundTransparency = 1
+        Message.TextColor3 = Color3.fromRGB(230, 230, 230)
+        Message.Font = Enum.Font.Gotham
+        Message.TextSize = 16
+        Message.TextWrapped = true
+        Message.Parent = Frame
+
+        -- Yes Button
+        local YesButton = Instance.new("TextButton")
+        YesButton.Text = "Yes"
+        YesButton.Size = UDim2.new(0, 100, 0, 30)
+        YesButton.Position = UDim2.new(0.1, 0, 1, -40)
+        YesButton.BackgroundColor3 = Color3.fromRGB(0, 170, 85)
+        YesButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        YesButton.Font = Enum.Font.GothamBold
+        YesButton.TextSize = 16
+        YesButton.Parent = Frame
+
+        local YesCorner = Instance.new("UICorner")
+        YesCorner.CornerRadius = UDim.new(0, 6)
+        YesCorner.Parent = YesButton
+
+        -- No Button
+        local NoButton = Instance.new("TextButton")
+        NoButton.Text = "No"
+        NoButton.Size = UDim2.new(0, 100, 0, 30)
+        NoButton.Position = UDim2.new(1, -110, 1, -40)
+        NoButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        NoButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        NoButton.Font = Enum.Font.GothamBold
+        NoButton.TextSize = 16
+        NoButton.Parent = Frame
+
+        local NoCorner = Instance.new("UICorner")
+        NoCorner.CornerRadius = UDim.new(0, 6)
+        NoCorner.Parent = NoButton
+
+        -- Button actions
+        YesButton.MouseButton1Click:Connect(function()
+            -- Delete all Obsidian GUIs from CoreGui
+            for _, v in pairs(CoreGui:GetDescendants()) do
+                if v.Name == "Obsidian" then
+                    v:Destroy()
+                end
+            end
+
+            -- Delete ALL WebhookGUI from PlayerGui
+            if LocalPlayer:FindFirstChild("PlayerGui") then
+                for _, gui in pairs(LocalPlayer.PlayerGui:GetChildren()) do
+                    if gui.Name == "WebhookGUI" then
+                        gui:Destroy()
+                    end
+                end
+            end
+
+            print("All Obsidian and WebhookGUI windows have been deleted!")
+            ScreenGui:Destroy()
+        end)
+
+        NoButton.MouseButton1Click:Connect(function()
+            ScreenGui:Destroy()
+        end)
+    end
+})
+
+
+local RightGroupBox = Tabs.Player:AddRightGroupbox("Webhook", "webhook")
+
+--// Toggle untuk menampilkan/menyembunyikan GUI Webhook
+RightGroupBox:AddToggle("ShowWebhookGUI", {
+	Text = "Show Webhook Settings ⚙️",
+	Default = true, -- GUI langsung aktif saat awal
+})
+
+-- Ambil GUI
+local player = game.Players.LocalPlayer
+local gui = player:WaitForChild("PlayerGui"):FindFirstChild("WebhookGUI")
+
+-- Kalau GUI ditemukan, langsung tampilkan saat awal
+if gui then
+	gui.Enabled = true
+else
+	warn("⚠️ WebhookGUI belum ditemukan saat inisialisasi!")
+end
+
+-- Event toggle diubah
+Toggles.ShowWebhookGUI:OnChanged(function(state)
+	local player = game.Players.LocalPlayer
+	local gui = player:WaitForChild("PlayerGui"):FindFirstChild("WebhookGUI")
+	if gui then
+		gui.Enabled = state
+		print("Webhook GUI visible:", state)
+	else
+		warn("⚠️ WebhookGUI belum ditemukan!")
+	end
+end)
+
+
+local LeftGroupBox = Tabs.Tp:AddLeftGroupbox("Islands", "tree-palm")
 
 local islands = {
     ["Kohana"] = CFrame.new(-642.243561, 16.0354481, 624.918884, 0.999580681, 0, -0.0289562326, 0, 1, 0, 0.0289562326, 0, 0.999580681),
@@ -2316,7 +2581,7 @@ LeftGroupBox:AddButton({
     end,
 })
 
-local RightGroupBox = Tabs.Tp:AddRightGroupbox("Position")
+local RightGroupBox = Tabs.Tp:AddRightGroupbox("Position", "folder")
 
 -- Variabel global
 local savedCFrame = nil
@@ -2390,241 +2655,3 @@ Toggles.TeleportToSavedPos:OnChanged(function(state)
     end
 end)
 
-
-local LeftGroupBox = Tabs.Webhook:AddLeftGroupbox("Webhook")
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-
-local LocalPlayer = Players.LocalPlayer
-local Notification = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Small Notification")
-
-local Request = (syn and syn.request) or (http_request) or (fluxus and fluxus.request) or (krnl and request)
-
--- Variabel utama
-local WebhookURL = ""
-local WebhookActive = false
-local SelectedTiers = {}
-
-local TierMap = {
-    [1] = "Common",
-    [2] = "Uncommon",
-    [3] = "Rare",
-    [4] = "Epic",
-    [5] = "Legendary",
-    [6] = "Mythic",
-    [7] = "SECRET"
-}
-
-local FishCounter = {
-    Common = 0,
-    Uncommon = 0,
-    Rare = 0,
-    Epic = 0,
-    Legendary = 0,
-    Mythic = 0,
-    SECRET = 0
-}
-
--- Fungsi bantu
-local function FormatNumber(num)
-    num = tonumber(num) or 0
-    if num >= 1e9 then
-        return string.format("%.2fb", num / 1e9)
-    elseif num >= 1e6 then
-        return string.format("%.2fm", num / 1e6)
-    elseif num >= 1e3 then
-        return string.format("%.2fk", num / 1e3)
-    else
-        return tostring(num)
-    end
-end
-
-local function FormatChance(chance)
-    chance = tonumber(chance) or 0
-    return string.format("%.2f%%", chance * 100)
-end
-
-local function GetRobloxImage(assetId)
-    if not assetId then return nil end
-    local url = "https://thumbnails.roblox.com/v1/assets?assetIds=" .. assetId .. "&size=420x420&format=Png&isCircular=false"
-    local success, response = pcall(game.HttpGet, game, url)
-    if success then
-        local data = HttpService:JSONDecode(response)
-        if data and data.data and data.data[1] and data.data[1].imageUrl then
-            return data.data[1].imageUrl
-        end
-    end
-    return nil
-end
-
-local function SendEmbed(data)
-    if WebhookURL ~= "" and Request then
-        local payload = {["embeds"] = data.embeds}
-        Request({
-            Url = WebhookURL,
-            Method = "POST",
-            Headers = {["Content-Type"] = "application/json"},
-            Body = HttpService:JSONEncode(payload)
-        })
-    end
-end
-
-
-LeftGroupBox:AddInput("WebhookURLInput", {
-    Text = "Webhook URL",
-    Placeholder = "Masukkan Webhook URL di sini...",
-    Callback = function(input)
-        WebhookURL = input
-        Library:Notify({
-            Title = "Webhook Set",
-            Description = "URL berhasil diatur!",
-            Time = 3
-        })
-    end
-})
-
-LeftGroupBox:AddToggle("WebhookToggle", {
-    Text = "Enable Webhook Logger",
-    Default = false,
-    Callback = function(state)
-        WebhookActive = state
-        if state then
-            Library:Notify({
-                Title = "Webhook Aktif",
-                Description = "Webhook logger diaktifkan.",
-                Time = 3
-            })
-            SendEmbed({
-                ["embeds"] = {{
-                    ["title"] = "✅ Webhook Aktif",
-                    ["description"] = "Fishing logger siap mengirim data ikan!",
-                    ["color"] = 5763719,
-                    ["timestamp"] = DateTime.now():ToIsoDate()
-                }}
-            })
-        else
-            Library:Notify({
-                Title = "Webhook Nonaktif",
-                Description = "Webhook logger dinonaktifkan.",
-                Time = 3
-            })
-        end
-    end
-})
-
-LeftGroupBox:AddDropdown("TierFilter", {
-    Text = "Tier Filter",
-    Values = {"All", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET"},
-    Multi = true,
-    Callback = function(selected)
-        SelectedTiers = selected
-        Library:Notify({
-            Title = "Tier Filter",
-            Description = "Tier diset ke: " .. table.concat(selected, ", "),
-            Time = 3
-        })
-    end
-})
-
--- Core Hook Notification System
-local Container = Notification.Display.Container
-local ItemName = Container:WaitForChild("ItemName")
-local NewLabel = Notification.Display.NewFrame.Frame:WaitForChild("NewLabel")
-local VectorFrame = Notification.Display.VectorFrame.Vector
-local LastFishData = nil
-
-local function FindFishModule(fishName)
-    local Items = ReplicatedStorage:WaitForChild("Items")
-    for _, moduleScript in ipairs(Items:GetChildren()) do
-        if moduleScript:IsA("ModuleScript") then
-            local ok, data = pcall(require, moduleScript)
-            if ok and data and data.Data and data.Data.Name then
-                local realName = data.Data.Name
-                if string.find(string.lower(fishName), string.lower(realName)) then
-                    return data
-                end
-            end
-        end
-    end
-    return nil
-end
-
-ItemName:GetPropertyChangedSignal("Text"):Connect(function()
-    if not WebhookActive or WebhookURL == "" then return end
-
-    local rawText = ItemName.Text
-    if rawText == "" then return end
-
-    local fishName, fishWeight = rawText:match("^(.-)%s*%((.-)%)$")
-    fishName = (fishName and fishName:gsub("^%s+", ""):gsub("%s+$", "")) or rawText
-    fishWeight = fishWeight or "Unknown"
-
-    local fishData = FindFishModule(fishName)
-    local tierNum = fishData and fishData.Data.Tier or 0
-    local tierName = TierMap[tierNum] or "Unknown"
-    local sellPrice = fishData and fishData.SellPrice or "Unknown"
-    local chance = fishData and fishData.Probability and fishData.Probability.Chance or 0
-
-    local newLabelText = NewLabel.Text or ""
-    local rarityText = Container:WaitForChild("Rarity").Text or "Unknown"
-    local bagText = Players.LocalPlayer.PlayerGui.Inventory.Main.Top.Options.Fish.Label:WaitForChild("BagSize").Text or "Unknown"
-
-    local assetId = string.match(VectorFrame.Image, "%d+")
-    local imageUrl = GetRobloxImage(assetId)
-
-    local currentData = {Fish = fishName, Weight = fishWeight, Bag = bagText, Rarity = rarityText}
-    if LastFishData and LastFishData.Fish == currentData.Fish and LastFishData.Weight == currentData.Weight and LastFishData.Bag == currentData.Bag and LastFishData.Rarity == currentData.Rarity then
-        return
-    end
-    LastFishData = currentData
-
-    if #SelectedTiers > 0 then
-        if not table.find(SelectedTiers, "All") and not table.find(SelectedTiers, tierName) then
-            return
-        end
-    end
-
-    if FishCounter[tierName] ~= nil then
-        FishCounter[tierName] += 1
-    end
-
-    local counterFields = {}
-    for _, name in ipairs({"Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET"}) do
-        table.insert(counterFields, {
-            ["name"] = "X : " .. name,
-            ["value"] = "```" .. tostring(FishCounter[name]) .. "```",
-            ["inline"] = true
-        })
-    end
-
-    local Data = {
-        ["embeds"] = {{
-            ["title"] = "🎣 New Fish Caught!",
-            ["color"] = math.random(1000000, 16777215),
-            ["fields"] = {
-                {["name"] = "Fish", ["value"] = "```" .. fishName .. "```", ["inline"] = true},
-                {["name"] = "Weight (KG)", ["value"] = "```" .. fishWeight .. "```", ["inline"] = true},
-                {["name"] = "Tier", ["value"] = "```" .. tierName .. "```", ["inline"] = true},
-                {["name"] = "Sell Price", ["value"] = "```" .. FormatNumber(sellPrice) .. "```", ["inline"] = true},
-                {["name"] = "Chance", ["value"] = "```" .. FormatChance(chance) .. "```", ["inline"] = true},
-                {["name"] = "Rarity", ["value"] = "```" .. rarityText .. "```", ["inline"] = true},
-                {["name"] = "Bag Size", ["value"] = "```" .. bagText .. "```", ["inline"] = true},
-            },
-            ["footer"] = {["text"] = "Nexa | Fishing Logger • Fish It!"},
-            ["timestamp"] = DateTime.now():ToIsoDate(),
-            ["image"] = {["url"] = imageUrl or "https://i.imgur.com/zwCkN8P.png"}
-        }}
-    }
-
-    for _, f in ipairs(counterFields) do
-        table.insert(Data.embeds[1].fields, f)
-    end
-
-    if newLabelText ~= "" then
-        table.insert(Data.embeds[1].fields, {["name"] = "Info", ["value"] = "```" .. newLabelText .. "```", ["inline"] = false})
-    end
-
-    SendEmbed(Data)
-end)
