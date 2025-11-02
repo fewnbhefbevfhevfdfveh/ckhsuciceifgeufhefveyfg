@@ -1,2 +1,7 @@
-⭐ [/] New Ui
-🟢 [+] Added 5x Speed
+[-] Delete Tab Webhook
+[/] Webhook Move To Tab Player
+[+] Added Tab Home 
+ = Account Info
+[/] Improve Ui
+[+] Tab Player:
+ - Added Destroy Window
