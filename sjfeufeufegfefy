@@ -7,22 +7,32 @@ local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 
-local Options = Library.Options
-local Toggles = Library.Toggles
+-- Player info
+local Player = game:GetService("Players").LocalPlayer
+local playerName = Player.Name or "UnknownPlayer"
+local playerId = tostring(Player.UserId)
 
-Library.ForceCheckbox = false
-Library.ShowToggleFrameInKeybinds = true
+-- Register library
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
 
+-- Folder penyimpanan per-player
+ThemeManager:SetFolder("MyScriptHub/" .. playerName)
+SaveManager:SetFolder("MyScriptHub/" .. playerName)
+SaveManager:SetSubFolder("Lobby") -- opsional
+
+-- Window utama
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.3.8 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.3.6 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
 })
 
+-- Semua Tabs
 local Tabs = {
-    Home = Window:AddTab("Home", "house"),
+	Home = Window:AddTab("Home", "house"),
 	Info = Window:AddTab("Info", "info"),
 	Farm = Window:AddTab("Farm", "fish"),
 	Event = Window:AddTab("Event", "calendar"),
@@ -31,7 +41,25 @@ local Tabs = {
 	Boat = Window:AddTab("Boat", "sailboat"),
 	Player = Window:AddTab("Player", "user"),
 	Tp = Window:AddTab("Teleport", "map-pin"),
+	Config = Window:AddTab("Config", "folder"),
 }
+
+-- Theme & Save Manager setup
+ThemeManager:ApplyToTab(Tabs.Config)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
+SaveManager:BuildConfigSection(Tabs.Config)
+
+-- 🟢 Auto Load config unik tiap player
+SaveManager:LoadAutoloadConfig()
+ThemeManager:LoadDefault()
+
+-- Optional settings
+local Options = Library.Options
+local Toggles = Library.Toggles
+Library.ForceCheckbox = false
+Library.ShowToggleFrameInKeybinds = true
+
 
 local LeftGroupBox = Tabs.Home:AddLeftGroupbox("Account Info", "circle-user-round")
 
