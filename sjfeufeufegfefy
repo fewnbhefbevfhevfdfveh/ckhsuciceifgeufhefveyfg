@@ -2489,8 +2489,8 @@ local RightGroupBox = Tabs.Player:AddRightGroupbox("Webhook", "webhook")
 
 --// Toggle untuk menampilkan/menyembunyikan GUI Webhook
 RightGroupBox:AddToggle("ShowWebhookGUI", {
-	Text = "Show Webhook Settings ⚙️",
-	Default = true, -- GUI langsung aktif saat awal
+	Text = "Show Webhook Gui",
+	Default = false, -- GUI langsung aktif saat awal
 })
 
 -- Ambil GUI
@@ -2499,7 +2499,7 @@ local gui = player:WaitForChild("PlayerGui"):FindFirstChild("WebhookGUI")
 
 -- Kalau GUI ditemukan, langsung tampilkan saat awal
 if gui then
-	gui.Enabled = true
+	gui.Enabled = false
 else
 	warn("⚠️ WebhookGUI belum ditemukan saat inisialisasi!")
 end
@@ -2658,4 +2658,3 @@ Toggles.TeleportToSavedPos:OnChanged(function(state)
         freezeCharacter()
     end
 end)
-
