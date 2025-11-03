@@ -7,19 +7,14 @@ local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 
--- Player info
-local Player = game:GetService("Players").LocalPlayer
-local playerName = Player.Name or "UnknownPlayer"
-local playerId = tostring(Player.UserId)
-
 -- Register library
 ThemeManager:SetLibrary(Library)
 SaveManager:SetLibrary(Library)
 
--- Folder penyimpanan per-player
-ThemeManager:SetFolder("MyScriptHub/" .. playerName)
-SaveManager:SetFolder("MyScriptHub/" .. playerName)
-SaveManager:SetSubFolder("Lobby") -- opsional
+-- Folder penyimpanan
+ThemeManager:SetFolder("MyScriptHub")
+SaveManager:SetFolder("MyScriptHub/specific-game")
+SaveManager:SetSubFolder("Lobby")
 
 -- Window utama
 local Window = Library:CreateWindow({
@@ -49,8 +44,6 @@ ThemeManager:ApplyToTab(Tabs.Config)
 SaveManager:IgnoreThemeSettings()
 SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
 SaveManager:BuildConfigSection(Tabs.Config)
-
--- 🟢 Auto Load config unik tiap player
 SaveManager:LoadAutoloadConfig()
 ThemeManager:LoadDefault()
 
@@ -59,7 +52,6 @@ local Options = Library.Options
 local Toggles = Library.Toggles
 Library.ForceCheckbox = false
 Library.ShowToggleFrameInKeybinds = true
-
 
 local LeftGroupBox = Tabs.Home:AddLeftGroupbox("Account Info", "circle-user-round")
 
