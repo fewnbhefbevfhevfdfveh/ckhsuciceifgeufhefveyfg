@@ -1,3 +1,4 @@
+
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
@@ -2216,25 +2217,65 @@ LeftGroupBox:AddButton({
     Func = function()
         local Lighting = game:GetService("Lighting")
         local Workspace = game:GetService("Workspace")
+        local Terrain = Workspace:FindFirstChildOfClass("Terrain")
 
+        -- Lighting Optimization
         Lighting.GlobalShadows = false
-        Lighting.FogEnd = 9e9
+        Lighting.FogEnd = 1e10
         Lighting.Brightness = 1
         Lighting.ExposureCompensation = 0
+        Lighting.EnvironmentDiffuseScale = 0
+        Lighting.EnvironmentSpecularScale = 0
         Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
         Lighting.ShadowSoftness = 0
+        Lighting.ColorShift_Bottom = Color3.new(0,0,0)
+        Lighting.ColorShift_Top = Color3.new(0,0,0)
 
+        -- Terrain Optimization
+        if Terrain then
+            Terrain.WaterWaveSize = 0
+            Terrain.WaterWaveSpeed = 0
+            Terrain.WaterReflectance = 0
+            Terrain.WaterTransparency = 1
+            sethiddenproperty(Terrain, "Decoration", false)
+        end
+
+        -- Disable Visual Effects (Bloom, Blur, SunRays, dll)
+        for _, v in pairs(Lighting:GetChildren()) do
+            if v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("DepthOfFieldEffect") then
+                v.Enabled = false
+            end
+        end
+
+        -- Mass Disable Visuals (tanpa hapus animasi/suara)
         pcall(function()
             for _, obj in pairs(Workspace:GetDescendants()) do
-                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Explosion") then
+                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") or obj:IsA("Explosion") then
                     obj.Enabled = false
                 elseif obj:IsA("Decal") or obj:IsA("Texture") then
                     obj.Transparency = 1
+                elseif obj:IsA("MeshPart") or obj:IsA("UnionOperation") or obj:IsA("Part") then
+                    obj.Material = Enum.Material.SmoothPlastic
+                    obj.Reflectance = 0
                 end
             end
         end)
+
+        -- Rendering Quality to Lowest
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+
+        -- Optimize Camera
+        for _, cam in pairs(Workspace:GetDescendants()) do
+            if cam:IsA("Camera") then
+                cam.FieldOfView = 70
+            end
+        end
+
+        -- Garbage Clean
+        collectgarbage("collect")
     end
 })
+
 
 -- Hide Username & Level Toggle
 LeftGroupBox:AddToggle("HideUsernameLevel", {
@@ -2487,24 +2528,24 @@ LeftGroupBox:AddButton({
 
 local RightGroupBox = Tabs.Player:AddRightGroupbox("Webhook", "webhook")
 
---// Toggle untuk menampilkan/menyembunyikan GUI Webhook
+--========================================================--
+-- TOGGLE SHOW/HIDE GUI
+--========================================================--
+
 RightGroupBox:AddToggle("ShowWebhookGUI", {
 	Text = "Show Webhook Gui",
-	Default = false, -- GUI langsung aktif saat awal
+	Default = false, -- ❌ GUI tidak langsung aktif
 })
 
--- Ambil GUI
 local player = game.Players.LocalPlayer
 local gui = player:WaitForChild("PlayerGui"):FindFirstChild("WebhookGUI")
 
--- Kalau GUI ditemukan, langsung tampilkan saat awal
 if gui then
-	gui.Enabled = false
+	gui.Enabled = false -- Tidak langsung tampil
 else
 	warn("⚠️ WebhookGUI belum ditemukan saat inisialisasi!")
 end
 
--- Event toggle diubah
 Toggles.ShowWebhookGUI:OnChanged(function(state)
 	local player = game.Players.LocalPlayer
 	local gui = player:WaitForChild("PlayerGui"):FindFirstChild("WebhookGUI")
