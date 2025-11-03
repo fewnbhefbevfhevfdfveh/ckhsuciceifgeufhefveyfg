@@ -1,4 +1,3 @@
-
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
@@ -16,7 +15,7 @@ Library.ShowToggleFrameInKeybinds = true
 
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.3.6 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.3.7 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -803,20 +802,26 @@ end
 
 task.wait(1)
 
+if not Window then
+    warn("Failed to create UI Window.")
+    return
+end
+
 local featureState = {
     AutoFish = false,
     Instant_ChargeDelay = 0.07,
     Instant_SpamCount = 5,
     Instant_WorkerCount = 2,
-    Instant_StartDelay = 1.26,
+    Instant_StartDelay = 1.20,
     Instant_CatchTimeout = 0.01,
     Instant_CycleDelay = 0.01,
-    Instant_ResetCount = 23,
+    Instant_ResetCount = 10,
     Instant_ResetPause = 0.01
 }
 
 local fishingTrove = {}
 local autoFishThread = nil
+local isWaitingForCorrectTier = false
 local fishCaughtBindable = Instance.new("BindableEvent")
 
 local function equipFishingRod()
@@ -850,7 +855,8 @@ end)
 
 local function stopAutoFishProcesses()
     featureState.AutoFish = false
-    for _, item in ipairs(fishingTrove) do
+    
+    for i, item in ipairs(fishingTrove) do
         if typeof(item) == "RBXScriptConnection" then
             item:Disconnect()
         elseif typeof(item) == "thread" then
@@ -858,6 +864,7 @@ local function stopAutoFishProcesses()
         end
     end
     fishingTrove = {}
+    
     pcall(function()
         if Modules.FishingController and Modules.FishingController.RequestClientStopFishing then
             Modules.FishingController:RequestClientStopFishing(true)
@@ -869,6 +876,7 @@ local function startAutoFishMethod_Instant()
     if not (Modules.ChargeRodFunc and Modules.StartMinigameFunc and Modules.CompleteFishingEvent and Modules.FishingController) then
         return
     end
+
     featureState.AutoFish = true
 
     local chargeCount = 0
@@ -878,6 +886,7 @@ local function startAutoFishMethod_Instant()
     local function worker()
         while featureState.AutoFish and player do
             local currentResetTarget_Worker = featureState.Instant_ResetCount or 10
+
             if isCurrentlyResetting or chargeCount >= currentResetTarget_Worker then
                 break
             end
@@ -885,6 +894,7 @@ local function startAutoFishMethod_Instant()
             local success, err = pcall(function()
                 while counterLock do task.wait() end
                 counterLock = true
+
                 if chargeCount < currentResetTarget_Worker then
                     chargeCount = chargeCount + 1
                 else
@@ -931,9 +941,11 @@ local function startAutoFishMethod_Instant()
                 end
 
                 if connection and connection.Connected then connection:Disconnect() end
+
                 if Modules.FishingController and Modules.FishingController.RequestClientStopFishing then
                     pcall(Modules.FishingController.RequestClientStopFishing, Modules.FishingController, true)
                 end
+
                 task.wait()
             end)
 
@@ -951,10 +963,12 @@ local function startAutoFishMethod_Instant()
         while featureState.AutoFish do
             local currentResetTarget = featureState.Instant_ResetCount or 10
             local currentPauseTime = featureState.Instant_ResetPause or 0.01
+
             chargeCount = 0
             isCurrentlyResetting = false
 
             local batchTrove = {}
+
             for i = 1, featureState.Instant_WorkerCount do
                 if not featureState.AutoFish then break end
                 local workerThread = task.spawn(worker)
@@ -967,16 +981,19 @@ local function startAutoFishMethod_Instant()
             end
 
             isCurrentlyResetting = true
+
             if featureState.AutoFish then
                 for _, thread in ipairs(batchTrove) do
                     task.cancel(thread)
                 end
                 batchTrove = {}
+
                 task.wait(currentPauseTime)
             end
         end
         stopAutoFishProcesses()
     end)
+
     table.insert(fishingTrove, autoFishThread)
 end
 
@@ -992,12 +1009,52 @@ local function startOrStopAutoFish(shouldStart)
     end
 end
 
--- ==================================================
--- ✅ UI SYSTEM (Versi Baru: AddToggle / AddInput)
--- ==================================================
+-- ===================================================================
+-- === UI BARU (WindUI Format Terbaru) ===
+-- ===================================================================
 
-local AutoFishToggle = LeftGroupBox:AddToggle("AutoFishToggle", {
-	Text = "AutoFish X5 Speed",
+-- Input: Delay Recast
+LeftGroupBox:AddInput("DelayRecastInput", {
+    Text = "Delay Recast",
+    Default = "1.20",
+    Placeholder = "Default: 1.20",
+    Callback = function(value)
+        local num = tonumber(value)
+        if num then
+            featureState.Instant_StartDelay = num
+        end
+    end
+})
+
+-- Input: Spam Finish
+LeftGroupBox:AddInput("SpamFinishInput", {
+    Text = "Spam Finish",
+    Default = "10",
+    Placeholder = "Default: 10",
+    Callback = function(value)
+        local num = tonumber(value)
+        if num then
+            featureState.Instant_ResetCount = math.floor(num)
+        end
+    end
+})
+
+-- Input: Cooldown Recast
+LeftGroupBox:AddInput("CooldownRecastInput", {
+    Text = "Cooldown Recast",
+    Default = "0.01",
+    Placeholder = "Default: 0.01",
+    Callback = function(value)
+        local num = tonumber(value)
+        if num then
+            featureState.Instant_ResetPause = num
+        end
+    end
+})
+
+-- Toggle: AutoFish
+LeftGroupBox:AddToggle("AutoFishToggle", {
+	Text = "AutoFish",
 	Default = false,
 })
 
@@ -1005,42 +1062,22 @@ Toggles.AutoFishToggle:OnChanged(function(state)
 	startOrStopAutoFish(state)
 end)
 
-LeftGroupBox:AddInput("DelayRecastInput", {
-	Text = "Delay Recast",
-	Default = tostring(featureState.Instant_StartDelay),
-	Placeholder = "Enter delay (Default: 1.26)",
-	Callback = function(input)
-		featureState.Instant_StartDelay = tonumber(input) or 1.26
-	end,
-})
-
-LeftGroupBox:AddInput("SpamFinishInput", {
-	Text = "Spam Finish",
-	Default = tostring(featureState.Instant_ResetCount),
-	Placeholder = "Enter spam count (Default: 23)",
-	Callback = function(input)
-		featureState.Instant_ResetCount = math.floor(tonumber(input) or 23)
-	end,
-})
-
-LeftGroupBox:AddInput("CooldownRecastInput", {
-	Text = "Cooldown Recast",
-	Default = tostring(featureState.Instant_ResetPause),
-	Placeholder = "Enter cooldown (Default: 0.01)",
-	Callback = function(input)
-		featureState.Instant_ResetPause = tonumber(input) or 0.01
-	end,
-})
 
 LeftGroupBox:AddLabel({
     Text = [[
-Setingan Ghostfinn Rod
-Delay Recast: 1.26
-Spam Finish: 23
-Cooldown Recast: 0.01
+Element = Default
+Element Crystal Cavern = 1.10|10|0.01
+Element = 1.03|5|0.01
+Ghostfun = Default
+Ghostfin = 1.85|13|0.05
+Ghostfin = 1.30|10|4.00
+Ghostfin Sacred = 1.27-1.30|10|0.10
+Ghostfin Mt.Hallow = 1.05|10|0.10
 
-Setingan Element Rod
-Belum Ada
+NOTE :
+1.Pastikan Ping Kalian Bagus Maka Settingan Diatas Akan Bekerja Dengan Baik
+2.Kalo Ping Jelek Dan Settingan Salah Maka Dia Tidak Akan Narik
+3.Beda Pulau Beda Settingan
 ]],
     DoesWrap = true,
 })
