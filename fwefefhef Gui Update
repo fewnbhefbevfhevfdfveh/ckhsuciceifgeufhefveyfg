@@ -97,7 +97,7 @@ local Scroll = Instance.new("ScrollingFrame")
 Scroll.Size = UDim2.new(1, -40, 1, -70)
 Scroll.Position = UDim2.new(0, 20, 0, 60)
 Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 400)
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 Scroll.ScrollBarThickness = 5
 Scroll.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 200)
 Scroll.Parent = MainFrame
@@ -122,15 +122,30 @@ else
 	table.insert(updates, "⚠️ Gagal memuat Update Log dari server!")
 end
 
--- Masukkan ke GUI dengan animasi fade
+-- Fungsi untuk memberi warna berdasarkan simbol di depan
+local function getColorFromSymbol(line)
+	if line:match("^%[%+%]") then
+		return Color3.fromRGB(0, 255, 140) -- hijau
+	elseif line:match("^%[%-%]") then
+		return Color3.fromRGB(255, 90, 90) -- merah
+	elseif line:match("^%[%/%]") then
+		return Color3.fromRGB(90, 160, 255) -- biru
+	else
+		return Color3.fromRGB(230, 230, 230) -- default
+	end
+end
+
+-- Masukkan ke GUI dengan animasi fade + auto-resize scroll
 for i, text in pairs(updates) do
 	local Label = Instance.new("TextLabel")
-	Label.Size = UDim2.new(1, 0, 0, 28)
+	Label.Size = UDim2.new(1, -10, 0, 0)
 	Label.BackgroundTransparency = 1
-	Label.TextColor3 = Color3.fromRGB(230, 230, 230)
+	Label.TextColor3 = getColorFromSymbol(text)
 	Label.Font = Enum.Font.Gotham
 	Label.TextSize = 16
 	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.TextWrapped = true
+	Label.AutomaticSize = Enum.AutomaticSize.Y
 	Label.Text = text
 	Label.TextTransparency = 1
 	Label.Parent = Scroll
@@ -140,9 +155,17 @@ for i, text in pairs(updates) do
 	end)
 end
 
+-- Auto adjust CanvasSize ke isi UIListLayout
+UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	Scroll.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y + 20)
+end)
+
 -- Tombol Close
 CloseBtn.MouseButton1Click:Connect(function()
-	TweenService:Create(MainFrame, TweenInfo.new(0.3), {BackgroundTransparency = 1, Position = UDim2.new(0.5, -240, 0.5, -120)}):Play()
+	TweenService:Create(MainFrame, TweenInfo.new(0.3), {
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0.5, -240, 0.5, -120)
+	}):Play()
 	TweenService:Create(blur, TweenInfo.new(0.5), {Size = 0}):Play()
 	task.wait(0.4)
 	ScreenGui:Destroy()
