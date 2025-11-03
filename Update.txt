@@ -1,1 +1,3 @@
-[/] Improve AutoFish 5X Speed
+[+] Added Tab Config:
+ - Ste Thamez
+ - Config Set
