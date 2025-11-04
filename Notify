@@ -51,39 +51,39 @@ end
 safeNotify({
     Title = "Welcome",
     Description = "Welcome! Thank you for using the Nexa script.",
-    Time = 4,
+    Time = 2,
 })
-task.wait(4)
+task.wait(2)
 
 -- 2. Script executed counter + DisplayName
 local displayName = tostring(player.DisplayName or player.Name or "Player")
 safeNotify({
     Title = "Nexa",
     Description = "Player: " .. displayName .. "\nScript executed " .. tostring(executeCount) .. " time(s).",
-    Time = 4,
+    Time = 2,
 })
-task.wait(4)
+task.wait(2)
 
 -- 3. Bug Report
 safeNotify({
     Title = "Bug Report",
     Description = "If there are any errors, please report them to the developer. Join Discord to report bugs.",
-    Time = 4,
+    Time = 2,
 })
-task.wait(4)
+task.wait(2)
 
 -- 4. Purchase
 safeNotify({
     Title = "Purchase",
     Description = "If you want to buy a premium script key, join Discord to purchase.",
-    Time = 4,
+    Time = 2,
 })
-task.wait(4)
+task.wait(2)
 
 -- 5. Thanks
 safeNotify({
     Title = "Thanks",
     Description = "Thank you for using Nexa! Enjoy its features.",
-    Time = 4,
+    Time = 2,
 })
-task.wait(4)
+task.wait(2)
