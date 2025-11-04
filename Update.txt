@@ -1,3 +1,1 @@
-[+] Added Tab Config:
- - Ste Thamez
- - Config Set
+[+] Added Auto Fishing Event
