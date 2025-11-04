@@ -27,8 +27,8 @@ end
 -- Variabel untuk deteksi perubahan teks
 local lastTriggered = false
 
--- Loop cek terus label text
-while task.wait(0.2) do
+-- Loop cek setiap 1 detik
+while task.wait(1) do
 	local text = label.Text
 
 	if (text == "00H 00M 5S" or text == "0H 0M 5S" or text == "0H 00M 5S") then
