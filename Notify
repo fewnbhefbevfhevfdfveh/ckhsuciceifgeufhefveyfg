@@ -1,57 +1,89 @@
--- Storage file name (so it can be saved in exploit environment)
-local counterFile = "2.txt"
+-- Script: Execute counter per player + sequential notifications (uses Library:Notify)
+-- Pastikan ini dijalankan di sisi client (LocalScript)
 
--- Read file if exists, otherwise create new
-local executeCount = 0
-if isfile(counterFile) then
-    local content = readfile(counterFile)
-    executeCount = tonumber(content) or 0
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+if not player then
+    Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
+    player = Players.LocalPlayer
 end
 
--- Increment every time the script runs
+-- safety: pastikan Library ada (ganti jika objek Library berbeda)
+-- contoh: local Library = ... atau require(someModule)
+-- Asumsi: "Library" sudah tersedia di environment (sesuai kode mu sebelumnya)
+if not Library or type(Library.Notify) ~= "function" then
+    warn("Library:Notify tidak ditemukan. Pastikan Library tersedia sebelum menjalankan script.")
+    return
+end
+
+-- Nama file unik per player
+local counterFile = "3" .. tostring(player.UserId) .. ".txt"
+
+-- Baca file jika tersedia
+local executeCount = 0
+if type(isfile) == "function" and type(readfile) == "function" then
+    local ok, content = pcall(function() return isfile(counterFile) and readfile(counterFile) or nil end)
+    if ok and content then
+        executeCount = tonumber(content) or 0
+    else
+        executeCount = 0
+    end
+end
+
+-- Tambah 1 dan simpan (aman pakai pcall)
 executeCount = executeCount + 1
-writefile(counterFile, tostring(executeCount))
+if type(writefile) == "function" then
+    pcall(function() writefile(counterFile, tostring(executeCount)) end)
+end
+
+-- Helper: tampilkan notify dengan fallback jika terjadi error
+local function safeNotify(tbl)
+    pcall(function()
+        Library:Notify(tbl)
+    end)
+end
 
 -- ========================
 -- Sequential Notifications
 -- ========================
 
 -- 1. Welcome
-Library:Notify({
+safeNotify({
     Title = "Welcome",
     Description = "Welcome! Thank you for using the Nexa script.",
     Time = 4,
 })
 task.wait(4)
 
--- 2. Script executed counter
-Library:Notify({
+-- 2. Script executed counter + DisplayName
+local displayName = tostring(player.DisplayName or player.Name or "Player")
+safeNotify({
     Title = "Nexa",
-    Description = "Script executed " .. executeCount .. " time(s).",
+    Description = "Player: " .. displayName .. "\nScript executed " .. tostring(executeCount) .. " time(s).",
     Time = 4,
 })
 task.wait(4)
 
 -- 3. Bug Report
-Library:Notify({
+safeNotify({
     Title = "Bug Report",
     Description = "If there are any errors, please report them to the developer. Join Discord to report bugs.",
-    Time = 4
+    Time = 4,
 })
 task.wait(4)
 
 -- 4. Purchase
-Library:Notify({
+safeNotify({
     Title = "Purchase",
     Description = "If you want to buy a premium script key, join Discord to purchase.",
-    Time = 4
+    Time = 4,
 })
 task.wait(4)
 
 -- 5. Thanks
-Library:Notify({
+safeNotify({
     Title = "Thanks",
     Description = "Thank you for using Nexa! Enjoy its features.",
-    Time = 4
+    Time = 4,
 })
 task.wait(4)
