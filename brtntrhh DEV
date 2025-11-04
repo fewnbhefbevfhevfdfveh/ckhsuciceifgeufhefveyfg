@@ -413,6 +413,8 @@ Toggles.MyPseudoCodeToggle:OnChanged(function(state)
 	end
 end)
 
+local LeftGroupBox = Tabs.Farm:AddLeftGroupbox("Fishing", "fish")
+
 -- ====================[ Auto Fishing Legit ]==================== --
 
 local RunService = game:GetService("RunService")
