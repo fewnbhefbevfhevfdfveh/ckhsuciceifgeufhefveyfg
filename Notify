@@ -1,0 +1,57 @@
+-- Storage file name (so it can be saved in exploit environment)
+local counterFile = "2.txt"
+
+-- Read file if exists, otherwise create new
+local executeCount = 0
+if isfile(counterFile) then
+    local content = readfile(counterFile)
+    executeCount = tonumber(content) or 0
+end
+
+-- Increment every time the script runs
+executeCount = executeCount + 1
+writefile(counterFile, tostring(executeCount))
+
+-- ========================
+-- Sequential Notifications
+-- ========================
+
+-- 1. Welcome
+Library:Notify({
+    Title = "Welcome",
+    Description = "Welcome! Thank you for using the Nexa script.",
+    Time = 4,
+})
+task.wait(4)
+
+-- 2. Script executed counter
+Library:Notify({
+    Title = "Nexa",
+    Description = "Script executed " .. executeCount .. " time(s).",
+    Time = 4,
+})
+task.wait(4)
+
+-- 3. Bug Report
+Library:Notify({
+    Title = "Bug Report",
+    Description = "If there are any errors, please report them to the developer. Join Discord to report bugs.",
+    Time = 4
+})
+task.wait(4)
+
+-- 4. Purchase
+Library:Notify({
+    Title = "Purchase",
+    Description = "If you want to buy a premium script key, join Discord to purchase.",
+    Time = 4
+})
+task.wait(4)
+
+-- 5. Thanks
+Library:Notify({
+    Title = "Thanks",
+    Description = "Thank you for using Nexa! Enjoy its features.",
+    Time = 4
+})
+task.wait(4)
