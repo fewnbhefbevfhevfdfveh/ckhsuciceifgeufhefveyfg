@@ -213,8 +213,6 @@ task.spawn(function()
     end
 end)
 
-local LeftGroupBox = Tabs.Info:AddLeftGroupbox("Admin Event Fish", "compass")
-
 local RightGroupBox = Tabs.Info:AddRightGroupbox("Event Hunt", "anchor")
 
 local Players = game:GetService("Players")
