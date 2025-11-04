@@ -2819,5 +2819,3 @@ Toggles.TeleportToSavedPos:OnChanged(function(state)
         freezeCharacter()
     end
 end)
-
-loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Admin%20Event%20Fish"))()
