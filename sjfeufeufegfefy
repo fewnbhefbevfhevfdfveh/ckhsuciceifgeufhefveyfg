@@ -1,4 +1,5 @@
 
+
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
@@ -413,7 +414,7 @@ Toggles.MyPseudoCodeToggle:OnChanged(function(state)
 	end
 end)
 
-local LeftGroupBox = Tabs.Farm:AddLeftGroupbox("Fishing", "fish")
+local Fishing = Tabs.Farm:AddLeftGroupbox("Fishing", "fish")
 
 -- ====================[ Auto Fishing Legit ]==================== --
 
@@ -492,7 +493,7 @@ local function ToggleAutoClick(shouldActivate)
 	end
 end
 
-local AutoFishToggle = LeftGroupBox:AddToggle("AutoFishToggle", {
+local AutoFishToggle = Fishing:AddToggle("AutoFishToggle", {
 	Text = "Auto Fish Legit",
 	Default = false,
 	Tooltip = "Aktifkan auto fishing otomatis",
@@ -505,7 +506,7 @@ AutoFishToggle:OnChanged(function(Value)
 	print("Auto Fish status:", Value)
 end)
 
-local SpeedInput = LeftGroupBox:AddInput("AutoFishSpeed", {
+local SpeedInput = Fishing:AddInput("AutoFishSpeed", {
 	Text = "Click Speed",
 	Default = tostring(ClickSpeed),
 	Numeric = true,
@@ -671,7 +672,7 @@ end
 -- 🟢 Toggle versi baru
 --------------------------------------------------------
 
-LeftGroupBox:AddToggle("FishingCounterToggle", {
+Fishing:AddToggle("FishingCounterToggle", {
 	Text = "Show Fishing Counter",
 	Default = false,
 })
@@ -691,7 +692,7 @@ local CancelFishing = ReplicatedStorage
     :WaitForChild("net")
     :WaitForChild("RF/CancelFishingInputs")
 
-LeftGroupBox:AddButton({
+Fishing:AddButton({
     Text = "Cancel Fishing",
     Func = function()
         CancelFishing:InvokeServer()
@@ -717,7 +718,7 @@ local UnequipRemote = Net:WaitForChild("RE/UnequipToolFromHotbar")
 local equipLoop = nil
 
 -- 🟢 Toggle Baru (Obsidian)
-LeftGroupBox:AddToggle("AutoEquipRodToggle", {
+Fishing:AddToggle("AutoEquipRodToggle", {
 	Text = "Auto Equip Rod",
 	Default = false,
 	Tooltip = "Automatically equips your fishing rod (slot 1) and unequips it when turned off",
@@ -748,7 +749,7 @@ LeftGroupBox:AddToggle("AutoEquipRodToggle", {
 	end
 })
 
-local RightGroupBox = Tabs.Farm:AddRightGroupbox("Sell", "landmark")
+local Sell = Tabs.Farm:AddRightGroupbox("Sell", "landmark")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
@@ -766,7 +767,7 @@ local mode = "Sell Delay"
 local autoSellLoop = nil
 
 -- 🟣 Slider (Mengikuti format yang kamu minta)
-RightGroupBox:AddSlider("SellDelaySlider", {
+Sell:AddSlider("SellDelaySlider", {
     Text = "Sell Delay (seconds)",
     Default = 2,
     Min = 1,
@@ -778,7 +779,7 @@ RightGroupBox:AddSlider("SellDelaySlider", {
 })
 
 -- 🟢 Dropdown
-RightGroupBox:AddDropdown("SellModeDropdown", {
+Sell:AddDropdown("SellModeDropdown", {
     Values = { "Backpack Full", "Sell Delay" },
     Default = "Sell Delay",
     Multi = false,
@@ -792,7 +793,7 @@ RightGroupBox:AddDropdown("SellModeDropdown", {
 })
 
 -- 🔵 Toggle
-RightGroupBox:AddToggle("AutoSellToggle", {
+Sell:AddToggle("AutoSellToggle", {
     Text = "Auto Sell All Items",
     Default = false,
     Callback = function(state)
@@ -833,7 +834,7 @@ RightGroupBox:AddToggle("AutoSellToggle", {
     end,
 })
 
-local LeftGroupBox = Tabs.Farm:AddLeftGroupbox("5X Speed", "chevrons-up")
+local Speed = Tabs.Farm:AddLeftGroupbox("5X Speed", "chevrons-up")
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -1097,7 +1098,7 @@ end
 -- ===================================================================
 
 -- Input: Delay Recast
-LeftGroupBox:AddInput("DelayRecastInput", {
+Speed:AddInput("DelayRecastInput", {
     Text = "Delay Recast",
     Default = "1.20",
     Placeholder = "Default: 1.20",
@@ -1110,7 +1111,7 @@ LeftGroupBox:AddInput("DelayRecastInput", {
 })
 
 -- Input: Spam Finish
-LeftGroupBox:AddInput("SpamFinishInput", {
+Speed:AddInput("SpamFinishInput", {
     Text = "Spam Finish",
     Default = "10",
     Placeholder = "Default: 10",
@@ -1123,7 +1124,7 @@ LeftGroupBox:AddInput("SpamFinishInput", {
 })
 
 -- Input: Cooldown Recast
-LeftGroupBox:AddInput("CooldownRecastInput", {
+Speed:AddInput("CooldownRecastInput", {
     Text = "Cooldown Recast",
     Default = "0.01",
     Placeholder = "Default: 0.01",
@@ -1136,7 +1137,7 @@ LeftGroupBox:AddInput("CooldownRecastInput", {
 })
 
 -- Toggle: AutoFish
-LeftGroupBox:AddToggle("AutoFishToggle", {
+Speed:AddToggle("AutoFishToggle", {
 	Text = "AutoFish",
 	Default = false,
 })
@@ -1146,7 +1147,7 @@ Toggles.AutoFishToggle:OnChanged(function(state)
 end)
 
 
-LeftGroupBox:AddLabel({
+Speed:AddLabel({
     Text = [[
 Element = Default
 Element Crystal Cavern = 1.10|10|0.01
@@ -1166,7 +1167,7 @@ NOTE :
 })
 
 
-local LeftGroupBox = Tabs.Event:AddLeftGroupbox("Halloween", "candy")
+local Halloween = Tabs.Event:AddLeftGroupbox("Halloween", "candy")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -1183,7 +1184,7 @@ local autoClaim = false
 local autoClaimLoop = nil
 
 -- 🟣 Toggle Baru (Obsidian)
-LeftGroupBox:AddToggle("AutoClaimRewardToggle", {
+Halloween:AddToggle("AutoClaimRewardToggle", {
 	Text = "Auto Claim All Rewards",
 	Default = false,
 	Tooltip = "Automatically claims all available event rewards",
@@ -1211,7 +1212,7 @@ LeftGroupBox:AddToggle("AutoClaimRewardToggle", {
 	end,
 })
 
-LeftGroupBox:AddButton({
+Halloween:AddButton({
     Text = "Auto TrickOrTreat",
     Func = function()
         local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -1241,7 +1242,7 @@ LeftGroupBox:AddButton({
     end
 })
 
-local LeftGroupBox = Tabs.Auto:AddLeftGroupbox("Deep Sea Status", "ghost")
+local DeepSea = Tabs.Auto:AddLeftGroupbox("Deep Sea Status", "ghost")
 
 -- === DEEP SEA QUEST ===
 local board = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board
@@ -1250,7 +1251,7 @@ local content = surfaceGui:WaitForChild("Content")
 local labelNames = {"Label1", "Label2", "Label3", "Label4"}
 
 -- Buat Label utama di LeftGroupBox
-local deepSeaLabel = LeftGroupBox:AddLabel({
+local deepSeaLabel = DeepSea:AddLabel({
     Text = "Checking...",
     DoesWrap = true,
     Size = 14
@@ -1284,11 +1285,11 @@ for _, name in ipairs(labelNames) do
     end
 end
 
-local LeftGroupBox = Tabs.Auto:AddLeftGroupbox("Aura Boat Status", "kayak")
+local AuraBoat = Tabs.Auto:AddLeftGroupbox("Aura Boat Status", "kayak")
 
 -- === AURA BOAT QUEST ===
 -- Buat label utama di LeftGroupBox
-local auraLabel = LeftGroupBox:AddLabel({
+local auraLabel = AuraBoat:AddLabel({
     Text = "Checking...",
     DoesWrap = true,
     Size = 14
@@ -1317,7 +1318,7 @@ task.spawn(function()
 end)
 
 
-local LeftGroupBox = Tabs.Auto:AddLeftGroupbox("Element Status", "atom")
+local Element = Tabs.Auto:AddLeftGroupbox("Element Status", "atom")
 
 -- === ELEMENT QUEST ===
 local board = workspace["!!! MENU RINGS"]["Element Tracker"].Board
@@ -1326,7 +1327,7 @@ local content = surfaceGui:WaitForChild("Content")
 local labelNames = {"Label1", "Label2", "Label3", "Label4"}
 
 -- Buat label di LeftGroupbox
-local elementLabel = LeftGroupBox:AddLabel({
+local elementLabel = Element:AddLabel({
     Text = "Checking...",
     DoesWrap = true,
     Size = 14
@@ -1357,7 +1358,7 @@ for _, name in ipairs(labelNames) do
     end
 end
 
-local LeftGroupBox = Tabs.Auto:AddLeftGroupbox("TempleLever Status", "toggle-right")
+local TempleLever = Tabs.Auto:AddLeftGroupbox("TempleLever Status", "toggle-right")
 
 -- === TEMPLE LEVER STATUS ===
 local Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS")
@@ -1370,7 +1371,7 @@ local Steps = {
 }
 
 -- Label untuk detail status lever
-local statusLabel = LeftGroupBox:AddLabel({
+local statusLabel = TempleLever:AddLabel({
     Text = "Checking...",
     DoesWrap = true,
     Size = 14
@@ -1406,7 +1407,7 @@ task.spawn(function()
     end
 end)
 
-local RightGroupBox = Tabs.Auto:AddRightGroupbox("Auto Quest", "crosshair")
+local AutoQuest = Tabs.Auto:AddRightGroupbox("Auto Quest", "crosshair")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -1558,7 +1559,7 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- 🟢 Dropdown tunggal untuk semua quest
-RightGroupBox:AddDropdown("QuestDropdown", {
+AutoQuest:AddDropdown("QuestDropdown", {
     Values = { "Deep Sea", "Element", "Aura Boat", "Temple Lever" },
     Default = "Deep Sea",
     Multi = false,
@@ -1573,7 +1574,7 @@ Options.QuestDropdown:OnChanged(function(option)
 end)
 
 -- 🟢 Toggle Auto Quest
-RightGroupBox:AddToggle("AutoQuestToggle", {
+AutoQuest:AddToggle("AutoQuestToggle", {
 	Text = "Auto Quest",
 	Default = false,
 })
@@ -1590,7 +1591,7 @@ end)
 
 
 
-local LeftGroupBox = Tabs.Shop:AddLeftGroupbox("Rod Purchaser", "fish-symbol")
+local Rod = Tabs.Shop:AddLeftGroupbox("Rod Purchaser", "fish-symbol")
 
 local rodMap = {
 	["Starter Rod"] = 1,
@@ -1614,7 +1615,7 @@ local selectedRods = {}
 local autoBuyRods = false
 
 -- Dropdown manual (lebih aman dan stabil)
-LeftGroupBox:AddDropdown("SelectRods", {
+Rod:AddDropdown("SelectRods", {
     Values = {
         "Starter Rod", "Luck Rod", "Carbon Rod", "Grass Rod",
         "Demascus Rod", "Ice Rod", "Lucky Rod", "Midnight Rod",
@@ -1642,7 +1643,7 @@ LeftGroupBox:AddDropdown("SelectRods", {
 })
 
 -- Tombol manual pembelian
-LeftGroupBox:AddButton({
+Rod:AddButton({
     Text = "Purchase Selected Rods",
     Func = function()
         if #selectedRods == 0 then
@@ -1680,7 +1681,7 @@ LeftGroupBox:AddButton({
 })
 
 -- Toggle auto-purchase loop
-LeftGroupBox:AddToggle("AutoBuyRodToggle", {
+Rod:AddToggle("AutoBuyRodToggle", {
     Text = "Auto Purchase Loop",
     Default = false,
 })
@@ -1744,7 +1745,7 @@ local autoBuyBait = false
 
 
 -- Dropdown manual (tanpa baitNames)
-RightGroupBox:AddDropdown("SelectBaits", {
+Bait:AddDropdown("SelectBaits", {
     Values = { 
         "Topwater Bait", 
         "Luck Bait", 
@@ -1777,7 +1778,7 @@ RightGroupBox:AddDropdown("SelectBaits", {
 })
 
 -- Tombol pembelian manual
-RightGroupBox:AddButton({
+Bait:AddButton({
     Text = "Purchase Selected Baits",
     Func = function()
         if #selectedBaits == 0 then
@@ -1815,7 +1816,7 @@ RightGroupBox:AddButton({
 })
 
 -- Toggle auto purchase loop
-RightGroupBox:AddToggle("AutoBuyBaitToggle", {
+Bait:AddToggle("AutoBuyBaitToggle", {
     Text = "Auto Purchase Loop",
     Default = false,
 })
@@ -1859,7 +1860,7 @@ Toggles.AutoBuyBaitToggle:OnChanged(function(state)
     end
 end)
 
-local LeftGroupBox = Tabs.Shop:AddLeftGroupbox("Weather Purchaser", "cloud")
+local Weather = Tabs.Shop:AddLeftGroupbox("Weather Purchaser", "cloud")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -1876,7 +1877,7 @@ local selectedWeathers = {}
 local autoPurchase = false
 
 -- Dropdown multi-select weather list
-LeftGroupBox:AddDropdown("SelectWeather", {
+Weather:AddDropdown("SelectWeather", {
     Values = { "Snow", "Wind", "Cloudy", "Storm", "Radiant", "Shark Hunt" },
     Default = {},
     Multi = true,
@@ -1899,7 +1900,7 @@ LeftGroupBox:AddDropdown("SelectWeather", {
 })
 
 -- Tombol beli manual
-LeftGroupBox:AddButton({
+Weather:AddButton({
     Text = "Purchase Selected Weather",
     Func = function()
         if #selectedWeathers == 0 then
@@ -1932,7 +1933,7 @@ LeftGroupBox:AddButton({
 })
 
 -- Toggle auto purchase loop
-LeftGroupBox:AddToggle("AutoWeatherPurchaseToggle", {
+Weather:AddToggle("AutoWeatherPurchaseToggle", {
     Text = "Auto Purchase Weather",
     Default = false,
 })
@@ -1969,7 +1970,7 @@ Toggles.AutoWeatherPurchaseToggle:OnChanged(function(state)
     end
 end)
 
-local RightGroupBox = Tabs.Shop:AddRightGroupbox("Boat Purchaser", "sailboat")
+local Boat = Tabs.Shop:AddRightGroupbox("Boat Purchaser", "sailboat")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -1997,7 +1998,7 @@ local selectedBoatID = nil
 local autoBuyBoat = false
 
 -- Dropdown manual (tanpa BoatNames)
-RightGroupBox:AddDropdown("SelectBoat", {
+Boat:AddDropdown("SelectBoat", {
     Values = {
         "Small Boat",
         "Kayak",
@@ -2019,7 +2020,7 @@ RightGroupBox:AddDropdown("SelectBoat", {
 })
 
 -- Tombol pembelian manual
-RightGroupBox:AddButton({
+Boat:AddButton({
     Text = "Purchase Selected Boat",
     Func = function()
         if not selectedBoatID then
@@ -2052,7 +2053,7 @@ RightGroupBox:AddButton({
 })
 
 -- Toggle auto-purchase loop
-RightGroupBox:AddToggle("AutoBuyBoatToggle", {
+Boat:AddToggle("AutoBuyBoatToggle", {
     Text = "Auto Purchase Loop",
     Default = false,
 })
@@ -2087,7 +2088,7 @@ Toggles.AutoBuyBoatToggle:OnChanged(function(state)
     end
 end)
 
-local LeftGroupBox = Tabs.Boat:AddLeftGroupbox("Spawn Boat", "ship")
+local Spawn = Tabs.Boat:AddLeftGroupbox("Spawn Boat", "ship")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SpawnBoat = ReplicatedStorage
@@ -2128,7 +2129,7 @@ table.sort(BoatNames)
 local selectedBoatID = BoatList[BoatNames[1]]
 
 -- Dropdown Pilih Boat
-LeftGroupBox:AddDropdown("SelectBoatDropdown", {
+Spawn:AddDropdown("SelectBoatDropdown", {
     Values = BoatNames,
     Default = BoatNames[1],
     Multi = false,
@@ -2141,7 +2142,7 @@ LeftGroupBox:AddDropdown("SelectBoatDropdown", {
 })
 
 -- Button Spawn Boat
-LeftGroupBox:AddButton({
+Spawn:AddButton({
     Text = "Spawn Boat",
     Func = function()
         local args = {selectedBoatID}
@@ -2165,12 +2166,12 @@ LeftGroupBox:AddButton({
     end
 })
 
-local RightGroupBox = Tabs.Boat:AddRightGroupbox("Speed Boat", "gauge")
+local SpeedBoat = Tabs.Boat:AddRightGroupbox("Speed Boat", "gauge")
 
 -- Input untuk set kecepatan
 local customSpeed = 1000
 
-RightGroupBox:AddInput("BoatSpeedInput", {
+SpeedBoat:AddInput("BoatSpeedInput", {
     Text = "Set Boat Speed",
     Default = "1000",
     Placeholder = "Example: 1000",
@@ -2183,7 +2184,7 @@ RightGroupBox:AddInput("BoatSpeedInput", {
 })
 
 -- Toggle untuk Super Speed
-RightGroupBox:AddToggle("SuperSpeedToggle", {
+SpeedBoat:AddToggle("SuperSpeedToggle", {
     Text = "Super Speed Boats",
     Default = false,
 })
@@ -2225,10 +2226,10 @@ Toggles.SuperSpeedToggle:OnChanged(function(state)
     end
 end)
 
-local LeftGroupBox = Tabs.Player:AddLeftGroupbox("LocalPlayer", "user")
+local LocalPlayer = Tabs.Player:AddLeftGroupbox("LocalPlayer", "user")
 
 -- Bypass Oxygen Tank Toggle
-LeftGroupBox:AddToggle("BypassOxygenTank", {
+LocalPlayer:AddToggle("BypassOxygenTank", {
     Text = "Bypass Oxygen Tank",
     Default = false,
 })
@@ -2248,7 +2249,7 @@ Toggles.BypassOxygenTank:OnChanged(function(state)
 end)
 
 -- Bypass Radar Toggle
-LeftGroupBox:AddToggle("BypassRadar", {
+LocalPlayer:AddToggle("BypassRadar", {
     Text = "Bypass Radar",
     Default = false,
 })
@@ -2266,7 +2267,7 @@ Toggles.BypassRadar:OnChanged(function(state)
 end)
 
 -- Black Screen Toggle
-LeftGroupBox:AddToggle("BlackScreen", {
+LocalPlayer:AddToggle("BlackScreen", {
     Text = "Black Screen",
     Default = false,
 })
@@ -2334,7 +2335,7 @@ Toggles.BlackScreen:OnChanged(function(state)
 end)
 
 -- Boost FPS Button
-LeftGroupBox:AddButton({
+LocalPlayer:AddButton({
     Text = "Boost FPS",
     Func = function()
         local Lighting = game:GetService("Lighting")
@@ -2400,7 +2401,7 @@ LeftGroupBox:AddButton({
 
 
 -- Hide Username & Level Toggle
-LeftGroupBox:AddToggle("HideUsernameLevel", {
+LocalPlayer:AddToggle("HideUsernameLevel", {
     Text = "Hide Username & Level",
     Default = false,
 })
@@ -2472,7 +2473,7 @@ Toggles.HideUsernameLevel:OnChanged(function(state)
 end)
 
 -- Reduce Lag Button
-LeftGroupBox:AddButton({
+LocalPlayer:AddButton({
     Text = "Reduce Lag",
     Func = function()
         local Players = game:GetService("Players")
@@ -2535,7 +2536,7 @@ Toggles.AntiLavaToggle:OnChanged(function(state)
     end
 end)
 
-LeftGroupBox:AddButton({
+LocalPlayer:AddButton({
     Text = "Destroy Window",
     Func = function()
         local CoreGui = game:GetService("CoreGui")
@@ -2648,13 +2649,13 @@ LeftGroupBox:AddButton({
 })
 
 
-local RightGroupBox = Tabs.Player:AddRightGroupbox("Webhook", "webhook")
+local Webhook = Tabs.Player:AddRightGroupbox("Webhook", "webhook")
 
 --========================================================--
 -- TOGGLE SHOW/HIDE GUI
 --========================================================--
 
-RightGroupBox:AddToggle("ShowWebhookGUI", {
+Webhook:AddToggle("ShowWebhookGUI", {
 	Text = "Show Webhook Gui",
 	Default = false, -- ❌ GUI tidak langsung aktif
 })
@@ -2680,7 +2681,7 @@ Toggles.ShowWebhookGUI:OnChanged(function(state)
 end)
 
 
-local LeftGroupBox = Tabs.Tp:AddLeftGroupbox("Islands", "tree-palm")
+local Islands = Tabs.Tp:AddLeftGroupbox("Islands", "tree-palm")
 
 local islands = {
     ["Kohana"] = CFrame.new(-642.243561, 16.0354481, 624.918884, 0.999580681, 0, -0.0289562326, 0, 1, 0, 0.0289562326, 0, 0.999580681),
@@ -2722,7 +2723,7 @@ table.sort(islandNames, function(a, b) return a:lower() < b:lower() end)
 local selectedIsland = islandNames[1] or "Kohana"
 
 -- Buat dropdown di Groupbox (misal Groupbox = Tabs.Teleport)
-LeftGroupBox:AddDropdown("MyDropdown", {
+Islands:AddDropdown("MyDropdown", {
     Values = islandNames,
     Default = selectedIsland,
     Multi = false,
@@ -2734,7 +2735,7 @@ LeftGroupBox:AddDropdown("MyDropdown", {
 })
 
 -- Buat button teleport
-LeftGroupBox:AddButton({
+Islands:AddButton({
     Text = "Teleport Now",
     Func = function()
         local player = game.Players.LocalPlayer
@@ -2748,14 +2749,14 @@ LeftGroupBox:AddButton({
     end,
 })
 
-local RightGroupBox = Tabs.Tp:AddRightGroupbox("Position", "folder")
+local Position = Tabs.Tp:AddRightGroupbox("Position", "folder")
 
 -- Variabel global
 local savedCFrame = nil
 local teleportEnabled = false
 
 -- Button Save Position
-RightGroupBox:AddButton({
+Position:AddButton({
     Text = "Save Position",
     Func = function()
         local player = game.Players.LocalPlayer
@@ -2810,7 +2811,7 @@ local function freezeCharacter()
 end
 
 -- Toggle Teleport + Freeze
-RightGroupBox:AddToggle("TeleportToSavedPos", {
+Position:AddToggle("TeleportToSavedPos", {
     Text = "Teleport to Saved Position",
     Default = false,
 })
