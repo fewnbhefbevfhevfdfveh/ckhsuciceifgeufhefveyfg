@@ -2511,7 +2511,7 @@ local volcanoFolder = workspace.Zones["Kohana Volcano"]
 local AutoRemove = false
 local connection
 
-LeftGroupBox:AddToggle("AntiLavaToggle", {
+LocalPlayer:AddToggle("AntiLavaToggle", {
     Text = "Anti Lava",
     Default = false,
 })
