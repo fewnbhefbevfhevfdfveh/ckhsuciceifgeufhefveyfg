@@ -15,7 +15,7 @@ SaveManager:SetSubFolder("Lobby")
 -- Window utama
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.3.8 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.3.9 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -186,6 +186,35 @@ task.spawn(function()
     end
 end)
 
+RightGroupBox:AddDivider()
+
+-- Buat label dulu dengan text awal
+local LabelOptions = {
+    Text = "Loading...",
+    DoesWrap = true
+}
+
+local Label = LeftGroupBox:AddLabel(LabelOptions)
+
+-- Update label setiap 1 detik
+task.spawn(function()
+    while true do
+        task.wait(1) -- delay 1 detik
+
+        -- Ambil text terbaru dari workspace
+        local headerText = workspace["!!! MENU RINGS"]["Event Tracker"].Main.Gui.Content.Items.Countdown.Header.Text
+        local labelText = workspace["!!! MENU RINGS"]["Event Tracker"].Main.Gui.Content.Items.Countdown.Label.Text
+
+        -- Gabungkan untuk ditampilkan di UI
+        local combinedText = "Event: " .. headerText .. "\nTime: " .. labelText
+
+        -- Update label WindUI
+        Label:SetText(combinedText)
+    end
+end)
+
+local LeftGroupBox = Tabs.Info:AddLeftGroupbox("Admin Event Fish", "compass")
+
 local RightGroupBox = Tabs.Info:AddRightGroupbox("Event Hunt", "anchor")
 
 local Players = game:GetService("Players")
@@ -349,8 +378,40 @@ toggle:OnChanged(function(state)
     end
 end)
 
+RightGroupBox:AddDivider()
 
-local LeftGroupBox = Tabs.Farm:AddLeftGroupbox("Fishing", "fish")
+RightGroupBox:AddToggle("MyPseudoCodeToggle", {
+	Text = "Auto Fishing Event",
+	Default = false,
+})
+
+Toggles.MyPseudoCodeToggle:OnChanged(function(state)
+	if state then
+		local Players = game:GetService("Players")
+		local LocalPlayer = Players.LocalPlayer
+		local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+		local targetCFrame = CFrame.new(
+			-1956.04785, -440.000488, 7392.30615,
+			0.108164124, 1.00112381e-07, 0.994133055,
+			-6.4575367e-08, 1, -9.36774273e-08,
+			-0.994133055, -5.40639853e-08, 0.108164124
+		)
+
+		task.spawn(function()
+			while Toggles.MyPseudoCodeToggle.Value do
+				task.wait(1) -- cek tiap 1 detik
+				if workspace:FindFirstChild("CountdownPart") then
+					local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+					if char and char:FindFirstChild("HumanoidRootPart") then
+						char.HumanoidRootPart.CFrame = targetCFrame
+						break -- stop setelah teleport sekali
+					end
+				end
+			end
+		end)
+	end
+end)
 
 -- ====================[ Auto Fishing Legit ]==================== --
 
@@ -1524,6 +1585,8 @@ Toggles.AutoQuestToggle:OnChanged(function(state)
         savedCFrame = nil
     end
 end)
+
+
 
 local LeftGroupBox = Tabs.Shop:AddLeftGroupbox("Rod Purchaser", "fish-symbol")
 
