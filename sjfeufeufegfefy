@@ -1724,7 +1724,7 @@ Toggles.AutoBuyRodToggle:OnChanged(function(state)
 end)
 
 
-local RightGroupBox = Tabs.Shop:AddRightGroupbox("Bait Purchaser", "shrimp")
+local Bait = Tabs.Shop:AddRightGroupbox("Bait Purchaser", "shrimp")
 
 local BaitID = {
     ["Topwater Bait"] = 10,
