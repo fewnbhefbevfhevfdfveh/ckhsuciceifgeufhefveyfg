@@ -1,1 +1,2 @@
-[+] Added Auto Fishing Event
+[+] Added Auto Favorite Item
+[/] Improve Ui
