@@ -1611,8 +1611,8 @@ local function DoEnchantCycle()
             if currentText == targetName then
                 -- === 🔔 NOTIFY SAAT DAPET === --
                 Library:Notify({
-                    Title = "mspaint",
-                    Description = "Dapat enchant: " .. targetName,
+                    Title = "Enchant Found!",
+                    Description = "Can enchant: " .. targetName,
                     Time = 4,
                 })
                 return true
