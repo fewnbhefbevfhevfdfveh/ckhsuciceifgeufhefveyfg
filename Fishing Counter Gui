@@ -1,0 +1,128 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local smallNotif = playerGui:WaitForChild("Small Notification")
+local display = smallNotif:WaitForChild("Display")
+local container = display:WaitForChild("Container")
+
+local notifications = playerGui:WaitForChild("Text Notifications")
+local notifFrame = notifications:WaitForChild("Frame")
+
+local successPos = UDim2.new(0.5, 0, 0.100000001, 0)
+
+-- Counter
+local successCount = 0
+local failCount = 0
+
+-- Reference agar bisa disable nanti
+local successConnection
+local failConnection
+local fishingGui
+
+-- Fungsi update label
+local function updateLabel(successLabel, failLabel)
+	successLabel.Text = "Success: " .. successCount
+	failLabel.Text = "Failed: " .. failCount
+end
+
+-- Fungsi buat GUI
+local function createFishingGui()
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "FishingCounterGui"
+	screenGui.Parent = playerGui
+	screenGui.ResetOnSpawn = false
+	screenGui.Enabled = false -- GUI langsung dalam keadaan tidak terlihat
+
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(0, 170, 0, 70)
+	frame.Position = UDim2.new(0, 15, 0, 15)
+	frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+	frame.BackgroundTransparency = 0.15
+	frame.BorderSizePixel = 0
+	frame.Parent = screenGui
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = frame
+
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 60)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 20))
+	})
+	gradient.Rotation = 45
+	gradient.Parent = frame
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 1.5
+	stroke.Color = Color3.fromRGB(120, 120, 255)
+	stroke.Transparency = 0.3
+	stroke.Parent = frame
+
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.new(1, 0, 0, 22)
+	title.Position = UDim2.new(0, 0, 0, 0)
+	title.BackgroundTransparency = 1
+	title.Text = "🎣 Fishing Counter"
+	title.Font = Enum.Font.GothamBold
+	title.TextColor3 = Color3.fromRGB(200, 200, 255)
+	title.TextSize = 15
+	title.TextXAlignment = Enum.TextXAlignment.Center
+	title.Parent = frame
+
+	local successLabel = Instance.new("TextLabel")
+	successLabel.Size = UDim2.new(1, -10, 0, 20)
+	successLabel.Position = UDim2.new(0, 5, 0, 28)
+	successLabel.BackgroundTransparency = 1
+	successLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+	successLabel.Font = Enum.Font.GothamMedium
+	successLabel.TextSize = 14
+	successLabel.Text = "Success: 0"
+	successLabel.TextXAlignment = Enum.TextXAlignment.Left
+	successLabel.Parent = frame
+
+	local failLabel = Instance.new("TextLabel")
+	failLabel.Size = UDim2.new(1, -10, 0, 20)
+	failLabel.Position = UDim2.new(0, 5, 0, 48)
+	failLabel.BackgroundTransparency = 1
+	failLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+	failLabel.Font = Enum.Font.GothamMedium
+	failLabel.TextSize = 14
+	failLabel.Text = "Failed: 0"
+	failLabel.TextXAlignment = Enum.TextXAlignment.Left
+	failLabel.Parent = frame
+
+	-- Connect events
+	successConnection = container:GetPropertyChangedSignal("Position"):Connect(function()
+		if container.Position == successPos then
+			successCount += 1
+			updateLabel(successLabel, failLabel)
+		end
+	end)
+
+	failConnection = notifFrame.ChildAdded:Connect(function(child)
+		if child.Name == "TextTile" then
+			local header = child:WaitForChild("Header", 5)
+			if header and header:IsA("TextLabel") then
+				if header.Text == "The fish got away!" then
+					failCount += 1
+					updateLabel(successLabel, failLabel)
+				end
+				header:GetPropertyChangedSignal("Text"):Connect(function()
+					if header.Text == "The fish got away!" then
+						failCount += 1
+						updateLabel(successLabel, failLabel)
+					end
+				end)
+			end
+		end
+	end)
+
+	return screenGui
+end
+
+-- Buat dan simpan GUI tapi langsung nonaktifkan visibility-nya
+if not fishingGui then
+	fishingGui = createFishingGui()
+end
