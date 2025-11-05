@@ -1494,41 +1494,6 @@ end)
 
 local AutoEnchant = Tabs.Auto:AddRightGroupbox("Auto Enchant", "sparkles")
 
-
-local playerGui = player:WaitForChild("PlayerGui")
-
--- Tunggu GUI utama
-local rollEnchant = playerGui:WaitForChild("Roll Enchant")
-local main = rollEnchant:WaitForChild("Main")
-
--- Tunggu sampai Inside benar-benar ada
-local inside
-repeat
-    inside = main:FindFirstChild("Inside")
-    task.wait(1)
-until inside
-
--- Ambil label enchant
-local top = inside:WaitForChild("Top")
-local enchantLabel = top:WaitForChild("EnchantLabel")
-
--- Buat label di WindUI (misalnya pakai Groupbox)
-local LabelOptions = {
-    Text = "Waiting for Enchant...",
-    DoesWrap = true
-}
-local Label = AutoEnchant:AddLabel(LabelOptions)
-
--- Deteksi perubahan teks enchant dan update ke label WindUI
-local lastText = ""
-while task.wait(1) do
-    local currentText = enchantLabel.Text
-    if currentText ~= lastText then
-        Label:SetText("Enchants obtained: " .. currentText)
-        lastText = currentText
-    end
-end
-
 AutoEnchant:AddDivider()
 
 --// === MODULE & REMOTE === //--
