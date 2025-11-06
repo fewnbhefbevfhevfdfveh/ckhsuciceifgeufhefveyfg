@@ -1,2 +1,2 @@
-[/] Fixed Bug Auto Enchant
-[+] Added Label View Enchant
+[/] Rename Tab Farm To Fishing
+[+] Added Equip Rod & Bait
