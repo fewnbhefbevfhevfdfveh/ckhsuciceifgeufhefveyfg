@@ -29,7 +29,7 @@ SaveManager:SetSubFolder("Lobby")
 -- Window utama
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.4.2 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.4.3 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -39,7 +39,7 @@ local Window = Library:CreateWindow({
 local Tabs = {
 	Home = Window:AddTab("Home", "house"),
 	Info = Window:AddTab("Info", "info"),
-	Farm = Window:AddTab("Farm", "fish"),
+	Farm = Window:AddTab("Fishing", "fish"),
 	Event = Window:AddTab("Event", "calendar"),
 	Auto = Window:AddTab("Auto", "repeat-2"),
 	Shop = Window:AddTab("Shop", "shopping-cart"),
@@ -527,35 +527,6 @@ Toggles.MyPseudoCodeToggle:OnChanged(function(state)
     end
 end)
 
--- Ambil RemoteEvent untuk equip rod
-local netEvent = ReplicatedStorage:WaitForChild("Packages")
-    :WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0")
-    :WaitForChild("net")
-    :WaitForChild("RE/EquipToolFromHotbar")
-
-local args = {1}
-
-local autoEquipRod = false
-
-Fishing:AddToggle("AutoEquipRodToggle", { 
-    Text = "Auto Equip Rod", 
-    Default = false,
-})
-
-Toggles.AutoEquipRodToggle:OnChanged(function(state)
-    autoEquipRod = state
-end)
-
-spawn(function()
-    while true do
-        if autoEquipRod then
-            netEvent:FireServer(unpack(args))
-        end
-        wait(1)
-    end
-end)
-
 -- Ambil RemoteFunction CancelFishing
 local CancelFishing = ReplicatedStorage
     :WaitForChild("Packages")
@@ -572,6 +543,196 @@ Fishing:AddButton({
     end
 })
 
+local Equipment = Tabs.Farm:AddRightGroupbox("Equipment", "backpack")
+
+-- Module
+local Net = require(ReplicatedStorage.Packages.Net)
+local Replion = require(ReplicatedStorage.Packages.Replion).Client
+
+-- RemoteEvent EquipItem
+local EquipItemEvent = Net:RemoteEvent("EquipItem")
+
+-- Data player
+local data = Replion:WaitReplion("Data")
+
+-- Variabel untuk menyimpan nama rod yang dipilih
+local SelectedRodName = "Starter Rod"
+
+-- Dropdown daftar Fishing Rods
+local RodDropdown = Equipment:AddDropdown("RodDropdown", {
+    Values = {
+        "Starter Rod",
+        "Luck Rod",
+        "Carbon Rod",
+        "Grass Rod",
+        "Demascus Rod",
+        "Ice Rod",
+        "Lucky Rod",
+        "Midnight Rod",
+        "Steampunk Rod",
+        "Chrome Rod",
+        "Fluorescent Rod",
+        "Astral Rod",
+        "Angler Rod",
+        "Ares Rod",
+        "Bamboo Rod",
+        "Toy Rod",
+        "Lava Rod",
+        "Hazmat Rod",
+        "Ghostfinn Rod",
+        "Element Rod",
+        "Angelic Rod",
+        "Gold Rod",
+        "Hyper Rod"
+    },
+    Default = "Starter Rod",
+    Multi = false,
+    Text = "Select Rod",
+    Searchable = true,
+    Callback = function(selected)
+        SelectedRodName = selected
+    end,
+})
+
+-- Tombol untuk equip rod yang dipilih
+Equipment:AddButton({
+    Text = "Equip Selected Rod",
+    Func = function()
+        -- Daftar ID Rod berdasarkan nama
+        local RodIDs = {
+            ["Starter Rod"] = 1,
+            ["Luck Rod"] = 79,
+            ["Carbon Rod"] = 76,
+            ["Grass Rod"] = 85,
+            ["Demascus Rod"] = 77,
+            ["Ice Rod"] = 78,
+            ["Lucky Rod"] = 4,
+            ["Midnight Rod"] = 80,
+            ["Steampunk Rod"] = 6,
+            ["Chrome Rod"] = 7,
+            ["Fluorescent Rod"] = 255,
+            ["Astral Rod"] = 5,
+            ["Angler Rod"] = 168,
+            ["Ares Rod"] = 126,
+            ["Bamboo Rod"] = 258,
+            ["Toy Rod"] = 84,
+            ["Lava Rod"] = 2,
+            ["Hazmat Rod"] = 256,
+            ["Ghostfinn Rod"] = 169,
+            ["Element Rod"] = 257,
+            ["Angelic Rod"] = 124,
+            ["Gold Rod"] = 8,
+            ["Hyper Rod"] = 9
+        }
+
+        local selectedID = RodIDs[SelectedRodName]
+        if not selectedID then return end
+
+        local rods = data:GetExpect({"Inventory", "Fishing Rods"})
+        if not rods then return end
+
+        for _, rod in ipairs(rods) do
+            if rod and rod.Id == selectedID then
+                EquipItemEvent:FireServer(rod.UUID, "Fishing Rods")
+                break
+            end
+        end
+    end,
+})
+
+-- RemoteEvent EquipBait
+local equipBaitRemote = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RE/EquipBait")
+
+local selectedID = nil
+
+-- Dropdown pilih Bait
+Equipment:AddDropdown("BobberDropdown", {
+    Values = {
+        "Starter Bait",
+        "Topwater Bait",
+        "Luck Bait",
+        "Midnight Bait",
+        "Nature Bait",
+        "Chroma Bait",
+        "Royal Bait",
+        "Dark Matter Bait",
+        "Corrupt Bait",
+        "Aether Bait",
+        "Floral Bait",
+        "Singularity Bait",
+        "Beach Ball Bait",
+        "Gold Bait",
+        "Hyper Bait"
+    },
+    Default = "Starter Bait",
+    Multi = false,
+    Text = "Select Bait",
+    Searchable = true,
+    Callback = function(selected)
+        local BobberIDs = {
+            ["Starter Bait"] = 1,
+            ["Luck Bait"] = 2,
+            ["Gold Bait"] = 4,
+            ["Hyper Bait"] = 5,
+            ["Chroma Bait"] = 6,
+            ["Dark Matter Bait"] = 8,
+            ["Beach Ball Bait"] = 9,
+            ["Topwater Bait"] = 10,
+            ["Corrupt Bait"] = 15,
+            ["Aether Bait"] = 16,
+            ["Nature Bait"] = 17,
+            ["Singularity Bait"] = 18,
+            ["Royal Bait"] = 19,
+            ["Floral Bait"] = 20,
+        }
+
+        selectedID = BobberIDs[selected]
+    end,
+})
+
+-- Tombol equip bait
+Equipment:AddButton({
+    Text = "Equip Selected Bait",
+    Func = function()
+        if selectedID then
+            equipBaitRemote:FireServer(selectedID)
+        end
+    end,
+})
+
+-- Ambil RemoteEvent untuk equip rod
+local netEvent = ReplicatedStorage:WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RE/EquipToolFromHotbar")
+
+local args = {1}
+
+local autoEquipRod = false
+
+Equipment:AddToggle("AutoEquipRodToggle", { 
+    Text = "Auto Equip Rod", 
+    Default = false,
+})
+
+Toggles.AutoEquipRodToggle:OnChanged(function(state)
+    autoEquipRod = state
+end)
+
+spawn(function()
+    while true do
+        if autoEquipRod then
+            netEvent:FireServer(unpack(args))
+        end
+        wait(1)
+    end
+end)
 local Speed = Tabs.Farm:AddLeftGroupbox("5X Speed", "chevrons-up")
 
 -- Loader modul dengan customRequire (untuk keamanan require modul)
