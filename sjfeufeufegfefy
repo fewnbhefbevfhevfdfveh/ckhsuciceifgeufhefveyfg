@@ -1493,6 +1493,7 @@ Toggles.UnfavoriteToggle:OnChanged(function(state)
 end)
 
 local AutoEnchant = Tabs.Auto:AddRightGroupbox("Auto Enchant", "sparkles")
+-- Referensi ke PlayerGui
 
 local playerGui = player:WaitForChild("PlayerGui")
 
@@ -1503,31 +1504,29 @@ local LabelOptions = {
 }
 local EnchantLabelUI = AutoEnchant:AddLabel(LabelOptions)
 
--- ======== CEK GUI DAN LABEL ENCHANT ========
-local rollEnchant = playerGui:WaitForChild("Roll Enchant")
-local main = rollEnchant:WaitForChild("Main")
-
--- Tunggu sampai Inside muncul
-local inside
-repeat
-    inside = main:FindFirstChild("Inside")
-    task.wait(1)
-until inside
-
--- Setelah Inside muncul, update label
-EnchantLabelUI:SetText("Enchant: Inside Loaded...")
-
--- Tunggu sampai EnchantLabel muncul
-local top = inside:WaitForChild("Top")
-local enchantLabel = top:WaitForChild("EnchantLabel")
-
--- Update status saat sudah siap
-EnchantLabelUI:SetText("Enchant: Ready...")
-
--- ======== LOOP PEMANTAU ENCHANT ========
-local lastText = ""
-
+-- Jalankan di thread terpisah agar tidak ganggu WindUI
 task.spawn(function()
+    -- Tunggu GUI utama muncul (tanpa batas waktu)
+    local rollEnchant = playerGui:WaitForChild("Roll Enchant")
+    local main = rollEnchant:WaitForChild("Main")
+
+    -- Tunggu sampai Inside muncul
+    local inside
+    repeat
+        inside = main:FindFirstChild("Inside")
+        task.wait(1)
+    until inside
+
+    EnchantLabelUI:SetText("Enchant: Inside Loaded...")
+
+    -- Tunggu sampai EnchantLabel muncul
+    local top = inside:WaitForChild("Top")
+    local enchantLabel = top:WaitForChild("EnchantLabel")
+
+    EnchantLabelUI:SetText("Enchant: Ready...")
+
+    -- Loop pemantau enchant
+    local lastText = ""
     while task.wait(1) do
         local currentText = enchantLabel.Text or "Unknown"
         if currentText ~= lastText then
