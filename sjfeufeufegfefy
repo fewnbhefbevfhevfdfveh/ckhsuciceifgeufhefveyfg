@@ -7,7 +7,7 @@ local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 
--- Deklarasi service dan variabel utama (tidak diubah)
+-- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
 local workspace = workspace
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -29,7 +29,7 @@ SaveManager:SetSubFolder("Lobby")
 -- Window utama
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.4.1 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.4.2 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -1494,24 +1494,65 @@ end)
 
 local AutoEnchant = Tabs.Auto:AddRightGroupbox("Auto Enchant", "sparkles")
 
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Buat label awal
+local LabelOptions = {
+    Text = "Enchant: Loading...",
+    DoesWrap = true
+}
+local EnchantLabelUI = AutoEnchant:AddLabel(LabelOptions)
+
+-- ======== CEK GUI DAN LABEL ENCHANT ========
+local rollEnchant = playerGui:WaitForChild("Roll Enchant")
+local main = rollEnchant:WaitForChild("Main")
+
+-- Tunggu sampai Inside muncul
+local inside
+repeat
+    inside = main:FindFirstChild("Inside")
+    task.wait(1)
+until inside
+
+-- Setelah Inside muncul, update label
+EnchantLabelUI:SetText("Enchant: Inside Loaded...")
+
+-- Tunggu sampai EnchantLabel muncul
+local top = inside:WaitForChild("Top")
+local enchantLabel = top:WaitForChild("EnchantLabel")
+
+-- Update status saat sudah siap
+EnchantLabelUI:SetText("Enchant: Ready...")
+
+-- ======== LOOP PEMANTAU ENCHANT ========
+local lastText = ""
+
+task.spawn(function()
+    while task.wait(1) do
+        local currentText = enchantLabel.Text or "Unknown"
+        if currentText ~= lastText then
+            lastText = currentText
+            EnchantLabelUI:SetText("Enchant: " .. currentText)
+        end
+    end
+end)
+
 AutoEnchant:AddDivider()
 
---// === MODULE & REMOTE === //--
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Library utama
 local Net = require(ReplicatedStorage.Packages.Net)
 local Replion = require(ReplicatedStorage.Packages.Replion).Client
 
+-- RemoteEvent
 local EquipItemEvent = Net:RemoteEvent("EquipItem")
-local EquipToolEvent = ReplicatedStorage.Packages["_Index"]["sleitnick_net@0.2.0"].net["RE/EquipToolFromHotbar"]
-local ActivateAltarEvent = ReplicatedStorage.Packages["_Index"]["sleitnick_net@0.2.0"].net["RE/ActivateEnchantingAltar"]
+local EquipToolEvent = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net"):WaitForChild("RE/EquipToolFromHotbar")
+local ActivateAltarEvent = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net"):WaitForChild("RE/ActivateEnchantingAltar")
 
---// === UI PLAYER === //--
-local playerGui = player:WaitForChild("PlayerGui")
-
---// === AUTO ENCHANT SYSTEM === //--
-local selectedEnchants = { "Leprechaun I" } -- default
-local autoEnchantEnabled = false
-
--- Dropdown multi-select
+-- Dropdown untuk memilih enchant
 AutoEnchant:AddDropdown("EnchantDropdown", {
     Values = {
         "Leprechaun I",
@@ -1532,109 +1573,130 @@ AutoEnchant:AddDropdown("EnchantDropdown", {
     Default = "Leprechaun I",
     Multi = true,
     Text = "Select Enchant",
-    Callback = function(values)
-        selectedEnchants = values
-    end
+    Searchable = true,
 })
 
--- Toggle auto enchant
+-- Toggle untuk mengaktifkan Auto Enchant
 AutoEnchant:AddToggle("AutoEnchantToggle", {
     Text = "Auto Enchant",
     Default = false,
-    Callback = function(state)
-        autoEnchantEnabled = state
-    end
+    Tooltip = "Automatically rerolls until the selected enchant is obtained",
 })
 
---// === FUNGSI UTAMA === //--
-local function DoEnchantCycle()
-    -- Ambil data inventory player
+-- === Fungsi cek apakah enchant sesuai target ===
+local function isTargetEnchant(text)
+    local selected = Options.EnchantDropdown.Value
+    if typeof(selected) == "table" then
+        for name, state in pairs(selected) do
+            if state == true and string.find(text, name) then
+                return true
+            end
+        end
+    elseif typeof(selected) == "string" then
+        if string.find(text, selected) then
+            return true
+        end
+    end
+    return false
+end
+
+-- Variabel kontrol task aktif
+local currentTask
+
+-- === Fungsi utama proses enchant ===
+local function doEnchantCycle()
     local data = Replion:WaitReplion("Data")
     local inventory = data:GetExpect("Inventory")
     local items = inventory and inventory["Items"]
-    if not items then return end
+    if not items then return false end
 
-    -- Temukan ID item Enchant Stone
-    local targetModuleName = "Enchant Stone"
-    local moduleTarget = ReplicatedStorage.Items:FindFirstChild(targetModuleName)
-    local targetId
+    local moduleTarget = ReplicatedStorage.Items:FindFirstChild("Enchant Stone")
+    if not moduleTarget then return false end
 
-    if moduleTarget then
-        local ok, moduleData = pcall(require, moduleTarget)
-        if ok and moduleData.Data and moduleData.Data.Id then
-            targetId = moduleData.Data.Id
-        end
-    end
-    if not targetId then return end
+    local ok, moduleData = pcall(require, moduleTarget)
+    local targetId = ok and moduleData.Data and moduleData.Data.Id
+    if not targetId then return false end
 
-    -- Step 1: Equip Enchant Stone
+    -- Equip item Enchant Stone
+    local equipped = false
     for _, item in pairs(items) do
-        if item.Id == targetId then
-            local args = { item.UUID, "Enchant Stones" }
-            EquipItemEvent:FireServer(unpack(args))
+        if item.Id == targetId and not item.Equip then
+            EquipItemEvent:FireServer(item.UUID, "Enchant Stones")
+            item.Equip = true
+            equipped = true
             break
         end
     end
 
+    if not equipped then return false end
     task.wait(1)
 
-    -- Step 2: Equip tool slot 5
-    local args2 = { 5 }
-    EquipToolEvent:FireServer(unpack(args2))
+    -- Equip tool di hotbar slot 5
+    EquipToolEvent:FireServer(5)
     task.wait(1)
 
-    -- Step 3: Aktifkan altar
+    -- Aktifkan altar enchant
     ActivateAltarEvent:FireServer()
-    task.wait(2)
 
-    -- Step 4: Pantau GUI enchant
+    -- Tunggu GUI Roll Enchant
     local rollEnchant = playerGui:WaitForChild("Roll Enchant")
     local main = rollEnchant:WaitForChild("Main")
+
     local inside
     repeat
         inside = main:FindFirstChild("Inside")
         task.wait(1)
-    until inside
+    until inside or not Toggles.AutoEnchantToggle.Value
+
+    if not Toggles.AutoEnchantToggle.Value then return false end
 
     local top = inside:WaitForChild("Top")
     local enchantLabel = top:WaitForChild("EnchantLabel")
 
-    local lastText = ""
-    while task.wait(1) do
+    task.wait(3)
+
+    -- Pantau enchant setiap detik
+    while Toggles.AutoEnchantToggle.Value and task.wait(1) do
         local currentText = enchantLabel.Text
-        if currentText ~= lastText then
-            lastText = currentText
+        if isTargetEnchant(currentText) then
+            Library:Notify({
+                Title = "Enchant Found!",
+                Description = currentText,
+                Time = 4
+            })
+            return true
         end
 
-        -- Cek apakah enchant yang didapat sesuai pilihan dropdown
-        for _, targetName in pairs(selectedEnchants) do
-            if currentText == targetName then
-                -- === 🔔 NOTIFY SAAT DAPET === --
-                Library:Notify({
-                    Title = "Enchant Found!",
-                    Description = "Can enchant: " .. targetName,
-                    Time = 4,
-                })
-                return true
-            end
+        if currentText ~= "" and currentText ~= "..." and currentText ~= "Rolling..." then
+            return false
         end
     end
+
+    return false
 end
 
---// === LOOP UTAMA === //--
-task.spawn(function()
-    while task.wait(2) do
-        if autoEnchantEnabled then
-            local success = DoEnchantCycle()
-            if success then
-                autoEnchantEnabled = false
-                if Toggles and Toggles.AutoEnchantToggle then
+-- === Sistem toggle utama Auto Enchant ===
+Toggles.AutoEnchantToggle:OnChanged(function(state)
+    if state then
+        if currentTask then
+            task.cancel(currentTask)
+        end
+
+        currentTask = task.spawn(function()
+            while Toggles.AutoEnchantToggle.Value do
+                local success = doEnchantCycle()
+                if success then
                     Toggles.AutoEnchantToggle:SetValue(false)
+                    break
+                else
+                    task.wait(3)
                 end
-                break -- stop loop total kalau sudah dapat salah satu target
-            else
-                task.wait(3)
             end
+        end)
+    else
+        if currentTask then
+            task.cancel(currentTask)
+            currentTask = nil
         end
     end
 end)
@@ -2864,3 +2926,4 @@ Toggles.TeleportToSavedPos:OnChanged(function(state)
         freezeCharacter()
     end
 end)
+
