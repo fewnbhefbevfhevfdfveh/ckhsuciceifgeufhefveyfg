@@ -1368,7 +1368,7 @@ local Quests = {
     },
     ["Element"] = {
         Label = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content:WaitForChild("Label2"),
-        PosBelum100 = CFrame.new(1482.32007, 11.143092, -302.042816),
+        PosBelum100 = CFrame.new(2117.75146, -91.1985855, -700.854065, 0.931628525, -2.26793677e-08, -0.363411963, -9.1509369e-09, 1, -8.58657501e-08, 0.363411963, 8.33205434e-08, 0.931628525),
         PosSudah100 = CFrame.new(1524.70227, 5.12503767, -634.379639)
     },
     ["Aura Boat"] = {
