@@ -1,1 +1,2 @@
-[+] Added Auto Enchant
+[/] Fixed Bug Auto Enchant
+[+] Added Label View Enchamt
