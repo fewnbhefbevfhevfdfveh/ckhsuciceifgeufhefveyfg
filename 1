@@ -1,0 +1,116 @@
+-- ============================================================
+-- === SETUP SERVICE & DATA (Auto Trade System) ===============
+-- ============================================================
+local Replion = require(ReplicatedStorage.Packages.Replion).Client
+
+local tradeRemote = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/InitiateTrade")
+
+local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
+
+
+
+--// === MAPPING NAMA → TIER === //--
+local NameToTier = {
+    ["Common"] = 1,
+    ["Uncommon"] = 2,
+    ["Rare"] = 3,
+    ["Epic"] = 4,
+    ["Legendary"] = 5,
+    ["Mythic"] = 6,
+    ["SECRET"] = 7,
+}
+
+-- ============================================================
+-- === LOGIKA AUTO TRADE ======================================
+-- ============================================================
+Toggles.AutoTradeToggle:OnChanged(function(state)
+    if state then
+        task.spawn(function()
+            local playerName = Options.PlayerInput.Value
+            local tierName = Options.TierDropdown.Value
+
+            if not playerName or playerName == "" then
+                Library:Notify("⚠️ Isi nama player dulu di kolom input!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
+            end
+
+            local targetPlayer = Players:FindFirstChild(playerName)
+            if not targetPlayer then
+                Library:Notify("❌ Player '" .. playerName .. "' tidak ditemukan!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
+            end
+
+            local targetTier = NameToTier[tierName]
+            if not targetTier then
+                Library:Notify("⚠️ Tier tidak valid!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
+            end
+
+            Library:Notify("🚀 Auto Trade dimulai untuk player " .. playerName .. " (Tier: " .. tierName .. ")", 4)
+
+            -- LOOP UTAMA: terus kirim sampai ikan tier habis
+            while Toggles.AutoTradeToggle.Value do
+                local data = Replion:WaitReplion("Data")
+                local inventory = data:GetExpect({ "Inventory", "Items" }) or {}
+
+                -- ambil semua ID ikan tier yang cocok
+                local fishTierIds = {}
+                for _, module in ipairs(ItemsFolder:GetChildren()) do
+                    if module:IsA("ModuleScript") then
+                        local ok, itemData = pcall(require, module)
+                        if ok and itemData and itemData.Data then
+                            local info = itemData.Data
+                            if info.Type == "Fish" and info.Tier == targetTier then
+                                fishTierIds[info.Id] = true
+                            end
+                        end
+                    end
+                end
+
+                -- cari UUID di inventory
+                local tradeList = {}
+                for _, invItem in ipairs(inventory) do
+                    if invItem and invItem.Id and fishTierIds[invItem.Id] and invItem.UUID then
+                        table.insert(tradeList, invItem.UUID)
+                    end
+                end
+
+                if #tradeList == 0 then
+                    Library:Notify("🎣 Semua ikan Tier " .. tierName .. " sudah habis!", 5)
+                    Toggles.AutoTradeToggle:SetValue(false)
+                    break
+                end
+
+                -- kirim ke target player
+                for i, uuid in ipairs(tradeList) do
+                    if not Toggles.AutoTradeToggle.Value then break end
+                    local args = { targetPlayer.UserId, uuid }
+                    local ok, result = pcall(function()
+                        return tradeRemote:InvokeServer(unpack(args))
+                    end)
+                    if ok then
+                        print(string.format("🐟 [%d/%d] Kirim Fish UUID %s → %s", i, #tradeList, uuid, tostring(result)))
+                    else
+                        warn("❌ Gagal kirim ikan:", uuid)
+                    end
+                    task.wait(0.25)
+                end
+
+                -- tunggu 3 detik sebelum cek lagi
+                task.wait(3)
+            end
+
+            print("🛑 Auto Trade berhenti (ikan Tier habis atau toggle dimatikan).")
+        end)
+    else
+        print("🧊 Auto Trade toggle dimatikan manual.")
+    end
+end)
