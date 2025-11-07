@@ -35,6 +35,8 @@ local Window = Library:CreateWindow({
 	ShowCustomCursor = true,
 })
 
+Library:SetDPIScale(85)
+
 -- Semua Tabs
 local Tabs = {
 	Home = Window:AddTab("Home", "house"),
