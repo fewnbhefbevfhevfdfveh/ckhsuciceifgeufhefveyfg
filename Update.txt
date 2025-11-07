@@ -1,2 +1,3 @@
-[/] Rename Tab Farm To Fishing
-[+] Added Equip Rod & Bait
+[-] Delete Tab Home
+[/] Rename Tab Home To Quest
+[+] Added Auto Trade 
