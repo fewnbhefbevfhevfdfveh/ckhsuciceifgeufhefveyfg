@@ -29,7 +29,7 @@ SaveManager:SetSubFolder("Lobby")
 -- Window utama
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.4.3 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.4.4 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -39,10 +39,10 @@ Library:SetDPIScale(85)
 
 -- Semua Tabs
 local Tabs = {
-	Home = Window:AddTab("Home", "house"),
 	Info = Window:AddTab("Info", "info"),
 	Farm = Window:AddTab("Fishing", "fish"),
 	Event = Window:AddTab("Event", "calendar"),
+    Quest = Window:AddTab("Quest", "scroll-text"),
 	Auto = Window:AddTab("Auto", "repeat-2"),
 	Shop = Window:AddTab("Shop", "shopping-cart"),
 	Boat = Window:AddTab("Boat", "sailboat"),
@@ -64,46 +64,6 @@ local Options = Library.Options
 local Toggles = Library.Toggles
 Library.ForceCheckbox = false
 Library.ShowToggleFrameInKeybinds = true
-
-local AccountInfo = Tabs.Home:AddLeftGroupbox("Account Info", "circle-user-round")
-
-
--- Fungsi untuk menunggu karakter muncul
-local function getCharacter()
-    return player.Character or player.CharacterAdded:Wait()
-end
-
--- Ambil karakter dan HumanoidRootPart
-local char = getCharacter()
-local hrp = char:WaitForChild("HumanoidRootPart")
-
--- Pastikan overhead UI ada
-local overhead = hrp:WaitForChild("Overhead")
-local header = overhead.Content.Header
-local level = overhead.LevelContainer.Label
-
--- Buat label di AccountInfo (asumsi AccountInfo sudah ada)
-local InfoLabel = AccountInfo:AddLabel({
-    Text = "Name: " .. header.Text .. "\n" .. level.Text,
-    DoesWrap = true
-})
-
--- Loop update setiap 1 detik
-task.spawn(function()
-    while task.wait(1) do
-        -- Jika karakter respawn atau hrp hilang, refresh referensi
-        if not hrp or not hrp.Parent then
-            char = getCharacter()
-            hrp = char:WaitForChild("HumanoidRootPart")
-            overhead = hrp:WaitForChild("Overhead")
-            header = overhead.Content.Header
-            level = overhead.LevelContainer.Label
-        end
-
-        -- Update teks label dengan info terbaru
-        InfoLabel:SetText("Name: " .. header.Text .. "\n" .. level.Text)
-    end
-end)
 
 local EventStatus = Tabs.Info:AddLeftGroupbox("Event Status", "compass")
 
@@ -1221,7 +1181,7 @@ Halloween:AddButton({
     end
 })
 
-local DeepSea = Tabs.Auto:AddLeftGroupbox("Deep Sea Status", "ghost")
+local DeepSea = Tabs.Quest:AddLeftGroupbox("Deep Sea Status", "ghost")
 
 -- === DEEP SEA QUEST ===
 local board = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board
@@ -1256,7 +1216,7 @@ for _, name in ipairs(labelNames) do
     end
 end
 
-local AuraBoat = Tabs.Auto:AddLeftGroupbox("Aura Boat Status", "kayak")
+local AuraBoat = Tabs.Quest:AddLeftGroupbox("Aura Boat Status", "kayak")
 
 -- === AURA BOAT QUEST ===
 local auraLabel = AuraBoat:AddLabel({
@@ -1281,7 +1241,7 @@ task.spawn(function()
     end
 end)
 
-local Element = Tabs.Auto:AddLeftGroupbox("Element Status", "atom")
+local Element = Tabs.Quest:AddLeftGroupbox("Element Status", "atom")
 
 -- === ELEMENT QUEST ===
 local boardElement = workspace["!!! MENU RINGS"]["Element Tracker"].Board
@@ -1315,7 +1275,7 @@ for _, name in ipairs(elementLabelNames) do
     end
 end
 
-local TempleLever = Tabs.Auto:AddLeftGroupbox("TempleLever Status", "toggle-right")
+local TempleLever = Tabs.Quest:AddLeftGroupbox("TempleLever Status", "toggle-right")
 
 -- === TEMPLE LEVER STATUS ===
 local Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS")
@@ -1358,7 +1318,7 @@ task.spawn(function()
     end
 end)
 
-local AutoQuest = Tabs.Auto:AddRightGroupbox("Auto Quest", "crosshair")
+local AutoQuest = Tabs.Quest:AddRightGroupbox("Auto Quest", "crosshair")
 
 
 -- Konfigurasi Quest
@@ -1537,7 +1497,7 @@ Toggles.AutoQuestToggle:OnChanged(function(state)
     end
 end)
 
-local AutoFavorite = Tabs.Auto:AddRightGroupbox("Auto Favorite", "star")
+local AutoFavorite = Tabs.Auto:AddLeftGroupbox("Auto Favorite", "star")
 
 
 --// === SETUP DASAR === //--
@@ -1862,6 +1822,138 @@ Toggles.AutoEnchantToggle:OnChanged(function(state)
         end
     end
 end)
+
+local Trade = Tabs.Auto:AddLeftGroupbox("Trade", "handshake")
+
+local Replion = require(ReplicatedStorage.Packages.Replion).Client
+
+local tradeRemote = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/InitiateTrade")
+
+local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
+
+-- ============================================================
+-- === WINDUI SECTION: TRADE SYSTEM ===========================
+-- ============================================================
+
+--// === PLAYER NAME INPUT === //--
+Trade:AddInput("PlayerInput", {
+    Text = "Input Player Name",
+    Default = "",
+    Placeholder = "Example: Han9207",
+    Callback = function(value)
+    end
+})
+
+--// === DROPDOWN FOR TIER SELECTION === //--
+local tierNames = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" }
+
+Trade:AddDropdown("TierDropdown", {
+    Values = tierNames,
+    Default = "Rare",
+    Multi = false,
+    Text = "Select Tier",
+})
+
+--// === AUTO TRADE TOGGLE === //--
+Trade:AddToggle("AutoTradeToggle", {
+    Text = "Auto Trade Player",
+    Default = false,
+    Tooltip = "Automatically trade all fishes with the selected tier.",
+})
+
+--// === NAME TO TIER MAPPING === //--
+local NameToTier = {
+    ["Common"] = 1,
+    ["Uncommon"] = 2,
+    ["Rare"] = 3,
+    ["Epic"] = 4,
+    ["Legendary"] = 5,
+    ["Mythic"] = 6,
+    ["SECRET"] = 7,
+}
+
+Toggles.AutoTradeToggle:OnChanged(function(state)
+    if state then
+        task.spawn(function()
+            local playerName = Options.PlayerInput.Value
+            local tierName = Options.TierDropdown.Value
+
+            if not playerName or playerName == "" then
+                Library:Notify("⚠️ Please enter the target player's name first!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
+            end
+
+            local targetPlayer = Players:FindFirstChild(playerName)
+            if not targetPlayer then
+                Library:Notify("❌ Player '" .. playerName .. "' not found!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
+            end
+
+            local targetTier = NameToTier[tierName]
+            if not targetTier then
+                Library:Notify("⚠️ Invalid tier!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
+            end
+
+            Library:Notify("🚀 Auto Trade started for player " .. playerName .. " (Tier: " .. tierName .. ")", 4)
+
+            -- MAIN LOOP: keep trading until all fishes of the tier are gone
+            while Toggles.AutoTradeToggle.Value do
+                local data = Replion:WaitReplion("Data")
+                local inventory = data:GetExpect({ "Inventory", "Items" }) or {}
+
+                -- collect all fish IDs that match the selected tier
+                local fishTierIds = {}
+                for _, module in ipairs(ItemsFolder:GetChildren()) do
+                    if module:IsA("ModuleScript") then
+                        local ok, itemData = pcall(require, module)
+                        if ok and itemData and itemData.Data then
+                            local info = itemData.Data
+                            if info.Type == "Fish" and info.Tier == targetTier then
+                                fishTierIds[info.Id] = true
+                            end
+                        end
+                    end
+                end
+
+                -- find matching UUIDs in inventory
+                local tradeList = {}
+                for _, invItem in ipairs(inventory) do
+                    if invItem and invItem.Id and fishTierIds[invItem.Id] and invItem.UUID then
+                        table.insert(tradeList, invItem.UUID)
+                    end
+                end
+
+                if #tradeList == 0 then
+                    Library:Notify("🎣 All fishes of Tier " .. tierName .. " are already traded!", 5)
+                    Toggles.AutoTradeToggle:SetValue(false)
+                    break
+                end
+
+                -- send items to target player
+                for _, uuid in ipairs(tradeList) do
+                    if not Toggles.AutoTradeToggle.Value then break end
+                    local args = { targetPlayer.UserId, uuid }
+                    pcall(function()
+                        tradeRemote:InvokeServer(unpack(args))
+                    end)
+                    task.wait(0.25)
+                end
+
+                task.wait(3)
+            end
+        end)
+    end
+end)
+
 
 local Rod = Tabs.Shop:AddLeftGroupbox("Rod Purchaser", "fish-symbol")
 
@@ -3088,4 +3180,3 @@ Toggles.TeleportToSavedPos:OnChanged(function(state)
         freezeCharacter()
     end
 end)
-
