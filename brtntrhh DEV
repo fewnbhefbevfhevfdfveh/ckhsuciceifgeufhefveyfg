@@ -7,7 +7,7 @@ local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 
--- Deklarasi service dan variabel utama (tidak diubah)
+-- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
 local workspace = workspace
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -28,19 +28,21 @@ SaveManager:SetSubFolder("Lobby")
 
 -- Window utama
 local Window = Library:CreateWindow({
-	Title = "Nexa | Dev",
-	Footer = "Game: Fish It | Version: 1.4.0 | by Nexa Community",
+	Title = "Nexa | Premium",
+	Footer = "Game: Fish It | Version: 1.4.4 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
 })
 
+Library:SetDPIScale(85)
+
 -- Semua Tabs
 local Tabs = {
-	Home = Window:AddTab("Home", "house"),
 	Info = Window:AddTab("Info", "info"),
-	Farm = Window:AddTab("Farm", "fish"),
+	Farm = Window:AddTab("Fishing", "fish"),
 	Event = Window:AddTab("Event", "calendar"),
+    Quest = Window:AddTab("Quest", "scroll-text"),
 	Auto = Window:AddTab("Auto", "repeat-2"),
 	Shop = Window:AddTab("Shop", "shopping-cart"),
 	Boat = Window:AddTab("Boat", "sailboat"),
@@ -62,46 +64,6 @@ local Options = Library.Options
 local Toggles = Library.Toggles
 Library.ForceCheckbox = false
 Library.ShowToggleFrameInKeybinds = true
-
-local AccountInfo = Tabs.Home:AddLeftGroupbox("Account Info", "circle-user-round")
-
-
--- Fungsi untuk menunggu karakter muncul
-local function getCharacter()
-    return player.Character or player.CharacterAdded:Wait()
-end
-
--- Ambil karakter dan HumanoidRootPart
-local char = getCharacter()
-local hrp = char:WaitForChild("HumanoidRootPart")
-
--- Pastikan overhead UI ada
-local overhead = hrp:WaitForChild("Overhead")
-local header = overhead.Content.Header
-local level = overhead.LevelContainer.Label
-
--- Buat label di AccountInfo (asumsi AccountInfo sudah ada)
-local InfoLabel = AccountInfo:AddLabel({
-    Text = "Name: " .. header.Text .. "\n" .. level.Text,
-    DoesWrap = true
-})
-
--- Loop update setiap 1 detik
-task.spawn(function()
-    while task.wait(1) do
-        -- Jika karakter respawn atau hrp hilang, refresh referensi
-        if not hrp or not hrp.Parent then
-            char = getCharacter()
-            hrp = char:WaitForChild("HumanoidRootPart")
-            overhead = hrp:WaitForChild("Overhead")
-            header = overhead.Content.Header
-            level = overhead.LevelContainer.Label
-        end
-
-        -- Update teks label dengan info terbaru
-        InfoLabel:SetText("Name: " .. header.Text .. "\n" .. level.Text)
-    end
-end)
 
 local EventStatus = Tabs.Info:AddLeftGroupbox("Event Status", "compass")
 
@@ -527,35 +489,6 @@ Toggles.MyPseudoCodeToggle:OnChanged(function(state)
     end
 end)
 
--- Ambil RemoteEvent untuk equip rod
-local netEvent = ReplicatedStorage:WaitForChild("Packages")
-    :WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0")
-    :WaitForChild("net")
-    :WaitForChild("RE/EquipToolFromHotbar")
-
-local args = {1}
-
-local autoEquipRod = false
-
-Fishing:AddToggle("AutoEquipRodToggle", { 
-    Text = "Auto Equip Rod", 
-    Default = false,
-})
-
-Toggles.AutoEquipRodToggle:OnChanged(function(state)
-    autoEquipRod = state
-end)
-
-spawn(function()
-    while true do
-        if autoEquipRod then
-            netEvent:FireServer(unpack(args))
-        end
-        wait(1)
-    end
-end)
-
 -- Ambil RemoteFunction CancelFishing
 local CancelFishing = ReplicatedStorage
     :WaitForChild("Packages")
@@ -572,6 +505,196 @@ Fishing:AddButton({
     end
 })
 
+local Equipment = Tabs.Farm:AddRightGroupbox("Equipment", "backpack")
+
+-- Module
+local Net = require(ReplicatedStorage.Packages.Net)
+local Replion = require(ReplicatedStorage.Packages.Replion).Client
+
+-- RemoteEvent EquipItem
+local EquipItemEvent = Net:RemoteEvent("EquipItem")
+
+-- Data player
+local data = Replion:WaitReplion("Data")
+
+-- Variabel untuk menyimpan nama rod yang dipilih
+local SelectedRodName = "Starter Rod"
+
+-- Dropdown daftar Fishing Rods
+local RodDropdown = Equipment:AddDropdown("RodDropdown", {
+    Values = {
+        "Starter Rod",
+        "Luck Rod",
+        "Carbon Rod",
+        "Grass Rod",
+        "Demascus Rod",
+        "Ice Rod",
+        "Lucky Rod",
+        "Midnight Rod",
+        "Steampunk Rod",
+        "Chrome Rod",
+        "Fluorescent Rod",
+        "Astral Rod",
+        "Angler Rod",
+        "Ares Rod",
+        "Bamboo Rod",
+        "Toy Rod",
+        "Lava Rod",
+        "Hazmat Rod",
+        "Ghostfinn Rod",
+        "Element Rod",
+        "Angelic Rod",
+        "Gold Rod",
+        "Hyper Rod"
+    },
+    Default = "Starter Rod",
+    Multi = false,
+    Text = "Select Rod",
+    Searchable = true,
+    Callback = function(selected)
+        SelectedRodName = selected
+    end,
+})
+
+-- Tombol untuk equip rod yang dipilih
+Equipment:AddButton({
+    Text = "Equip Selected Rod",
+    Func = function()
+        -- Daftar ID Rod berdasarkan nama
+        local RodIDs = {
+            ["Starter Rod"] = 1,
+            ["Luck Rod"] = 79,
+            ["Carbon Rod"] = 76,
+            ["Grass Rod"] = 85,
+            ["Demascus Rod"] = 77,
+            ["Ice Rod"] = 78,
+            ["Lucky Rod"] = 4,
+            ["Midnight Rod"] = 80,
+            ["Steampunk Rod"] = 6,
+            ["Chrome Rod"] = 7,
+            ["Fluorescent Rod"] = 255,
+            ["Astral Rod"] = 5,
+            ["Angler Rod"] = 168,
+            ["Ares Rod"] = 126,
+            ["Bamboo Rod"] = 258,
+            ["Toy Rod"] = 84,
+            ["Lava Rod"] = 2,
+            ["Hazmat Rod"] = 256,
+            ["Ghostfinn Rod"] = 169,
+            ["Element Rod"] = 257,
+            ["Angelic Rod"] = 124,
+            ["Gold Rod"] = 8,
+            ["Hyper Rod"] = 9
+        }
+
+        local selectedID = RodIDs[SelectedRodName]
+        if not selectedID then return end
+
+        local rods = data:GetExpect({"Inventory", "Fishing Rods"})
+        if not rods then return end
+
+        for _, rod in ipairs(rods) do
+            if rod and rod.Id == selectedID then
+                EquipItemEvent:FireServer(rod.UUID, "Fishing Rods")
+                break
+            end
+        end
+    end,
+})
+
+-- RemoteEvent EquipBait
+local equipBaitRemote = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RE/EquipBait")
+
+local selectedID = nil
+
+-- Dropdown pilih Bait
+Equipment:AddDropdown("BobberDropdown", {
+    Values = {
+        "Starter Bait",
+        "Topwater Bait",
+        "Luck Bait",
+        "Midnight Bait",
+        "Nature Bait",
+        "Chroma Bait",
+        "Royal Bait",
+        "Dark Matter Bait",
+        "Corrupt Bait",
+        "Aether Bait",
+        "Floral Bait",
+        "Singularity Bait",
+        "Beach Ball Bait",
+        "Gold Bait",
+        "Hyper Bait"
+    },
+    Default = "Starter Bait",
+    Multi = false,
+    Text = "Select Bait",
+    Searchable = true,
+    Callback = function(selected)
+        local BobberIDs = {
+            ["Starter Bait"] = 1,
+            ["Luck Bait"] = 2,
+            ["Gold Bait"] = 4,
+            ["Hyper Bait"] = 5,
+            ["Chroma Bait"] = 6,
+            ["Dark Matter Bait"] = 8,
+            ["Beach Ball Bait"] = 9,
+            ["Topwater Bait"] = 10,
+            ["Corrupt Bait"] = 15,
+            ["Aether Bait"] = 16,
+            ["Nature Bait"] = 17,
+            ["Singularity Bait"] = 18,
+            ["Royal Bait"] = 19,
+            ["Floral Bait"] = 20,
+        }
+
+        selectedID = BobberIDs[selected]
+    end,
+})
+
+-- Tombol equip bait
+Equipment:AddButton({
+    Text = "Equip Selected Bait",
+    Func = function()
+        if selectedID then
+            equipBaitRemote:FireServer(selectedID)
+        end
+    end,
+})
+
+-- Ambil RemoteEvent untuk equip rod
+local netEvent = ReplicatedStorage:WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RE/EquipToolFromHotbar")
+
+local args = {1}
+
+local autoEquipRod = false
+
+Equipment:AddToggle("AutoEquipRodToggle", { 
+    Text = "Auto Equip Rod", 
+    Default = false,
+})
+
+Toggles.AutoEquipRodToggle:OnChanged(function(state)
+    autoEquipRod = state
+end)
+
+spawn(function()
+    while true do
+        if autoEquipRod then
+            netEvent:FireServer(unpack(args))
+        end
+        wait(1)
+    end
+end)
 local Speed = Tabs.Farm:AddLeftGroupbox("5X Speed", "chevrons-up")
 
 -- Loader modul dengan customRequire (untuk keamanan require modul)
@@ -1058,7 +1181,7 @@ Halloween:AddButton({
     end
 })
 
-local DeepSea = Tabs.Auto:AddLeftGroupbox("Deep Sea Status", "ghost")
+local DeepSea = Tabs.Quest:AddLeftGroupbox("Deep Sea Status", "ghost")
 
 -- === DEEP SEA QUEST ===
 local board = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board
@@ -1093,7 +1216,7 @@ for _, name in ipairs(labelNames) do
     end
 end
 
-local AuraBoat = Tabs.Auto:AddLeftGroupbox("Aura Boat Status", "kayak")
+local AuraBoat = Tabs.Quest:AddLeftGroupbox("Aura Boat Status", "kayak")
 
 -- === AURA BOAT QUEST ===
 local auraLabel = AuraBoat:AddLabel({
@@ -1118,7 +1241,7 @@ task.spawn(function()
     end
 end)
 
-local Element = Tabs.Auto:AddLeftGroupbox("Element Status", "atom")
+local Element = Tabs.Quest:AddLeftGroupbox("Element Status", "atom")
 
 -- === ELEMENT QUEST ===
 local boardElement = workspace["!!! MENU RINGS"]["Element Tracker"].Board
@@ -1152,7 +1275,7 @@ for _, name in ipairs(elementLabelNames) do
     end
 end
 
-local TempleLever = Tabs.Auto:AddLeftGroupbox("TempleLever Status", "toggle-right")
+local TempleLever = Tabs.Quest:AddLeftGroupbox("TempleLever Status", "toggle-right")
 
 -- === TEMPLE LEVER STATUS ===
 local Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS")
@@ -1195,7 +1318,7 @@ task.spawn(function()
     end
 end)
 
-local AutoQuest = Tabs.Auto:AddRightGroupbox("Auto Quest", "crosshair")
+local AutoQuest = Tabs.Quest:AddRightGroupbox("Auto Quest", "crosshair")
 
 
 -- Konfigurasi Quest
@@ -1207,7 +1330,7 @@ local Quests = {
     },
     ["Element"] = {
         Label = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content:WaitForChild("Label2"),
-        PosBelum100 = CFrame.new(1482.32007, 11.143092, -302.042816),
+        PosBelum100 = CFrame.new(2117.75146, -91.1985855, -700.854065, 0.931628525, -2.26793677e-08, -0.363411963, -9.1509369e-09, 1, -8.58657501e-08, 0.363411963, 8.33205434e-08, 0.931628525),
         PosSudah100 = CFrame.new(1524.70227, 5.12503767, -634.379639)
     },
     ["Aura Boat"] = {
@@ -1374,7 +1497,7 @@ Toggles.AutoQuestToggle:OnChanged(function(state)
     end
 end)
 
-local AutoFavorite = Tabs.Auto:AddRightGroupbox("Auto Favorite", "star")
+local AutoFavorite = Tabs.Auto:AddLeftGroupbox("Auto Favorite", "star")
 
 
 --// === SETUP DASAR === //--
@@ -1491,6 +1614,346 @@ Toggles.UnfavoriteToggle:OnChanged(function(state)
 		end)
 	end
 end)
+
+local AutoEnchant = Tabs.Auto:AddRightGroupbox("Auto Enchant", "sparkles")
+-- Referensi ke PlayerGui
+
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Buat label awal
+local LabelOptions = {
+    Text = "Enchant: Loading...",
+    DoesWrap = true
+}
+local EnchantLabelUI = AutoEnchant:AddLabel(LabelOptions)
+
+-- Jalankan di thread terpisah agar tidak ganggu WindUI
+task.spawn(function()
+    -- Tunggu GUI utama muncul (tanpa batas waktu)
+    local rollEnchant = playerGui:WaitForChild("Roll Enchant")
+    local main = rollEnchant:WaitForChild("Main")
+
+    -- Tunggu sampai Inside muncul
+    local inside
+    repeat
+        inside = main:FindFirstChild("Inside")
+        task.wait(1)
+    until inside
+
+    EnchantLabelUI:SetText("Enchant: Inside Loaded...")
+
+    -- Tunggu sampai EnchantLabel muncul
+    local top = inside:WaitForChild("Top")
+    local enchantLabel = top:WaitForChild("EnchantLabel")
+
+    EnchantLabelUI:SetText("Enchant: Ready...")
+
+    -- Loop pemantau enchant
+    local lastText = ""
+    while task.wait(1) do
+        local currentText = enchantLabel.Text or "Unknown"
+        if currentText ~= lastText then
+            lastText = currentText
+            EnchantLabelUI:SetText("Enchant: " .. currentText)
+        end
+    end
+end)
+
+AutoEnchant:AddDivider()
+
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Library utama
+local Net = require(ReplicatedStorage.Packages.Net)
+local Replion = require(ReplicatedStorage.Packages.Replion).Client
+
+-- RemoteEvent
+local EquipItemEvent = Net:RemoteEvent("EquipItem")
+local EquipToolEvent = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net"):WaitForChild("RE/EquipToolFromHotbar")
+local ActivateAltarEvent = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net"):WaitForChild("RE/ActivateEnchantingAltar")
+
+-- Dropdown untuk memilih enchant
+AutoEnchant:AddDropdown("EnchantDropdown", {
+    Values = {
+        "Leprechaun I",
+        "Leprechaun II",
+        "Mutation Hunter I",
+        "Mutation Hunter II",
+        "Gold Digger I",
+        "Reeler I",
+        "Big Hunter I",
+        "Empowered I",
+        "Glistening I",
+        "Stargazer I",
+        "Stormhunter I",
+        "XPerienced I",
+        "Cursed I",
+        "Prismatic I"
+    },
+    Default = "Leprechaun I",
+    Multi = true,
+    Text = "Select Enchant",
+    Searchable = true,
+})
+
+-- Toggle untuk mengaktifkan Auto Enchant
+AutoEnchant:AddToggle("AutoEnchantToggle", {
+    Text = "Auto Enchant",
+    Default = false,
+    Tooltip = "Automatically rerolls until the selected enchant is obtained",
+})
+
+-- === Fungsi cek apakah enchant sesuai target ===
+local function isTargetEnchant(text)
+    local selected = Options.EnchantDropdown.Value
+    if typeof(selected) == "table" then
+        for name, state in pairs(selected) do
+            if state == true and string.find(text, name) then
+                return true
+            end
+        end
+    elseif typeof(selected) == "string" then
+        if string.find(text, selected) then
+            return true
+        end
+    end
+    return false
+end
+
+-- Variabel kontrol task aktif
+local currentTask
+
+-- === Fungsi utama proses enchant ===
+local function doEnchantCycle()
+    local data = Replion:WaitReplion("Data")
+    local inventory = data:GetExpect("Inventory")
+    local items = inventory and inventory["Items"]
+    if not items then return false end
+
+    local moduleTarget = ReplicatedStorage.Items:FindFirstChild("Enchant Stone")
+    if not moduleTarget then return false end
+
+    local ok, moduleData = pcall(require, moduleTarget)
+    local targetId = ok and moduleData.Data and moduleData.Data.Id
+    if not targetId then return false end
+
+    -- Equip item Enchant Stone
+    local equipped = false
+    for _, item in pairs(items) do
+        if item.Id == targetId and not item.Equip then
+            EquipItemEvent:FireServer(item.UUID, "Enchant Stones")
+            item.Equip = true
+            equipped = true
+            break
+        end
+    end
+
+    if not equipped then return false end
+    task.wait(1)
+
+    -- Equip tool di hotbar slot 5
+    EquipToolEvent:FireServer(5)
+    task.wait(1)
+
+    -- Aktifkan altar enchant
+    ActivateAltarEvent:FireServer()
+
+    -- Tunggu GUI Roll Enchant
+    local rollEnchant = playerGui:WaitForChild("Roll Enchant")
+    local main = rollEnchant:WaitForChild("Main")
+
+    local inside
+    repeat
+        inside = main:FindFirstChild("Inside")
+        task.wait(1)
+    until inside or not Toggles.AutoEnchantToggle.Value
+
+    if not Toggles.AutoEnchantToggle.Value then return false end
+
+    local top = inside:WaitForChild("Top")
+    local enchantLabel = top:WaitForChild("EnchantLabel")
+
+    task.wait(3)
+
+    -- Pantau enchant setiap detik
+    while Toggles.AutoEnchantToggle.Value and task.wait(1) do
+        local currentText = enchantLabel.Text
+        if isTargetEnchant(currentText) then
+            Library:Notify({
+                Title = "Enchant Found!",
+                Description = currentText,
+                Time = 4
+            })
+            return true
+        end
+
+        if currentText ~= "" and currentText ~= "..." and currentText ~= "Rolling..." then
+            return false
+        end
+    end
+
+    return false
+end
+
+-- === Sistem toggle utama Auto Enchant ===
+Toggles.AutoEnchantToggle:OnChanged(function(state)
+    if state then
+        if currentTask then
+            task.cancel(currentTask)
+        end
+
+        currentTask = task.spawn(function()
+            while Toggles.AutoEnchantToggle.Value do
+                local success = doEnchantCycle()
+                if success then
+                    Toggles.AutoEnchantToggle:SetValue(false)
+                    break
+                else
+                    task.wait(3)
+                end
+            end
+        end)
+    else
+        if currentTask then
+            task.cancel(currentTask)
+            currentTask = nil
+        end
+    end
+end)
+
+local Trade = Tabs.Auto:AddLeftGroupbox("Trade", "handshake")
+
+local Replion = require(ReplicatedStorage.Packages.Replion).Client
+
+local tradeRemote = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/InitiateTrade")
+
+local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
+
+-- ============================================================
+-- === WINDUI SECTION: TRADE SYSTEM ===========================
+-- ============================================================
+
+--// === PLAYER NAME INPUT === //--
+Trade:AddInput("PlayerInput", {
+    Text = "Input Player Name",
+    Default = "",
+    Placeholder = "Example: Han9207",
+    Callback = function(value)
+    end
+})
+
+--// === DROPDOWN FOR TIER SELECTION === //--
+local tierNames = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" }
+
+Trade:AddDropdown("TierDropdown", {
+    Values = tierNames,
+    Default = "Rare",
+    Multi = false,
+    Text = "Select Tier",
+})
+
+--// === AUTO TRADE TOGGLE === //--
+Trade:AddToggle("AutoTradeToggle", {
+    Text = "Auto Trade Player",
+    Default = false,
+    Tooltip = "Automatically trade all fishes with the selected tier.",
+})
+
+--// === NAME TO TIER MAPPING === //--
+local NameToTier = {
+    ["Common"] = 1,
+    ["Uncommon"] = 2,
+    ["Rare"] = 3,
+    ["Epic"] = 4,
+    ["Legendary"] = 5,
+    ["Mythic"] = 6,
+    ["SECRET"] = 7,
+}
+
+Toggles.AutoTradeToggle:OnChanged(function(state)
+    if state then
+        task.spawn(function()
+            local playerName = Options.PlayerInput.Value
+            local tierName = Options.TierDropdown.Value
+
+            if not playerName or playerName == "" then
+                Library:Notify("⚠️ Please enter the target player's name first!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
+            end
+
+            local targetPlayer = Players:FindFirstChild(playerName)
+            if not targetPlayer then
+                Library:Notify("❌ Player '" .. playerName .. "' not found!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
+            end
+
+            local targetTier = NameToTier[tierName]
+            if not targetTier then
+                Library:Notify("⚠️ Invalid tier!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
+            end
+
+            Library:Notify("🚀 Auto Trade started for player " .. playerName .. " (Tier: " .. tierName .. ")", 4)
+
+            -- MAIN LOOP: keep trading until all fishes of the tier are gone
+            while Toggles.AutoTradeToggle.Value do
+                local data = Replion:WaitReplion("Data")
+                local inventory = data:GetExpect({ "Inventory", "Items" }) or {}
+
+                -- collect all fish IDs that match the selected tier
+                local fishTierIds = {}
+                for _, module in ipairs(ItemsFolder:GetChildren()) do
+                    if module:IsA("ModuleScript") then
+                        local ok, itemData = pcall(require, module)
+                        if ok and itemData and itemData.Data then
+                            local info = itemData.Data
+                            if info.Type == "Fish" and info.Tier == targetTier then
+                                fishTierIds[info.Id] = true
+                            end
+                        end
+                    end
+                end
+
+                -- find matching UUIDs in inventory
+                local tradeList = {}
+                for _, invItem in ipairs(inventory) do
+                    if invItem and invItem.Id and fishTierIds[invItem.Id] and invItem.UUID then
+                        table.insert(tradeList, invItem.UUID)
+                    end
+                end
+
+                if #tradeList == 0 then
+                    Library:Notify("🎣 All fishes of Tier " .. tierName .. " are already traded!", 5)
+                    Toggles.AutoTradeToggle:SetValue(false)
+                    break
+                end
+
+                -- send items to target player
+                for _, uuid in ipairs(tradeList) do
+                    if not Toggles.AutoTradeToggle.Value then break end
+                    local args = { targetPlayer.UserId, uuid }
+                    pcall(function()
+                        tradeRemote:InvokeServer(unpack(args))
+                    end)
+                    task.wait(0.25)
+                end
+
+                task.wait(3)
+            end
+        end)
+    end
+end)
+
 
 local Rod = Tabs.Shop:AddLeftGroupbox("Rod Purchaser", "fish-symbol")
 
