@@ -1,0 +1,3011 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
+
+local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
+local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
+local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
+local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+
+-- Deklarasi service dan variabel utama (tidak diubah)
+local workspace = workspace
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui") -- ✅ tambahan PlayerGui
+
+-- Register library
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+
+-- Folder penyimpanan
+ThemeManager:SetFolder("MyScriptHub")
+SaveManager:SetFolder("MyScriptHub/specific-game")
+SaveManager:SetSubFolder("Lobby")
+
+-- Window utama
+local Window = Library:CreateWindow({
+	Title = "Nexa | Premium",
+	Footer = "Game: Fish It | Version: 1.4.5 | by Nexa Community",
+	Icon = "rbxassetid://131269662643486",
+	NotifySide = "Right",
+	ShowCustomCursor = true,
+})
+
+Library:SetDPIScale(85)
+
+-- Semua Tabs
+local Tabs = {
+	Info = Window:AddTab("Info", "info"),
+	Farm = Window:AddTab("Fishing", "fish"),
+	Event = Window:AddTab("Event", "calendar"),
+    Quest = Window:AddTab("Quest", "scroll-text"),
+	Auto = Window:AddTab("Auto", "repeat-2"),
+	Shop = Window:AddTab("Shop", "shopping-cart"),
+	Boat = Window:AddTab("Boat", "sailboat"),
+	Player = Window:AddTab("Player", "user"),
+	Tp = Window:AddTab("Teleport", "map-pin"),
+	Config = Window:AddTab("Config", "folder"),
+}
+
+-- Theme & Save Manager setup
+ThemeManager:ApplyToTab(Tabs.Config)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({ "MenuKeybind" })
+SaveManager:BuildConfigSection(Tabs.Config)
+SaveManager:LoadAutoloadConfig()
+ThemeManager:LoadDefault()
+
+-- Optional settings
+local Options = Library.Options
+local Toggles = Library.Toggles
+Library.ForceCheckbox = false
+Library.ShowToggleFrameInKeybinds = true
+
+local EventStatus = Tabs.Info:AddLeftGroupbox("Event Status", "compass")
+
+local hunts = {
+    ["Props 1"] = "Shark Hunt",
+    ["Props 2"] = "Model", -- Worm Hunt
+    ["Props 3"] = "Megalodon Hunt",
+    ["Props 4"] = "Ghost Shark Hunt",
+    ["Props 5"] = "Fishing Hunt",
+}
+
+-- Referensi ke menu rings
+local menuRings = workspace:FindFirstChild("!!! MENU RINGS")
+
+-- Buat label untuk status di LeftGroupbox (asumsi EventStatus sudah ada)
+local huntStatusLabel = EventStatus:AddLabel({
+    Text = "Checking...",
+    DoesWrap = true,
+    Size = 16,
+})
+
+-- Fungsi update status
+local function updateStatus()
+    if not menuRings then return end
+
+    local statusText = ""
+
+    for i = 1, 5 do
+        local propName = "Props " .. i
+        local huntName = hunts[propName]
+        local prop = menuRings:FindFirstChild(propName)
+        local found = false
+
+        if prop and huntName then
+            if prop:FindFirstChild(huntName) then
+                found = true
+            end
+        end
+
+        -- Worm Hunt khusus (Props 2 → "Model")
+        if propName == "Props 2" then
+            if prop and prop:FindFirstChild("Model") then
+                found = true
+            end
+            statusText = statusText .. "Worm Hunt: " .. (found and "Spawned!" or "Not Found") .. "\n"
+        else
+            statusText = statusText .. hunts[propName] .. ": " .. (found and "Spawned!" or "Not Found") .. "\n"
+        end
+    end
+
+    -- hapus newline terakhir
+    statusText = statusText:sub(1, #statusText - 1)
+
+    -- update teks di label
+    huntStatusLabel:SetText(statusText)
+end
+
+-- update awal
+updateStatus()
+
+-- auto update kalau ada perubahan di menuRings
+if menuRings then
+    menuRings.ChildAdded:Connect(function(child)
+        if string.match(child.Name, "Props") then
+            updateStatus()
+        end
+    end)
+
+    menuRings.ChildRemoved:Connect(function(child)
+        if string.match(child.Name, "Props") then
+            updateStatus()
+        end
+    end)
+
+    for i = 1, 5 do
+        local prop = menuRings:FindFirstChild("Props " .. i)
+        if prop then
+            prop.ChildAdded:Connect(updateStatus)
+            prop.ChildRemoved:Connect(updateStatus)
+        end
+    end
+end
+
+-- cek & update setiap 1 detik
+task.spawn(function()
+    while task.wait(1) do
+        updateStatus()
+    end
+end)
+
+EventStatus:AddDivider()
+
+-- Opsi label awal
+local LabelOptions = {
+    Text = "Loading...",
+    DoesWrap = true
+}
+
+-- Buat label di EventStatus (asumsi EventStatus sudah ada)
+local Label = EventStatus:AddLabel(LabelOptions)
+
+-- Update label setiap 1 detik
+task.spawn(function()
+    while true do
+        task.wait(1)
+
+        -- Ambil teks terbaru dari workspace
+        local headerText = workspace["!!! MENU RINGS"]["Event Tracker"].Main.Gui.Content.Items.Countdown.Header.Text
+        local labelText = workspace["!!! MENU RINGS"]["Event Tracker"].Main.Gui.Content.Items.Countdown.Label.Text
+
+        -- Gabungkan teks untuk ditampilkan di UI
+        local combinedText = "Event: " .. headerText .. "\nTime: " .. labelText
+
+        -- Update teks di label
+        Label:SetText(combinedText)
+    end
+end)
+
+local EventHunt = Tabs.Info:AddRightGroupbox("Event Hunt", "anchor")
+
+-- Variabel penyimpanan dan kontrol
+local savePosition -- posisi awal sebelum teleport
+local freezeBV, freezeBG
+local selectedTargets = {} -- multi pilih
+local isActive = false
+
+-- Offset per event
+local offsets = {
+    ["Shark Hunt"] = Vector3.new(0, 100, 0),
+    ["Worm Hunt"] = Vector3.new(0, 100, 0),
+    ["Megalodon Hunt"] = Vector3.new(0, 5, 0),
+    ["Ghost Shark Hunt"] = Vector3.new(0, 100, 0),
+    ["Fishing Hunt"] = Vector3.new(0, 100, 0),
+}
+
+-- Target finder functions
+local targets = {
+    ["Shark Hunt"] = function()
+        local menuRings = workspace:FindFirstChild("!!! MENU RINGS")
+        local props = menuRings and menuRings:FindFirstChild("Props 1")
+        return props and props:FindFirstChild("Shark Hunt")
+    end,
+    ["Worm Hunt"] = function()
+        local menuRings = workspace:FindFirstChild("!!! MENU RINGS")
+        local props = menuRings and menuRings:FindFirstChild("Props 2")
+        return props and props:FindFirstChild("Model")
+    end,
+    ["Megalodon Hunt"] = function()
+        local menuRings = workspace:FindFirstChild("!!! MENU RINGS")
+        local props = menuRings and menuRings:FindFirstChild("Props 3")
+        return props and props:FindFirstChild("Megalodon Hunt")
+    end,
+    ["Ghost Shark Hunt"] = function()
+        local menuRings = workspace:FindFirstChild("!!! MENU RINGS")
+        local props = menuRings and menuRings:FindFirstChild("Props 4")
+        return props and props:FindFirstChild("Ghost Shark Hunt")
+    end,
+    ["Fishing Hunt"] = function()
+        local menuRings = workspace:FindFirstChild("!!! MENU RINGS")
+        local props = menuRings and menuRings:FindFirstChild("Props 5")
+        return props and props:FindFirstChild("Fishing Hunt")
+    end,
+}
+
+-- Freeze player movement
+local function ApplyFreeze()
+    if freezeBV then freezeBV:Destroy() end
+    if freezeBG then freezeBG:Destroy() end
+
+    freezeBV = Instance.new("BodyVelocity")
+    freezeBV.Velocity = Vector3.new(0, 0, 0)
+    freezeBV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+    freezeBV.Parent = hrp
+
+    freezeBG = Instance.new("BodyGyro")
+    freezeBG.CFrame = hrp.CFrame
+    freezeBG.D = 10
+    freezeBG.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+    freezeBG.Parent = hrp
+end
+
+local function RemoveFreeze()
+    if freezeBV then freezeBV:Destroy() freezeBV = nil end
+    if freezeBG then freezeBG:Destroy() freezeBG = nil end
+end
+
+-- Cari target aktif pertama dari selectedTargets
+local function FindActiveTarget()
+    for _, name in ipairs(selectedTargets) do
+        local getTarget = targets[name]
+        if getTarget then
+            local model = getTarget()
+            if model then
+                return name, model
+            end
+        end
+    end
+    return nil, nil
+end
+
+-- Fungsi teleport loop
+local function TeleportLoop()
+    task.spawn(function()
+        while isActive do
+            local eventName, targetModel = FindActiveTarget()
+            if eventName and targetModel then
+                local offset = offsets[eventName] or Vector3.new(0, 10, 0)
+                hrp.CFrame = targetModel:GetPivot() + offset
+                ApplyFreeze()
+
+                -- Tunggu sampai model hilang
+                repeat
+                    task.wait(1)
+                until not isActive or not targets[eventName]() -- model hilang
+
+                RemoveFreeze()
+                if isActive and savePosition then
+                    hrp.CFrame = savePosition -- kembali ke posisi awal
+                end
+            else
+                task.wait(1) -- tunggu lagi sampai ada hunt aktif
+            end
+        end
+    end)
+end
+
+-- Update saat respawn karakter
+player.CharacterAdded:Connect(function(newChar)
+    character = newChar
+    hrp = character:WaitForChild("HumanoidRootPart")
+    if isActive then
+        task.delay(1, TeleportLoop)
+    end
+end)
+
+-- Contoh pembuatan dropdown dan toggle (asumsi EventHunt sudah tersedia)
+
+-- Dropdown multi pilihan event
+local dropdown = EventHunt:AddDropdown("SelectedEvents", {
+    Values = {
+        "Shark Hunt",
+        "Worm Hunt",
+        "Megalodon Hunt",
+        "Ghost Shark Hunt",
+        "Fishing Hunt",
+    },
+    Default = {},
+    Multi = true,
+    Text = "Select Events",
+})
+
+dropdown:OnChanged(function(options)
+    selectedTargets = options
+end)
+
+-- Toggle Teleport
+local toggle = EventHunt:AddToggle("TeleportToggle", {
+    Text = "Teleport To Events",
+    Default = false,
+})
+
+toggle:OnChanged(function(state)
+    isActive = state
+    if state then
+        savePosition = hrp.CFrame -- simpan posisi awal saat toggle ON
+        TeleportLoop()
+    else
+        RemoveFreeze()
+        if savePosition then
+            hrp.CFrame = savePosition
+        end
+    end
+end)
+
+EventHunt:AddDivider()
+
+EventHunt:AddToggle("MyPseudoCodeToggle", {
+    Text = "Auto Talon Admin Event",
+    Default = false,
+})
+
+Toggles.MyPseudoCodeToggle:OnChanged(function(state)
+    if state then
+        local targetCFrame = CFrame.new(
+            -1956.04785, -440.000488, 7392.30615,
+            0.108164124, 1.00112381e-07, 0.994133055,
+            -6.4575367e-08, 1, -9.36774273e-08,
+            -0.994133055, -5.40639853e-08, 0.108164124
+        )
+
+        task.spawn(function()
+            while Toggles.MyPseudoCodeToggle.Value do
+                task.wait(1) -- cek tiap 1 detik
+                if workspace:FindFirstChild("CountdownPart") then
+                    local char = player.Character or player.CharacterAdded:Wait()
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        char.HumanoidRootPart.CFrame = targetCFrame
+                        break -- stop setelah teleport sekali
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+local Fishing = Tabs.Farm:AddLeftGroupbox("Fishing", "fish")
+
+local FishingController = require(ReplicatedStorage.Controllers.FishingController)
+local AutoFishingController = require(ReplicatedStorage.Controllers.AutoFishingController)
+local Replion = require(ReplicatedStorage.Packages.Replion)
+
+local AutoFishState = {
+	IsActive = false,
+	MinigameActive = false
+}
+
+local ClickSpeed = 0.05
+
+local function performClick()
+	FishingController:RequestFishingMinigameClick()
+	task.wait(ClickSpeed + math.random() * ClickSpeed)
+end
+
+-- Override state changed supaya selalu aktif
+local originalAutoFishingStateChanged = AutoFishingController.AutoFishingStateChanged
+AutoFishingController.AutoFishingStateChanged = function(...)
+	return originalAutoFishingStateChanged(true)
+end
+
+local function ensureServerAutoFishingOn()
+	local replionData = Replion.Client:WaitReplion("Data")
+	local currentAutoFishingState = replionData:GetExpect("AutoFishing")
+
+	if not currentAutoFishingState then
+		local Net = require(ReplicatedStorage.Packages.Net)
+		local UpdateAutoFishingRemote = Net:RemoteFunction("UpdateAutoFishingState")
+		pcall(function()
+			UpdateAutoFishingRemote:InvokeServer(true)
+		end)
+	end
+end
+
+local originalRodStarted = FishingController.FishingRodStarted
+local originalFishingStopped = FishingController.FishingStopped
+local clickThread = nil
+
+FishingController.FishingRodStarted = function(self, ...)
+	originalRodStarted(self, ...)
+	if AutoFishState.IsActive and not AutoFishState.MinigameActive then
+		AutoFishState.MinigameActive = true
+		if clickThread then task.cancel(clickThread) end
+		clickThread = task.spawn(function()
+			while AutoFishState.IsActive and AutoFishState.MinigameActive do
+				performClick()
+			end
+		end)
+	end
+end
+
+FishingController.FishingStopped = function(self, ...)
+	originalFishingStopped(self, ...)
+	if AutoFishState.MinigameActive then
+		AutoFishState.MinigameActive = false
+		task.wait(1)
+		ensureServerAutoFishingOn()
+	end
+end
+
+local function ToggleAutoClick(shouldActivate)
+	AutoFishState.IsActive = shouldActivate
+	if shouldActivate then
+		ensureServerAutoFishingOn()
+	else
+		if clickThread then
+			task.cancel(clickThread)
+			clickThread = nil
+		end
+		AutoFishState.MinigameActive = false
+	end
+end
+
+local AutoFishToggle = Fishing:AddToggle("AutoFishToggle", {
+	Text = "Auto Fish Legit",
+	Default = false,
+	Tooltip = "Aktifkan auto fishing otomatis",
+	Callback = function(Value)
+		ToggleAutoClick(Value)
+	end
+})
+
+AutoFishToggle:OnChanged(function(Value)
+	print("Auto Fish status:", Value)
+end)
+
+local SpeedInput = Fishing:AddInput("AutoFishSpeed", {
+	Text = "Click Speed",
+	Default = tostring(ClickSpeed),
+	Numeric = true,
+	Finished = true,
+	Placeholder = "Example: 0.0005",
+	Tooltip = "Kecepatan klik (semakin kecil semakin cepat)",
+	Callback = function(Value)
+		local num = tonumber(Value)
+		if num and num > 0 then
+			ClickSpeed = num
+		end
+	end
+})
+
+
+-- Tambahkan toggle pada Groupbox (asumsi Groupbox dan Toggles sudah tersedia)
+Fishing:AddToggle("MyPseudoCodeToggle", {
+    Text = "Show Fishing Counter Gui",
+    Default = false,
+})
+
+Toggles.MyPseudoCodeToggle:OnChanged(function(state)
+    local fishingCounterGui = player.PlayerGui:FindFirstChild("FishingCounterGui")
+    if fishingCounterGui then
+        fishingCounterGui.Enabled = state
+    else
+        warn("FishingCounterGui not found!")
+    end
+end)
+
+-- Ambil RemoteFunction CancelFishing
+local CancelFishing = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/CancelFishingInputs")
+
+-- Tambah tombol Cancel Fishing di Fishing GUI (asumsi Fishing sudah ada)
+Fishing:AddButton({
+    Text = "Cancel Fishing",
+    Func = function()
+        CancelFishing:InvokeServer()
+    end
+})
+
+local Equipment = Tabs.Farm:AddRightGroupbox("Equipment", "backpack")
+
+-- Module
+local Net = require(ReplicatedStorage.Packages.Net)
+local Replion = require(ReplicatedStorage.Packages.Replion).Client
+
+-- RemoteEvent EquipItem
+local EquipItemEvent = Net:RemoteEvent("EquipItem")
+
+-- Data player
+local data = Replion:WaitReplion("Data")
+
+-- Variabel untuk menyimpan nama rod yang dipilih
+local SelectedRodName = "Starter Rod"
+
+-- Dropdown daftar Fishing Rods
+local RodDropdown = Equipment:AddDropdown("RodDropdown", {
+    Values = {
+        "Starter Rod",
+        "Luck Rod",
+        "Carbon Rod",
+        "Grass Rod",
+        "Demascus Rod",
+        "Ice Rod",
+        "Lucky Rod",
+        "Midnight Rod",
+        "Steampunk Rod",
+        "Chrome Rod",
+        "Fluorescent Rod",
+        "Astral Rod",
+        "Angler Rod",
+        "Ares Rod",
+        "Bamboo Rod",
+        "Toy Rod",
+        "Lava Rod",
+        "Hazmat Rod",
+        "Ghostfinn Rod",
+        "Element Rod",
+        "Angelic Rod",
+        "Gold Rod",
+        "Hyper Rod"
+    },
+    Default = "Starter Rod",
+    Multi = false,
+    Text = "Select Rod",
+    Searchable = true,
+    Callback = function(selected)
+        SelectedRodName = selected
+    end,
+})
+
+-- Tombol untuk equip rod yang dipilih
+Equipment:AddButton({
+    Text = "Equip Selected Rod",
+    Func = function()
+        -- Daftar ID Rod berdasarkan nama
+        local RodIDs = {
+            ["Starter Rod"] = 1,
+            ["Luck Rod"] = 79,
+            ["Carbon Rod"] = 76,
+            ["Grass Rod"] = 85,
+            ["Demascus Rod"] = 77,
+            ["Ice Rod"] = 78,
+            ["Lucky Rod"] = 4,
+            ["Midnight Rod"] = 80,
+            ["Steampunk Rod"] = 6,
+            ["Chrome Rod"] = 7,
+            ["Fluorescent Rod"] = 255,
+            ["Astral Rod"] = 5,
+            ["Angler Rod"] = 168,
+            ["Ares Rod"] = 126,
+            ["Bamboo Rod"] = 258,
+            ["Toy Rod"] = 84,
+            ["Lava Rod"] = 2,
+            ["Hazmat Rod"] = 256,
+            ["Ghostfinn Rod"] = 169,
+            ["Element Rod"] = 257,
+            ["Angelic Rod"] = 124,
+            ["Gold Rod"] = 8,
+            ["Hyper Rod"] = 9
+        }
+
+        local selectedID = RodIDs[SelectedRodName]
+        if not selectedID then return end
+
+        local rods = data:GetExpect({"Inventory", "Fishing Rods"})
+        if not rods then return end
+
+        for _, rod in ipairs(rods) do
+            if rod and rod.Id == selectedID then
+                EquipItemEvent:FireServer(rod.UUID, "Fishing Rods")
+                break
+            end
+        end
+    end,
+})
+
+-- RemoteEvent EquipBait
+local equipBaitRemote = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RE/EquipBait")
+
+local selectedID = nil
+
+-- Dropdown pilih Bait
+Equipment:AddDropdown("BobberDropdown", {
+    Values = {
+        "Starter Bait",
+        "Topwater Bait",
+        "Luck Bait",
+        "Midnight Bait",
+        "Nature Bait",
+        "Chroma Bait",
+        "Royal Bait",
+        "Dark Matter Bait",
+        "Corrupt Bait",
+        "Aether Bait",
+        "Floral Bait",
+        "Singularity Bait",
+        "Beach Ball Bait",
+        "Gold Bait",
+        "Hyper Bait"
+    },
+    Default = "Starter Bait",
+    Multi = false,
+    Text = "Select Bait",
+    Searchable = true,
+    Callback = function(selected)
+        local BobberIDs = {
+            ["Starter Bait"] = 1,
+            ["Luck Bait"] = 2,
+            ["Gold Bait"] = 4,
+            ["Hyper Bait"] = 5,
+            ["Chroma Bait"] = 6,
+            ["Dark Matter Bait"] = 8,
+            ["Beach Ball Bait"] = 9,
+            ["Topwater Bait"] = 10,
+            ["Corrupt Bait"] = 15,
+            ["Aether Bait"] = 16,
+            ["Nature Bait"] = 17,
+            ["Singularity Bait"] = 18,
+            ["Royal Bait"] = 19,
+            ["Floral Bait"] = 20,
+        }
+
+        selectedID = BobberIDs[selected]
+    end,
+})
+
+-- Tombol equip bait
+Equipment:AddButton({
+    Text = "Equip Selected Bait",
+    Func = function()
+        if selectedID then
+            equipBaitRemote:FireServer(selectedID)
+        end
+    end,
+})
+
+-- Ambil RemoteEvent untuk equip rod
+local netEvent = ReplicatedStorage:WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RE/EquipToolFromHotbar")
+
+local args = {1}
+
+local autoEquipRod = false
+
+Equipment:AddToggle("AutoEquipRodToggle", { 
+    Text = "Auto Equip Rod", 
+    Default = false,
+})
+
+Toggles.AutoEquipRodToggle:OnChanged(function(state)
+    autoEquipRod = state
+end)
+
+spawn(function()
+    while true do
+        if autoEquipRod then
+            netEvent:FireServer(unpack(args))
+        end
+        wait(1)
+    end
+end)
+
+local Speed = Tabs.Farm:AddLeftGroupbox("Blatant (Beta)", "chevrons-up")
+
+local FuncAutoFish = {
+    autofish = false,
+    preRecastDelay = 1.40, -- Default Delay Spam
+    biteDelay = 1.50       -- Default Delay Fishing
+}
+
+local autoFishLoop
+
+--// Function: Find Net Folder
+local function getNetFolder()
+    local packages = ReplicatedStorage:FindFirstChild("Packages")
+    if packages and packages:FindFirstChild("_Index") then
+        for _, child in ipairs(packages._Index:GetChildren()) do
+            if child.Name:find("^sleitnick_net@") then
+                return child:FindFirstChild("net")
+            end
+        end
+    end
+    return ReplicatedStorage:FindFirstChild("net") or ReplicatedStorage:FindFirstChild("Net")
+end
+
+--// Function: Get Fishing Remotes
+local function getFishingRemotes()
+    local net = getNetFolder()
+    if not net then return nil end
+
+    local charge = net:FindFirstChild("RF/ChargeFishingRod")
+    local mini = net:FindFirstChild("RF/RequestFishingMinigameStarted")
+    local cancelIn = net:FindFirstChild("RF/CancelFishingInputs")
+    local complete = net:FindFirstChild("RE/FishingCompleted")
+
+    if not (charge and mini and cancelIn and complete) then
+        return nil
+    end
+
+    return {
+        charge = charge,
+        mini = mini,
+        cancelIn = cancelIn,
+        complete = complete
+    }
+end
+
+--// Function: Cast Fishing Once
+local function castOnce()
+    local r = getFishingRemotes()
+    if not r then return end
+
+    task.spawn(function()
+        r.charge:InvokeServer(workspace:GetServerTimeNow() - 1)
+        r.mini:InvokeServer(-2, 1)
+    end)
+end
+
+--// Function: Recast Before Bite
+local function recastBeforeBite()
+    local r = getFishingRemotes()
+    if not r then return end
+
+    task.spawn(function()
+        r.cancelIn:InvokeServer()
+        task.wait(0.05)
+        r.charge:InvokeServer(workspace:GetServerTimeNow())
+        r.mini:InvokeServer(-2, 1)
+    end)
+end
+
+--// Function: Reel Now
+local function reelNow()
+    local r = getFishingRemotes()
+    if not r then return end
+
+    task.spawn(function()
+        local batch = 5
+        local repeats = 8
+        local microDelay = 0.0001
+
+        for _ = 1, repeats do
+            for i = 1, batch do
+                r.complete:FireServer()
+            end
+            task.wait(microDelay)
+        end
+    end)
+end
+
+--// Function: Start Auto Fish
+local function startAutoFish()
+    if autoFishLoop then task.cancel(autoFishLoop) end
+    FuncAutoFish.autofish = true
+
+    autoFishLoop = task.spawn(function()
+        while FuncAutoFish.autofish do
+            castOnce()
+            task.wait(FuncAutoFish.preRecastDelay)
+            recastBeforeBite()
+            reelNow()
+            task.wait(FuncAutoFish.biteDelay)
+            reelNow()
+        end
+    end)
+end
+
+--// Function: Stop Auto Fish
+local function stopAutoFish()
+    FuncAutoFish.autofish = false
+    if autoFishLoop then
+        task.cancel(autoFishLoop)
+        autoFishLoop = nil
+    end
+end
+
+
+-- Toggle versi baru
+Speed:AddToggle("AutoFishToggle", {
+	Text = "Auto Blatant Fishing",
+	Default = false,
+})
+
+Toggles.AutoFishToggle:OnChanged(function(state)
+	if state then
+		startAutoFish()
+	else
+		stopAutoFish()
+	end
+end)
+
+-- Input versi baru untuk delay manual
+Speed:AddInput("DelaySpamInput", {
+	Text = "Delay Spam",
+	Default = "1.40", -- Default Delay Spam
+	Placeholder = "Masukkan delay (contoh: 1.40)",
+	Callback = function(value)
+		local num = tonumber(value)
+		if num then
+			FuncAutoFish.preRecastDelay = num
+		else
+			warn("[Auto Fish] Invalid Delay Spam input:", value)
+		end
+	end
+})
+
+Speed:AddInput("DelayFishingInput", {
+	Text = "Delay Fishing",
+	Default = "1.50", -- Default Delay Fishing
+	Placeholder = "Masukkan delay (contoh: 1.50)",
+	Callback = function(value)
+		local num = tonumber(value)
+		if num then
+			FuncAutoFish.biteDelay = num
+		else
+			warn("[Auto Fish] Invalid Delay Fishing input:", value)
+		end
+	end
+})
+
+
+local Sell = Tabs.Farm:AddRightGroupbox("Sell", "landmark")
+
+-- Variabel dan remote untuk auto sell
+local LocalPlayer = Players.LocalPlayer
+local sellRemote = ReplicatedStorage:WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/SellAllItems")
+
+local autoSell = false
+local sellDelay = 2
+local mode = "Sell Delay"
+local autoSellLoop = nil
+
+-- Slider delay jual otomatis
+Sell:AddSlider("SellDelaySlider", {
+    Text = "Sell Delay (seconds)",
+    Default = 2,
+    Min = 1,
+    Max = 30,
+    Rounding = 0,
+    Callback = function(value)
+        sellDelay = value
+    end,
+})
+
+-- Dropdown mode auto sell
+Sell:AddDropdown("SellModeDropdown", {
+    Values = { "Backpack Full", "Sell Delay" },
+    Default = "Sell Delay",
+    Multi = false,
+    Text = "Select Mode",
+    AllowNull = false,
+    Searchable = false,
+    MaxVisibleDropdownItems = 5,
+    Callback = function(option)
+        mode = option
+    end,
+})
+
+-- Toggle auto sell
+Sell:AddToggle("AutoSellToggle", {
+    Text = "Auto Sell All Items",
+    Default = false,
+    Callback = function(state)
+        autoSell = state
+
+        if state then
+            autoSellLoop = task.spawn(function()
+                while autoSell do
+                    pcall(function()
+                        if mode == "Sell Delay" then
+                            sellRemote:InvokeServer()
+                            task.wait(sellDelay)
+                        elseif mode == "Backpack Full" then
+                            local bagLabel = LocalPlayer
+                                .PlayerGui
+                                .Inventory
+                                .Main
+                                .Top
+                                .Options
+                                .Fish
+                                .Label
+                                .BagSize
+
+                            if bagLabel and bagLabel.Text == "4,500/4,500" then
+                                sellRemote:InvokeServer()
+                            end
+                            task.wait(1)
+                        end
+                    end)
+                end
+            end)
+        else
+            if autoSellLoop then
+                task.cancel(autoSellLoop)
+                autoSellLoop = nil
+            end
+        end
+    end,
+})
+
+local Halloween = Tabs.Event:AddLeftGroupbox("Halloween", "candy")
+
+-- 🔗 Remote references
+local Net = ReplicatedStorage:WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+
+local ClaimReward = Net:WaitForChild("RE/ClaimEventReward")
+local SpecialDialogueEvent = Net:WaitForChild("RF/SpecialDialogueEvent")
+
+-- Auto Claim Rewards
+local autoClaim = false
+local autoClaimLoop = nil
+
+Halloween:AddToggle("AutoClaimRewardToggle", {
+    Text = "Auto Claim All Rewards",
+    Default = false,
+    Tooltip = "Automatically claims all available event rewards",
+    Callback = function(state)
+        autoClaim = state
+
+        if state then
+            autoClaimLoop = task.spawn(function()
+                while autoClaim do
+                    for i = 1, 13 do
+                        pcall(function()
+                            ClaimReward:FireServer(i)
+                        end)
+                        task.wait(0.1)
+                    end
+                    task.wait(1)
+                end
+            end)
+        else
+            if autoClaimLoop then
+                task.cancel(autoClaimLoop)
+                autoClaimLoop = nil
+            end
+        end
+    end,
+})
+
+-- Auto TrickOrTreat Button
+Halloween:AddButton({
+    Text = "Auto TrickOrTreat",
+    Func = function()
+        local NPCFolder = ReplicatedStorage:WaitForChild("NPC")
+        local NPCs = NPCFolder:GetChildren()
+        local eventType = "TrickOrTreat"
+
+        task.spawn(function()
+            for i, npc in ipairs(NPCs) do
+                task.wait(0.01)
+                pcall(function()
+                    SpecialDialogueEvent:InvokeServer(npc.Name, eventType)
+                end)
+
+                if i == #NPCs then
+                    Library:Notify({
+                        Title = "Auto TrickOrTreat",
+                        Description = "All NPCs are done!",
+                        Time = 4,
+                    })
+                    break
+                end
+            end
+        end)
+    end
+})
+
+local DeepSea = Tabs.Quest:AddLeftGroupbox("Deep Sea Status", "ghost")
+
+-- === DEEP SEA QUEST ===
+local board = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board
+local surfaceGui = board:WaitForChild("Gui")
+local content = surfaceGui:WaitForChild("Content")
+local labelNames = {"Label1", "Label2", "Label3", "Label4"}
+
+local deepSeaLabel = DeepSea:AddLabel({
+    Text = "Checking...",
+    DoesWrap = true,
+    Size = 14
+})
+
+local function updateDeepSea()
+    local lines = {}
+    for _, name in ipairs(labelNames) do
+        local label = content:FindFirstChild(name)
+        if label then
+            table.insert(lines, label.Text)
+        end
+    end
+    local newText = table.concat(lines, "\n")
+    deepSeaLabel:SetText(newText)
+end
+
+updateDeepSea()
+
+for _, name in ipairs(labelNames) do
+    local label = content:FindFirstChild(name)
+    if label then
+        label:GetPropertyChangedSignal("Text"):Connect(updateDeepSea)
+    end
+end
+
+local AuraBoat = Tabs.Quest:AddRightGroupbox("Aura Boat Status", "kayak")
+
+-- === AURA BOAT QUEST ===
+local auraLabel = AuraBoat:AddLabel({
+    Text = "Checking...",
+    DoesWrap = true,
+    Size = 14
+})
+
+local function updateAura()
+    local contentAura = workspace["!!! MENU RINGS"]["Aura Tracker"].Board.Gui.Content
+    local combinedText = table.concat({
+        contentAura.Label1.Text,
+        contentAura.Label2.Text,
+        contentAura.Label3.Text
+    }, "\n")
+    auraLabel:SetText(combinedText)
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        updateAura()
+    end
+end)
+
+local Element = Tabs.Quest:AddLeftGroupbox("Element Status", "atom")
+
+-- === ELEMENT QUEST ===
+local boardElement = workspace["!!! MENU RINGS"]["Element Tracker"].Board
+local surfaceGuiElement = boardElement:WaitForChild("Gui")
+local contentElement = surfaceGuiElement:WaitForChild("Content")
+local elementLabelNames = {"Label1", "Label2", "Label3", "Label4"}
+
+local elementLabel = Element:AddLabel({
+    Text = "Checking...",
+    DoesWrap = true,
+    Size = 14
+})
+
+local function updateElement()
+    local lines = {}
+    for _, name in ipairs(elementLabelNames) do
+        local label = contentElement:FindFirstChild(name)
+        if label then
+            table.insert(lines, label.Text)
+        end
+    end
+    elementLabel:SetText(table.concat(lines, "\n"))
+end
+
+updateElement()
+
+for _, name in ipairs(elementLabelNames) do
+    local label = contentElement:FindFirstChild(name)
+    if label then
+        label:GetPropertyChangedSignal("Text"):Connect(updateElement)
+    end
+end
+
+local TempleLever = Tabs.Quest:AddRightGroupbox("TempleLever Status", "toggle-right")
+
+-- === TEMPLE LEVER STATUS ===
+local Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS")
+local Steps = {
+    "TempleLever 1",
+    "TempleLever 2",
+    "TempleLever 3",
+    "TempleLever 4",
+}
+
+local statusLabel = TempleLever:AddLabel({
+    Text = "Checking...",
+    DoesWrap = true,
+    Size = 14
+})
+
+local function updateStatus()
+    local lines = {}
+
+    for _, name in ipairs(Steps) do
+        local lever = Jungle:FindFirstChild(name)
+        local mark = "0%"
+
+        if lever and lever:FindFirstChild("RootPart") then
+            local root = lever.RootPart
+            if not root:FindFirstChild("ProximityPrompt") then
+                mark = "100%"
+            end
+        end
+
+        table.insert(lines, string.format("%s: %s", name, mark))
+    end
+
+    statusLabel:SetText(table.concat(lines, "\n"))
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        pcall(updateStatus)
+    end
+end)
+
+local AutoQuest = Tabs.Quest:AddLeftGroupbox("Auto Quest", "crosshair")
+
+
+-- Konfigurasi Quest
+local Quests = {
+    ["Deep Sea"] = {
+        Label = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content:WaitForChild("Label1"),
+        PosBelum100 = CFrame.new(-3563.65063, -279.074219, -1605.75671),
+        PosSudah100 = CFrame.new(-3698.01001, -135.073914, -1010.34033)
+    },
+    ["Element"] = {
+        Label = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content:WaitForChild("Label2"),
+        PosBelum100 = CFrame.new(2117.75146, -91.1985855, -700.854065, 0.931628525, -2.26793677e-08, -0.363411963, -9.1509369e-09, 1, -8.58657501e-08, 0.363411963, 8.33205434e-08, 0.931628525),
+        PosSudah100 = CFrame.new(1524.70227, 5.12503767, -634.379639)
+    },
+    ["Aura Boat"] = {
+        PosTarget = CFrame.new(88.2434769, 9.53157043, 2685.2605),
+        MinLevel = 200
+    },
+    ["Temple Lever"] = {
+        Steps = {
+            { Name = "TempleLever 1", CFrame = CFrame.new(1837.76038, 6.46929169, -289.37793) },
+            { Name = "TempleLever 2", CFrame = CFrame.new(1407.78601, 6.59558344, 118.577896) },
+            { Name = "TempleLever 3", CFrame = CFrame.new(877.883911, 4.8866396, -358.809021) },
+            { Name = "TempleLever 4", CFrame = CFrame.new(1837.76038, 6.46929169, -289.37793) },
+        }
+    }
+}
+
+local selectedQuest = "Deep Sea"
+local autoQuestEnabled = false
+local freezeBV, freezeBG
+local savedCFrame
+
+-- Freeze / Unfreeze functions
+local function Freeze(char, cf)
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    if freezeBV then freezeBV:Destroy() freezeBV = nil end
+    if freezeBG then freezeBG:Destroy() freezeBG = nil end
+
+    freezeBV = Instance.new("BodyVelocity")
+    freezeBV.Velocity = Vector3.zero
+    freezeBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    freezeBV.Parent = hrp
+
+    freezeBG = Instance.new("BodyGyro")
+    freezeBG.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    freezeBG.CFrame = cf or hrp.CFrame
+    freezeBG.Parent = hrp
+end
+
+local function Unfreeze()
+    if freezeBV then freezeBV:Destroy() freezeBV = nil end
+    if freezeBG then freezeBG:Destroy() freezeBG = nil end
+end
+
+-- Teleport utama
+local function TeleportOnce(cf)
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char:SetPrimaryPartCFrame(cf)
+        savedCFrame = cf
+        Freeze(char, cf)
+    end
+end
+
+-- Temple Lever Quest Logic
+local function RunTempleLever()
+    task.spawn(function()
+        local Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS")
+        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        local steps = Quests["Temple Lever"].Steps
+
+        for _, step in ipairs(steps) do
+            if not autoQuestEnabled or selectedQuest ~= "Temple Lever" then break end
+            local lever = Jungle:FindFirstChild(step.Name)
+
+            if lever and lever:FindFirstChild("RootPart") then
+                hrp.CFrame = step.CFrame
+                task.wait(0.5)
+                local prompt = lever.RootPart:FindFirstChild("ProximityPrompt")
+                if prompt then
+                    fireproximityprompt(prompt)
+                    task.wait(5)
+                end
+            end
+            task.wait(1)
+        end
+    end)
+end
+
+-- Cek quest utama
+local function CheckQuest()
+    if not autoQuestEnabled or not selectedQuest then return end
+
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+
+    if selectedQuest == "Aura Boat" then
+        local overhead = hrp:WaitForChild("Overhead")
+        local levelLabel = overhead:WaitForChild("LevelContainer"):WaitForChild("Label")
+        local level = tonumber(levelLabel.Text:match("%d+")) or 0
+        if level >= Quests["Aura Boat"].MinLevel then
+            TeleportOnce(Quests["Aura Boat"].PosTarget)
+        end
+
+    elseif selectedQuest == "Temple Lever" then
+        RunTempleLever()
+
+    else
+        local quest = Quests[selectedQuest]
+        local text = quest.Label.Text
+        local persen = tonumber(text:match("(%d+)%%"))
+        if persen and persen < 100 then
+            TeleportOnce(quest.PosBelum100)
+        else
+            TeleportOnce(quest.PosSudah100)
+        end
+    end
+end
+
+-- Update saat label berubah
+for name, quest in pairs(Quests) do
+    if quest.Label then
+        quest.Label:GetPropertyChangedSignal("Text"):Connect(function()
+            if selectedQuest == name and autoQuestEnabled then
+                CheckQuest()
+            end
+        end)
+    end
+end
+
+-- Anti geser saat aktif
+RunService.Heartbeat:Connect(function()
+    if autoQuestEnabled and savedCFrame then
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local hrp = char.HumanoidRootPart
+            if (hrp.Position - savedCFrame.Position).Magnitude > 2 then
+                hrp.CFrame = savedCFrame
+            end
+        end
+    end
+end)
+
+-- UI Dropdown untuk pilih quest
+AutoQuest:AddDropdown("QuestDropdown", {
+    Values = { "Deep Sea", "Element", "Aura Boat", "Temple Lever" },
+    Default = "Deep Sea",
+    Multi = false,
+    Text = "Select Quest",
+})
+
+Options.QuestDropdown:OnChanged(function(option)
+    selectedQuest = option
+    if autoQuestEnabled then
+        CheckQuest()
+    end
+end)
+
+-- UI Toggle Auto Quest
+AutoQuest:AddToggle("AutoQuestToggle", {
+    Text = "Auto Quest",
+    Default = false,
+})
+
+Toggles.AutoQuestToggle:OnChanged(function(state)
+    autoQuestEnabled = state
+    if state then
+        CheckQuest()
+    else
+        Unfreeze()
+        savedCFrame = nil
+    end
+end)
+
+local AutoFavorite = Tabs.Auto:AddLeftGroupbox("Auto Favorite", "star")
+
+
+--// === SETUP DASAR === //--
+local Net = require(ReplicatedStorage.Packages.Net)
+local Replion = require(ReplicatedStorage.Packages.Replion).Client
+
+local FavoriteItemEvent = Net:RemoteEvent("FavoriteItem")
+local data = Replion:WaitReplion("Data")
+
+--// === FUNGSI FAVORITE === //--
+local function FavoriteAllByTier(tierTarget)
+	local inventory = data:GetExpect("Inventory")
+	local items = inventory and inventory["Items"]
+	if not items then return end
+
+	for _, item in pairs(items) do
+		if item and not item.Favorited then
+			for _, module in pairs(ReplicatedStorage.Items:GetChildren()) do
+				if module:IsA("ModuleScript") then
+					local ok, moduleData = pcall(require, module)
+					if ok and moduleData.Data and moduleData.Data.Id == item.Id then
+						if moduleData.Data.Tier == tierTarget then
+							FavoriteItemEvent:FireServer(item.UUID)
+							task.wait(0.1)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+--// === FUNGSI UNFAVORITE BERDASAR TIER === //--
+local function UnfavoriteAllByTier(tierTarget)
+	local inventory = data:GetExpect("Inventory")
+	local items = inventory and inventory["Items"]
+	if not items then return end
+
+	for _, item in pairs(items) do
+		if item and item.Favorited then
+			for _, module in pairs(ReplicatedStorage.Items:GetChildren()) do
+				if module:IsA("ModuleScript") then
+					local ok, moduleData = pcall(require, module)
+					if ok and moduleData.Data and moduleData.Data.Id == item.Id then
+						if moduleData.Data.Tier == tierTarget then
+							FavoriteItemEvent:FireServer(item.UUID)
+							task.wait(0.1)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+--// === UI KONTROL === //--
+AutoFavorite:AddDropdown("TierDropdown", {
+	Values = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" },
+	Default = "Rare",
+	Multi = false,
+	Text = "Select Rarity",
+})
+
+AutoFavorite:AddToggle("FavoriteToggle", {
+	Text = "Auto Favorite",
+	Default = false,
+})
+
+AutoFavorite:AddToggle("UnfavoriteToggle", {
+	Text = "Auto Unfavorite",
+	Default = false,
+})
+
+-- Mapping nama ke angka Tier
+local tierMap = {
+	Common = 1,
+	Uncommon = 2,
+	Rare = 3,
+	Epic = 4,
+	Legendary = 5,
+	Mythic = 6,
+	SECRET = 7,
+}
+
+-- Loop Auto Favorite
+Toggles.FavoriteToggle:OnChanged(function(state)
+	if state then
+		local selectedTierName = Options.TierDropdown.Value
+		local tierTarget = tierMap[selectedTierName]
+		if not tierTarget then return end
+
+		task.spawn(function()
+			while Toggles.FavoriteToggle.Value do
+				FavoriteAllByTier(tierTarget)
+				task.wait(3)
+			end
+		end)
+	end
+end)
+
+-- Loop Auto Unfavorite per Tier
+Toggles.UnfavoriteToggle:OnChanged(function(state)
+	if state then
+		local selectedTierName = Options.TierDropdown.Value
+		local tierTarget = tierMap[selectedTierName]
+		if not tierTarget then return end
+
+		task.spawn(function()
+			while Toggles.UnfavoriteToggle.Value do
+				UnfavoriteAllByTier(tierTarget)
+				task.wait(3)
+			end
+		end)
+	end
+end)
+
+
+local AutoEnchant = Tabs.Auto:AddRightGroupbox("Auto Enchant", "sparkles")
+-- Referensi ke PlayerGui
+
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Buat label awal
+local LabelOptions = {
+    Text = "Enchant: Loading...",
+    DoesWrap = true
+}
+local EnchantLabelUI = AutoEnchant:AddLabel(LabelOptions)
+
+-- Jalankan di thread terpisah agar tidak ganggu WindUI
+task.spawn(function()
+    -- Tunggu GUI utama muncul (tanpa batas waktu)
+    local rollEnchant = playerGui:WaitForChild("Roll Enchant")
+    local main = rollEnchant:WaitForChild("Main")
+
+    -- Tunggu sampai Inside muncul
+    local inside
+    repeat
+        inside = main:FindFirstChild("Inside")
+        task.wait(1)
+    until inside
+
+    EnchantLabelUI:SetText("Enchant: Inside Loaded...")
+
+    -- Tunggu sampai EnchantLabel muncul
+    local top = inside:WaitForChild("Top")
+    local enchantLabel = top:WaitForChild("EnchantLabel")
+
+    EnchantLabelUI:SetText("Enchant: Ready...")
+
+    -- Loop pemantau enchant
+    local lastText = ""
+    while task.wait(1) do
+        local currentText = enchantLabel.Text or "Unknown"
+        if currentText ~= lastText then
+            lastText = currentText
+            EnchantLabelUI:SetText("Enchant: " .. currentText)
+        end
+    end
+end)
+
+AutoEnchant:AddDivider()
+
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Library utama
+local Net = require(ReplicatedStorage.Packages.Net)
+local Replion = require(ReplicatedStorage.Packages.Replion).Client
+
+-- RemoteEvent
+local EquipItemEvent = Net:RemoteEvent("EquipItem")
+local EquipToolEvent = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net"):WaitForChild("RE/EquipToolFromHotbar")
+local ActivateAltarEvent = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net"):WaitForChild("RE/ActivateEnchantingAltar")
+
+-- Dropdown untuk memilih enchant
+AutoEnchant:AddDropdown("EnchantDropdown", {
+    Values = {
+        "Leprechaun I",
+        "Leprechaun II",
+        "Mutation Hunter I",
+        "Mutation Hunter II",
+        "Gold Digger I",
+        "Reeler I",
+        "Big Hunter I",
+        "Empowered I",
+        "Glistening I",
+        "Stargazer I",
+        "Stormhunter I",
+        "XPerienced I",
+        "Cursed I",
+        "Prismatic I"
+    },
+    Default = "Leprechaun I",
+    Multi = true,
+    Text = "Select Enchant",
+    Searchable = true,
+})
+
+-- Toggle untuk mengaktifkan Auto Enchant
+AutoEnchant:AddToggle("AutoEnchantToggle", {
+    Text = "Auto Enchant",
+    Default = false,
+    Tooltip = "Automatically rerolls until the selected enchant is obtained",
+})
+
+-- === Fungsi cek apakah enchant sesuai target ===
+local function isTargetEnchant(text)
+    local selected = Options.EnchantDropdown.Value
+    if typeof(selected) == "table" then
+        for name, state in pairs(selected) do
+            if state == true and string.find(text, name) then
+                return true
+            end
+        end
+    elseif typeof(selected) == "string" then
+        if string.find(text, selected) then
+            return true
+        end
+    end
+    return false
+end
+
+-- Variabel kontrol task aktif
+local currentTask
+
+-- === Fungsi utama proses enchant ===
+local function doEnchantCycle()
+    local data = Replion:WaitReplion("Data")
+    local inventory = data:GetExpect("Inventory")
+    local items = inventory and inventory["Items"]
+    if not items then return false end
+
+    local moduleTarget = ReplicatedStorage.Items:FindFirstChild("Enchant Stone")
+    if not moduleTarget then return false end
+
+    local ok, moduleData = pcall(require, moduleTarget)
+    local targetId = ok and moduleData.Data and moduleData.Data.Id
+    if not targetId then return false end
+
+    -- Equip item Enchant Stone
+    local equipped = false
+    for _, item in pairs(items) do
+        if item.Id == targetId and not item.Equip then
+            EquipItemEvent:FireServer(item.UUID, "Enchant Stones")
+            item.Equip = true
+            equipped = true
+            break
+        end
+    end
+
+    if not equipped then return false end
+    task.wait(1)
+
+    -- Equip tool di hotbar slot 5
+    EquipToolEvent:FireServer(5)
+    task.wait(1)
+
+    -- Aktifkan altar enchant
+    ActivateAltarEvent:FireServer()
+
+    -- Tunggu GUI Roll Enchant
+    local rollEnchant = playerGui:WaitForChild("Roll Enchant")
+    local main = rollEnchant:WaitForChild("Main")
+
+    local inside
+    repeat
+        inside = main:FindFirstChild("Inside")
+        task.wait(1)
+    until inside or not Toggles.AutoEnchantToggle.Value
+
+    if not Toggles.AutoEnchantToggle.Value then return false end
+
+    local top = inside:WaitForChild("Top")
+    local enchantLabel = top:WaitForChild("EnchantLabel")
+
+    task.wait(3)
+
+    -- Pantau enchant setiap detik
+    while Toggles.AutoEnchantToggle.Value and task.wait(1) do
+        local currentText = enchantLabel.Text
+        if isTargetEnchant(currentText) then
+            Library:Notify({
+                Title = "Enchant Found!",
+                Description = currentText,
+                Time = 4
+            })
+            return true
+        end
+
+        if currentText ~= "" and currentText ~= "..." and currentText ~= "Rolling..." then
+            return false
+        end
+    end
+
+    return false
+end
+
+-- === Sistem toggle utama Auto Enchant ===
+Toggles.AutoEnchantToggle:OnChanged(function(state)
+    if state then
+        if currentTask then
+            task.cancel(currentTask)
+        end
+
+        currentTask = task.spawn(function()
+            while Toggles.AutoEnchantToggle.Value do
+                local success = doEnchantCycle()
+                if success then
+                    Toggles.AutoEnchantToggle:SetValue(false)
+                    break
+                else
+                    task.wait(3)
+                end
+            end
+        end)
+    else
+        if currentTask then
+            task.cancel(currentTask)
+            currentTask = nil
+        end
+    end
+end)
+
+local Trade = Tabs.Auto:AddLeftGroupbox("Trade", "handshake")
+
+local Replion = require(ReplicatedStorage.Packages.Replion).Client
+
+local tradeRemote = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/InitiateTrade")
+
+local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
+
+-- ============================================================
+-- === WINDUI SECTION: TRADE SYSTEM ===========================
+-- ============================================================
+
+--// === PLAYER NAME INPUT === //--
+Trade:AddInput("PlayerInput", {
+    Text = "Input Player Name",
+    Default = "",
+    Placeholder = "Example: Han9207",
+    Callback = function(value)
+    end
+})
+
+--// === DROPDOWN FOR TIER SELECTION === //--
+local tierNames = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" }
+
+Trade:AddDropdown("TierDropdown", {
+    Values = tierNames,
+    Default = "Rare",
+    Multi = false,
+    Text = "Select Tier",
+})
+
+--// === AUTO TRADE TOGGLE === //--
+Trade:AddToggle("AutoTradeToggle", {
+    Text = "Auto Trade Player",
+    Default = false,
+    Tooltip = "Automatically trade all fishes with the selected tier.",
+})
+
+--// === NAME TO TIER MAPPING === //--
+local NameToTier = {
+    ["Common"] = 1,
+    ["Uncommon"] = 2,
+    ["Rare"] = 3,
+    ["Epic"] = 4,
+    ["Legendary"] = 5,
+    ["Mythic"] = 6,
+    ["SECRET"] = 7,
+}
+
+Toggles.AutoTradeToggle:OnChanged(function(state)
+    if state then
+        task.spawn(function()
+            local playerName = Options.PlayerInput.Value
+            local tierName = Options.TierDropdown.Value
+
+            if not playerName or playerName == "" then
+                Library:Notify("⚠️ Please enter the target player's name first!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
+            end
+
+            local targetPlayer = Players:FindFirstChild(playerName)
+            if not targetPlayer then
+                Library:Notify("❌ Player '" .. playerName .. "' not found!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
+            end
+
+            local targetTier = NameToTier[tierName]
+            if not targetTier then
+                Library:Notify("⚠️ Invalid tier!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
+            end
+
+            Library:Notify("🚀 Auto Trade started for player " .. playerName .. " (Tier: " .. tierName .. ")", 4)
+
+            -- MAIN LOOP: keep trading until all fishes of the tier are gone
+            while Toggles.AutoTradeToggle.Value do
+                local data = Replion:WaitReplion("Data")
+                local inventory = data:GetExpect({ "Inventory", "Items" }) or {}
+
+                -- collect all fish IDs that match the selected tier
+                local fishTierIds = {}
+                for _, module in ipairs(ItemsFolder:GetChildren()) do
+                    if module:IsA("ModuleScript") then
+                        local ok, itemData = pcall(require, module)
+                        if ok and itemData and itemData.Data then
+                            local info = itemData.Data
+                            if info.Type == "Fish" and info.Tier == targetTier then
+                                fishTierIds[info.Id] = true
+                            end
+                        end
+                    end
+                end
+
+                -- find matching UUIDs in inventory
+                local tradeList = {}
+                for _, invItem in ipairs(inventory) do
+                    if invItem and invItem.Id and fishTierIds[invItem.Id] and invItem.UUID then
+                        table.insert(tradeList, invItem.UUID)
+                    end
+                end
+
+                if #tradeList == 0 then
+                    Library:Notify("🎣 All fishes of Tier " .. tierName .. " are already traded!", 5)
+                    Toggles.AutoTradeToggle:SetValue(false)
+                    break
+                end
+
+                -- send items to target player
+                for _, uuid in ipairs(tradeList) do
+                    if not Toggles.AutoTradeToggle.Value then break end
+                    local args = { targetPlayer.UserId, uuid }
+                    pcall(function()
+                        tradeRemote:InvokeServer(unpack(args))
+                    end)
+                    task.wait(0.25)
+                end
+
+                task.wait(3)
+            end
+        end)
+    end
+end)
+
+
+local Rod = Tabs.Shop:AddLeftGroupbox("Rod Purchaser", "fish-symbol")
+
+-- Mapping nama rod ke ID
+local rodMap = {
+	["Starter Rod"] = 1,
+	["Luck Rod"] = 79,
+	["Carbon Rod"] = 76,
+	["Grass Rod"] = 85,
+	["Demascus Rod"] = 77,
+	["Ice Rod"] = 78,
+	["Lucky Rod"] = 4,
+	["Midnight Rod"] = 80,
+	["Steampunk Rod"] = 6,
+	["Chrome Rod"] = 7,
+	["Fluorescent Rod"] = 255,
+	["Astral Rod"] = 5,
+	["Angler Rod"] = 168,
+	["Ares Rod"] = 126,
+	["Bamboo Rod"] = 258,
+}
+
+local selectedRods = {}
+local autoBuyRods = false
+
+-- Dropdown manual (lebih aman dan stabil)
+Rod:AddDropdown("SelectRods", {
+    Values = {
+        "Starter Rod", "Luck Rod", "Carbon Rod", "Grass Rod",
+        "Demascus Rod", "Ice Rod", "Lucky Rod", "Midnight Rod",
+        "Steampunk Rod", "Chrome Rod", "Fluorescent Rod", "Astral Rod",
+        "Angler Rod", "Ares Rod", "Bamboo Rod"
+    },
+    Default = {},
+    Multi = true,
+    Text = "Select Rods to Purchase",
+    Searchable = true,
+    Callback = function(values)
+        selectedRods = {}
+
+        -- Memperbaiki format dropdown multi
+        for key, value in pairs(values) do
+            if typeof(key) == "string" and value == true then
+                table.insert(selectedRods, rodMap[key])
+            elseif typeof(value) == "string" then
+                table.insert(selectedRods, rodMap[value])
+            end
+        end
+
+    end
+})
+
+-- Tombol manual pembelian
+Rod:AddButton({
+    Text = "Purchase Selected Rods",
+    Func = function()
+        if #selectedRods == 0 then
+            Library:Notify({
+                Title = "Purchase Failed",
+                Description = "Please select at least one rod first.",
+                Time = 4,
+            })
+            return
+        end
+
+        local remote = ReplicatedStorage
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/PurchaseFishingRod")
+
+        local successCount = 0
+        for _, id in ipairs(selectedRods) do
+            local success = pcall(function()
+                remote:InvokeServer(id)
+            end)
+            if success then
+                successCount += 1
+            end
+        end
+
+        Library:Notify({
+            Title = "Purchase Complete",
+            Description = "Successfully purchased " .. successCount .. " rods.",
+            Time = 4,
+        })
+    end
+})
+
+-- Toggle auto-purchase loop
+Rod:AddToggle("AutoBuyRodToggle", {
+    Text = "Auto Purchase Loop",
+    Default = false,
+})
+
+-- Toggle event handler
+Toggles.AutoBuyRodToggle:OnChanged(function(state)
+    autoBuyRods = state
+
+    if state then
+        Library:Notify({
+            Title = "Auto Purchase Enabled",
+            Description = "Loop started — automatically buying selected rods.",
+            Time = 4,
+        })
+
+        task.spawn(function()
+            while autoBuyRods do
+                if #selectedRods > 0 then
+                    local remote = ReplicatedStorage
+                        :WaitForChild("Packages")
+                        :WaitForChild("_Index")
+                        :WaitForChild("sleitnick_net@0.2.0")
+                        :WaitForChild("net")
+                        :WaitForChild("RF/PurchaseFishingRod")
+
+                    for _, id in ipairs(selectedRods) do
+                        pcall(function()
+                            remote:InvokeServer(id)
+                        end)
+                    end
+                end
+                task.wait(5) -- delay antar pembelian
+            end
+        end)
+    else
+        Library:Notify({
+            Title = "Auto Purchase Disabled",
+            Description = "Loop stopped.",
+            Time = 4,
+        })
+    end
+end)
+
+local Bait = Tabs.Shop:AddRightGroupbox("Bait Purchaser", "shrimp")
+
+-- Mapping nama bait ke ID
+local BaitID = {
+    ["Topwater Bait"] = 10,
+    ["Luck Bait"] = 2,
+    ["Midnight Bait"] = 3,
+    ["Nature Bait"] = 17,
+    ["Chroma Bait"] = 6,
+    ["Dark Matter Bait"] = 8,
+    ["Corrupt Bait"] = 15,
+    ["Aether Bait"] = 16,
+    ["Floral Bait"] = 20,
+}
+
+local selectedBaits = {}
+local autoBuyBait = false
+
+-- Dropdown manual (tanpa baitNames)
+Bait:AddDropdown("SelectBaits", {
+    Values = { 
+        "Topwater Bait", 
+        "Luck Bait", 
+        "Midnight Bait", 
+        "Nature Bait", 
+        "Chroma Bait", 
+        "Dark Matter Bait", 
+        "Corrupt Bait", 
+        "Aether Bait", 
+        "Floral Bait" 
+    },
+    Default = {},
+    Multi = true,
+    Text = "Select Baits to Purchase",
+    Searchable = true,
+    Callback = function(values)
+        selectedBaits = {}
+
+        -- Fix format dropdown multi (array/dictionary)
+        for key, value in pairs(values) do
+            if typeof(key) == "string" and value == true then
+                table.insert(selectedBaits, BaitID[key])
+            elseif typeof(value) == "string" then
+                table.insert(selectedBaits, BaitID[value])
+            end
+        end
+
+    end
+})
+
+-- Tombol pembelian manual
+Bait:AddButton({
+    Text = "Purchase Selected Baits",
+    Func = function()
+        if #selectedBaits == 0 then
+            Library:Notify({
+                Title = "Purchase Failed",
+                Description = "Please select at least one bait first.",
+                Time = 4,
+            })
+            return
+        end
+
+        local remote = ReplicatedStorage
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/PurchaseBait")
+
+        local successCount = 0
+        for _, id in ipairs(selectedBaits) do
+            local success = pcall(function()
+                remote:InvokeServer(id)
+            end)
+            if success then
+                successCount += 1
+            end
+        end
+
+        Library:Notify({
+            Title = "Purchase Complete",
+            Description = "Successfully purchased " .. successCount .. " baits.",
+            Time = 4,
+        })
+    end
+})
+
+-- Toggle auto purchase loop
+Bait:AddToggle("AutoBuyBaitToggle", {
+    Text = "Auto Purchase Loop",
+    Default = false,
+})
+
+-- Event toggle
+Toggles.AutoBuyBaitToggle:OnChanged(function(state)
+    autoBuyBait = state
+
+    if state then
+        Library:Notify({
+            Title = "Auto Purchase Enabled",
+            Description = "Loop started — automatically buying selected baits.",
+            Time = 4,
+        })
+
+        task.spawn(function()
+            while autoBuyBait do
+                if #selectedBaits > 0 then
+                    local remote = ReplicatedStorage
+                        :WaitForChild("Packages")
+                        :WaitForChild("_Index")
+                        :WaitForChild("sleitnick_net@0.2.0")
+                        :WaitForChild("net")
+                        :WaitForChild("RF/PurchaseBait")
+
+                    for _, id in ipairs(selectedBaits) do
+                        pcall(function()
+                            remote:InvokeServer(id)
+                        end)
+                    end
+                end
+                task.wait(5) -- jeda antar pembelian
+            end
+        end)
+    else
+        Library:Notify({
+            Title = "Auto Purchase Disabled",
+            Description = "Loop stopped.",
+            Time = 4,
+        })
+    end
+end)
+
+local Weather = Tabs.Shop:AddLeftGroupbox("Weather Purchaser", "cloud")
+
+-- RemoteEvent untuk beli weather
+local PurchaseWeather = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/PurchaseWeatherEvent")
+
+-- Table untuk simpan pilihan user
+local selectedWeathers = {}
+local autoPurchase = false
+
+-- Dropdown multi-select weather list
+Weather:AddDropdown("SelectWeather", {
+    Values = { "Snow", "Wind", "Cloudy", "Storm", "Radiant", "Shark Hunt" },
+    Default = {},
+    Multi = true,
+    Text = "Select Weather Events",
+    Searchable = true,
+    Callback = function(values)
+        selectedWeathers = {}
+
+        -- Support format multi dropdown
+        for key, value in pairs(values) do
+            if typeof(key) == "string" and value == true then
+                table.insert(selectedWeathers, key)
+            elseif typeof(value) == "string" then
+                table.insert(selectedWeathers, value)
+            end
+        end
+
+    end
+})
+
+-- Tombol beli manual
+Weather:AddButton({
+    Text = "Purchase Selected Weather",
+    Func = function()
+        if #selectedWeathers == 0 then
+            Library:Notify({
+                Title = "Purchase Failed",
+                Description = "Please select at least one weather first.",
+                Time = 4,
+            })
+            return
+        end
+
+        local successCount = 0
+        for _, weather in ipairs(selectedWeathers) do
+            local success, err = pcall(function()
+                PurchaseWeather:InvokeServer(weather)
+            end)
+            if success then
+                successCount += 1
+            else
+                warn("Failed to purchase weather:", weather, err)
+            end
+        end
+
+        Library:Notify({
+            Title = "Purchase Complete",
+            Description = "Successfully purchased " .. successCount .. " weather(s).",
+            Time = 4,
+        })
+    end
+})
+
+-- Toggle auto purchase loop
+Weather:AddToggle("AutoWeatherPurchaseToggle", {
+    Text = "Auto Purchase Weather",
+    Default = false,
+})
+
+Toggles.AutoWeatherPurchaseToggle:OnChanged(function(state)
+    autoPurchase = state
+
+    if state then
+        Library:Notify({
+            Title = "Auto Purchase Enabled",
+            Description = "Loop started — automatically buying selected weathers.",
+            Time = 4,
+        })
+
+        task.spawn(function()
+            while autoPurchase do
+                if #selectedWeathers > 0 then
+                    for _, weather in ipairs(selectedWeathers) do
+                        pcall(function()
+                            PurchaseWeather:InvokeServer(weather)
+                        end)
+                        task.wait(0.3)
+                    end
+                end
+                task.wait(1.5) -- jeda antar loop
+            end
+        end)
+    else
+        Library:Notify({
+            Title = "Auto Purchase Disabled",
+            Description = "Loop stopped.",
+            Time = 4,
+        })
+    end
+end)
+
+local Boat = Tabs.Shop:AddRightGroupbox("Boat Purchaser", "sailboat")
+
+-- RemoteEvent untuk beli boat
+local PurchaseBoat = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/PurchaseBoat")
+
+-- Daftar Boat (manual, bisa kamu ubah urutannya sesuka hati)
+local BoatList = {
+    ["Small Boat"] = 1,
+    ["Kayak"] = 2,
+    ["Jetski"] = 3,
+    ["Highfield Boat"] = 4,
+    ["Speed Boat"] = 5,
+    ["Fishing Boat"] = 6,
+    ["Mini Yacht"] = 14,
+    ["Mini Hoverboat"] = 15,
+    ["Hyper Boat"] = 7,
+}
+
+local selectedBoatID = nil
+local autoBuyBoat = false
+
+-- Dropdown manual (tanpa BoatNames)
+Boat:AddDropdown("SelectBoat", {
+    Values = {
+        "Small Boat",
+        "Kayak",
+        "Jetski",
+        "Highfield Boat",
+        "Speed Boat",
+        "Fishing Boat",
+        "Mini Yacht",
+        "Mini Hoverboat",
+        "Hyper Boat"
+    },
+    Default = {},
+    Multi = false,
+    Text = "Select Boat to Purchase",
+    Callback = function(option)
+        selectedBoatID = BoatList[option]
+    end
+})
+
+-- Tombol pembelian manual
+Boat:AddButton({
+    Text = "Purchase Selected Boat",
+    Func = function()
+        if not selectedBoatID then
+            Library:Notify({
+                Title = "Purchase Failed",
+                Description = "Please select a boat first.",
+                Time = 4,
+            })
+            return
+        end
+
+        local success, result = pcall(function()
+            return PurchaseBoat:InvokeServer(selectedBoatID)
+        end)
+
+        if success then
+            Library:Notify({
+                Title = "Boat Purchased",
+                Description = "Successfully purchased boat ID: " .. tostring(selectedBoatID),
+                Time = 4,
+            })
+        else
+            Library:Notify({
+                Title = "Purchase Failed",
+                Description = tostring(result),
+                Time = 4,
+            })
+        end
+    end
+})
+
+-- Toggle auto-purchase loop
+Boat:AddToggle("AutoBuyBoatToggle", {
+    Text = "Auto Purchase Loop",
+    Default = false,
+})
+
+-- Event toggle
+Toggles.AutoBuyBoatToggle:OnChanged(function(state)
+    autoBuyBoat = state
+
+    if state then
+        Library:Notify({
+            Title = "Auto Purchase Enabled",
+            Description = "Loop started — automatically buying selected boat.",
+            Time = 4,
+        })
+
+        task.spawn(function()
+            while autoBuyBoat do
+                if selectedBoatID then
+                    pcall(function()
+                        PurchaseBoat:InvokeServer(selectedBoatID)
+                    end)
+                end
+                task.wait(5)
+            end
+        end)
+    else
+        Library:Notify({
+            Title = "Auto Purchase Disabled",
+            Description = "Loop stopped.",
+            Time = 4,
+        })
+    end
+end)
+
+local Spawn = Tabs.Boat:AddLeftGroupbox("Spawn Boat", "ship")
+
+-- RemoteEvent untuk spawn boat
+local SpawnBoat = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/SpawnBoat")
+
+-- Daftar Boat
+local BoatList = {
+    ["Small Boat"] = 1,
+    ["Kayak"] = 2,
+    ["Jetski"] = 3,
+    ["Highfield Boat"] = 4,
+    ["Speed Boat"] = 5,
+    ["Fishing Boat"] = 6,
+    ["Mini Yacht"] = 14,
+    ["Mini Hoverboat"] = 15,
+    ["Hyper Boat"] = 7,
+    ["Dinky Fishing Boat"] = 20,
+    ["Aura Boat"] = 17,
+    ["Burger Boat"] = 18,
+    ["Mega Hovercraft"] = 19,
+    ["Froen Boat"] = 11,
+    ["Cruiser Boat"] = 13,
+    ["Rubber Ducky"] = 16,
+}
+
+-- Convert ke nama boat untuk dropdown
+local BoatNames = {}
+for name,_ in pairs(BoatList) do
+    table.insert(BoatNames, name)
+end
+table.sort(BoatNames)
+
+-- Default pilihan
+local selectedBoatID = BoatList[BoatNames[1]]
+
+-- Dropdown Pilih Boat
+Spawn:AddDropdown("SelectBoatDropdown", {
+    Values = BoatNames,
+    Default = BoatNames[1],
+    Multi = false,
+    Text = "Select Boat to Spawn",
+    Searchable = true,
+    Callback = function(option)
+        selectedBoatID = BoatList[option]
+        print("Selected Boat to Spawn:", option, "ID:", selectedBoatID)
+    end
+})
+
+-- Button Spawn Boat
+Spawn:AddButton({
+    Text = "Spawn Boat",
+    Func = function()
+        local success, result = pcall(function()
+            return SpawnBoat:InvokeServer(selectedBoatID)
+        end)
+
+        if success then
+            Library:Notify({
+                Title = "Boat Spawned",
+                Description = "Spawned Boat: " .. tostring(result),
+                Time = 4,
+            })
+        else
+            Library:Notify({
+                Title = "Spawn Failed",
+                Description = tostring(result),
+                Time = 4,
+            })
+        end
+    end
+})
+
+local SpeedBoat = Tabs.Boat:AddRightGroupbox("Speed Boat", "gauge")
+
+-- Input untuk set kecepatan
+local customSpeed = 1000
+SpeedBoat:AddInput("BoatSpeedInput", {
+    Text = "Set Boat Speed",
+    Default = "1000",
+    Placeholder = "Example: 1000",
+    Callback = function(value)
+        local number = tonumber(value)
+        if number then
+            customSpeed = number
+        end
+    end
+})
+
+-- Toggle untuk Super Speed
+SpeedBoat:AddToggle("SuperSpeedToggle", {
+    Text = "Super Speed Boats",
+    Default = false,
+})
+
+Toggles.SuperSpeedToggle:OnChanged(function(state)
+    local BoatsModule = require(ReplicatedStorage.Shared.BoatsHandlingData)
+
+    -- Simpan speed asli kalau belum ada
+    if not BoatsModule._OriginalSpeed then
+        BoatsModule._OriginalSpeed = {}
+        for boatName, boatData in pairs(BoatsModule) do
+            if type(boatData) == "table" and boatData.Speed then
+                BoatsModule._OriginalSpeed[boatName] = boatData.Speed
+            end
+        end
+    end
+
+    if state then
+        for _, boatData in pairs(BoatsModule) do
+            if type(boatData) == "table" and boatData.Speed then
+                boatData.Speed = customSpeed
+            end
+        end
+        Library:Notify({
+            Title = "Super Speed Activated",
+            Description = "All boats now move at "..customSpeed.." speed!",
+            Time = 3,
+        })
+    else
+        for boatName, boatData in pairs(BoatsModule) do
+            if type(boatData) == "table" and boatData.Speed and BoatsModule._OriginalSpeed[boatName] then
+                boatData.Speed = BoatsModule._OriginalSpeed[boatName]
+            end
+        end
+        Library:Notify({
+            Title = "Super Speed Disabled",
+            Description = "Boats restored to normal speed.",
+            Time = 3,
+        })
+    end
+end)
+
+local LocalPlayer = Tabs.Player:AddLeftGroupbox("LocalPlayer", "user")
+
+-- Bypass Oxygen Tank Toggle
+LocalPlayer:AddToggle("BypassOxygenTank", {
+    Text = "Bypass Oxygen Tank",
+    Default = false,
+})
+Toggles.BypassOxygenTank:OnChanged(function(state)
+    local Net = ReplicatedStorage:WaitForChild("Packages")
+                    :WaitForChild("_Index")
+                    :WaitForChild("sleitnick_net@0.2.0")
+                    :WaitForChild("net")
+    
+    if state then
+        local args = {105} -- ID tank
+        Net:WaitForChild("RF/EquipOxygenTank"):InvokeServer(unpack(args))
+    else
+        Net:WaitForChild("RF/UnequipOxygenTank"):InvokeServer()
+    end
+end)
+
+-- Bypass Radar Toggle
+LocalPlayer:AddToggle("BypassRadar", {
+    Text = "Bypass Radar",
+    Default = false,
+})
+Toggles.BypassRadar:OnChanged(function(state)
+    Window.AlwayShowTab = state
+
+    local args = { state }
+    local remoteFunc = ReplicatedStorage
+        :WaitForChild("Packages")
+        :WaitForChild("_Index")
+        :WaitForChild("sleitnick_net@0.2.0")
+        :WaitForChild("net")
+        :WaitForChild("RF/UpdateFishingRadar")
+    remoteFunc:InvokeServer(unpack(args))
+end)
+
+-- Black Screen Toggle
+LocalPlayer:AddToggle("BlackScreen", {
+    Text = "Black Screen",
+    Default = false,
+})
+Toggles.BlackScreen:OnChanged(function(state)
+    local playerGui = player:WaitForChild("PlayerGui")
+    local darkGui = playerGui:FindFirstChild("DarkScreenGUI")
+
+    local lighting = game:GetService("Lighting")
+    local originalLightingSettings = {
+        GlobalShadows = lighting.GlobalShadows,
+        Brightness = lighting.Brightness,
+        FogEnd = lighting.FogEnd,
+        ClockTime = lighting.ClockTime
+    }
+    local originalParticles = {}
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") then
+            originalParticles[v] = v.Enabled
+        end
+    end
+
+    if state then
+        if not darkGui then
+            darkGui = Instance.new("ScreenGui")
+            darkGui.Name = "DarkScreenGUI"
+            darkGui.ResetOnSpawn = false
+            darkGui.IgnoreGuiInset = true
+            darkGui.Parent = playerGui
+
+            local darkFrame = Instance.new("Frame")
+            darkFrame.Name = "DarkFrame"
+            darkFrame.Size = UDim2.new(1, 0, 1, 0)
+            darkFrame.Position = UDim2.new(0, 0, 0, 0)
+            darkFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+            darkFrame.BackgroundTransparency = 0
+            darkFrame.BorderSizePixel = 0
+            darkFrame.Parent = darkGui
+        end
+
+        lighting.GlobalShadows = false
+        lighting.Brightness = 0
+        lighting.FogEnd = 100000
+        lighting.ClockTime = 12
+
+        for particle, _ in pairs(originalParticles) do
+            particle.Enabled = false
+        end
+    else
+        if darkGui then
+            darkGui:Destroy()
+        end
+
+        lighting.GlobalShadows = originalLightingSettings.GlobalShadows
+        lighting.Brightness = originalLightingSettings.Brightness
+        lighting.FogEnd = originalLightingSettings.FogEnd
+        lighting.ClockTime = originalLightingSettings.ClockTime
+
+        for particle, enabled in pairs(originalParticles) do
+            if particle.Parent then
+                particle.Enabled = enabled
+            end
+        end
+    end
+end)
+
+-- Hide Username & Level Toggle
+LocalPlayer:AddToggle("HideUsernameLevel", {
+    Text = "Hide Username & Level",
+    Default = false,
+})
+Toggles.HideUsernameLevel:OnChanged(function(state)
+    local charactersFolder = workspace:WaitForChild("Characters")
+    local savedTexts = {}
+
+    local function setLabelText(character, text)
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        local levelLabel = hrp:FindFirstChild("Overhead")
+            and hrp.Overhead:FindFirstChild("LevelContainer")
+            and hrp.Overhead.LevelContainer:FindFirstChild("Label")
+
+        if levelLabel and levelLabel:IsA("TextLabel") then
+            if not savedTexts[character] then savedTexts[character] = {} end
+            if not savedTexts[character].LevelLabel then
+                savedTexts[character].LevelLabel = levelLabel.Text
+            end
+            levelLabel.Text = text
+        end
+
+        local headerLabel = hrp:FindFirstChild("Overhead")
+            and hrp.Overhead:FindFirstChild("Content")
+            and hrp.Overhead.Content:FindFirstChild("Header")
+
+        if headerLabel and headerLabel:IsA("TextLabel") then
+            if not savedTexts[character] then savedTexts[character] = {} end
+            if not savedTexts[character].HeaderLabel then
+                savedTexts[character].HeaderLabel = headerLabel.Text
+            end
+            headerLabel.Text = text
+        end
+    end
+
+    if state then
+        for _, character in pairs(charactersFolder:GetChildren()) do
+            setLabelText(character, "NexaHub")
+        end
+
+        charactersFolder.ChildAdded:Connect(function(character)
+            task.wait(1)
+            setLabelText(character, "NexaHub")
+        end)
+    else
+        for character, texts in pairs(savedTexts) do
+            if texts.LevelLabel then
+                local levelLabel = character:FindFirstChild("HumanoidRootPart")
+                    and character.HumanoidRootPart:FindFirstChild("Overhead")
+                    and character.HumanoidRootPart.Overhead:FindFirstChild("LevelContainer")
+                    and character.HumanoidRootPart.Overhead.LevelContainer:FindFirstChild("Label")
+                if levelLabel and levelLabel:IsA("TextLabel") then
+                    levelLabel.Text = texts.LevelLabel
+                end
+            end
+
+            if texts.HeaderLabel then
+                local headerLabel = character:FindFirstChild("HumanoidRootPart")
+                    and character.HumanoidRootPart:FindFirstChild("Overhead")
+                    and character.HumanoidRootPart.Overhead:FindFirstChild("Content")
+                    and character.HumanoidRootPart.Overhead.Content:FindFirstChild("Header")
+                if headerLabel and headerLabel:IsA("TextLabel") then
+                    headerLabel.Text = texts.HeaderLabel
+                end
+            end
+        end
+    end
+end)
+
+-- Anti Lava Toggle
+local volcanoFolder = workspace.Zones["Kohana Volcano"]
+
+local AutoRemove = false
+local connection
+
+LocalPlayer:AddToggle("AntiLavaToggle", {
+    Text = "Anti Lava",
+    Default = false,
+})
+Toggles.AntiLavaToggle:OnChanged(function(state)
+    AutoRemove = state
+
+    if AutoRemove then
+        connection = RunService.Heartbeat:Connect(function()
+            for _, obj in ipairs(volcanoFolder:GetDescendants()) do
+                if obj:IsA("TouchTransmitter") then
+                    obj:Destroy()
+                end
+            end
+        end)
+    else
+        if connection then
+            connection:Disconnect()
+            connection = nil
+        end
+    end
+end)
+
+-- Boost FPS Button
+LocalPlayer:AddButton({
+    Text = "Boost FPS",
+    Func = function()
+        local Lighting = game:GetService("Lighting")
+        local Workspace = game:GetService("Workspace")
+        local Terrain = Workspace:FindFirstChildOfClass("Terrain")
+
+        -- Lighting Optimization
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 1e10
+        Lighting.Brightness = 1
+        Lighting.ExposureCompensation = 0
+        Lighting.EnvironmentDiffuseScale = 0
+        Lighting.EnvironmentSpecularScale = 0
+        Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+        Lighting.ShadowSoftness = 0
+        Lighting.ColorShift_Bottom = Color3.new(0,0,0)
+        Lighting.ColorShift_Top = Color3.new(0,0,0)
+
+        -- Terrain Optimization
+        if Terrain then
+            Terrain.WaterWaveSize = 0
+            Terrain.WaterWaveSpeed = 0
+            Terrain.WaterReflectance = 0
+            Terrain.WaterTransparency = 1
+            sethiddenproperty(Terrain, "Decoration", false)
+        end
+
+        -- Disable Visual Effects (Bloom, Blur, SunRays, dll)
+        for _, v in pairs(Lighting:GetChildren()) do
+            if v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("DepthOfFieldEffect") then
+                v.Enabled = false
+            end
+        end
+
+        -- Mass Disable Visuals (tanpa hapus animasi/suara)
+        pcall(function()
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") or obj:IsA("Explosion") then
+                    obj.Enabled = false
+                elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                    obj.Transparency = 1
+                elseif obj:IsA("MeshPart") or obj:IsA("UnionOperation") or obj:IsA("Part") then
+                    obj.Material = Enum.Material.SmoothPlastic
+                    obj.Reflectance = 0
+                end
+            end
+        end)
+
+        -- Rendering Quality to Lowest
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+
+        -- Optimize Camera
+        for _, cam in pairs(Workspace:GetDescendants()) do
+            if cam:IsA("Camera") then
+                cam.FieldOfView = 70
+            end
+        end
+
+        -- Garbage Clean
+        collectgarbage("collect")
+    end
+})
+
+-- Reduce Lag Button
+LocalPlayer:AddButton({
+    Text = "Reduce Lag",
+    Func = function()
+        local Workspace = game:GetService("Workspace")
+        local Lighting = game:GetService("Lighting")
+
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 9e9
+        Lighting.Brightness = 1
+        Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+        Lighting.ExposureCompensation = 0
+        Lighting.ShadowSoftness = 0
+
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Explosion") then
+                obj.Enabled = false
+            elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                obj.Transparency = 1
+            end
+        end
+
+        for _, gui in pairs(LocalPlayer:WaitForChild("PlayerGui"):GetDescendants()) do
+            if gui:IsA("TextLabel") or gui:IsA("TextButton") then
+                gui.TextScaled = false
+            elseif gui:IsA("ImageLabel") or gui:IsA("ImageButton") then
+                gui.ImageTransparency = 0.5
+            end
+        end
+    end
+})
+
+-- Destroy Window Button
+LocalPlayer:AddButton({
+    Text = "Destroy Window",
+    Func = function()
+        local CoreGui = game:GetService("CoreGui")
+
+        -- Remove old confirmation GUI if it exists
+        if CoreGui:FindFirstChild("ConfirmDestroyGUI") then
+            CoreGui.ConfirmDestroyGUI:Destroy()
+        end
+
+        -- Create confirmation GUI (directly in CoreGui)
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "ConfirmDestroyGUI"
+        ScreenGui.ResetOnSpawn = false
+        ScreenGui.Parent = CoreGui
+
+        -- Main frame
+        local Frame = Instance.new("Frame")
+        Frame.Size = UDim2.new(0, 260, 0, 140)
+        Frame.Position = UDim2.new(0.5, -130, 0.5, -70)
+        Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        Frame.BorderSizePixel = 0
+        Frame.Active = true
+        Frame.Draggable = true
+        Frame.Parent = ScreenGui
+
+        local UICorner = Instance.new("UICorner")
+        UICorner.CornerRadius = UDim.new(0, 10)
+        UICorner.Parent = Frame
+
+        -- Title
+        local Title = Instance.new("TextLabel")
+        Title.Text = "Confirmation"
+        Title.Size = UDim2.new(1, 0, 0, 30)
+        Title.BackgroundTransparency = 1
+        Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Title.Font = Enum.Font.GothamBold
+        Title.TextSize = 20
+        Title.Parent = Frame
+
+        -- Message
+        local Message = Instance.new("TextLabel")
+        Message.Text = "Do you want to destroy all Obsidian and WebhookGUI windows?"
+        Message.Size = UDim2.new(1, -20, 0, 40)
+        Message.Position = UDim2.new(0, 10, 0, 40)
+        Message.BackgroundTransparency = 1
+        Message.TextColor3 = Color3.fromRGB(230, 230, 230)
+        Message.Font = Enum.Font.Gotham
+        Message.TextSize = 16
+        Message.TextWrapped = true
+        Message.Parent = Frame
+
+        -- Yes Button
+        local YesButton = Instance.new("TextButton")
+        YesButton.Text = "Yes"
+        YesButton.Size = UDim2.new(0, 100, 0, 30)
+        YesButton.Position = UDim2.new(0.1, 0, 1, -40)
+        YesButton.BackgroundColor3 = Color3.fromRGB(0, 170, 85)
+        YesButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        YesButton.Font = Enum.Font.GothamBold
+        YesButton.TextSize = 16
+        YesButton.Parent = Frame
+
+        local YesCorner = Instance.new("UICorner")
+        YesCorner.CornerRadius = UDim.new(0, 6)
+        YesCorner.Parent = YesButton
+
+        -- No Button
+        local NoButton = Instance.new("TextButton")
+        NoButton.Text = "No"
+        NoButton.Size = UDim2.new(0, 100, 0, 30)
+        NoButton.Position = UDim2.new(1, -110, 1, -40)
+        NoButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        NoButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        NoButton.Font = Enum.Font.GothamBold
+        NoButton.TextSize = 16
+        NoButton.Parent = Frame
+
+        local NoCorner = Instance.new("UICorner")
+        NoCorner.CornerRadius = UDim.new(0, 6)
+        NoCorner.Parent = NoButton
+
+        -- Button actions
+        YesButton.MouseButton1Click:Connect(function()
+            -- Delete all Obsidian GUIs from CoreGui
+            for _, v in pairs(CoreGui:GetDescendants()) do
+                if v.Name == "Obsidian" then
+                    v:Destroy()
+                end
+            end
+
+            -- Delete ALL WebhookGUI from PlayerGui
+            if LocalPlayer:FindFirstChild("PlayerGui") then
+                for _, gui in pairs(LocalPlayer.PlayerGui:GetChildren()) do
+                    if gui.Name == "WebhookGUI" then
+                        gui:Destroy()
+                    end
+                end
+            end
+
+            print("All Obsidian and WebhookGUI windows have been deleted!")
+            ScreenGui:Destroy()
+        end)
+
+        NoButton.MouseButton1Click:Connect(function()
+            ScreenGui:Destroy()
+        end)
+    end
+})
+
+local Webhook = Tabs.Player:AddRightGroupbox("Webhook", "webhook")
+
+-- Toggle untuk menampilkan/menyembunyikan Webhook GUI
+Webhook:AddToggle("ShowWebhookGUI", {
+    Text = "Show Webhook Gui",
+    Default = false, -- GUI tidak langsung aktif saat inisialisasi
+})
+
+-- Inisialisasi: sembunyikan WebhookGUI saat script mulai jika ada
+local playerGui = player:WaitForChild("PlayerGui")
+local webhookGui = playerGui:FindFirstChild("WebhookGUI")
+if webhookGui then
+    webhookGui.Enabled = false
+else
+    warn("⚠️ WebhookGUI belum ditemukan saat inisialisasi!")
+end
+
+-- Event toggle untuk menampilkan/menyembunyikan WebhookGUI
+Toggles.ShowWebhookGUI:OnChanged(function(state)
+    local playerGui = player:WaitForChild("PlayerGui")
+    local webhookGui = playerGui:FindFirstChild("WebhookGUI")
+    if webhookGui then
+        webhookGui.Enabled = state
+        print("Webhook GUI visible:", state)
+    else
+        warn("⚠️ WebhookGUI belum ditemukan!")
+    end
+end)
+
+local Islands = Tabs.Tp:AddLeftGroupbox("Islands", "tree-palm")
+
+-- Deklarasi service dan variabel utama (tidak diubah)
+local workspace = workspace
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
+
+-- Daftar Island dengan posisi CFrame
+local islands = {
+    ["Kohana"] = CFrame.new(-642.243561, 16.0354481, 624.918884, 0.999580681, 0, -0.0289562326, 0, 1, 0, 0.0289562326, 0, 0.999580681),
+    ["Winter Fest"] = CFrame.new(1687.93079, 6.8625145, 3309.67725, 0.96799022, -3.6394315e-08, -0.250987828, 1.06909646e-08, 1, -1.0377223e-07, 0.250987828, 9.77672059e-08, 0.96799022),
+    ["Lost Isle"] = CFrame.new(-3660.07031, 26.1918774, -933.131897, -0.77232331, -7.22959044e-08, -0.635229647, -1.90984206e-08, 1, -9.05904614e-08, 0.635229647, -5.7833244e-08, -0.77232331),
+    ["Isoteric Island"] = CFrame.new(2029.47913, 27.3972206, 1393.52319, 0.438848287, -3.30229497e-08, -0.89856118, 8.09404801e-08, 1, 2.55982613e-09, 0.89856118, -7.34489944e-08, 0.438848287),
+    ["Crater Island"] = CFrame.new(973.268372, 7.36203814, 4879.09277, 0.99999994, -1.67766032e-08, -0.000279307278, 1.67553038e-08, 1, -7.62482344e-08, 0.000279307278, 7.62435519e-08, 0.99999994),
+    ["Coral Reefs"] = CFrame.new(-3134.98511, 20.9564934, 2167.80566, 0.610140502, 5.54546098e-08, -0.792293251, -1.07331415e-08, 1, 6.17270004e-08, 0.792293251, -2.91583468e-08, 0.610140502),
+    ["Kohana Volcano"] = CFrame.new(-525.122925, 24.0000591, 187.470749, 0.702778041, -1.4945584e-08, 0.711409211, 1.59372149e-09, 1, 1.18378477e-08, -0.711409211, -1.17821113e-08, 0.702778041),
+    ["Fisherman Island"] = CFrame.new(33.5687256, 17.0335217, 2834.95557, 0.999833524, -8.21432367e-10, 0.0182459373, 2.40968401e-09, 1, 8.70248726e-08, -0.0182459373, 8.7054351e-08, 0.999833524),
+    ["Esoteric Depths"] = CFrame.new(3152.74707, -1302.72986, 1438.05444, 0.442518562, -2.42594727e-08, -0.896759331, -8.6126515e-09, 1, 1.33023953e-08, 0.896759331, -2.15753335e-08, 0.442518562),
+    ["Tropical Grove"] = CFrame.new(-2046.1554, 6.26801682, 3660.56006, -0.739083588, 1.74285066e-08, 0.673613727, -5.79817758e-08, 1, -8.94902854e-08, -0.673613727, -1.05198126e-07, -0.739083588),
+    ["Treasure Room"] = CFrame.new(-3599.53491, -266.57373, -1566.98657),
+    ["Weather Machine"] = CFrame.new(-1525.72632, 6.49999952, 1892.23645, 0.0615941137, 6.608282509e-10, -0.998101294, -6.8356556e-08, 1, 3.55628549e-09, 0.998101294, 6.84458072e-08, 0.0615941137),
+    ["Sisyphus Statue"] = CFrame.new(-3692.22021, -135.574417, -1026.96167, -0.928567886, 9.83784361e-08, 0.371162564, 1.22746741e-07, 1, 4.20307664e-08, -0.371162564, 8.45874197e-08, -0.928567886),
+    ["Ancient Jungle"] = CFrame.new(1275.54553, 7.85804176, -193.749756, 0.924119413, 5.65956171e-08, -0.382103801, -3.36512187e-08, 1, 6.67302302e-08, 0.382103801, -4.88084417e-08, 0.924119413),
+    ["Underground Cellar 1"] = CFrame.new(1954.18994, -41.7413597, -577.574768, -0.817980289, 0.573605001, 0.0434255376, 0.572797239, 0.81913203, -0.0304316022, -0.0530269668, -1.84206292e-05, -0.998593211),
+    ["Underground Cellar 2"] = CFrame.new(2120.27417, -93.1985779, -701.552185, -0.998591185, 0, 0.0530693457, 0, 1, 0, -0.0530693457, 0, -0.998591185),
+    ["Second Enchant Altar"] = CFrame.new(1478.29846, 126.044891, -613.519653, -0.117893577, 0, 0.993026376, 0, 1, 0, -0.993026376, 0, -0.117893577),
+    ["Mysterious Door"] = CFrame.new(1899.19629, 13.3589745, -577.593811, -0.0531117916, 0, -0.998588562, 0, 1, 0, 0.998588562, 0, -0.0531117916),
+    ["Temple Lever 1"] = CFrame.new(1485.66541, 5.41373634, -861.165161, -5.01871109e-05, 0.988927424, 0.148400292, -1, -5.01871109e-05, -3.74019146e-06, 3.74019146e-06, -0.148400292, 0.988927364),
+    ["Temple Lever 2"] = CFrame.new(898.490479, 5.41373587, -361.212708, 9.11951065e-06, 0.0998446345, -0.995003104, -1, 9.11951065e-06, -8.2552433e-06, 8.2552433e-06, 0.995003104, 0.0998445749),
+    ["Temple Lever 3"] = CFrame.new(1419.39148, 28.1637344, 79.5802917, 3.55243683e-05, -0.332731277, -0.943021655, -1, -3.55243683e-05, -2.51233578e-05, -2.51233578e-05, 0.943021655, -0.332731247),
+    ["Temple Lever 4"] = CFrame.new(1818.72156, 5.41373634, -285.160828, -1.15633011e-05, -0.192806393, 0.981236815, -1, 1.15633011e-05, -9.53674316e-06, -9.53674316e-06, -0.981236815, -0.192806482),
+    ["Temple"] = CFrame.new(1478.09546, 0.0774269104, -612.817993, 0.993017375, 0, 0.117968373, 0, 1, 0, -0.117968373, 0, 0.993017375),
+    ["Mount Hallow"] = CFrame.new(1840.72021, 33.7589836, 3116.54443, -0.996191859, 0, -0.0871884301, 0, 1, 0, 0.0871884301, 0, -0.996191859),
+	["Crystal Cavern 1"] = CFrame.new(-1553.69409, -360.835022, 6960.74805, 0, 0, -1, 1, 0, 0, 0, -1, 0),
+	["Crystal Cavern 2"] = CFrame.new(2342.47388, 186.970016, 3078.82715, 0.951068401, 0, 0.308980465, 0, 1, 0, -0.308980465, 0, 0.951068401),
+}
+
+-- Ambil semua nama Island dan sort secara case-insensitive
+local islandNames = {}
+for name, _ in pairs(islands) do
+    table.insert(islandNames, name)
+end
+table.sort(islandNames, function(a, b) return a:lower() < b:lower() end)
+
+-- Default island yang dipilih
+local selectedIsland = islandNames[1] or "Kohana"
+
+-- Buat dropdown untuk memilih island
+Islands:AddDropdown("MyDropdown", {
+    Values = islandNames,
+    Default = selectedIsland,
+    Multi = false,
+    Text = "Select Island",
+    Searchable = true,
+    Callback = function(value)
+        selectedIsland = value
+    end,
+})
+
+-- Tombol teleport ke island yang dipilih
+Islands:AddButton({
+    Text = "Teleport Now",
+    Func = function()
+        local player = game.Players.LocalPlayer
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+
+        local targetCFrame = islands[selectedIsland]
+        if targetCFrame then
+            char:PivotTo(targetCFrame)
+        else
+        end
+    end,
+})
+
+local Position = Tabs.Tp:AddRightGroupbox("Position", "folder")
+
+-- Variabel global untuk posisi dan status teleport
+local savedCFrame = nil
+local teleportEnabled = false
+
+-- Button Save Position
+Position:AddButton({
+    Text = "Save Position",
+    Func = function()
+        local player = game.Players.LocalPlayer
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            savedCFrame = hrp.CFrame -- simpan CFrame lengkap (posisi + arah)
+            Library:Notify({
+                Title = "Saved",
+                Description = "Position saved successfully!",
+                Time = 4,
+            })
+        else
+            Library:Notify({
+                Title = "Error",
+                Description = "Character not ready!",
+                Time = 4,
+            })
+        end
+    end
+})
+
+-- Fungsi freeze karakter di posisi savedCFrame
+local function freezeCharacter()
+    local player = game.Players.LocalPlayer
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp or not savedCFrame then return end
+
+    -- BodyVelocity untuk menahan posisi
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+    bv.Velocity = Vector3.new(0,0,0)
+    bv.Parent = hrp
+
+    -- BodyGyro untuk mengunci rotasi
+    local bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
+    bg.CFrame = savedCFrame
+    bg.Parent = hrp
+
+    -- Loop cek jarak dan reset posisi jika keluar radius 2
+    spawn(function()
+        while teleportEnabled and hrp and hrp.Parent do
+            local distance = (hrp.Position - savedCFrame.Position).Magnitude
+            if distance > 2 then
+                hrp.CFrame = savedCFrame
+            end
+            task.wait(0.1)
+        end
+        -- Hapus BodyVelocity dan BodyGyro saat toggle dimatikan
+        if bv then bv:Destroy() end
+        if bg then bg:Destroy() end
+    end)
+end
+
+-- Toggle Teleport dan Freeze ke posisi yang disimpan
+Position:AddToggle("TeleportToSavedPos", {
+    Text = "Teleport to Saved Position",
+    Default = false,
+})
+
+Toggles.TeleportToSavedPos:OnChanged(function(state)
+    teleportEnabled = state
+    if teleportEnabled then
+        freezeCharacter()
+    end
+end)
