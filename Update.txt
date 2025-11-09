@@ -1,2 +1,2 @@
 [-] Remove 5x Speed
-[+] Added Blatant Fishing
+[+] Added Blatant Fishing (Beta)
