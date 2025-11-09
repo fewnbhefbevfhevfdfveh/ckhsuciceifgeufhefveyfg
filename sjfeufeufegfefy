@@ -341,7 +341,7 @@ end)
 EventHunt:AddDivider()
 
 EventHunt:AddToggle("MyPseudoCodeToggle", {
-    Text = "Auto Fishing Event",
+    Text = "Auto Talon Admin Event",
     Default = false,
 })
 
@@ -1044,7 +1044,7 @@ for _, name in ipairs(labelNames) do
     end
 end
 
-local AuraBoat = Tabs.Quest:AddLeftGroupbox("Aura Boat Status", "kayak")
+local AuraBoat = Tabs.Quest:AddRightGroupbox("Aura Boat Status", "kayak")
 
 -- === AURA BOAT QUEST ===
 local auraLabel = AuraBoat:AddLabel({
@@ -1103,7 +1103,7 @@ for _, name in ipairs(elementLabelNames) do
     end
 end
 
-local TempleLever = Tabs.Quest:AddLeftGroupbox("TempleLever Status", "toggle-right")
+local TempleLever = Tabs.Quest:AddRightGroupbox("TempleLever Status", "toggle-right")
 
 -- === TEMPLE LEVER STATUS ===
 local Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS")
@@ -1146,7 +1146,7 @@ task.spawn(function()
     end
 end)
 
-local AutoQuest = Tabs.Quest:AddRightGroupbox("Auto Quest", "crosshair")
+local AutoQuest = Tabs.Quest:AddLeftGroupbox("Auto Quest", "crosshair")
 
 
 -- Konfigurasi Quest
