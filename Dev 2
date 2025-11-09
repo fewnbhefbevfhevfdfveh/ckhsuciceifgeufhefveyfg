@@ -30,7 +30,7 @@ SaveManager:SetSubFolder("Lobby")
 -- Window utama
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.4.6 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.4.5 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -1328,23 +1328,49 @@ end)
 
 local AutoFavorite = Tabs.Auto:AddLeftGroupbox("Auto Favorite", "star")
 
--- Deklarasi service dan variabel utama (tidak diubah)
-local workspace = workspace
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
-local PlayerGui = player:WaitForChild("PlayerGui") -- ✅ tambahan PlayerGui
-
 --// === SETUP DASAR === //--
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Net = require(ReplicatedStorage.Packages.Net)
 local Replion = require(ReplicatedStorage.Packages.Replion).Client
 
 local FavoriteItemEvent = Net:RemoteEvent("FavoriteItem")
 local data = Replion:WaitReplion("Data")
+
+-- Nama file untuk cache favorit
+local FAVORITE_CACHE = "favorited_cache.json"
+
+--// === UTIL UNTUK SIMPAN & MUAT CACHE === //--
+local function loadCache()
+	if isfile and isfile(FAVORITE_CACHE) then
+		local content = readfile(FAVORITE_CACHE)
+		local ok, decoded = pcall(function() return game:GetService("HttpService"):JSONDecode(content) end)
+		if ok and typeof(decoded) == "table" then
+			return decoded
+		end
+	end
+	return {}
+end
+
+local function saveCache(tbl)
+	if writefile then
+		local encoded = game:GetService("HttpService"):JSONEncode(tbl)
+		writefile(FAVORITE_CACHE, encoded)
+	end
+end
+
+-- cache favorit lokal
+local favoritedCache = loadCache()
+
+-- Helper: update status di cache
+local function setFavoriteStatus(uuid, status)
+	favoritedCache[uuid] = status
+	saveCache(favoritedCache)
+end
+
+-- Helper: cek status di cache
+local function isFavorited(uuid)
+	return favoritedCache[uuid] == true
+end
 
 --// === FUNGSI FAVORITE === //--
 local function FavoriteAllByTier(tierTarget)
@@ -1353,13 +1379,15 @@ local function FavoriteAllByTier(tierTarget)
 	if not items then return end
 
 	for _, item in pairs(items) do
-		if item and not item.Favorited then
+		if item and not isFavorited(item.UUID) then
 			for _, module in pairs(ReplicatedStorage.Items:GetChildren()) do
 				if module:IsA("ModuleScript") then
 					local ok, moduleData = pcall(require, module)
 					if ok and moduleData.Data and moduleData.Data.Id == item.Id then
 						if moduleData.Data.Tier == tierTarget then
 							FavoriteItemEvent:FireServer(item.UUID)
+							item.Favorited = true
+							setFavoriteStatus(item.UUID, true)
 							task.wait(0.1)
 						end
 					end
@@ -1376,13 +1404,15 @@ local function UnfavoriteAllByTier(tierTarget)
 	if not items then return end
 
 	for _, item in pairs(items) do
-		if item and item.Favorited then
+		if item and isFavorited(item.UUID) then
 			for _, module in pairs(ReplicatedStorage.Items:GetChildren()) do
 				if module:IsA("ModuleScript") then
 					local ok, moduleData = pcall(require, module)
 					if ok and moduleData.Data and moduleData.Data.Id == item.Id then
 						if moduleData.Data.Tier == tierTarget then
 							FavoriteItemEvent:FireServer(item.UUID)
+							item.Favorited = false
+							setFavoriteStatus(item.UUID, false)
 							task.wait(0.1)
 						end
 					end
@@ -1397,16 +1427,16 @@ AutoFavorite:AddDropdown("TierDropdown", {
 	Values = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" },
 	Default = "Rare",
 	Multi = false,
-	Text = "Select Rarity",
+	Text = "Pilih Tier Item",
 })
 
 AutoFavorite:AddToggle("FavoriteToggle", {
-	Text = "Auto Favorite",
+	Text = "Aktifkan Auto Favorite Loop",
 	Default = false,
 })
 
 AutoFavorite:AddToggle("UnfavoriteToggle", {
-	Text = "Auto Unfavorite",
+	Text = "Aktifkan Auto Unfavorite Tier",
 	Default = false,
 })
 
