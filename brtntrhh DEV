@@ -29,7 +29,7 @@ SaveManager:SetSubFolder("Lobby")
 -- Window utama
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.4.4 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.4.5 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -695,12 +695,13 @@ spawn(function()
         wait(1)
     end
 end)
+
 local Speed = Tabs.Farm:AddLeftGroupbox("Blatant (Beta)", "chevrons-up")
 
 local FuncAutoFish = {
     autofish = false,
-    preRecastDelay = 1.40,
-    biteDelay = 1.50
+    preRecastDelay = 1.40, -- Default Delay Spam
+    biteDelay = 1.50       -- Default Delay Fishing
 }
 
 local autoFishLoop
@@ -809,6 +810,7 @@ local function stopAutoFish()
     end
 end
 
+
 -- Toggle versi baru
 Speed:AddToggle("AutoFishToggle", {
 	Text = "Auto Blatant Fishing",
@@ -826,8 +828,8 @@ end)
 -- Input versi baru untuk delay manual
 Speed:AddInput("DelaySpamInput", {
 	Text = "Delay Spam",
-	Default = tostring(FuncAutoFish.preRecastDelay),
-	Placeholder = "Masukkan delay (contoh: 0.6)",
+	Default = "1.40", -- Default Delay Spam
+	Placeholder = "Masukkan delay (contoh: 1.40)",
 	Callback = function(value)
 		local num = tonumber(value)
 		if num then
@@ -840,8 +842,8 @@ Speed:AddInput("DelaySpamInput", {
 
 Speed:AddInput("DelayFishingInput", {
 	Text = "Delay Fishing",
-	Default = tostring(FuncAutoFish.biteDelay),
-	Placeholder = "Masukkan delay (contoh: 1.5)",
+	Default = "1.50", -- Default Delay Fishing
+	Placeholder = "Masukkan delay (contoh: 1.50)",
 	Callback = function(value)
 		local num = tonumber(value)
 		if num then
