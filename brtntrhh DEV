@@ -28,7 +28,7 @@ SaveManager:SetSubFolder("Lobby")
 
 -- Window utama
 local Window = Library:CreateWindow({
-	Title = "Nexa | Dev",
+	Title = "Nexa | Premium",
 	Footer = "Game: Fish It | Version: 1.4.5 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
@@ -341,7 +341,7 @@ end)
 EventHunt:AddDivider()
 
 EventHunt:AddToggle("MyPseudoCodeToggle", {
-    Text = "Auto Fishing Event",
+    Text = "Auto Talon Admin Event",
     Default = false,
 })
 
@@ -1044,7 +1044,7 @@ for _, name in ipairs(labelNames) do
     end
 end
 
-local AuraBoat = Tabs.Quest:AddLeftGroupbox("Aura Boat Status", "kayak")
+local AuraBoat = Tabs.Quest:AddRightGroupbox("Aura Boat Status", "kayak")
 
 -- === AURA BOAT QUEST ===
 local auraLabel = AuraBoat:AddLabel({
@@ -1103,7 +1103,7 @@ for _, name in ipairs(elementLabelNames) do
     end
 end
 
-local TempleLever = Tabs.Quest:AddLeftGroupbox("TempleLever Status", "toggle-right")
+local TempleLever = Tabs.Quest:AddRightGroupbox("TempleLever Status", "toggle-right")
 
 -- === TEMPLE LEVER STATUS ===
 local Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS")
@@ -1146,7 +1146,7 @@ task.spawn(function()
     end
 end)
 
-local AutoQuest = Tabs.Quest:AddRightGroupbox("Auto Quest", "crosshair")
+local AutoQuest = Tabs.Quest:AddLeftGroupbox("Auto Quest", "crosshair")
 
 
 -- Konfigurasi Quest
@@ -1327,6 +1327,16 @@ end)
 
 local AutoFavorite = Tabs.Auto:AddLeftGroupbox("Auto Favorite", "star")
 
+--// === DEKLARASI SERVICE & VARIABEL UTAMA === //--
+local workspace = workspace
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
 
 --// === SETUP DASAR === //--
 local Net = require(ReplicatedStorage.Packages.Net)
@@ -1335,7 +1345,7 @@ local Replion = require(ReplicatedStorage.Packages.Replion).Client
 local FavoriteItemEvent = Net:RemoteEvent("FavoriteItem")
 local data = Replion:WaitReplion("Data")
 
---// === FUNGSI FAVORITE / UNFAVORITE === //--
+--// === FUNGSI FAVORITE === //--
 local function FavoriteAllByTier(tierTarget)
 	local inventory = data:GetExpect("Inventory")
 	local items = inventory and inventory["Items"]
@@ -1359,6 +1369,7 @@ local function FavoriteAllByTier(tierTarget)
 	end
 end
 
+--// === FUNGSI UNFAVORITE BERDASAR TIER === //--
 local function UnfavoriteAllByTier(tierTarget)
 	local inventory = data:GetExpect("Inventory")
 	local items = inventory and inventory["Items"]
@@ -1382,21 +1393,21 @@ local function UnfavoriteAllByTier(tierTarget)
 	end
 end
 
---// === GUI (Dropdown + Toggle) === //--
-AutoFavorite:AddDropdown("TierDropdown", {
+--// === UI KONTROL === //--
+Groupbox:AddDropdown("TierDropdown", {
 	Values = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" },
 	Default = "Rare",
 	Multi = false,
-	Text = "Select Rarity", 
+	Text = "Select Rarity",
 })
 
-AutoFavorite:AddToggle("FavoriteToggle", {
-	Text = "Auto Favorite",  
+Groupbox:AddToggle("FavoriteToggle", {
+	Text = "Auto Favorite",
 	Default = false,
 })
 
-AutoFavorite:AddToggle("UnfavoriteToggle", {
-	Text = "Auto Unfavorite",  
+Groupbox:AddToggle("UnfavoriteToggle", {
+	Text = "Auto Unfavorite",
 	Default = false,
 })
 
@@ -1427,7 +1438,7 @@ Toggles.FavoriteToggle:OnChanged(function(state)
 	end
 end)
 
--- Loop Auto Unfavorite
+-- Loop Auto Unfavorite per Tier
 Toggles.UnfavoriteToggle:OnChanged(function(state)
 	if state then
 		local selectedTierName = Options.TierDropdown.Value
