@@ -1,3 +1,2 @@
-[-] Delete Tab Home
-[/] Rename Tab Home To Quest
-[+] Added Auto Trade 
+[-] Remove 5x Speed
+[+] Added Blatant Fishing
