@@ -29,7 +29,7 @@ SaveManager:SetSubFolder("Lobby")
 -- Window utama
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.4.5 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.4.6 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -1327,17 +1327,6 @@ end)
 
 local AutoFavorite = Tabs.Auto:AddLeftGroupbox("Auto Favorite", "star")
 
---// === DEKLARASI SERVICE & VARIABEL UTAMA === //--
-local workspace = workspace
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
-local PlayerGui = player:WaitForChild("PlayerGui")
-
 --// === SETUP DASAR === //--
 local Net = require(ReplicatedStorage.Packages.Net)
 local Replion = require(ReplicatedStorage.Packages.Replion).Client
@@ -1394,19 +1383,19 @@ local function UnfavoriteAllByTier(tierTarget)
 end
 
 --// === UI KONTROL === //--
-Groupbox:AddDropdown("TierDropdown", {
+AutoFavorite:AddDropdown("TierDropdown", {
 	Values = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" },
 	Default = "Rare",
 	Multi = false,
 	Text = "Select Rarity",
 })
 
-Groupbox:AddToggle("FavoriteToggle", {
+AutoFavorite:AddToggle("FavoriteToggle", {
 	Text = "Auto Favorite",
 	Default = false,
 })
 
-Groupbox:AddToggle("UnfavoriteToggle", {
+AutoFavorite:AddToggle("UnfavoriteToggle", {
 	Text = "Auto Unfavorite",
 	Default = false,
 })
