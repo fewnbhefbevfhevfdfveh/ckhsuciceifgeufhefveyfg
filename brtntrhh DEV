@@ -28,7 +28,7 @@ SaveManager:SetSubFolder("Lobby")
 
 -- Window utama
 local Window = Library:CreateWindow({
-	Title = "Nexa | Premium",
+	Title = "Nexa | Dev",
 	Footer = "Game: Fish It | Version: 1.4.5 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
