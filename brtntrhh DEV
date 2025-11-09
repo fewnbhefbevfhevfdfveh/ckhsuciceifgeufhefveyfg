@@ -29,7 +29,7 @@ SaveManager:SetSubFolder("Lobby")
 -- Window utama
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.4.6 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.4.7 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -1348,7 +1348,6 @@ local function FavoriteAllByTier(tierTarget)
 					if ok and moduleData.Data and moduleData.Data.Id == item.Id then
 						if moduleData.Data.Tier == tierTarget then
 							FavoriteItemEvent:FireServer(item.UUID)
-							item.Favorited = true
 							task.wait(0.1)
 						end
 					end
@@ -1372,7 +1371,6 @@ local function UnfavoriteAllByTier(tierTarget)
 					if ok and moduleData.Data and moduleData.Data.Id == item.Id then
 						if moduleData.Data.Tier == tierTarget then
 							FavoriteItemEvent:FireServer(item.UUID)
-							item.Favorited = false
 							task.wait(0.1)
 						end
 					end
