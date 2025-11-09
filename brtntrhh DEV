@@ -29,7 +29,7 @@ SaveManager:SetSubFolder("Lobby")
 -- Window utama
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.4.4 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.4.3 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -380,7 +380,7 @@ local AutoFishState = {
 	MinigameActive = false
 }
 
-local ClickSpeed = 0.05
+local ClickSpeed = 0.0001
 
 local function performClick()
 	FishingController:RequestFishingMinigameClick()
@@ -2584,24 +2584,44 @@ end)
 
 local LocalPlayer = Tabs.Player:AddLeftGroupbox("LocalPlayer", "user")
 
--- Bypass Oxygen Tank Toggle
-LocalPlayer:AddToggle("BypassOxygenTank", {
-    Text = "Bypass Oxygen Tank",
-    Default = false,
+-- Main state
+local AntiDrown_Enabled = true
+
+-- Add WindUI toggle (place under your Misc/Player or similar tab)
+LocalPlayer:AddToggle("InfinityOxygenToggle", {
+	Text = "Infinity Oxygen",
+	Default = true,
+	Tooltip = "Prevents the player from losing oxygen underwater.",
 })
-Toggles.BypassOxygenTank:OnChanged(function(state)
-    local Net = ReplicatedStorage:WaitForChild("Packages")
-                    :WaitForChild("_Index")
-                    :WaitForChild("sleitnick_net@0.2.0")
-                    :WaitForChild("net")
-    
-    if state then
-        local args = {105} -- ID tank
-        Net:WaitForChild("RF/EquipOxygenTank"):InvokeServer(unpack(args))
-    else
-        Net:WaitForChild("RF/UnequipOxygenTank"):InvokeServer()
-    end
+
+-- Toggle event
+Toggles.InfinityOxygenToggle:OnChanged(function(state)
+	AntiDrown_Enabled = state
+	if state then
+		Library:Notify("💧 Infinity Oxygen Enabled!", 3)
+	else
+		Library:Notify("💨 Infinity Oxygen Disabled!", 3)
+	end
 end)
+
+-- ============================================================
+-- === METAMETHOD HOOK (BLOCK OXYGEN UPDATE REQUEST) ==========
+-- ============================================================
+local rawmt = getrawmetatable(game)
+setreadonly(rawmt, false)
+local oldNamecall = rawmt.__namecall
+
+rawmt.__namecall = newcclosure(function(self, ...)
+	local method = getnamecallmethod()
+
+	-- Block the oxygen update request when enabled
+	if tostring(self) == "URE/UpdateOxygen" and method == "FireServer" and AntiDrown_Enabled then
+		return nil
+	end
+
+	return oldNamecall(self, ...)
+end)
+
 
 -- Bypass Radar Toggle
 LocalPlayer:AddToggle("BypassRadar", {
@@ -3180,3 +3200,4 @@ Toggles.TeleportToSavedPos:OnChanged(function(state)
         freezeCharacter()
     end
 end)
+
