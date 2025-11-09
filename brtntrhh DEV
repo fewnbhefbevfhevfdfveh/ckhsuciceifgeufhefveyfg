@@ -7,7 +7,7 @@ local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 
--- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
+-- Deklarasi service dan variabel utama (tidak diubah)
 local workspace = workspace
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -16,6 +16,7 @@ local hrp = character:WaitForChild("HumanoidRootPart")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui") -- ✅ tambahan PlayerGui
 
 -- Register library
 ThemeManager:SetLibrary(Library)
@@ -29,7 +30,7 @@ SaveManager:SetSubFolder("Lobby")
 -- Window utama
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.4.7 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.4.8 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -1327,6 +1328,7 @@ end)
 
 local AutoFavorite = Tabs.Auto:AddLeftGroupbox("Auto Favorite", "star")
 
+
 --// === SETUP DASAR === //--
 local Net = require(ReplicatedStorage.Packages.Net)
 local Replion = require(ReplicatedStorage.Packages.Replion).Client
@@ -1440,6 +1442,7 @@ Toggles.UnfavoriteToggle:OnChanged(function(state)
 		end)
 	end
 end)
+
 
 local AutoEnchant = Tabs.Auto:AddRightGroupbox("Auto Enchant", "sparkles")
 -- Referensi ke PlayerGui
