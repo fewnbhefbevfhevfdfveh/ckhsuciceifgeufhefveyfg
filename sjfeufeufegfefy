@@ -29,7 +29,7 @@ SaveManager:SetSubFolder("Lobby")
 -- Window utama
 local Window = Library:CreateWindow({
 	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.4.4 | by Nexa Community",
+	Footer = "Game: Fish It | Version: 1.4.5 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -695,337 +695,165 @@ spawn(function()
         wait(1)
     end
 end)
-local Speed = Tabs.Farm:AddLeftGroupbox("5X Speed", "chevrons-up")
 
--- Loader modul dengan customRequire (untuk keamanan require modul)
-local Modules = {}
-local function customRequire(module)
-    if not module then return nil end
-    local success, result = pcall(require, module)
-    if success then
-        return result
-    else
-        local clone = module:Clone()
-        clone.Parent = nil
-        local cloneSuccess, cloneResult = pcall(require, clone)
-        if cloneSuccess then
-            return cloneResult
-        else
-            warn("Failed to load module: " .. module:GetFullName())
-            return nil
-        end
-    end
-end
+local Speed = Tabs.Farm:AddLeftGroupbox("Blatant (Beta)", "chevrons-up")
 
--- Load modul inti dengan pcall agar aman
-local success, errorMessage = pcall(function()
-    local Controllers = ReplicatedStorage:WaitForChild("Controllers", 20)
-    local NetFolder = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild(
-        "sleitnick_net@0.2.0"):WaitForChild("net", 20)
-    local Shared = ReplicatedStorage:WaitForChild("Shared", 20)
-    
-    if not (Controllers and NetFolder and Shared) then error("Core game folders not found.") end
-
-    Modules.Replion = customRequire(ReplicatedStorage.Packages.Replion)
-    Modules.ItemUtility = customRequire(Shared.ItemUtility)
-    Modules.FishingController = customRequire(Controllers.FishingController)
-    
-    Modules.EquipToolEvent = NetFolder["RE/EquipToolFromHotbar"]
-    Modules.ChargeRodFunc = NetFolder["RF/ChargeFishingRod"]
-    Modules.StartMinigameFunc = NetFolder["RF/RequestFishingMinigameStarted"]
-    Modules.CompleteFishingEvent = NetFolder["RE/FishingCompleted"]
-end)
-
-if not success then
-    warn("FATAL ERROR DURING MODULE LOADING: " .. tostring(errorMessage))
-    return
-end
-
-task.wait(1)
-
-if not Window then
-    warn("Failed to create UI Window.")
-    return
-end
-
--- State & variabel fitur AutoFish
-local featureState = {
-    AutoFish = false,
-    Instant_ChargeDelay = 0.07,
-    Instant_SpamCount = 5,
-    Instant_WorkerCount = 2,
-    Instant_StartDelay = 1.20,
-    Instant_CatchTimeout = 0.01,
-    Instant_CycleDelay = 0.01,
-    Instant_ResetCount = 10,
-    Instant_ResetPause = 0.01
+local FuncAutoFish = {
+    autofish = false,
+    preRecastDelay = 1.40, -- Default Delay Spam
+    biteDelay = 1.50       -- Default Delay Fishing
 }
 
-local fishingTrove = {}
-local autoFishThread = nil
-local fishCaughtBindable = Instance.new("BindableEvent")
+local autoFishLoop
 
--- Fungsi equip fishing rod
-local function equipFishingRod()
-    if Modules.EquipToolEvent then
-        pcall(Modules.EquipToolEvent.FireServer, Modules.EquipToolEvent, 1)
-    end
-end
-
--- Detect ikan yang ditangkap (notif kecil muncul)
-task.spawn(function()
-    local lastFishName = ""
-    while task.wait(0.25) do
-        local playerGui = player:FindFirstChild("PlayerGui")
-        if playerGui then
-            local notificationGui = playerGui:FindFirstChild("Small Notification")
-            if notificationGui and notificationGui.Enabled then
-                local container = notificationGui:FindFirstChild("Display", true) and
-                    notificationGui.Display:FindFirstChild("Container", true)
-                if container then
-                    local itemNameLabel = container:FindFirstChild("ItemName")
-                    if itemNameLabel and itemNameLabel.Text ~= "" and itemNameLabel.Text ~= lastFishName then
-                        lastFishName = itemNameLabel.Text
-                        fishCaughtBindable:Fire()
-                    end
-                end
-            else
-                lastFishName = ""
+--// Function: Find Net Folder
+local function getNetFolder()
+    local packages = ReplicatedStorage:FindFirstChild("Packages")
+    if packages and packages:FindFirstChild("_Index") then
+        for _, child in ipairs(packages._Index:GetChildren()) do
+            if child.Name:find("^sleitnick_net@") then
+                return child:FindFirstChild("net")
             end
         end
     end
-end)
+    return ReplicatedStorage:FindFirstChild("net") or ReplicatedStorage:FindFirstChild("Net")
+end
 
--- Fungsi stop semua proses AutoFish
-local function stopAutoFishProcesses()
-    featureState.AutoFish = false
-    
-    for i, item in ipairs(fishingTrove) do
-        if typeof(item) == "RBXScriptConnection" then
-            item:Disconnect()
-        elseif typeof(item) == "thread" then
-            task.cancel(item)
-        end
+--// Function: Get Fishing Remotes
+local function getFishingRemotes()
+    local net = getNetFolder()
+    if not net then return nil end
+
+    local charge = net:FindFirstChild("RF/ChargeFishingRod")
+    local mini = net:FindFirstChild("RF/RequestFishingMinigameStarted")
+    local cancelIn = net:FindFirstChild("RF/CancelFishingInputs")
+    local complete = net:FindFirstChild("RE/FishingCompleted")
+
+    if not (charge and mini and cancelIn and complete) then
+        return nil
     end
-    fishingTrove = {}
-    
-    pcall(function()
-        if Modules.FishingController and Modules.FishingController.RequestClientStopFishing then
-            Modules.FishingController:RequestClientStopFishing(true)
+
+    return {
+        charge = charge,
+        mini = mini,
+        cancelIn = cancelIn,
+        complete = complete
+    }
+end
+
+--// Function: Cast Fishing Once
+local function castOnce()
+    local r = getFishingRemotes()
+    if not r then return end
+
+    task.spawn(function()
+        r.charge:InvokeServer(workspace:GetServerTimeNow() - 1)
+        r.mini:InvokeServer(-2, 1)
+    end)
+end
+
+--// Function: Recast Before Bite
+local function recastBeforeBite()
+    local r = getFishingRemotes()
+    if not r then return end
+
+    task.spawn(function()
+        r.cancelIn:InvokeServer()
+        task.wait(0.05)
+        r.charge:InvokeServer(workspace:GetServerTimeNow())
+        r.mini:InvokeServer(-2, 1)
+    end)
+end
+
+--// Function: Reel Now
+local function reelNow()
+    local r = getFishingRemotes()
+    if not r then return end
+
+    task.spawn(function()
+        local batch = 5
+        local repeats = 8
+        local microDelay = 0.0001
+
+        for _ = 1, repeats do
+            for i = 1, batch do
+                r.complete:FireServer()
+            end
+            task.wait(microDelay)
         end
     end)
 end
 
--- Fungsi start AutoFish metode instant
-local function startAutoFishMethod_Instant()
-    if not (Modules.ChargeRodFunc and Modules.StartMinigameFunc and Modules.CompleteFishingEvent and Modules.FishingController) then
-        return
-    end
+--// Function: Start Auto Fish
+local function startAutoFish()
+    if autoFishLoop then task.cancel(autoFishLoop) end
+    FuncAutoFish.autofish = true
 
-    featureState.AutoFish = true
-
-    local chargeCount = 0
-    local isCurrentlyResetting = false
-    local counterLock = false
-
-    local function worker()
-        while featureState.AutoFish and player do
-            local currentResetTarget_Worker = featureState.Instant_ResetCount or 10
-
-            if isCurrentlyResetting or chargeCount >= currentResetTarget_Worker then
-                break
-            end
-
-            local success, err = pcall(function()
-                while counterLock do task.wait() end
-                counterLock = true
-
-                if chargeCount < currentResetTarget_Worker then
-                    chargeCount = chargeCount + 1
-                else
-                    counterLock = false
-                    return
-                end
-                counterLock = false
-
-                Modules.ChargeRodFunc:InvokeServer(nil, nil, nil, workspace:GetServerTimeNow())
-                task.wait(featureState.Instant_ChargeDelay)
-                Modules.StartMinigameFunc:InvokeServer(-139, 1, workspace:GetServerTimeNow())
-                task.wait(featureState.Instant_StartDelay)
-
-                if not featureState.AutoFish or isCurrentlyResetting then return end
-
-                for _ = 1, featureState.Instant_SpamCount do
-                    if not featureState.AutoFish or isCurrentlyResetting then break end
-                    Modules.CompleteFishingEvent:FireServer()
-                    task.wait(0.05)
-                end
-
-                if not featureState.AutoFish or isCurrentlyResetting then return end
-
-                local gotFishSignal = false
-                local connection
-                local timeoutThread = task.delay(featureState.Instant_CatchTimeout, function()
-                    if not gotFishSignal and connection and connection.Connected then
-                        connection:Disconnect()
-                    end
-                end)
-
-                connection = fishCaughtBindable.Event:Connect(function()
-                    if gotFishSignal then return end
-                    gotFishSignal = true
-                    task.cancel(timeoutThread)
-                    if connection and connection.Connected then
-                        connection:Disconnect()
-                    end
-                end)
-
-                while not gotFishSignal and task.wait() do
-                    if not featureState.AutoFish or isCurrentlyResetting then break end
-                    if timeoutThread and coroutine.status(timeoutThread) == "dead" then break end
-                end
-
-                if connection and connection.Connected then connection:Disconnect() end
-
-                if Modules.FishingController and Modules.FishingController.RequestClientStopFishing then
-                    pcall(Modules.FishingController.RequestClientStopFishing, Modules.FishingController, true)
-                end
-
-                task.wait()
-            end)
-
-            if not success then
-                warn("GLua Auto Instant Fish Error: ", err)
-                task.wait(1)
-            end
-
-            if not featureState.AutoFish then break end
-            task.wait(featureState.Instant_CycleDelay)
+    autoFishLoop = task.spawn(function()
+        while FuncAutoFish.autofish do
+            castOnce()
+            task.wait(FuncAutoFish.preRecastDelay)
+            recastBeforeBite()
+            reelNow()
+            task.wait(FuncAutoFish.biteDelay)
+            reelNow()
         end
-    end
-
-    autoFishThread = task.spawn(function()
-        while featureState.AutoFish do
-            local currentResetTarget = featureState.Instant_ResetCount or 10
-            local currentPauseTime = featureState.Instant_ResetPause or 0.01
-
-            chargeCount = 0
-            isCurrentlyResetting = false
-
-            local batchTrove = {}
-
-            for i = 1, featureState.Instant_WorkerCount do
-                if not featureState.AutoFish then break end
-                local workerThread = task.spawn(worker)
-                table.insert(batchTrove, workerThread)
-                table.insert(fishingTrove, workerThread)
-            end
-
-            while featureState.AutoFish and chargeCount < currentResetTarget do
-                task.wait()
-            end
-
-            isCurrentlyResetting = true
-
-            if featureState.AutoFish then
-                for _, thread in ipairs(batchTrove) do
-                    task.cancel(thread)
-                end
-                batchTrove = {}
-
-                task.wait(currentPauseTime)
-            end
-        end
-        stopAutoFishProcesses()
     end)
-
-    table.insert(fishingTrove, autoFishThread)
 end
 
--- Fungsi start/stop auto fish
-local function startOrStopAutoFish(shouldStart)
-    if shouldStart then
-        stopAutoFishProcesses()
-        featureState.AutoFish = true
-        equipFishingRod()
-        task.wait(0.01)
-        startAutoFishMethod_Instant()
-    else
-        stopAutoFishProcesses()
+--// Function: Stop Auto Fish
+local function stopAutoFish()
+    FuncAutoFish.autofish = false
+    if autoFishLoop then
+        task.cancel(autoFishLoop)
+        autoFishLoop = nil
     end
 end
 
--- ===================================================================
--- === UI BARU (WindUI Format Terbaru) ===
--- ===================================================================
 
--- Input: Delay Recast
-Speed:AddInput("DelayRecastInput", {
-    Text = "Delay Recast",
-    Default = "1.20",
-    Placeholder = "Default: 1.20",
-    Callback = function(value)
-        local num = tonumber(value)
-        if num then
-            featureState.Instant_StartDelay = num
-        end
-    end
-})
-
--- Input: Spam Finish
-Speed:AddInput("SpamFinishInput", {
-    Text = "Spam Finish",
-    Default = "10",
-    Placeholder = "Default: 10",
-    Callback = function(value)
-        local num = tonumber(value)
-        if num then
-            featureState.Instant_ResetCount = math.floor(num)
-        end
-    end
-})
-
--- Input: Cooldown Recast
-Speed:AddInput("CooldownRecastInput", {
-    Text = "Cooldown Recast",
-    Default = "0.01",
-    Placeholder = "Default: 0.01",
-    Callback = function(value)
-        local num = tonumber(value)
-        if num then
-            featureState.Instant_ResetPause = num
-        end
-    end
-})
-
--- Toggle: AutoFish
+-- Toggle versi baru
 Speed:AddToggle("AutoFishToggle", {
-	Text = "AutoFish",
+	Text = "Auto Blatant Fishing",
 	Default = false,
 })
 
 Toggles.AutoFishToggle:OnChanged(function(state)
-	startOrStopAutoFish(state)
+	if state then
+		startAutoFish()
+	else
+		stopAutoFish()
+	end
 end)
 
-Speed:AddLabel({
-    Text = [[
-Element = Default
-Element Crystal Cavern = 1.10|10|0.01
-Element = 1.03|5|0.01
-Ghostfun = Default
-Ghostfin = 1.85|13|0.05
-Ghostfin = 1.30|10|4.00
-Ghostfin Sacred = 1.27-1.30|10|0.10
-Ghostfin Mt.Hallow = 1.05|10|0.10
-
-NOTE :
-1.Pastikan Ping Kalian Bagus Maka Settingan Diatas Akan Bekerja Dengan Baik
-2.Kalo Ping Jelek Dan Settingan Salah Maka Dia Tidak Akan Narik
-3.Beda Pulau Beda Settingan
-]],
-    DoesWrap = true,
+-- Input versi baru untuk delay manual
+Speed:AddInput("DelaySpamInput", {
+	Text = "Delay Spam",
+	Default = "1.40", -- Default Delay Spam
+	Placeholder = "Masukkan delay (contoh: 1.40)",
+	Callback = function(value)
+		local num = tonumber(value)
+		if num then
+			FuncAutoFish.preRecastDelay = num
+		else
+			warn("[Auto Fish] Invalid Delay Spam input:", value)
+		end
+	end
 })
+
+Speed:AddInput("DelayFishingInput", {
+	Text = "Delay Fishing",
+	Default = "1.50", -- Default Delay Fishing
+	Placeholder = "Masukkan delay (contoh: 1.50)",
+	Callback = function(value)
+		local num = tonumber(value)
+		if num then
+			FuncAutoFish.biteDelay = num
+		else
+			warn("[Auto Fish] Invalid Delay Fishing input:", value)
+		end
+	end
+})
+
 
 local Sell = Tabs.Farm:AddRightGroupbox("Sell", "landmark")
 
