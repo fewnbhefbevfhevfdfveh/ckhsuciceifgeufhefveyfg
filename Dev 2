@@ -7,7 +7,7 @@ local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 
--- Deklarasi service dan variabel utama (tidak diubah)
+-- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
 local workspace = workspace
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -16,7 +16,6 @@ local hrp = character:WaitForChild("HumanoidRootPart")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
-local PlayerGui = player:WaitForChild("PlayerGui") -- ✅ tambahan PlayerGui
 
 -- Register library
 ThemeManager:SetLibrary(Library)
@@ -29,8 +28,8 @@ SaveManager:SetSubFolder("Lobby")
 
 -- Window utama
 local Window = Library:CreateWindow({
-	Title = "Nexa | Premium",
-	Footer = "Game: Fish It | Version: 1.4.5 | by Nexa Community",
+	Title = "Nexa | Dev",
+	Footer = "Game: Fish It | Version: 1.4.6 | by Nexa Community",
 	Icon = "rbxassetid://131269662643486",
 	NotifySide = "Right",
 	ShowCustomCursor = true,
@@ -40,9 +39,8 @@ Library:SetDPIScale(85)
 
 -- Semua Tabs
 local Tabs = {
-	Info = Window:AddTab("Info", "info"),
+	Event = Window:AddTab("Event", "info"),
 	Farm = Window:AddTab("Fishing", "fish"),
-	Event = Window:AddTab("Event", "calendar"),
     Quest = Window:AddTab("Quest", "scroll-text"),
 	Auto = Window:AddTab("Auto", "repeat-2"),
 	Shop = Window:AddTab("Shop", "shopping-cart"),
@@ -66,7 +64,7 @@ local Toggles = Library.Toggles
 Library.ForceCheckbox = false
 Library.ShowToggleFrameInKeybinds = true
 
-local EventStatus = Tabs.Info:AddLeftGroupbox("Event Status", "compass")
+local EventStatus = Tabs.Event:AddLeftGroupbox("Event Status", "compass")
 
 local hunts = {
     ["Props 1"] = "Shark Hunt",
@@ -157,33 +155,7 @@ end)
 
 EventStatus:AddDivider()
 
--- Opsi label awal
-local LabelOptions = {
-    Text = "Loading...",
-    DoesWrap = true
-}
-
--- Buat label di EventStatus (asumsi EventStatus sudah ada)
-local Label = EventStatus:AddLabel(LabelOptions)
-
--- Update label setiap 1 detik
-task.spawn(function()
-    while true do
-        task.wait(1)
-
-        -- Ambil teks terbaru dari workspace
-        local headerText = workspace["!!! MENU RINGS"]["Event Tracker"].Main.Gui.Content.Items.Countdown.Header.Text
-        local labelText = workspace["!!! MENU RINGS"]["Event Tracker"].Main.Gui.Content.Items.Countdown.Label.Text
-
-        -- Gabungkan teks untuk ditampilkan di UI
-        local combinedText = "Event: " .. headerText .. "\nTime: " .. labelText
-
-        -- Update teks di label
-        Label:SetText(combinedText)
-    end
-end)
-
-local EventHunt = Tabs.Info:AddRightGroupbox("Event Hunt", "anchor")
+local EventHunt = Tabs.Event:AddRightGroupbox("Event Hunt", "anchor")
 
 -- Variabel penyimpanan dan kontrol
 local savePosition -- posisi awal sebelum teleport
@@ -340,35 +312,6 @@ toggle:OnChanged(function(state)
 end)
 
 EventHunt:AddDivider()
-
-EventHunt:AddToggle("MyPseudoCodeToggle", {
-    Text = "Auto Talon Admin Event",
-    Default = false,
-})
-
-Toggles.MyPseudoCodeToggle:OnChanged(function(state)
-    if state then
-        local targetCFrame = CFrame.new(
-            -1956.04785, -440.000488, 7392.30615,
-            0.108164124, 1.00112381e-07, 0.994133055,
-            -6.4575367e-08, 1, -9.36774273e-08,
-            -0.994133055, -5.40639853e-08, 0.108164124
-        )
-
-        task.spawn(function()
-            while Toggles.MyPseudoCodeToggle.Value do
-                task.wait(1) -- cek tiap 1 detik
-                if workspace:FindFirstChild("CountdownPart") then
-                    local char = player.Character or player.CharacterAdded:Wait()
-                    if char and char:FindFirstChild("HumanoidRootPart") then
-                        char.HumanoidRootPart.CFrame = targetCFrame
-                        break -- stop setelah teleport sekali
-                    end
-                end
-            end
-        end)
-    end
-end)
 
 local Fishing = Tabs.Farm:AddLeftGroupbox("Fishing", "fish")
 
@@ -939,77 +882,6 @@ Sell:AddToggle("AutoSellToggle", {
     end,
 })
 
-local Halloween = Tabs.Event:AddLeftGroupbox("Halloween", "candy")
-
--- 🔗 Remote references
-local Net = ReplicatedStorage:WaitForChild("Packages")
-    :WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0")
-    :WaitForChild("net")
-
-local ClaimReward = Net:WaitForChild("RE/ClaimEventReward")
-local SpecialDialogueEvent = Net:WaitForChild("RF/SpecialDialogueEvent")
-
--- Auto Claim Rewards
-local autoClaim = false
-local autoClaimLoop = nil
-
-Halloween:AddToggle("AutoClaimRewardToggle", {
-    Text = "Auto Claim All Rewards",
-    Default = false,
-    Tooltip = "Automatically claims all available event rewards",
-    Callback = function(state)
-        autoClaim = state
-
-        if state then
-            autoClaimLoop = task.spawn(function()
-                while autoClaim do
-                    for i = 1, 13 do
-                        pcall(function()
-                            ClaimReward:FireServer(i)
-                        end)
-                        task.wait(0.1)
-                    end
-                    task.wait(1)
-                end
-            end)
-        else
-            if autoClaimLoop then
-                task.cancel(autoClaimLoop)
-                autoClaimLoop = nil
-            end
-        end
-    end,
-})
-
--- Auto TrickOrTreat Button
-Halloween:AddButton({
-    Text = "Auto TrickOrTreat",
-    Func = function()
-        local NPCFolder = ReplicatedStorage:WaitForChild("NPC")
-        local NPCs = NPCFolder:GetChildren()
-        local eventType = "TrickOrTreat"
-
-        task.spawn(function()
-            for i, npc in ipairs(NPCs) do
-                task.wait(0.01)
-                pcall(function()
-                    SpecialDialogueEvent:InvokeServer(npc.Name, eventType)
-                end)
-
-                if i == #NPCs then
-                    Library:Notify({
-                        Title = "Auto TrickOrTreat",
-                        Description = "All NPCs are done!",
-                        Time = 4,
-                    })
-                    break
-                end
-            end
-        end)
-    end
-})
-
 local DeepSea = Tabs.Quest:AddLeftGroupbox("Deep Sea Status", "ghost")
 
 -- === DEEP SEA QUEST ===
@@ -1328,58 +1200,22 @@ end)
 
 local AutoFavorite = Tabs.Auto:AddLeftGroupbox("Auto Favorite", "star")
 
+
 --// === SETUP DASAR === //--
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Net = require(ReplicatedStorage.Packages.Net)
 local Replion = require(ReplicatedStorage.Packages.Replion).Client
 
 local FavoriteItemEvent = Net:RemoteEvent("FavoriteItem")
 local data = Replion:WaitReplion("Data")
 
--- Nama file untuk cache favorit
-local FAVORITE_CACHE = "favorited_cache.json"
-
---// === UTIL UNTUK SIMPAN & MUAT CACHE === //--
-local function loadCache()
-	if isfile and isfile(FAVORITE_CACHE) then
-		local content = readfile(FAVORITE_CACHE)
-		local ok, decoded = pcall(function() return game:GetService("HttpService"):JSONDecode(content) end)
-		if ok and typeof(decoded) == "table" then
-			return decoded
-		end
-	end
-	return {}
-end
-
-local function saveCache(tbl)
-	if writefile then
-		local encoded = game:GetService("HttpService"):JSONEncode(tbl)
-		writefile(FAVORITE_CACHE, encoded)
-	end
-end
-
--- cache favorit lokal
-local favoritedCache = loadCache()
-
--- Helper: update status di cache
-local function setFavoriteStatus(uuid, status)
-	favoritedCache[uuid] = status
-	saveCache(favoritedCache)
-end
-
--- Helper: cek status di cache
-local function isFavorited(uuid)
-	return favoritedCache[uuid] == true
-end
-
---// === FUNGSI FAVORITE === //--
+--// === FUNGSI FAVORITE / UNFAVORITE === //--
 local function FavoriteAllByTier(tierTarget)
 	local inventory = data:GetExpect("Inventory")
 	local items = inventory and inventory["Items"]
 	if not items then return end
 
 	for _, item in pairs(items) do
-		if item and not isFavorited(item.UUID) then
+		if item and not item.Favorited then
 			for _, module in pairs(ReplicatedStorage.Items:GetChildren()) do
 				if module:IsA("ModuleScript") then
 					local ok, moduleData = pcall(require, module)
@@ -1387,7 +1223,6 @@ local function FavoriteAllByTier(tierTarget)
 						if moduleData.Data.Tier == tierTarget then
 							FavoriteItemEvent:FireServer(item.UUID)
 							item.Favorited = true
-							setFavoriteStatus(item.UUID, true)
 							task.wait(0.1)
 						end
 					end
@@ -1397,14 +1232,13 @@ local function FavoriteAllByTier(tierTarget)
 	end
 end
 
---// === FUNGSI UNFAVORITE BERDASAR TIER === //--
 local function UnfavoriteAllByTier(tierTarget)
 	local inventory = data:GetExpect("Inventory")
 	local items = inventory and inventory["Items"]
 	if not items then return end
 
 	for _, item in pairs(items) do
-		if item and isFavorited(item.UUID) then
+		if item and item.Favorited then
 			for _, module in pairs(ReplicatedStorage.Items:GetChildren()) do
 				if module:IsA("ModuleScript") then
 					local ok, moduleData = pcall(require, module)
@@ -1412,7 +1246,6 @@ local function UnfavoriteAllByTier(tierTarget)
 						if moduleData.Data.Tier == tierTarget then
 							FavoriteItemEvent:FireServer(item.UUID)
 							item.Favorited = false
-							setFavoriteStatus(item.UUID, false)
 							task.wait(0.1)
 						end
 					end
@@ -1422,21 +1255,21 @@ local function UnfavoriteAllByTier(tierTarget)
 	end
 end
 
---// === UI KONTROL === //--
+--// === GUI (Dropdown + Toggle) === //--
 AutoFavorite:AddDropdown("TierDropdown", {
 	Values = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" },
 	Default = "Rare",
 	Multi = false,
-	Text = "Pilih Tier Item",
+	Text = "Select Rarity", 
 })
 
 AutoFavorite:AddToggle("FavoriteToggle", {
-	Text = "Aktifkan Auto Favorite Loop",
+	Text = "Auto Favorite",  
 	Default = false,
 })
 
 AutoFavorite:AddToggle("UnfavoriteToggle", {
-	Text = "Aktifkan Auto Unfavorite Tier",
+	Text = "Auto Unfavorite",  
 	Default = false,
 })
 
@@ -1467,7 +1300,7 @@ Toggles.FavoriteToggle:OnChanged(function(state)
 	end
 end)
 
--- Loop Auto Unfavorite per Tier
+-- Loop Auto Unfavorite
 Toggles.UnfavoriteToggle:OnChanged(function(state)
 	if state then
 		local selectedTierName = Options.TierDropdown.Value
@@ -1482,7 +1315,6 @@ Toggles.UnfavoriteToggle:OnChanged(function(state)
 		end)
 	end
 end)
-
 
 local AutoEnchant = Tabs.Auto:AddRightGroupbox("Auto Enchant", "sparkles")
 -- Referensi ke PlayerGui
@@ -2925,16 +2757,15 @@ local islands = {
     ["Ancient Jungle"] = CFrame.new(1275.54553, 7.85804176, -193.749756, 0.924119413, 5.65956171e-08, -0.382103801, -3.36512187e-08, 1, 6.67302302e-08, 0.382103801, -4.88084417e-08, 0.924119413),
     ["Underground Cellar 1"] = CFrame.new(1954.18994, -41.7413597, -577.574768, -0.817980289, 0.573605001, 0.0434255376, 0.572797239, 0.81913203, -0.0304316022, -0.0530269668, -1.84206292e-05, -0.998593211),
     ["Underground Cellar 2"] = CFrame.new(2120.27417, -93.1985779, -701.552185, -0.998591185, 0, 0.0530693457, 0, 1, 0, -0.0530693457, 0, -0.998591185),
-    ["Second Enchant Altar"] = CFrame.new(1478.29846, 126.044891, -613.519653, -0.117893577, 0, 0.993026376, 0, 1, 0, -0.993026376, 0, -0.117893577),
+    ["Tample Guardian"] = CFrame.new(1478.29846, 126.044891, -613.519653, -0.117893577, 0, 0.993026376, 0, 1, 0, -0.993026376, 0, -0.117893577),
     ["Mysterious Door"] = CFrame.new(1899.19629, 13.3589745, -577.593811, -0.0531117916, 0, -0.998588562, 0, 1, 0, 0.998588562, 0, -0.0531117916),
-    ["Temple Lever 1"] = CFrame.new(1485.66541, 5.41373634, -861.165161, -5.01871109e-05, 0.988927424, 0.148400292, -1, -5.01871109e-05, -3.74019146e-06, 3.74019146e-06, -0.148400292, 0.988927364),
-    ["Temple Lever 2"] = CFrame.new(898.490479, 5.41373587, -361.212708, 9.11951065e-06, 0.0998446345, -0.995003104, -1, 9.11951065e-06, -8.2552433e-06, 8.2552433e-06, 0.995003104, 0.0998445749),
-    ["Temple Lever 3"] = CFrame.new(1419.39148, 28.1637344, 79.5802917, 3.55243683e-05, -0.332731277, -0.943021655, -1, -3.55243683e-05, -2.51233578e-05, -2.51233578e-05, 0.943021655, -0.332731247),
-    ["Temple Lever 4"] = CFrame.new(1818.72156, 5.41373634, -285.160828, -1.15633011e-05, -0.192806393, 0.981236815, -1, 1.15633011e-05, -9.53674316e-06, -9.53674316e-06, -0.981236815, -0.192806482),
-    ["Temple"] = CFrame.new(1478.09546, 0.0774269104, -612.817993, 0.993017375, 0, 0.117968373, 0, 1, 0, -0.117968373, 0, 0.993017375),
-    ["Mount Hallow"] = CFrame.new(1840.72021, 33.7589836, 3116.54443, -0.996191859, 0, -0.0871884301, 0, 1, 0, 0.0871884301, 0, -0.996191859),
-	["Crystal Cavern 1"] = CFrame.new(-1553.69409, -360.835022, 6960.74805, 0, 0, -1, 1, 0, 0, 0, -1, 0),
-	["Crystal Cavern 2"] = CFrame.new(2342.47388, 186.970016, 3078.82715, 0.951068401, 0, 0.308980465, 0, 1, 0, -0.308980465, 0, 0.951068401),
+    ["Hourglass Diamond Artifact"] = CFrame.new(1485.66541, 5.41373634, -861.165161, -5.01871109e-05, 0.988927424, 0.148400292, -1, -5.01871109e-05, -3.74019146e-06, 3.74019146e-06, -0.148400292, 0.988927364),
+    ["Arrow Artifact"] = CFrame.new(898.490479, 5.41373587, -361.212708, 9.11951065e-06, 0.0998446345, -0.995003104, -1, 9.11951065e-06, -8.2552433e-06, 8.2552433e-06, 0.995003104, 0.0998445749),
+    ["Crescent Artifact"] = CFrame.new(1419.39148, 28.1637344, 79.5802917, 3.55243683e-05, -0.332731277, -0.943021655, -1, -3.55243683e-05, -2.51233578e-05, -2.51233578e-05, 0.943021655, -0.332731247),
+    ["Diamond Artifact"] = CFrame.new(1818.72156, 5.41373634, -285.160828, -1.15633011e-05, -0.192806393, 0.981236815, -1, 1.15633011e-05, -9.53674316e-06, -9.53674316e-06, -0.981236815, -0.192806482),
+    ["Sacred Temple"] = CFrame.new(1478.09546, 0.0774269104, -612.817993, 0.993017375, 0, 0.117968373, 0, 1, 0, -0.117968373, 0, 0.993017375),
+    ["Crystalline Passage"] = CFrame.new(6053.09717, -538.900085, 4391.29102, -0.993590963, -1.39414302e-08, 0.10982503, 1.7823354e-10, 1, -7.10982503, 1.27797193e-07, -0.10982503, -0.993590963),
+    ["Ancient Ruin"] = CFrame.new(6085.4248, -585.924194, 4638.86719, -0.696671784, 6.0984318e-08, -0.717390001, -1.9965112e-08, 1, -1.0439771e-07, -0.717390001, -8.7053305e-08, -0.696671784),
 }
 
 -- Ambil semua nama Island dan sort secara case-insensitive
