@@ -122,9 +122,18 @@ else
 	table.insert(updates, "⚠️ Gagal memuat Update Log dari server!")
 end
 
--- Fungsi untuk memberi warna berdasarkan simbol di depan
+-- Fungsi untuk memberi warna berdasarkan simbol di depan dan kata kunci
 local function getColorFromSymbol(line)
-	if line:match("^%[%+%]") then
+	local lowerLine = line:lower()
+	if lowerLine:match("^added") then
+		return Color3.fromRGB(0, 255, 140) -- hijau
+	elseif lowerLine:match("^removed") then
+		return Color3.fromRGB(255, 90, 90) -- merah
+	elseif lowerLine:match("^changed") then
+		return Color3.fromRGB(255, 255, 0) -- kuning
+	elseif lowerLine:match("^fixed") then
+		return Color3.fromRGB(150, 0, 0) -- merah gelap
+	elseif line:match("^%[%+%]") then
 		return Color3.fromRGB(0, 255, 140) -- hijau
 	elseif line:match("^%[%-%]") then
 		return Color3.fromRGB(255, 90, 90) -- merah
