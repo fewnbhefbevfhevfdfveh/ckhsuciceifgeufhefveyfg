@@ -7,7 +7,7 @@ local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 
--- Deklarasi service dan variabel utama (tidak diubah)
+-- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
 local workspace = workspace
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -16,7 +16,6 @@ local hrp = character:WaitForChild("HumanoidRootPart")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
-local PlayerGui = player:WaitForChild("PlayerGui") -- ✅ tambahan PlayerGui
 
 -- Register library
 ThemeManager:SetLibrary(Library)
@@ -40,9 +39,8 @@ Library:SetDPIScale(85)
 
 -- Semua Tabs
 local Tabs = {
-	Info = Window:AddTab("Info", "info"),
+	Event = Window:AddTab("Event", "info"),
 	Farm = Window:AddTab("Fishing", "fish"),
-	Event = Window:AddTab("Event", "calendar"),
     Quest = Window:AddTab("Quest", "scroll-text"),
 	Auto = Window:AddTab("Auto", "repeat-2"),
 	Shop = Window:AddTab("Shop", "shopping-cart"),
@@ -66,7 +64,7 @@ local Toggles = Library.Toggles
 Library.ForceCheckbox = false
 Library.ShowToggleFrameInKeybinds = true
 
-local EventStatus = Tabs.Info:AddLeftGroupbox("Event Status", "compass")
+local EventStatus = Tabs.Event:AddLeftGroupbox("Event Status", "compass")
 
 local hunts = {
     ["Props 1"] = "Shark Hunt",
@@ -157,33 +155,7 @@ end)
 
 EventStatus:AddDivider()
 
--- Opsi label awal
-local LabelOptions = {
-    Text = "Loading...",
-    DoesWrap = true
-}
-
--- Buat label di EventStatus (asumsi EventStatus sudah ada)
-local Label = EventStatus:AddLabel(LabelOptions)
-
--- Update label setiap 1 detik
-task.spawn(function()
-    while true do
-        task.wait(1)
-
-        -- Ambil teks terbaru dari workspace
-        local headerText = workspace["!!! MENU RINGS"]["Event Tracker"].Main.Gui.Content.Items.Countdown.Header.Text
-        local labelText = workspace["!!! MENU RINGS"]["Event Tracker"].Main.Gui.Content.Items.Countdown.Label.Text
-
-        -- Gabungkan teks untuk ditampilkan di UI
-        local combinedText = "Event: " .. headerText .. "\nTime: " .. labelText
-
-        -- Update teks di label
-        Label:SetText(combinedText)
-    end
-end)
-
-local EventHunt = Tabs.Info:AddRightGroupbox("Event Hunt", "anchor")
+local EventHunt = Tabs.Event:AddRightGroupbox("Event Hunt", "anchor")
 
 -- Variabel penyimpanan dan kontrol
 local savePosition -- posisi awal sebelum teleport
@@ -340,35 +312,6 @@ toggle:OnChanged(function(state)
 end)
 
 EventHunt:AddDivider()
-
-EventHunt:AddToggle("MyPseudoCodeToggle", {
-    Text = "Auto Talon Admin Event",
-    Default = false,
-})
-
-Toggles.MyPseudoCodeToggle:OnChanged(function(state)
-    if state then
-        local targetCFrame = CFrame.new(
-            -1956.04785, -440.000488, 7392.30615,
-            0.108164124, 1.00112381e-07, 0.994133055,
-            -6.4575367e-08, 1, -9.36774273e-08,
-            -0.994133055, -5.40639853e-08, 0.108164124
-        )
-
-        task.spawn(function()
-            while Toggles.MyPseudoCodeToggle.Value do
-                task.wait(1) -- cek tiap 1 detik
-                if workspace:FindFirstChild("CountdownPart") then
-                    local char = player.Character or player.CharacterAdded:Wait()
-                    if char and char:FindFirstChild("HumanoidRootPart") then
-                        char.HumanoidRootPart.CFrame = targetCFrame
-                        break -- stop setelah teleport sekali
-                    end
-                end
-            end
-        end)
-    end
-end)
 
 local Fishing = Tabs.Farm:AddLeftGroupbox("Fishing", "fish")
 
@@ -939,77 +882,6 @@ Sell:AddToggle("AutoSellToggle", {
     end,
 })
 
-local Halloween = Tabs.Event:AddLeftGroupbox("Halloween", "candy")
-
--- 🔗 Remote references
-local Net = ReplicatedStorage:WaitForChild("Packages")
-    :WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0")
-    :WaitForChild("net")
-
-local ClaimReward = Net:WaitForChild("RE/ClaimEventReward")
-local SpecialDialogueEvent = Net:WaitForChild("RF/SpecialDialogueEvent")
-
--- Auto Claim Rewards
-local autoClaim = false
-local autoClaimLoop = nil
-
-Halloween:AddToggle("AutoClaimRewardToggle", {
-    Text = "Auto Claim All Rewards",
-    Default = false,
-    Tooltip = "Automatically claims all available event rewards",
-    Callback = function(state)
-        autoClaim = state
-
-        if state then
-            autoClaimLoop = task.spawn(function()
-                while autoClaim do
-                    for i = 1, 13 do
-                        pcall(function()
-                            ClaimReward:FireServer(i)
-                        end)
-                        task.wait(0.1)
-                    end
-                    task.wait(1)
-                end
-            end)
-        else
-            if autoClaimLoop then
-                task.cancel(autoClaimLoop)
-                autoClaimLoop = nil
-            end
-        end
-    end,
-})
-
--- Auto TrickOrTreat Button
-Halloween:AddButton({
-    Text = "Auto TrickOrTreat",
-    Func = function()
-        local NPCFolder = ReplicatedStorage:WaitForChild("NPC")
-        local NPCs = NPCFolder:GetChildren()
-        local eventType = "TrickOrTreat"
-
-        task.spawn(function()
-            for i, npc in ipairs(NPCs) do
-                task.wait(0.01)
-                pcall(function()
-                    SpecialDialogueEvent:InvokeServer(npc.Name, eventType)
-                end)
-
-                if i == #NPCs then
-                    Library:Notify({
-                        Title = "Auto TrickOrTreat",
-                        Description = "All NPCs are done!",
-                        Time = 4,
-                    })
-                    break
-                end
-            end
-        end)
-    end
-})
-
 local DeepSea = Tabs.Quest:AddLeftGroupbox("Deep Sea Status", "ghost")
 
 -- === DEEP SEA QUEST ===
@@ -1328,16 +1200,6 @@ end)
 
 local AutoFavorite = Tabs.Auto:AddLeftGroupbox("Auto Favorite", "star")
 
--- Deklarasi service dan variabel utama (tidak diubah)
-local workspace = workspace
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
-local PlayerGui = player:WaitForChild("PlayerGui") -- ✅ tambahan PlayerGui
 
 --// === SETUP DASAR === //--
 local Net = require(ReplicatedStorage.Packages.Net)
@@ -1346,7 +1208,7 @@ local Replion = require(ReplicatedStorage.Packages.Replion).Client
 local FavoriteItemEvent = Net:RemoteEvent("FavoriteItem")
 local data = Replion:WaitReplion("Data")
 
---// === FUNGSI FAVORITE === //--
+--// === FUNGSI FAVORITE / UNFAVORITE === //--
 local function FavoriteAllByTier(tierTarget)
 	local inventory = data:GetExpect("Inventory")
 	local items = inventory and inventory["Items"]
@@ -1360,6 +1222,7 @@ local function FavoriteAllByTier(tierTarget)
 					if ok and moduleData.Data and moduleData.Data.Id == item.Id then
 						if moduleData.Data.Tier == tierTarget then
 							FavoriteItemEvent:FireServer(item.UUID)
+							item.Favorited = true
 							task.wait(0.1)
 						end
 					end
@@ -1369,7 +1232,6 @@ local function FavoriteAllByTier(tierTarget)
 	end
 end
 
---// === FUNGSI UNFAVORITE BERDASAR TIER === //--
 local function UnfavoriteAllByTier(tierTarget)
 	local inventory = data:GetExpect("Inventory")
 	local items = inventory and inventory["Items"]
@@ -1383,6 +1245,7 @@ local function UnfavoriteAllByTier(tierTarget)
 					if ok and moduleData.Data and moduleData.Data.Id == item.Id then
 						if moduleData.Data.Tier == tierTarget then
 							FavoriteItemEvent:FireServer(item.UUID)
+							item.Favorited = false
 							task.wait(0.1)
 						end
 					end
@@ -1392,21 +1255,21 @@ local function UnfavoriteAllByTier(tierTarget)
 	end
 end
 
---// === UI KONTROL === //--
+--// === GUI (Dropdown + Toggle) === //--
 AutoFavorite:AddDropdown("TierDropdown", {
 	Values = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" },
 	Default = "Rare",
 	Multi = false,
-	Text = "Select Rarity",
+	Text = "Select Rarity", 
 })
 
 AutoFavorite:AddToggle("FavoriteToggle", {
-	Text = "Auto Favorite",
+	Text = "Auto Favorite",  
 	Default = false,
 })
 
 AutoFavorite:AddToggle("UnfavoriteToggle", {
-	Text = "Auto Unfavorite",
+	Text = "Auto Unfavorite",  
 	Default = false,
 })
 
@@ -1437,7 +1300,7 @@ Toggles.FavoriteToggle:OnChanged(function(state)
 	end
 end)
 
--- Loop Auto Unfavorite per Tier
+-- Loop Auto Unfavorite
 Toggles.UnfavoriteToggle:OnChanged(function(state)
 	if state then
 		local selectedTierName = Options.TierDropdown.Value
@@ -1452,7 +1315,6 @@ Toggles.UnfavoriteToggle:OnChanged(function(state)
 		end)
 	end
 end)
-
 
 local AutoEnchant = Tabs.Auto:AddRightGroupbox("Auto Enchant", "sparkles")
 -- Referensi ke PlayerGui
