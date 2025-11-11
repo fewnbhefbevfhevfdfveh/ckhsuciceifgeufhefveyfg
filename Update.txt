@@ -1,18 +1,2 @@
-- Added:
-- [+] Added Teleport to Crystalline Passage
-- [+] Added Teleport to Ancient Ruin
-
-- Changed:
-- [/] Rename Temple to Sacred Temple
-- [/] Rename Temple Lever 1 to Hourglass Diamond Artifact
-- [/] Rename Temple Lever 2 to Arrow Artifact
-- [/] Rename Temple Lever 3 to Crescent Artifact
-- [/] Rename Temple Lever 4 to Diamond Artifact
-- [/] Rename Tab Info To Event
-
-- Removed:
-- [-] Delete Tab Event:
-- [-] Delete Auto TrickOrTreat
-- [-] Delete Auto Claim All Rewards
-- [-] Delete Crystal Cavern 1 & 2
-- [-] Delete Mount Hallow
+- Fixed:
+[!] fixed Bug Auto Favorite
