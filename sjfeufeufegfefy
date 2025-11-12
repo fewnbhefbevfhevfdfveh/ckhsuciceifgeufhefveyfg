@@ -819,7 +819,7 @@ Sell:AddSlider("SellDelaySlider", {
     Text = "Sell Delay (seconds)",
     Default = 2,
     Min = 1,
-    Max = 30,
+    Max = 100,
     Rounding = 0,
     Callback = function(value)
         sellDelay = value
