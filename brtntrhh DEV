@@ -574,7 +574,7 @@ local mode = "Sell Delay"
 local autoSellLoop = nil
 
 -- Dropdown: Select Mode
-local SellModeDropdown = Sell:Dropdown({
+local SellModeDropdown = Fishing:Dropdown({
     Title = "Auto Sell Mode",
     Desc = "Choose how Auto Sell works",
     Values = { "Backpack Full", "Sell Delay" },
@@ -585,7 +585,7 @@ local SellModeDropdown = Sell:Dropdown({
 })
 
 -- Slider: Sell Delay (seconds)
-local SellDelaySlider = Sell:Slider({
+local SellDelaySlider = Fishing:Slider({
     Title = "Sell Delay",
     Desc = "Delay between selling (seconds)",
     Step = 1,
@@ -600,7 +600,7 @@ local SellDelaySlider = Sell:Slider({
 })
 
 -- Toggle: Auto Sell
-local AutoSellToggle = Sell:Toggle({
+local AutoSellToggle = Fishing:Toggle({
     Title = "Auto Sell All Items",
     Value = false,
     Callback = function(state)
