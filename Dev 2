@@ -536,7 +536,7 @@ local args = {1}
 local autoEquipRod = false
 
 -- WindUI Toggle (baru)
-local AutoEquipRodToggle = Equipment:Toggle({
+local AutoEquipRodToggle = Fishing:Toggle({
     Title = "Auto Equip Rod",
     Desc = "Automatically equip rod every 1 second",
     Icon = "fish",
