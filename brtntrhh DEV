@@ -1,4 +1,4 @@
-local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
 local workspace = workspace
@@ -10,143 +10,58 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local screenSize = camera.ViewportSize
 
-WindUI:Popup({
-    Title = "WELCOME TO NEXA FISH IT! SCRIPT",
-    Icon = "crown",
-
-    Content = [[
-Welcome to Nexa Fish It Script.
-Enjoy a faster, more stable, and more efficient automated fishing experience.
-    ]],
-
-    Buttons = {
-        {
-            Title = "Cancel",
-            Callback = function() end,
-            Variant = "Tertiary",
-        },
-        {
-            Title = "Continue",
-            Icon = "arrow-right",
-            Callback = function() end,
-            Variant = "Primary",
-        }
-    }
-})
-
-WindUI:AddTheme({
-    Name = "Nexa", -- theme name
-
-    -- Semua ini dibiarkan DEFAULT (tidak diubah)
-    Accent = nil,
-    Background = nil,
-    BackgroundTransparency = nil,
-    Outline = nil,
-    Text = nil,
-    Placeholder = nil,
-    Button = nil,
-    Icon = nil,
-    Hover = nil,
-
-    -- Hanya ubah warna window
-    WindowBackground = Color3.fromHex("#002B7A"), -- biru gelap laut
-    WindowShadow = Color3.fromHex("#000000"),
-
-    -- Dialog, Tab, Element biar default → set nil
-    DialogBackground = nil,
-    DialogBackgroundTransparency = nil,
-    DialogTitle = nil,
-    DialogContent = nil,
-    DialogIcon = nil,
-
-    WindowTopbarButtonIcon = nil,
-    WindowTopbarTitle = nil,
-    WindowTopbarAuthor = nil,
-    WindowTopbarIcon = nil,
-
-    TabBackground = nil,
-    TabTitle = nil,
-    TabIcon = nil,
-
-    ElementBackground = nil,
-    ElementTitle = nil,
-    ElementDesc = nil,
-    ElementIcon = nil,
-
-    PopupBackground = nil,
-    PopupBackgroundTransparency = nil,
-    PopupTitle = nil,
-    PopupContent = nil,
-    PopupIcon = nil,
-})
-
--- GRADIENT KHUSUS WINDOW (seperti logo N: biru muda → biru gelap)
-WindUI:Gradient({
-    ["0"] = { Color = Color3.fromHex("#4FC3FF"), Transparency = 0 },    -- biru muda atas
-    ["100"] = { Color = Color3.fromHex("#002B7A"), Transparency = 0 },  -- biru gelap bawah
-}, {
-    Rotation = 90,
-})
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
--- Buat Window
-local Window = WindUI:CreateWindow({
+local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Icon = "rbxassetid://132484363980167", -- lucide icon
-    Author = "Fish IT! | By Nexa Community",
-    Folder = "Nexa",
-
-    Theme = "Nexa", -- pakai tema dari versi pertama
-    Transparent = true,
-    Acrylic = false,
-    HidePanelBackground = true,
-    HideSearchBar = false,
-    NewElements = true,
-    Resizable = true,
-    SideBarWidth = 200,
-    BackgroundImageTransparency = 0.42,
-    ScrollBarEnabled = true,
-
-    User = {
-        Enabled = true,
-        Anonymous = false,
-        Name = LocalPlayer.Name,
-        Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=420&h=420",
-        Callback = function() end,
-    },
+    Subtitle = "Fish It | V0.0.0",
+    Size = UDim2.fromOffset(720, 410),
+    DragStyle = 1,
+    DisabledWindowControls = {},
+    ShowUserInfo = false,
+    Keybind = Enum.KeyCode.RightControl,
+    AcrylicBlur = true,
 })
 
-Window:Tag({
-    Title = "v1.2.9",
-    Color = Color3.fromHex("#30ff6a")
+local cg = game:GetService("CoreGui")
+
+task.spawn(function()
+    while true do
+        for _, obj in ipairs(cg:GetDescendants()) do
+            if obj.Name == "UserInfo" then
+                obj:Destroy()
+            end
+        end
+        task.wait(1)
+    end
+end)
+
+local tabGroups = {
+	TabGroup1 = Window:TabGroup()
+}
+
+local tabs = {
+	Fishing = tabGroups.TabGroup1:Tab({ Name = "Fishing", Image = "rbxassetid://97899956724998" }),
+	Quest = tabGroups.TabGroup1:Tab({ Name = "Quest", Image = "rbxassetid://10734950309" })
+}
+
+local sections = {
+	Fishing = tabs.Fishing:Section({ Side = "Left" }),
+    Fishing1 = tabs.Fishing:Section({ Side = "Right" }),
+    Quest = tabs.Quest:Section({ Side = "Left" }),
+    Quest1 = tabs.Quest:Section({ Side = "Right" }),
+}
+
+sections.Fishing:Header({
+	Name = "Fishing Feature"
 })
-
-
-Window:EditOpenButton({
-    Enabled = false
-})
-
-local Fishing = Window:Tab({Title = "Fishing", Icon = "fish", Locked = false})
-local Quest = Window:Tab({Title = "Quest", Icon = "scroll", Locked = false})
-local Auto = Window:Tab({Title = "Auto", Icon = "swords", Locked = false})
-local Shop = Window:Tab({Title = "Shop", Icon = "shopping-cart", Locked = false})
-local Boat = Window:Tab({Title = "Boat", Icon = "ship", Locked = false})
-local Player = Window:Tab({Title = "Player", Icon = "user", Locked = false})
-local Tp = Window:Tab({Title = "Teleport", Icon = "map", Locked = false})
-
-Fishing:Select() -- Select Tab
-
-Fishing:Section({ Title = "Fishing" })
 
 local FishingController = require(ReplicatedStorage.Controllers.FishingController)
 local AutoFishingController = require(ReplicatedStorage.Controllers.AutoFishingController)
 local Replion = require(ReplicatedStorage.Packages.Replion)
 
+-- STATE
 local AutoFishState = {
 	IsActive = false,
 	MinigameActive = false
@@ -154,17 +69,19 @@ local AutoFishState = {
 
 local ClickSpeed = 0.05
 
+-- CLICK FUNCTION
 local function performClick()
 	FishingController:RequestFishingMinigameClick()
 	task.wait(ClickSpeed + math.random() * ClickSpeed)
 end
 
--- Override state changed supaya selalu aktif
+-- FORCE AUTOFISH ALWAYS ON
 local originalAutoFishingStateChanged = AutoFishingController.AutoFishingStateChanged
 AutoFishingController.AutoFishingStateChanged = function(...)
 	return originalAutoFishingStateChanged(true)
 end
 
+-- FORCE SERVER AUTO FISHING ON
 local function ensureServerAutoFishingOn()
 	local replionData = Replion.Client:WaitReplion("Data")
 	local currentAutoFishingState = replionData:GetExpect("AutoFishing")
@@ -172,21 +89,27 @@ local function ensureServerAutoFishingOn()
 	if not currentAutoFishingState then
 		local Net = require(ReplicatedStorage.Packages.Net)
 		local UpdateAutoFishingRemote = Net:RemoteFunction("UpdateAutoFishingState")
+
 		pcall(function()
 			UpdateAutoFishingRemote:InvokeServer(true)
 		end)
 	end
 end
 
+-- HOOK MINIGAME
 local originalRodStarted = FishingController.FishingRodStarted
 local originalFishingStopped = FishingController.FishingStopped
+
 local clickThread = nil
 
 FishingController.FishingRodStarted = function(self, ...)
 	originalRodStarted(self, ...)
+
 	if AutoFishState.IsActive and not AutoFishState.MinigameActive then
 		AutoFishState.MinigameActive = true
+
 		if clickThread then task.cancel(clickThread) end
+
 		clickThread = task.spawn(function()
 			while AutoFishState.IsActive and AutoFishState.MinigameActive do
 				performClick()
@@ -197,6 +120,7 @@ end
 
 FishingController.FishingStopped = function(self, ...)
 	originalFishingStopped(self, ...)
+
 	if AutoFishState.MinigameActive then
 		AutoFishState.MinigameActive = false
 		task.wait(1)
@@ -204,8 +128,10 @@ FishingController.FishingStopped = function(self, ...)
 	end
 end
 
+-- TOGGLE
 local function ToggleAutoClick(shouldActivate)
 	AutoFishState.IsActive = shouldActivate
+
 	if shouldActivate then
 		ensureServerAutoFishingOn()
 	else
@@ -213,31 +139,115 @@ local function ToggleAutoClick(shouldActivate)
 			task.cancel(clickThread)
 			clickThread = nil
 		end
+
 		AutoFishState.MinigameActive = false
 	end
 end
 
-local AutoFishToggle = Fishing:Toggle({
-    Title = "Auto Fish Legit",
-    Desc = "Enable automatic fishing",
-    Value = false,
-    Callback = function(state)
-        ToggleAutoClick(state)
-    end
-})
+-- =====================================================================
+--  UI (FORMAT BARU)
+-- =====================================================================
 
-local ShowCounterToggle = Fishing:Toggle({
-    Title = "Show Fishing Counter Gui",
-    Desc = "Show or hide the FishingCounterGui",
-    Value = false,
-    Callback = function(state)
-        local fishingCounterGui = player.PlayerGui:FindFirstChild("FishingCounterGui")
-        if fishingCounterGui then
-            fishingCounterGui.Enabled = state
-        else
-            warn("FishingCounterGui not found!")
-        end
+sections.Fishing:Toggle({
+	Name = "Auto Fish Legit",
+	Default = false,
+	Callback = function(value)
+		ToggleAutoClick(value)
+
+		Window:Notify({
+			Title = "Auto Fish Legit",
+			Description = (value and "Enabled " or "Disabled ") .. "Auto Fish"
+		})
+	end,
+}, "AutoFishToggle")
+
+sections.Fishing:Input({
+	Name = "Click Speed",
+	Placeholder = "Default: 0.05",
+	AcceptedCharacters = "Numbers",
+	Callback = function(value)
+		local num = tonumber(value)
+
+		if num and num > 0 then
+			ClickSpeed = num
+			Window:Notify({
+				Title = "Speed",
+				Description = "Click Speed set to: " .. num
+			})
+		end
+	end,
+}, "AutoFishSpeed")
+
+sections.Fishing:Toggle({
+	Name = "Show Fishing Counter Gui",
+	Default = false,
+	Callback = function(state)
+		local fishingCounterGui = player.PlayerGui:FindFirstChild("FishingCounterGui")
+
+		if fishingCounterGui then
+			fishingCounterGui.Enabled = state
+		else
+			warn("FishingCounterGui not found!")
+		end
+	end,
+}, "ShowFishingCounterGuiToggle")
+
+local stopAnimConnections = {}
+
+local function setGameAnimationsEnabled(state)
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then
+        return
     end
+
+    -- Bersihkan koneksi animasi lama
+    for _, conn in ipairs(stopAnimConnections) do
+        conn:Disconnect()
+    end
+    stopAnimConnections = {}
+
+    if state then
+        -- Hentikan semua animasi yg sedang berjalan
+        local animator = humanoid:FindFirstChildOfClass("Animator")
+        if animator then
+            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                track:Stop(0)
+            end
+
+            -- Cegah animasi baru dimainkan
+            local conn = animator.AnimationPlayed:Connect(function(track)
+                task.defer(function()
+                    track:Stop(0)
+                end)
+            end)
+            table.insert(stopAnimConnections, conn)
+        end
+    else
+        -- Re-enable: cukup matikan koneksi
+        for _, conn in ipairs(stopAnimConnections) do
+            conn:Disconnect()
+        end
+        stopAnimConnections = {}
+    end
+
+    -- Notify WindUI
+    Window:Notify({
+        Title = "No Animation",
+        Description = (state and "Enabled " or "Disabled ") .. "No Animation"
+    })
+end
+
+-- =====================================================================
+-- Toggle WindUI (Format Baru)
+-- =====================================================================
+
+sections.Fishing:Toggle({
+    Name = "No Animation",
+    Default = false,
+    Callback = function(state)
+        setGameAnimationsEnabled(state)
+    end,
 })
 
 -- Ambil RemoteFunction CancelFishing
@@ -248,16 +258,20 @@ local CancelFishing = ReplicatedStorage
     :WaitForChild("net")
     :WaitForChild("RF/CancelFishingInputs")
 
-local CancelFishingButton = Fishing:Button({
-    Title = "Cancel Fishing",
-    Desc = "Cancel the current fishing process",
-    Locked = false,
-    Callback = function()
-        CancelFishing:InvokeServer()
-    end
+-- Button Baru Format sections.Fishing
+sections.Fishing:Button({
+	Name = "Cancel Fishing",
+	Callback = function()
+		CancelFishing:InvokeServer()
+	end,
 })
 
--- Services (Players & ReplicatedStorage sudah didefinisikan tadi, jadi tidak dibuat ulang)
+
+sections.Fishing:Header({
+	Name = "Instant Fishing Feature"
+})
+
+-- Services (Players & ReplicatedStorage sudah didefinisikan tadi)
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 
 -- Remotes
@@ -278,10 +292,10 @@ local isFishing = false
 local autoFishingEnabled = false
 
 -- Delay Values
-local castDelay = 1.5        
-local completedDelay = 1     
+local castDelay = 1.5
+local completedDelay = 1
 
--- Safe function
+-- Safe Wait
 local function SafeWait(t)
     local start = os.clock()
     while os.clock() - start < t do
@@ -291,7 +305,7 @@ local function SafeWait(t)
     return true
 end
 
--- Auto Fishing Start
+-- Start Fishing Cycle
 local function StartFishingCycle()
     if not autoFishingEnabled then return end
     if isFishing then return end
@@ -304,7 +318,7 @@ local function StartFishingCycle()
     RequestFishingMinigameStarted:InvokeServer(unpack(miniggameArgs))
 end
 
--- On minigame complete ("!")
+-- Detect "!" (minigame completed)
 REReplicateTextEffect.OnClientEvent:Connect(function(data)
     if not autoFishingEnabled then return end
     if not data or not data.TextData then return end
@@ -318,72 +332,68 @@ REReplicateTextEffect.OnClientEvent:Connect(function(data)
 
     task.spawn(function()
         if not SafeWait(tonumber(completedDelay) or 1) then return end
-        if not autoFishingEnabled then return end
-
         REFishingCompleted:FireServer()
         isFishing = false
 
         if not SafeWait(tonumber(castDelay) or 1.5) then return end
-        if not autoFishingEnabled then return end
-
         StartFishingCycle()
     end)
 end)
 
--- ==========================================
--- WINDUI ELEMENTS
--- ==========================================
+-- ============================================================
+--  UI BARU (FORMAT SECTIONS.Fishing)
+-- ============================================================
 
--- Toggle Instant Fishing
-local Toggle = Fishing:Toggle({
-    Title = "Instant Fishing",
-    Value = false,
-    Callback = function(state)
-        autoFishingEnabled = state
+sections.Fishing:Toggle({
+	Name = "Instant Fishing",
+	Default = false,
+	Callback = function(state)
+		autoFishingEnabled = state
 
         if state then
             StartFishingCycle()
         else
             isFishing = false
         end
-    end
+
+		Window:Notify({
+			Title = "Instant Fishing",
+			Description = (state and "Enabled" or "Disabled") .. " Instant Fishing"
+		})
+	end,
+}, "InstantFishingToggle")
+
+
+sections.Fishing:Input({
+	Name = "Cast Delay",
+	Placeholder = "Default: 1.5",
+	AcceptedCharacters = "Numbers",
+	Callback = function(input)
+		castDelay = tonumber(input) or 1.5
+		Window:Notify({
+			Title = "Cast Delay",
+			Description = "Cast Delay set to: " .. tostring(castDelay)
+		})
+	end,
+}, "InstantFishingCastDelay")
+
+
+sections.Fishing:Input({
+	Name = "Completed Delay",
+	Placeholder = "Default: 1",
+	AcceptedCharacters = "Numbers",
+	Callback = function(input)
+		completedDelay = tonumber(input) or 1
+		Window:Notify({
+			Title = "Completed Delay",
+			Description = "Completed Delay set to: " .. tostring(completedDelay)
+		})
+	end,
+}, "InstantFishingCompletedDelay")
+
+sections.Fishing1:Header({
+	Name = "Equipment Feature"
 })
-
-Fishing:Section({ Title = "Settings" })
-
-local SpeedInput = Fishing:Input({
-    Title = "Click Speed",
-    Desc = "Click speed (the smaller the faster)",
-    Value = tostring(ClickSpeed),
-    Type = "Input",
-    Placeholder = "Example: 0.0005",
-    Callback = function(input)
-        local num = tonumber(input)
-        if num and num > 0 then
-            ClickSpeed = num
-        end
-    end
-})
-
--- Cast Delay
-local InputCastDelay = Fishing:Input({
-    Title = "Cast Delay",
-    Value = "1.5",
-    Callback = function(input)
-        castDelay = tonumber(input) or 1.5
-    end
-})
-
--- Completed Delay
-local InputCompletedDelay = Fishing:Input({
-    Title = "Completed Delay",
-    Value = "1",
-    Callback = function(input)
-        completedDelay = tonumber(input) or 1
-    end
-})
-
-Fishing:Section({ Title = "Equipment" })
 
 -- Module
 local Net = require(ReplicatedStorage.Packages.Net)
@@ -398,75 +408,88 @@ local data = Replion:WaitReplion("Data")
 -- Variabel untuk menyimpan nama rod yang dipilih
 local SelectedRodName = "Starter Rod"
 
--- Dropdown Rods (WindUI)
-local RodDropdown = Fishing:Dropdown({
-    Title = "Select Rod",
-    Desc = "Select the fishing rod you want to equip",
-    Values = {
-        "Starter Rod", "Luck Rod", "Carbon Rod", "Grass Rod", "Demascus Rod",
-        "Ice Rod", "Lucky Rod", "Midnight Rod", "Steampunk Rod", "Chrome Rod",
-        "Fluorescent Rod", "Astral Rod", "Angler Rod", "Ares Rod", "Bamboo Rod",
-        "Toy Rod", "Lava Rod", "Hazmat Rod", "Ghostfinn Rod", "Element Rod",
-        "Angelic Rod", "Gold Rod", "Hyper Rod"
-    },
-    Value = "Starter Rod",
-    Search = true,
-    Callback = function(selected)
-        SelectedRodName = selected
-    end
+-- Dropdown baru (format sections)
+sections.Fishing1:Dropdown({
+	Name = "Select Rod",
+	Search = true,
+	Multi = false,
+	Options = {
+		"Starter Rod",
+		"Luck Rod",
+		"Carbon Rod",
+		"Grass Rod",
+		"Demascus Rod",
+		"Ice Rod",
+		"Lucky Rod",
+		"Midnight Rod",
+		"Steampunk Rod",
+		"Chrome Rod",
+		"Fluorescent Rod",
+		"Astral Rod",
+		"Angler Rod",
+		"Ares Rod",
+		"Bamboo Rod",
+		"Toy Rod",
+		"Lava Rod",
+		"Hazmat Rod",
+		"Ghostfinn Rod",
+		"Element Rod",
+		"Angelic Rod",
+		"Gold Rod",
+		"Hyper Rod"
+	},
+	Default = "Starter Rod",
+	Callback = function(Value)
+		SelectedRodName = Value
+	end,
+}, "RodDropdown")
+
+
+-- Button baru (format sections)
+sections.Fishing1:Button({
+	Name = "Equip Selected Rod",
+	Callback = function()
+
+		local RodIDs = {
+			["Starter Rod"] = 1,
+			["Luck Rod"] = 79,
+			["Carbon Rod"] = 76,
+			["Grass Rod"] = 85,
+			["Demascus Rod"] = 77,
+			["Ice Rod"] = 78,
+			["Lucky Rod"] = 4,
+			["Midnight Rod"] = 80,
+			["Steampunk Rod"] = 6,
+			["Chrome Rod"] = 7,
+			["Fluorescent Rod"] = 255,
+			["Astral Rod"] = 5,
+			["Angler Rod"] = 168,
+			["Ares Rod"] = 126,
+			["Bamboo Rod"] = 258,
+			["Toy Rod"] = 84,
+			["Lava Rod"] = 2,
+			["Hazmat Rod"] = 256,
+			["Ghostfinn Rod"] = 169,
+			["Element Rod"] = 257,
+			["Angelic Rod"] = 124,
+			["Gold Rod"] = 8,
+			["Hyper Rod"] = 9
+		}
+
+		local selectedID = RodIDs[SelectedRodName]
+		if not selectedID then return end
+
+		local rods = data:GetExpect({"Inventory", "Fishing Rods"})
+		if not rods then return end
+
+		for _, rod in ipairs(rods) do
+			if rod and rod.Id == selectedID then
+				EquipItemEvent:FireServer(rod.UUID, "Fishing Rods")
+				break
+			end
+		end
+	end,
 })
-
--- Button Equip Rod (WindUI)
-local EquipRodButton = Fishing:Button({
-    Title = "Equip Selected Rod",
-    Desc = "Equip rod that you selected from the dropdown",
-    Locked = false,
-    Callback = function()
-
-        local RodIDs = {
-            ["Starter Rod"] = 1,
-            ["Luck Rod"] = 79,
-            ["Carbon Rod"] = 76,
-            ["Grass Rod"] = 85,
-            ["Demascus Rod"] = 77,
-            ["Ice Rod"] = 78,
-            ["Lucky Rod"] = 4,
-            ["Midnight Rod"] = 80,
-            ["Steampunk Rod"] = 6,
-            ["Chrome Rod"] = 7,
-            ["Fluorescent Rod"] = 255,
-            ["Astral Rod"] = 5,
-            ["Angler Rod"] = 168,
-            ["Ares Rod"] = 126,
-            ["Bamboo Rod"] = 258,
-            ["Toy Rod"] = 84,
-            ["Lava Rod"] = 2,
-            ["Hazmat Rod"] = 256,
-            ["Ghostfinn Rod"] = 169,
-            ["Element Rod"] = 257,
-            ["Angelic Rod"] = 124,
-            ["Gold Rod"] = 8,
-            ["Hyper Rod"] = 9
-        }
-
-        local selectedID = RodIDs[SelectedRodName]
-        if not selectedID then return end
-
-        local rods = data:GetExpect({"Inventory", "Fishing Rods"})
-        if not rods then return end
-
-        for _, rod in ipairs(rods) do
-            if rod and rod.Id == selectedID then
-                EquipItemEvent:FireServer(rod.UUID, "Fishing Rods")
-                break
-            end
-        end
-    end
-})
-
--------------------------------------------------------
--- BAGIAN BAIT (digabung & tanpa mengubah kode lama)
--------------------------------------------------------
 
 -- RemoteEvent EquipBait
 local equipBaitRemote = ReplicatedStorage
@@ -478,18 +501,29 @@ local equipBaitRemote = ReplicatedStorage
 
 local selectedID = nil
 
--- Dropdown pilih Bait (WindUI)
-local BobberDropdown = Fishing:Dropdown({
-    Title = "Select Bait",
-    Desc = "Select the verse you want to equip",
-    Values = {
-        "Starter Bait", "Topwater Bait", "Luck Bait", "Midnight Bait",
-        "Nature Bait", "Chroma Bait", "Royal Bait", "Dark Matter Bait",
-        "Corrupt Bait", "Aether Bait", "Floral Bait", "Singularity Bait",
-        "Beach Ball Bait", "Gold Bait", "Hyper Bait"
+-- Dropdown pilih Bait (UI Baru)
+sections.Fishing1:Dropdown({
+    Name = "Select Bait",
+    Options = {
+        "Starter Bait",
+        "Topwater Bait",
+        "Luck Bait",
+        "Midnight Bait",
+        "Nature Bait",
+        "Chroma Bait",
+        "Royal Bait",
+        "Dark Matter Bait",
+        "Corrupt Bait",
+        "Aether Bait",
+        "Floral Bait",
+        "Singularity Bait",
+        "Beach Ball Bait",
+        "Gold Bait",
+        "Hyper Bait"
     },
-    Value = "Starter Bait",
+    Default = "Starter Bait",
     Search = true,
+
     Callback = function(selected)
         local BobberIDs = {
             ["Starter Bait"] = 1,
@@ -505,23 +539,21 @@ local BobberDropdown = Fishing:Dropdown({
             ["Nature Bait"] = 17,
             ["Singularity Bait"] = 18,
             ["Royal Bait"] = 19,
-            ["Floral Bait"] = 20
+            ["Floral Bait"] = 20,
         }
 
         selectedID = BobberIDs[selected]
-    end
+    end,
 })
 
--- Button equip bait (WindUI)
-local EquipBaitButton = Fishing:Button({
-    Title = "Equip Selected Bait",
-    Desc = "Equip the selected bait in the dropdown",
-    Locked = false,
-    Callback = function()
-        if selectedID then
-            equipBaitRemote:FireServer(selectedID)
-        end
-    end
+-- Tombol Equip Bait (UI Baru)
+sections.Fishing1:Button({
+	Name = "Equip Selected Bait",
+	Callback = function()
+		if selectedID then
+			equipBaitRemote:FireServer(selectedID)
+		end
+	end,
 })
 
 -- Ambil RemoteEvent untuk equip rod
@@ -535,32 +567,29 @@ local args = {1}
 
 local autoEquipRod = false
 
--- WindUI Toggle (baru)
-local AutoEquipRodToggle = Equipment:Toggle({
-    Title = "Auto Equip Rod",
-    Desc = "Automatically equip rod every 1 second",
-    Icon = "fish",
-    Type = "Checkbox",
-    Value = false,
+-- Toggle Baru
+sections.Fishing1:Toggle({
+    Name = "Auto Equip Rod",
+    Default = false,
     Callback = function(state)
         autoEquipRod = state
-    end
+    end,
 })
 
--- Loop auto-equip (tidak diubah)
-spawn(function()
+-- Loop Auto Equip
+task.spawn(function()
     while true do
         if autoEquipRod then
             netEvent:FireServer(unpack(args))
         end
-        wait(1)
+        task.wait(1)
     end
 end)
 
+sections.Fishing1:Header({
+	Name = "Sell Feature"
+})
 
-Fishing:Section({ Title = "Sell" })
-
--- Variabel dan remote untuk auto sell
 local LocalPlayer = Players.LocalPlayer
 local sellRemote = ReplicatedStorage:WaitForChild("Packages")
     :WaitForChild("_Index")
@@ -569,521 +598,257 @@ local sellRemote = ReplicatedStorage:WaitForChild("Packages")
     :WaitForChild("RF/SellAllItems")
 
 local autoSell = false
-local sellDelay = 1
+local sellDelay = 2
 local mode = "Sell Delay"
 local autoSellLoop = nil
 
--- Dropdown: Select Mode
-local SellModeDropdown = Fishing:Dropdown({
-    Title = "Auto Sell Mode",
-    Desc = "Choose how Auto Sell works",
-    Values = { "Backpack Full", "Sell Delay" },
-    Value = "Sell Delay",
-    Callback = function(option)
-        mode = option
-    end
+-- Slider Delay Jual Otomatis
+sections.Fishing1:Slider({
+	Name = "Sell Delay (seconds)",
+	Default = 2,
+	Min = 1,
+	Max = 100,
+	Rounding = 0,
+	Callback = function(value)
+		sellDelay = value
+	end,
+}, "SellDelaySlider")
+
+-- Dropdown Mode Auto Sell
+sections.Fishing1:Dropdown({
+	Name = "Select Mode",
+	Options = { "Backpack Full", "Sell Delay" },
+	Default = "Sell Delay",
+	Multi = false,
+	Search = false,
+	MaxVisibleDropdownItems = 5,
+	Callback = function(option)
+		mode = option
+	end,
+}, "SellModeDropdown")
+
+-- Toggle Auto Sell
+sections.Fishing1:Toggle({
+	Name = "Auto Sell All Items",
+	Default = false,
+	Callback = function(state)
+		autoSell = state
+
+		if state then
+			autoSellLoop = task.spawn(function()
+				while autoSell do
+					pcall(function()
+						if mode == "Sell Delay" then
+							sellRemote:InvokeServer()
+							task.wait(sellDelay)
+						elseif mode == "Backpack Full" then
+							local bagLabel = LocalPlayer
+								.PlayerGui
+								.Inventory
+								.Main
+								.Top
+								.Options
+								.Fish
+								.Label
+								.BagSize
+
+							if bagLabel and bagLabel.Text == "4,500/4,500" then
+								sellRemote:InvokeServer()
+							end
+							task.wait(1)
+						end
+					end)
+				end
+			end)
+		else
+			if autoSellLoop then
+				task.cancel(autoSellLoop)
+				autoSellLoop = nil
+			end
+		end
+	end,
+}, "AutoSellToggle")
+
+
+sections.Quest:Header({
+	Name = "Sell Feature"
 })
 
--- Slider: Sell Delay (seconds)
-local SellDelaySlider = Fishing:Slider({
-    Title = "Sell Delay",
-    Desc = "Delay between selling (seconds)",
-    Step = 1,
-    Value = {
-        Min = 1,
-        Max = 100,
-        Default = 2,
-    },
-    Callback = function(value)
-        sellDelay = value
-    end
+local board = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board
+local surfaceGui = board:WaitForChild("Gui")
+local content = surfaceGui:WaitForChild("Content")
+local labelNames = {"Label1", "Label2", "Label3", "Label4"}
+
+-- Buat label Paragraph baru dengan header dan isi default
+local deepSeaParagraph = sections.Quest:Paragraph({
+	Header = "Deep Sea Quest Status",
+	Body = "Checking..."
+}, "DeepSeaQuestParagraph")
+
+local function updateDeepSea()
+	local lines = {}
+	for _, name in ipairs(labelNames) do
+		local label = content:FindFirstChild(name)
+		if label then
+			table.insert(lines, label.Text)
+		end
+	end
+	local newText = table.concat(lines, "\n")
+	deepSeaParagraph:SetBody(newText)
+end
+
+updateDeepSea()
+
+for _, name in ipairs(labelNames) do
+	local label = content:FindFirstChild(name)
+	if label then
+		label:GetPropertyChangedSignal("Text"):Connect(updateDeepSea)
+	end
+end
+
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
+
+--======================================================
+-- SCREEN GUI
+--======================================================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "NexaUIToggle"
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+
+--======================================================
+-- FRAME KOTAK (WARNA BIRU SEPERTI FOTO)
+--======================================================
+local ToggleFrame = Instance.new("Frame")
+ToggleFrame.Parent = ScreenGui
+ToggleFrame.Size = UDim2.new(0, 70, 0, 70)
+ToggleFrame.Position = UDim2.new(0, 100, 0, 150)
+ToggleFrame.BackgroundColor3 = Color3.fromRGB(20, 80, 200)
+ToggleFrame.BorderSizePixel = 0
+
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 14)
+Corner.Parent = ToggleFrame
+
+-- GRADIENT BIRU
+local Gradient = Instance.new("UIGradient")
+Gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(36, 112, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 42, 130))
 })
+Gradient.Rotation = 45
+Gradient.Parent = ToggleFrame
 
--- Toggle: Auto Sell
-local AutoSellToggle = Fishing:Toggle({
-    Title = "Auto Sell All Items",
-    Value = false,
-    Callback = function(state)
-        autoSell = state
+-- GLOW BIRU SOFT
+local Glow = Instance.new("ImageLabel")
+Glow.Parent = ToggleFrame
+Glow.Size = UDim2.new(1.7, 0, 1.7, 0)
+Glow.Position = UDim2.new(0.5, 0, 0.5, 0)
+Glow.AnchorPoint = Vector2.new(0.5, 0.5)
+Glow.BackgroundTransparency = 1
+Glow.Image = "rbxassetid://12171505282" -- soft radial glow
+Glow.ImageColor3 = Color3.fromRGB(0, 153, 255)
+Glow.ImageTransparency = 0.35
 
-        if state then
-            autoSellLoop = task.spawn(function()
-                while autoSell do
-                    pcall(function()
-                        if mode == "Sell Delay" then
-                            sellRemote:InvokeServer()
-                            task.wait(sellDelay)
+-- BORDER HALUS
+local Stroke = Instance.new("UIStroke")
+Stroke.Parent = ToggleFrame
+Stroke.Thickness = 2
+Stroke.Color = Color3.fromRGB(140, 200, 255)
+Stroke.Transparency = 0.25
 
-                        elseif mode == "Backpack Full" then
-                            local bagLabel = LocalPlayer
-                                .PlayerGui
-                                .Inventory
-                                .Main
-                                .Top
-                                .Options
-                                .Fish
-                                .Label
-                                .BagSize
+--======================================================
+-- IMAGE BUTTON
+--======================================================
+local ToggleBtn = Instance.new("ImageButton")
+ToggleBtn.Parent = ToggleFrame
+ToggleBtn.Size = UDim2.new(0, 60, 0, 60)
+ToggleBtn.Position = UDim2.new(0.5, -30, 0.5, -30)
+ToggleBtn.BackgroundTransparency = 1
+ToggleBtn.Image = "rbxassetid://123906607434048"
 
-                            if bagLabel and bagLabel.Text == "4,500/4,500" then
-                                sellRemote:InvokeServer()
-                            end
+--======================================================
+-- STATE UITOGGLE
+--======================================================
+local uiVisible = true
 
-                            task.wait(1)
-                        end
-                    end)
+ToggleBtn.MouseButton1Click:Connect(function()
+
+    -- shrink
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.08), {
+        Size = UDim2.new(0, 52, 0, 52)
+    }):Play()
+
+    task.wait(0.08)
+
+    -- expand
+    TweenService:Create(ToggleBtn, TweenInfo.new(0.12), {
+        Size = UDim2.new(0, 60, 0, 60)
+    }):Play()
+
+    uiVisible = not uiVisible
+
+    if Window and Window.SetState then
+        Window:SetState(uiVisible)
+    else
+        warn("Window:SetState tidak ditemukan")
+    end    
+end)
+
+--======================================================
+-- UNIVERSAL DRAG SYSTEM
+--======================================================
+local dragging = false
+local dragStart
+local startPos
+
+local function beginDrag(input)
+    dragging = true
+    dragStart = input.Position
+    startPos = ToggleFrame.Position
+end
+
+local function updateDrag(input)
+    local delta = input.Position - dragStart
+    ToggleFrame.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+local function endDrag()
+    dragging = false
+end
+
+-- Bisa ditarik dari Frame & Button
+for _, object in ipairs({ToggleFrame, ToggleBtn}) do
+    object.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+            
+            beginDrag(input)
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    endDrag()
                 end
             end)
-
-        else
-            if autoSellLoop then
-                task.cancel(autoSellLoop)
-                autoSellLoop = nil
-            end
         end
-    end
-})
-
-Auto:Section({ Title = "Auto Favorite & Trade" })
-
---// === SETUP DASAR === //--
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Net = require(ReplicatedStorage.Packages.Net)
-local Replion = require(ReplicatedStorage.Packages.Replion).Client
-
-local FavoriteItemEvent = Net:RemoteEvent("FavoriteItem")
-local tradeRemote = ReplicatedStorage
-    :WaitForChild("Packages")
-    :WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0")
-    :WaitForChild("net")
-    :WaitForChild("RF/InitiateTrade")
-
-local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
-local data = Replion:WaitReplion("Data")
-
--- UI TAB
-local Auto = Tabs.Auto
-
---// === WINDUI INPUT === //--
-local PlayerInput = Auto:Input({
-    Title = "Target Player",
-    Placeholder = "Example: Nexa1234",
-    Type = "Input",
-    Value = "",
-    Callback = function(text) end
-})
-
---// === WINDUI DROPDOWN === //--
-local TierDropdown = Auto:Dropdown({
-    Title = "Select Rarity",
-    Desc = "Choose the tier to process",
-    Values = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" },
-    Value = { "Rare" },
-    Multi = false,
-    AllowNone = false,
-    Callback = function(value) end
-})
-
---// === WINDUI TOGGLES === //--
-local AutoFavoriteToggle = Auto:Toggle({
-    Title = "Auto Favorite",
-    Value = false,
-    Callback = function() end
-})
-
-local AutoUnfavoriteToggle = Auto:Toggle({
-    Title = "Auto Unfavorite",
-    Value = false,
-    Callback = function() end
-})
-
-local AutoTradeToggle = Auto:Toggle({
-    Title = "Auto Trade Fish",
-    Value = false,
-    Callback = function() end
-})
-
---// === MAP TIER === //--
-local TierMap = {
-    ["Common"] = 1,
-    ["Uncommon"] = 2,
-    ["Rare"] = 3,
-    ["Epic"] = 4,
-    ["Legendary"] = 5,
-    ["Mythic"] = 6,
-    ["SECRET"] = 7,
-}
-
---// === FUNGSI FAVORITE === //--
-local function ProcessFavorite(tierTarget, setFavorite)
-    local inventory = data:GetExpect("Inventory")
-    local items = inventory and inventory["Items"]
-    if not items then return end
-
-    local total = 0
-    for _, item in pairs(items) do
-        if item and item.Favorited ~= setFavorite then
-            for _, module in ipairs(ItemsFolder:GetChildren()) do
-                if module:IsA("ModuleScript") then
-                    local ok, moduleData = pcall(require, module)
-                    if ok and moduleData.Data and moduleData.Data.Id == item.Id then
-                        if moduleData.Data.Tier == tierTarget then
-                            item.Favorited = setFavorite
-                            FavoriteItemEvent:FireServer(item.UUID)
-                            total += 1
-                            task.wait(0.1)
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    if total > 0 then
-        WindUI:Notify({
-            Title = setFavorite and "Added to Favorite" or "Removed Favorite",
-            Content = total .. " item(s) (Tier " .. tierTarget .. ")",
-            Duration = 3,
-            Icon = "star",
-        })
-    end
+    end)
 end
 
---// === AUTO FAVORITE === //--
-AutoFavoriteToggle:OnChanged(function(state)
-    if state then
-        task.spawn(function()
-            while AutoFavoriteToggle.Value do
-                local tierName = TierDropdown.Value[1]
-                local tierTarget = TierMap[tierName]
-                if tierTarget then
-                    ProcessFavorite(tierTarget, true)
-                end
-                task.wait(3)
-            end
-        end)
-    end
-end)
+-- Update posisi drag
+UIS.InputChanged:Connect(function(input)
+    if dragging then
+        if input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch then
 
---// === AUTO UNFAVORITE === //--
-AutoUnfavoriteToggle:OnChanged(function(state)
-    if state then
-        task.spawn(function()
-            while AutoUnfavoriteToggle.Value do
-                local tierName = TierDropdown.Value[1]
-                local tierTarget = TierMap[tierName]
-                if tierTarget then
-                    ProcessFavorite(tierTarget, false)
-                end
-                task.wait(3)
-            end
-        end)
-    end
-end)
-
---// === AUTO TRADE === //--
-AutoTradeToggle:OnChanged(function(state)
-    if state then
-        task.spawn(function()
-            local playerName = PlayerInput.Value
-            local tierName = TierDropdown.Value[1]
-            local tierTarget = TierMap[tierName]
-
-            if not playerName or playerName == "" or not tierTarget then
-                WindUI:Notify({
-                    Title = "Missing Info",
-                    Content = "Fill player name + select tier!",
-                    Duration = 3,
-                    Icon = "alert-circle",
-                })
-                AutoTradeToggle:SetValue(false)
-                return
-            end
-
-            local targetPlayer = Players:FindFirstChild(playerName)
-            if not targetPlayer then
-                WindUI:Notify({
-                    Title = "Player Not Found",
-                    Content = playerName .. " is not in server!",
-                    Duration = 3,
-                    Icon = "x",
-                })
-                AutoTradeToggle:SetValue(false)
-                return
-            end
-
-            WindUI:Notify({
-                Title = "Auto Trade Started",
-                Content = "Trading Tier " .. tierName .. " to " .. playerName,
-                Duration = 4,
-                Icon = "send",
-            })
-
-            while AutoTradeToggle.Value do
-                local inventory = data:GetExpect({ "Inventory", "Items" }) or {}
-
-                local fishTierIds = {}
-                for _, module in ipairs(ItemsFolder:GetChildren()) do
-                    if module:IsA("ModuleScript") then
-                        local ok, itemData = pcall(require, module)
-                        if ok and itemData and itemData.Data then
-                            local info = itemData.Data
-                            if info.Type == "Fish" and info.Tier == tierTarget then
-                                fishTierIds[info.Id] = true
-                            end
-                        end
-                    end
-                end
-
-                local tradeList = {}
-                for _, invItem in pairs(inventory) do
-                    if invItem and fishTierIds[invItem.Id] then
-                        tradeList[#tradeList + 1] = invItem.UUID
-                    end
-                end
-
-                if #tradeList == 0 then
-                    WindUI:Notify({
-                        Title = "No More Fish",
-                        Content = "No Tier " .. tierName .. " fish left.",
-                        Duration = 5,
-                        Icon = "fish",
-                    })
-                    AutoTradeToggle:SetValue(false)
-                    break
-                end
-
-                for _, uuid in ipairs(tradeList) do
-                    if not AutoTradeToggle.Value then break end
-                    pcall(function()
-                        tradeRemote:InvokeServer(targetPlayer.UserId, uuid)
-                    end)
-                    task.wait(0.25)
-                end
-
-                task.wait(3)
-            end
-        end)
-    end
-end)
-
-Auto:Section({ Title = "Auto Enchant" })
-
-local playerGui = player:WaitForChild("PlayerGui")
-
--- Paragraph awal tanpa Image/Thumbnail/Buttons
-local EnchantParagraph = Auto:Paragraph({
-    Title = "Auto Enchant Status",
-    Desc = "Loading...",
-    Color = "Blue",
-    Locked = false
-})
-
--- Fungsi update paragraf
-local function UpdateEnchantText(txt)
-    EnchantParagraph:Set({
-        Desc = txt
-    })
-end
-
-task.spawn(function()
-    -- Tunggu GUI muncul
-    local rollEnchant = playerGui:WaitForChild("Roll Enchant")
-    local main = rollEnchant:WaitForChild("Main")
-
-    local inside
-    repeat
-        inside = main:FindFirstChild("Inside")
-        task.wait(1)
-    until inside
-
-    UpdateEnchantText("Inside Loaded...")
-
-    local top = inside:WaitForChild("Top")
-    local enchantLabel = top:WaitForChild("EnchantLabel")
-
-    UpdateEnchantText("Ready...")
-
-    local lastText = ""
-    while task.wait(1) do
-        local currentText = enchantLabel.Text or "Unknown"
-        if currentText ~= lastText then
-            lastText = currentText
-            UpdateEnchantText("Current Enchant: " .. currentText)
-        end
-    end
-end)
-
-local playerGui = player:WaitForChild("PlayerGui")
-
--- Library utama
-local Net = require(ReplicatedStorage.Packages.Net)
-local Replion = require(ReplicatedStorage.Packages.Replion).Client
-
--- RemoteEvent
-local EquipItemEvent = Net:RemoteEvent("EquipItem")
-local EquipToolEvent = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net"):WaitForChild("RE/EquipToolFromHotbar")
-local ActivateAltarEvent = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net"):WaitForChild("RE/ActivateEnchantingAltar")
-
--- ===== WindUI ELEMENTS BARU =====
-
--- Dropdown baru (Multi)
-local EnchantDropdown = Auto:Dropdown({
-    Title = "Select Enchant",
-    Desc = "Choose target enchants",
-    Values = {
-        "Leprechaun I",
-        "Leprechaun II",
-        "Mutation Hunter I",
-        "Mutation Hunter II",
-        "Gold Digger I",
-        "Reeler I",
-        "Big Hunter I",
-        "Empowered I",
-        "Glistening I",
-        "Stargazer I",
-        "Stormhunter I",
-        "XPerienced I",
-        "Cursed I",
-        "Prismatic I"
-    },
-    Value = { "Leprechaun I" },
-    Multi = true,
-    AllowNone = true,
-    Searchable = true,
-    Callback = function(selected)
-        print("Selected enchants:")
-        print(game:GetService("HttpService"):JSONEncode(selected))
-    end
-})
-
--- Toggle baru
-local AutoEnchantToggle = Auto:Toggle({
-    Title = "Auto Enchant",
-    Value = false,
-    Callback = function(state)
-        print("Auto Enchant:", state)
-    end
-})
-
--- Notify singkat
-local function SendNotify(title, content)
-    WindUI:Notify({
-        Title = title,
-        Content = content,
-        Duration = 3,
-        Icon = "sparkles"
-    })
-end
-
--- ===== Fungsi cek enchant =====
-local function isTargetEnchant(text)
-    local selected = EnchantDropdown.Value
-    for _, name in pairs(selected) do
-        if string.find(text, name) then
-            return true
-        end
-    end
-    return false
-end
-
--- ===== TASK CONTROL =====
-local currentTask
-
--- ===== Proses enchant utama =====
-local function doEnchantCycle()
-    local data = Replion:WaitReplion("Data")
-    local inventory = data:GetExpect("Inventory")
-    local items = inventory and inventory["Items"]
-    if not items then return false end
-
-    local moduleTarget = ReplicatedStorage.Items:FindFirstChild("Enchant Stone")
-    if not moduleTarget then return false end
-
-    local ok, moduleData = pcall(require, moduleTarget)
-    local targetId = ok and moduleData.Data and moduleData.Data.Id
-    if not targetId then return false end
-
-    -- Equip Enchant Stone
-    local equipped = false
-    for _, item in pairs(items) do
-        if item.Id == targetId and not item.Equip then
-            EquipItemEvent:FireServer(item.UUID, "Enchant Stones")
-            item.Equip = true
-            equipped = true
-            break
-        end
-    end
-
-    if not equipped then return false end
-    task.wait(1)
-
-    EquipToolEvent:FireServer(5)
-    task.wait(1)
-
-    ActivateAltarEvent:FireServer()
-
-    local rollEnchant = playerGui:WaitForChild("Roll Enchant")
-    local main = rollEnchant:WaitForChild("Main")
-
-    local inside
-    repeat
-        inside = main:FindFirstChild("Inside")
-        task.wait(1)
-    until inside or not AutoEnchantToggle.Value
-
-    if not AutoEnchantToggle.Value then return false end
-
-    local top = inside:WaitForChild("Top")
-    local enchantLabel = top:WaitForChild("EnchantLabel")
-
-    task.wait(3)
-
-    while AutoEnchantToggle.Value and task.wait(1) do
-        local currentText = enchantLabel.Text
-
-        if isTargetEnchant(currentText) then
-            SendNotify("Enchant Found!", currentText)
-            return true
-        end
-
-        if currentText ~= "" and currentText ~= "..." and currentText ~= "Rolling..." then
-            return false
-        end
-    end
-
-    return false
-end
-
--- ===== Sistem Toggle Baru =====
-AutoEnchantToggle:OnChanged(function(state)
-    if state then
-        if currentTask then
-            task.cancel(currentTask)
-        end
-
-        currentTask = task.spawn(function()
-            while AutoEnchantToggle.Value do
-                local success = doEnchantCycle()
-
-                if success then
-                    AutoEnchantToggle:Set(false)
-                    break
-                else
-                    task.wait(3)
-                end
-            end
-        end)
-
-    else
-        if currentTask then
-            task.cancel(currentTask)
-            currentTask = nil
+            updateDrag(input)
         end
     end
 end)
