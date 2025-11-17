@@ -602,20 +602,21 @@ local sellDelay = 2
 local mode = "Sell Delay"
 local autoSellLoop = nil
 
--- Slider Delay Jual Otomatis
-sections.Fishing1:Slider({
+-- Slider delay jual otomatis
+sections.Sell:Slider({
 	Name = "Sell Delay (seconds)",
 	Default = 2,
-	Min = 1,
-	Max = 100,
+	Minimum = 1,
+	Maximum = 100,
 	Rounding = 0,
+	DisplayMethod = nil, -- atau bisa dihapus kalau tidak perlu
 	Callback = function(value)
 		sellDelay = value
 	end,
 }, "SellDelaySlider")
 
--- Dropdown Mode Auto Sell
-sections.Fishing1:Dropdown({
+-- Dropdown mode auto sell
+sections.Sell:Dropdown({
 	Name = "Select Mode",
 	Options = { "Backpack Full", "Sell Delay" },
 	Default = "Sell Delay",
@@ -627,8 +628,8 @@ sections.Fishing1:Dropdown({
 	end,
 }, "SellModeDropdown")
 
--- Toggle Auto Sell
-sections.Fishing1:Toggle({
+-- Toggle auto sell
+sections.Sell:Toggle({
 	Name = "Auto Sell All Items",
 	Default = false,
 	Callback = function(state)
@@ -669,9 +670,8 @@ sections.Fishing1:Toggle({
 	end,
 }, "AutoSellToggle")
 
-
 sections.Quest:Header({
-	Name = "Sell Feature"
+	Name = "DeepSea Status"
 })
 
 local board = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board
