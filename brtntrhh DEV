@@ -15,7 +15,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.1",
+    Subtitle = "Fish It | V0.0.0",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -2087,66 +2087,280 @@ sections.Player:Header({
 	Name = "LocalPlayer"
 })
 
+--// Anti Drown Variable
+local AntiDrown_Enabled = false
 
--- Variable lokal (tanpa _G)
-local AntiDrownEnabled = false
+--// Toggle di WindUI
+sections.Player:Toggle({
+    Name = "Anti Drown",
+    Default = false,
+    Callback = function(value)
+        AntiDrown_Enabled = value
 
--- Ambil remote OxygenChanged
-local NetFolder = ReplicatedStorage:WaitForChild("Packages")
-	:WaitForChild("_Index")
-	:WaitForChild("sleitnick_net@0.2.0")
-	:WaitForChild("net")
+        Window:Notify({
+            Title = "Drown",
+            Description = (value and "Enabled " or "Disabled ") .. "Anti Drown"
+        })
+    end,
+}, "AntiDrownToggle")
 
-local REOxygenChanged = NetFolder:FindFirstChild("RE/OxygenChanged")
+--// Metamethod Hook (Anti Drown)
+local rawmt = getrawmetatable(game)
+setreadonly(rawmt, false)
 
--- Loop menjaga Oxygen tetap 100
-local function MaintainOxygen()
-	while task.wait(0.3) do
-		if AntiDrownEnabled then
-			local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-			local hum = char:FindFirstChildOfClass("Humanoid")
+local oldNamecall = rawmt.__namecall
 
-			if hum and hum:FindFirstChild("Oxygen") then
-				if hum.Oxygen.Value < 100 then
-					hum.Oxygen.Value = 100
-				end
-			end
-		end
-	end
-end
+rawmt.__namecall = newcclosure(function(self, ...)
+    local method = getnamecallmethod()
 
--- Jalankan loop Anti Drown
-task.spawn(MaintainOxygen)
+    if AntiDrown_Enabled 
+        and tostring(self) == "URE/UpdateOxygen" 
+        and method == "FireServer" then
+        
+        return nil
+    end
 
--- Hook event jika server mencoba mengurangi oxygen
-if REOxygenChanged then
-	REOxygenChanged.OnClientEvent:Connect(function()
-		if AntiDrownEnabled then
-			local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-			local hum = char:FindFirstChildOfClass("Humanoid")
-			if hum and hum:FindFirstChild("Oxygen") then
-				hum.Oxygen.Value = 100
-			end
-		end
-	end)
-end
-
-----------------------------------------------------------------------
--- TOGGLE WINDUI (TETAP FORMAT KAMU)
-----------------------------------------------------------------------
+    return oldNamecall(self, ...)
+end)
 
 sections.Player:Toggle({
-	Name = "Anti Drown",
-	Default = false,
-	Callback = function(value)
-		AntiDrownEnabled = value
+    Name = "Bypass Radar",
+    Default = false,
+    Callback = function(state)
+        Window.AlwayShowTab = state
 
-		Window:Notify({
-			Title = "Anti Drown",
-			Description = value and "Enabled Anti Drown" or "Disabled Anti Drown",
-		})
-	end,
-}, "AntiDrown")
+        local remoteFunc = ReplicatedStorage
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/UpdateFishingRadar")
+
+        pcall(function()
+            remoteFunc:InvokeServer(state)
+        end)
+    end,
+}, "BypassRadarToggle")
+
+-- Simpan setting asli Lighting
+local originalLightingSettings = {
+    GlobalShadows = Lighting.GlobalShadows,
+    Brightness = Lighting.Brightness,
+    FogEnd = Lighting.FogEnd,
+    ClockTime = Lighting.ClockTime
+}
+
+-- Simpan semua efek partikel
+local originalParticles = {}
+for _, v in pairs(workspace:GetDescendants()) do
+    if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") then
+        originalParticles[v] = v.Enabled
+    end
+end
+
+-- Toggle Black Screen + Bersihkan Lighting
+sections.Player:Toggle({
+    Name = "Black Screen",
+    Default = false,
+    Callback = function(state)
+        local playerGui = player:WaitForChild("PlayerGui")
+        local darkGui = playerGui:FindFirstChild("DarkScreenGUI")
+
+        if state then
+            -- Buat overlay hitam
+            if not darkGui then
+                darkGui = Instance.new("ScreenGui")
+                darkGui.Name = "DarkScreenGUI"
+                darkGui.ResetOnSpawn = false
+                darkGui.IgnoreGuiInset = true
+                darkGui.Parent = playerGui
+
+                local darkFrame = Instance.new("Frame")
+                darkFrame.Name = "DarkFrame"
+                darkFrame.Size = UDim2.new(1, 0, 1, 0)
+                darkFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+                darkFrame.BackgroundTransparency = 0
+                darkFrame.BorderSizePixel = 0
+                darkFrame.Parent = darkGui
+            end
+
+            -- Atur lighting menjadi minimal
+            Lighting.GlobalShadows = false
+            Lighting.Brightness = 0
+            Lighting.FogEnd = 100000
+            Lighting.ClockTime = 12
+
+            -- Matikan semua partikel
+            for particle, _ in pairs(originalParticles) do
+                if particle and particle.Parent then
+                    particle.Enabled = false
+                end
+            end
+
+        else
+            -- Hapus overlay
+            if darkGui then
+                darkGui:Destroy()
+            end
+
+            -- Kembalikan lighting ke kondisi asli
+            Lighting.GlobalShadows = originalLightingSettings.GlobalShadows
+            Lighting.Brightness = originalLightingSettings.Brightness
+            Lighting.FogEnd = originalLightingSettings.FogEnd
+            Lighting.ClockTime = originalLightingSettings.ClockTime
+
+            -- Kembalikan status semua partikel
+            for particle, enabled in pairs(originalParticles) do
+                if particle and particle.Parent then
+                    particle.Enabled = enabled
+                end
+            end
+        end
+    end,
+}, "BlackScreenToggle")
+
+local volcanoFolder = workspace.Zones["Kohana Volcano"]
+local RunService = game:GetService("RunService")
+
+local connection = nil
+
+sections.Player:Toggle({
+    Name = "Anti Lava",
+    Default = false,
+    Callback = function(state)
+        if state then
+            connection = RunService.Heartbeat:Connect(function()
+                for _, obj in ipairs(volcanoFolder:GetDescendants()) do
+                    if obj:IsA("TouchTransmitter") then
+                        obj:Destroy()
+                    end
+                end
+            end)
+        else
+            if connection then
+                connection:Disconnect()
+                connection = nil
+            end
+        end
+    end,
+}, "AntiLavaToggle")
+
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Inisialisasi: sembunyikan WebhookGUI saat script mulai jika ada
+local webhookGui = playerGui:FindFirstChild("WebhookGUI")
+if webhookGui then
+    webhookGui.Enabled = false
+end
+
+sections.Player:Toggle({
+    Name = "Show Webhook Gui",
+    Default = false,
+    Callback = function(state)
+        local webhookGui = playerGui:FindFirstChild("WebhookGUI")
+        if webhookGui then
+            webhookGui.Enabled = state
+        end
+    end,
+}, "ShowWebhookGUIToggle")
+
+sections.Player:Button({
+    Name = "Boost FPS",
+    Callback = function()
+        local Lighting = game:GetService("Lighting")
+        local Workspace = game:GetService("Workspace")
+        local Terrain = Workspace:FindFirstChildOfClass("Terrain")
+
+        -- Lighting Optimization
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 1e10
+        Lighting.Brightness = 1
+        Lighting.ExposureCompensation = 0
+        Lighting.EnvironmentDiffuseScale = 0
+        Lighting.EnvironmentSpecularScale = 0
+        Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+        Lighting.ShadowSoftness = 0
+        Lighting.ColorShift_Bottom = Color3.new(0,0,0)
+        Lighting.ColorShift_Top = Color3.new(0,0,0)
+
+        -- Terrain Optimization
+        if Terrain then
+            Terrain.WaterWaveSize = 0
+            Terrain.WaterWaveSpeed = 0
+            Terrain.WaterReflectance = 0
+            Terrain.WaterTransparency = 1
+            sethiddenproperty(Terrain, "Decoration", false)
+        end
+
+        -- Disable Visual Effects (Bloom, Blur, SunRays, dll)
+        for _, v in pairs(Lighting:GetChildren()) do
+            if v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("DepthOfFieldEffect") then
+                v.Enabled = false
+            end
+        end
+
+        -- Mass Disable Visuals (tanpa hapus animasi/suara)
+        pcall(function()
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") or obj:IsA("Explosion") then
+                    obj.Enabled = false
+                elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                    obj.Transparency = 1
+                elseif obj:IsA("MeshPart") or obj:IsA("UnionOperation") or obj:IsA("Part") then
+                    obj.Material = Enum.Material.SmoothPlastic
+                    obj.Reflectance = 0
+                end
+            end
+        end)
+
+        -- Rendering Quality to Lowest
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+
+        -- Optimize Camera
+        for _, cam in pairs(Workspace:GetDescendants()) do
+            if cam:IsA("Camera") then
+                cam.FieldOfView = 70
+            end
+        end
+
+        -- Garbage Clean
+        collectgarbage("collect")
+    end,
+}, "BoostFPSButton")
+
+sections.Player:Button({
+    Name = "Reduce Lag",
+    Callback = function()
+        local Workspace = game:GetService("Workspace")
+        local Lighting = game:GetService("Lighting")
+        local player = game.Players.LocalPlayer
+
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 9e9
+        Lighting.Brightness = 1
+        Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+        Lighting.ExposureCompensation = 0
+        Lighting.ShadowSoftness = 0
+
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Explosion") then
+                obj.Enabled = false
+            elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                obj.Transparency = 1
+            end
+        end
+
+        for _, gui in pairs(player:WaitForChild("PlayerGui"):GetDescendants()) do
+            if gui:IsA("TextLabel") or gui:IsA("TextButton") then
+                gui.TextScaled = false
+            elseif gui:IsA("ImageLabel") or gui:IsA("ImageButton") then
+                gui.ImageTransparency = 0.5
+            end
+        end
+    end,
+}, "ReduceLagButton")
+
 
 -- Config
 
