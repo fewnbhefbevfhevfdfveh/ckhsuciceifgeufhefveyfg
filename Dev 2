@@ -15,7 +15,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.1",
+    Subtitle = "Fish It | V0.0.0",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -1019,231 +1019,6 @@ sections.Auto:Header({
 	Name = "Auto Favorite & Trade"
 })
 
-local Net = require(ReplicatedStorage.Packages.Net)
-local Replion = require(ReplicatedStorage.Packages.Replion).Client
-
-local FavoriteItemEvent = Net:RemoteEvent("FavoriteItem")
-
-local tradeRemote = ReplicatedStorage
-    :WaitForChild("Packages")
-    :WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0")
-    :WaitForChild("net")
-    :WaitForChild("RF/InitiateTrade")
-
-local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
-local data = Replion:WaitReplion("Data")
-
--- // === MAP TIER === //
-local TierMap = {
-    ["Common"] = 1,
-    ["Uncommon"] = 2,
-    ["Rare"] = 3,
-    ["Epic"] = 4,
-    ["Legendary"] = 5,
-    ["Mythic"] = 6,
-    ["SECRET"] = 7,
-}
-
--- =====================================================================
--- UI BARU
--- =====================================================================
-
--- Input
-sections.Auto:Input({
-	Name = "Target Player",
-	Placeholder = "Example: Nexa1234",
-	Callback = function(value)
-		Options.PlayerInput = value
-	end,
-}, "PlayerInput")
-
--- Dropdown
-sections.Auto:Dropdown({
-	Name = "Select Rarity",
-	Options = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" },
-	Default = "Rare",
-	Multi = false,
-	Callback = function(value)
-		Options.TierDropdown = value
-	end,
-}, "TierDropdown")
-
--- Toggle Auto Favorite
-sections.Auto:Toggle({
-	Name = "Auto Favorite",
-	Default = false,
-	Callback = function(v)
-		Toggles.AutoFavoriteToggle = v
-	end
-}, "AutoFavoriteToggle")
-
--- Toggle Auto Unfavorite
-sections.Auto:Toggle({
-	Name = "Auto Unfavorite",
-	Default = false,
-	Callback = function(v)
-		Toggles.AutoUnfavoriteToggle = v
-	end
-}, "AutoUnfavoriteToggle")
-
--- Toggle Auto Trade
-sections.Auto:Toggle({
-	Name = "Auto Trade Fish",
-	Default = false,
-	Callback = function(v)
-		Toggles.AutoTradeToggle = v
-	end
-}, "AutoTradeToggle")
-
-
--- =====================================================================
--- FAVORITE / UNFAVORITE FUNCTION
--- =====================================================================
-local function ProcessFavorite(tierTarget, setFavorite)
-    local inventory = data:GetExpect("Inventory")
-    local items = inventory and inventory["Items"]
-    if not items then return end
-
-    local total = 0
-
-    for _, item in pairs(items) do
-        if item and item.Favorited ~= setFavorite then
-            
-            for _, module in ipairs(ItemsFolder:GetChildren()) do
-                if module:IsA("ModuleScript") then
-                    local ok, moduleData = pcall(require, module)
-                    if ok and moduleData.Data and moduleData.Data.Id == item.Id then
-                        if moduleData.Data.Tier == tierTarget then
-                            
-                            item.Favorited = setFavorite
-                            FavoriteItemEvent:FireServer(item.UUID)
-
-                            total += 1
-                            task.wait(0.1)
-                        end
-                    end
-                end
-            end
-
-        end
-    end
-
-    if total > 0 then
-        Window:Notify({
-            Title = setFavorite and "⭐ Auto Favorite" or "💔 Auto Unfavorite",
-            Description = (setFavorite and "Added: " or "Removed: ") .. total .. " Tier " .. tierTarget .. " item(s)",
-            Lifetime = 3
-        })
-    end
-end
-
--- =====================================================================
--- AUTO FAVORITE LOOP (BARU)
--- =====================================================================
-task.spawn(function()
-	while true do
-		if Toggles.AutoFavoriteToggle then
-			local tierName = Options.TierDropdown
-			local tierTarget = TierMap[tierName]
-			if tierTarget then
-				ProcessFavorite(tierTarget, true)
-			end
-		end
-		task.wait(3)
-	end
-end)
-
--- =====================================================================
--- AUTO UNFAVORITE LOOP (BARU)
--- =====================================================================
-task.spawn(function()
-	while true do
-		if Toggles.AutoUnfavoriteToggle then
-			local tierName = Options.TierDropdown
-			local tierTarget = TierMap[tierName]
-			if tierTarget then
-				ProcessFavorite(tierTarget, false)
-			end
-		end
-		task.wait(3)
-	end
-end)
-
--- =====================================================================
--- AUTO TRADE LOOP (BARU)
--- =====================================================================
-task.spawn(function()
-	while true do
-		if Toggles.AutoTradeToggle then
-
-			local playerName = Options.PlayerInput
-			local tierName = Options.TierDropdown
-			local tierTarget = TierMap[tierName]
-
-			if not playerName or playerName == "" then
-				Window:Notify({
-					Title = "⚠️ Error",
-					Description = "Player name is empty!",
-					Lifetime = 4
-				})
-				Toggles.AutoTradeToggle = false
-				continue
-			end
-
-			local target = Players:FindFirstChild(playerName)
-			if not target then
-				Window:Notify({
-					Title = "❌ Player Not Found",
-					Description = "Player '" .. playerName .. "' does not exist.",
-					Lifetime = 4
-				})
-				Toggles.AutoTradeToggle = false
-				continue
-			end
-
-			local inventory = data:GetExpect({ "Inventory", "Items" }) or {}
-
-			local fishTierIds = {}
-			for _, module in ipairs(ItemsFolder:GetChildren()) do
-				if module:IsA("ModuleScript") then
-					local ok, info = pcall(require, module)
-					if ok and info.Data and info.Data.Tier == tierTarget and info.Data.Type == "Fish" then
-						fishTierIds[info.Data.Id] = true
-					end
-				end
-			end
-
-			local tradeList = {}
-			for _, fish in pairs(inventory) do
-				if fishTierIds[fish.Id] then
-					table.insert(tradeList, fish.UUID)
-				end
-			end
-
-			if #tradeList == 0 then
-				Window:Notify({
-					Title = "🎣 Out of Fish",
-					Description = "No Tier " .. tierName .. " fish left!",
-					Lifetime = 4
-				})
-				Toggles.AutoTradeToggle = false
-				continue
-			end
-
-			for _, uuid in ipairs(tradeList) do
-				if not Toggles.AutoTradeToggle then break end
-				pcall(function()
-					tradeRemote:InvokeServer(target.UserId, uuid)
-				end)
-				task.wait(0.25)
-			end
-
-		end
-
-		task.wait(2)
-	end
-end)
 
 -- Config
 
@@ -1259,9 +1034,12 @@ MacLib:LoadAutoLoadConfig()
 
 -- ImageBotton
 
+-- ========================================================================
+-- BAGIAN YANG DITAMBAHKAN (DIGABUNG) — TANPA MENGUBAH BAGIAN ATAS
+-- ========================================================================
+
 local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
-local player = game.Players.LocalPlayer
 
 --======================================================
 -- SCREEN GUI
@@ -1273,11 +1051,11 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
 --======================================================
--- FRAME KOTAK (WARNA BIRU SEPERTI FOTO)
+-- FRAME KOTAK (WARNA BIRU)
 --======================================================
 local ToggleFrame = Instance.new("Frame")
 ToggleFrame.Parent = ScreenGui
-ToggleFrame.Size = UDim2.new(0, 50, 0, 50) -- dikecilin dari 70 ke 50
+ToggleFrame.Size = UDim2.new(0, 50, 0, 50)
 ToggleFrame.Position = UDim2.new(0, 100, 0, 150)
 ToggleFrame.BackgroundColor3 = Color3.fromRGB(20, 80, 200)
 ToggleFrame.BorderSizePixel = 0
@@ -1290,23 +1068,23 @@ Corner.Parent = ToggleFrame
 local Gradient = Instance.new("UIGradient")
 Gradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(36, 112, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 42, 130))
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 42, 130)),
 })
 Gradient.Rotation = 45
 Gradient.Parent = ToggleFrame
 
--- GLOW BIRU SOFT
+-- GLOW BIRU
 local Glow = Instance.new("ImageLabel")
 Glow.Parent = ToggleFrame
 Glow.Size = UDim2.new(1.7, 0, 1.7, 0)
 Glow.Position = UDim2.new(0.5, 0, 0.5, 0)
 Glow.AnchorPoint = Vector2.new(0.5, 0.5)
 Glow.BackgroundTransparency = 1
-Glow.Image = "rbxassetid://12171505282" -- soft radial glow
+Glow.Image = "rbxassetid://12171505282"
 Glow.ImageColor3 = Color3.fromRGB(0, 153, 255)
 Glow.ImageTransparency = 0.35
 
--- BORDER HALUS
+-- BORDER
 local Stroke = Instance.new("UIStroke")
 Stroke.Parent = ToggleFrame
 Stroke.Thickness = 2
@@ -1318,21 +1096,20 @@ Stroke.Transparency = 0.25
 --======================================================
 local ToggleBtn = Instance.new("ImageButton")
 ToggleBtn.Parent = ToggleFrame
-ToggleBtn.Size = UDim2.new(0, 40, 0, 40) -- dikecilin dari 60 ke 40
-ToggleBtn.Position = UDim2.new(0.5, -20, 0.5, -20) -- supaya tetap center
+ToggleBtn.Size = UDim2.new(0, 40, 0, 40)
+ToggleBtn.Position = UDim2.new(0.5, -20, 0.5, -20)
 ToggleBtn.BackgroundTransparency = 1
 ToggleBtn.Image = "rbxassetid://123906607434048"
 
 --======================================================
--- STATE UITOGGLE
+-- STATE UI TOGGLE
 --======================================================
 local uiVisible = true
 
 ToggleBtn.MouseButton1Click:Connect(function()
-
     -- shrink
     TweenService:Create(ToggleBtn, TweenInfo.new(0.08), {
-        Size = UDim2.new(0, 35, 0, 35) -- shrink animasi disesuaikan
+        Size = UDim2.new(0, 35, 0, 35)
     }):Play()
 
     task.wait(0.08)
@@ -1348,7 +1125,7 @@ ToggleBtn.MouseButton1Click:Connect(function()
         Window:SetState(uiVisible)
     else
         warn("Window:SetState tidak ditemukan")
-    end    
+    end
 end)
 
 --======================================================
@@ -1378,12 +1155,12 @@ local function endDrag()
     dragging = false
 end
 
--- Bisa ditarik dari Frame & Button
+-- Bisa ditarik dari frame & button
 for _, object in ipairs({ToggleFrame, ToggleBtn}) do
     object.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
             or input.UserInputType == Enum.UserInputType.Touch then
-            
+
             beginDrag(input)
 
             input.Changed:Connect(function()
@@ -1395,7 +1172,7 @@ for _, object in ipairs({ToggleFrame, ToggleBtn}) do
     end)
 end
 
--- Update posisi drag
+-- Update drag
 UIS.InputChanged:Connect(function(input)
     if dragging then
         if input.UserInputType == Enum.UserInputType.MouseMovement
