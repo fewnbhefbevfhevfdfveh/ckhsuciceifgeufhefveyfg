@@ -1,2 +1,2 @@
-- Changed:
-- [/] New Ui
+- Added:
+- [+] Added Anti Stuck Detector
