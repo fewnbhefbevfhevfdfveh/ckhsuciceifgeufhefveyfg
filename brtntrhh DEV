@@ -15,7 +15,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.0",
+    Subtitle = "Fish It | V0.0.1",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -58,6 +58,13 @@ local sections = {
     Quest1 = tabs.Quest:Section({ Side = "Right" }),
     Auto = tabs.Auto:Section({ Side = "Left" }),
     Auto1 = tabs.Auto:Section({ Side = "Right" }),
+    Shop = tabs.Shop:Section({ Side = "Left" }),
+    Shop1 = tabs.Shop:Section({ Side = "Right" }),
+    Boat = tabs.Boat:Section({ Side = "Left" }),
+    Boat1 = tabs.Boat:Section({ Side = "Right" }),
+    Tp = tabs.Tp:Section({ Side = "Left" }),
+    Tp1 = tabs.Tp:Section({ Side = "Right" }),
+    Player = tabs.Player:Section({ Side = "Left" }),
 }
 
 sections.Fishing:Header({
@@ -1294,6 +1301,10 @@ sections.Auto1:Header({
 
 local playerGui = player:WaitForChild("PlayerGui")
 
+-- === FIX TAMBAHAN WAJIB ===
+local Options = { SelectedEnchants = {} }
+local Toggles = { AutoEnchant = false }
+
 -- Library utama
 local Net = require(ReplicatedStorage.Packages.Net)
 local Replion = require(ReplicatedStorage.Packages.Replion).Client
@@ -1365,7 +1376,7 @@ sections.Auto1:Toggle({
     end,
 }, "AutoEnchantToggle")
 
--- === Fungsi cek apakah enchant sesuai target ===
+-- === Fungsi cek enchant yang dipilih ===
 local function isTargetEnchant(text)
     local selected = Options.SelectedEnchants
     if typeof(selected) == "table" then
@@ -1408,7 +1419,7 @@ function doEnchantCycle()
     if not equipped then return false end
     task.wait(1)
 
-    -- Equip tool di hotbar slot 5
+    -- Equip tool di slot 5
     EquipToolEvent:FireServer(5)
     task.wait(1)
 
@@ -1432,7 +1443,7 @@ function doEnchantCycle()
 
     task.wait(3)
 
-    -- Pantau enchant setiap detik
+    -- Pantau enchant
     while Toggles.AutoEnchant and task.wait(1) do
         local currentText = enchantLabel.Text
         if isTargetEnchant(currentText) then
@@ -1451,6 +1462,691 @@ function doEnchantCycle()
 
     return false
 end
+
+sections.Shop:Header({
+	Name = "Rod Shop"
+})
+
+-- Mapping nama rod ke ID
+local rodMap = {
+    ["Starter Rod"] = 1,
+    ["Luck Rod"] = 79,
+    ["Carbon Rod"] = 76,
+    ["Grass Rod"] = 85,
+    ["Demascus Rod"] = 77,
+    ["Ice Rod"] = 78,
+    ["Lucky Rod"] = 4,
+    ["Midnight Rod"] = 80,
+    ["Steampunk Rod"] = 6,
+    ["Chrome Rod"] = 7,
+    ["Fluorescent Rod"] = 255,
+    ["Astral Rod"] = 5,
+    ["Angler Rod"] = 168,
+    ["Ares Rod"] = 126,
+    ["Bamboo Rod"] = 258,
+}
+
+local selectedRods = {}
+local autoBuyRods = false
+
+-- Dropdown untuk pilih rod
+sections.Shop:Dropdown({
+    Name = "Select Rods",
+    Search = true,
+    Multi = true,
+    Required = false,
+    Options = {
+        "Starter Rod", "Luck Rod", "Carbon Rod", "Grass Rod",
+        "Demascus Rod", "Ice Rod", "Lucky Rod", "Midnight Rod",
+        "Steampunk Rod", "Chrome Rod", "Fluorescent Rod", "Astral Rod",
+        "Angler Rod", "Ares Rod", "Bamboo Rod"
+    },
+    Default = {},
+    Callback = function(value)
+        selectedRods = {}
+        -- value adalah table key=rodName, value=bool (true/false)
+        for rodName, state in pairs(value) do
+            if state then
+                local id = rodMap[rodName]
+                if id then
+                    table.insert(selectedRods, id)
+                end
+            end
+        end
+    end,
+}, "SelectRodsDropdown")
+
+-- Tombol untuk beli rod manual
+sections.Shop:Button({
+    Name = "Purchase Selected Rods",
+    Callback = function()
+        if #selectedRods == 0 then
+            return
+        end
+
+        local remote = ReplicatedStorage
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/PurchaseFishingRod")
+
+        for _, id in ipairs(selectedRods) do
+            pcall(function()
+                remote:InvokeServer(id)
+            end)
+        end
+    end,
+}, "PurchaseRodsButton")
+
+-- Toggle untuk auto buy loop
+sections.Shop:Toggle({
+    Name = "Auto Purchase Loop",
+    Default = false,
+    Callback = function(state)
+        autoBuyRods = state
+
+        if state then
+            task.spawn(function()
+                local remote = ReplicatedStorage
+                    :WaitForChild("Packages")
+                    :WaitForChild("_Index")
+                    :WaitForChild("sleitnick_net@0.2.0")
+                    :WaitForChild("net")
+                    :WaitForChild("RF/PurchaseFishingRod")
+
+                while autoBuyRods do
+                    if #selectedRods > 0 then
+                        for _, id in ipairs(selectedRods) do
+                            pcall(function()
+                                remote:InvokeServer(id)
+                            end)
+                        end
+                    end
+                    task.wait(5)
+                end
+            end)
+        end
+    end,
+}, "AutoBuyRodToggle")
+
+sections.Shop:Header({
+	Name = "Bait Shop"
+})
+
+-- Mapping nama bait ke ID
+local BaitID = {
+    ["Topwater Bait"] = 10,
+    ["Luck Bait"] = 2,
+    ["Midnight Bait"] = 3,
+    ["Nature Bait"] = 17,
+    ["Chroma Bait"] = 6,
+    ["Dark Matter Bait"] = 8,
+    ["Corrupt Bait"] = 15,
+    ["Aether Bait"] = 16,
+    ["Floral Bait"] = 20,
+}
+
+local selectedBaits = {}
+local autoBuyBait = false
+
+-- Dropdown pilih bait
+sections.Shop:Dropdown({
+    Name = "Select Baits",
+    Search = true,
+    Multi = true,
+    Required = false,
+    Options = {
+        "Topwater Bait", "Luck Bait", "Midnight Bait", "Nature Bait",
+        "Chroma Bait", "Dark Matter Bait", "Corrupt Bait", "Aether Bait",
+        "Floral Bait"
+    },
+    Default = {},
+    Callback = function(value)
+        selectedBaits = {}
+        -- value adalah table dengan key = baitName, value = true/false
+        for baitName, state in pairs(value) do
+            if state then
+                local id = BaitID[baitName]
+                if id then
+                    table.insert(selectedBaits, id)
+                end
+            end
+        end
+    end,
+}, "SelectBaitsDropdown")
+
+-- Tombol pembelian bait manual
+sections.Shop:Button({
+    Name = "Purchase Selected Baits",
+    Callback = function()
+        if #selectedBaits == 0 then
+            return
+        end
+
+        local remote = ReplicatedStorage
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/PurchaseBait")
+
+        for _, id in ipairs(selectedBaits) do
+            pcall(function()
+                remote:InvokeServer(id)
+            end)
+        end
+    end,
+}, "PurchaseBaitsButton")
+
+-- Toggle auto purchase loop
+sections.Shop:Toggle({
+    Name = "Auto Purchase Loop",
+    Default = false,
+    Callback = function(state)
+        autoBuyBait = state
+
+        if state then
+            task.spawn(function()
+                local remote = ReplicatedStorage
+                    :WaitForChild("Packages")
+                    :WaitForChild("_Index")
+                    :WaitForChild("sleitnick_net@0.2.0")
+                    :WaitForChild("net")
+                    :WaitForChild("RF/PurchaseBait")
+
+                while autoBuyBait do
+                    if #selectedBaits > 0 then
+                        for _, id in ipairs(selectedBaits) do
+                            pcall(function()
+                                remote:InvokeServer(id)
+                            end)
+                        end
+                    end
+                    task.wait(5)
+                end
+            end)
+        end
+    end,
+}, "AutoBuyBaitToggle")
+
+sections.Shop1:Header({
+	Name = "Weather Shop"
+})
+
+-- RemoteEvent untuk beli weather
+local PurchaseWeather = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/PurchaseWeatherEvent")
+
+local selectedWeathers = {}
+local autoPurchase = false
+
+-- Dropdown multi-select weather list
+sections.Shop1:Dropdown({
+    Name = "Select Weather Events",
+    Search = true,
+    Multi = true,
+    Required = false,
+    Options = { "Snow", "Wind", "Cloudy", "Storm", "Radiant", "Shark Hunt" },
+    Default = {},
+    Callback = function(values)
+        selectedWeathers = {}
+        for weatherName, state in pairs(values) do
+            if state then
+                table.insert(selectedWeathers, weatherName)
+            end
+        end
+    end,
+}, "SelectWeatherDropdown")
+
+-- Tombol beli manual
+sections.Shop1:Button({
+    Name = "Purchase Selected Weather",
+    Callback = function()
+        if #selectedWeathers == 0 then
+            return
+        end
+
+        for _, weather in ipairs(selectedWeathers) do
+            pcall(function()
+                PurchaseWeather:InvokeServer(weather)
+            end)
+        end
+    end,
+}, "PurchaseWeatherButton")
+
+-- Toggle auto purchase loop
+sections.Shop1:Toggle({
+    Name = "Auto Purchase Weather",
+    Default = false,
+    Callback = function(state)
+        autoPurchase = state
+
+        if state then
+            task.spawn(function()
+                while autoPurchase do
+                    if #selectedWeathers > 0 then
+                        for _, weather in ipairs(selectedWeathers) do
+                            pcall(function()
+                                PurchaseWeather:InvokeServer(weather)
+                            end)
+                            task.wait(0.3)
+                        end
+                    end
+                    task.wait(1.5)
+                end
+            end)
+        end
+    end,
+}, "AutoWeatherPurchaseToggle")
+
+
+sections.Shop1:Header({
+	Name = "Boat Shop"
+})
+
+-- RemoteEvent untuk beli boat
+local PurchaseBoat = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/PurchaseBoat")
+
+-- Daftar Boat
+local BoatList = {
+    ["Small Boat"] = 1,
+    ["Kayak"] = 2,
+    ["Jetski"] = 3,
+    ["Highfield Boat"] = 4,
+    ["Speed Boat"] = 5,
+    ["Fishing Boat"] = 6,
+    ["Mini Yacht"] = 14,
+    ["Mini Hoverboat"] = 15,
+    ["Hyper Boat"] = 7,
+}
+
+local selectedBoatID = nil
+local autoBuyBoat = false
+
+-- Dropdown pilih boat (single select)
+sections.Shop1:Dropdown({
+    Name = "Select Boat to Purchase",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = {
+        "Small Boat",
+        "Kayak",
+        "Jetski",
+        "Highfield Boat",
+        "Speed Boat",
+        "Fishing Boat",
+        "Mini Yacht",
+        "Mini Hoverboat",
+        "Hyper Boat"
+    },
+    Default = nil,
+    Callback = function(option)
+        selectedBoatID = BoatList[option]
+    end,
+}, "SelectBoatDropdown")
+
+-- Tombol pembelian manual
+sections.Shop1:Button({
+    Name = "Purchase Selected Boat",
+    Callback = function()
+        if not selectedBoatID then
+            return
+        end
+
+        pcall(function()
+            PurchaseBoat:InvokeServer(selectedBoatID)
+        end)
+    end,
+}, "PurchaseBoatButton")
+
+-- Toggle auto purchase loop
+sections.Shop1:Toggle({
+    Name = "Auto Purchase Loop",
+    Default = false,
+    Callback = function(state)
+        autoBuyBoat = state
+
+        if state then
+            task.spawn(function()
+                while autoBuyBoat do
+                    if selectedBoatID then
+                        pcall(function()
+                            PurchaseBoat:InvokeServer(selectedBoatID)
+                        end)
+                    end
+                    task.wait(5)
+                end
+            end)
+        end
+    end,
+}, "AutoBuyBoatToggle")
+
+sections.Boat:Header({
+	Name = "Boat Spawn"
+})
+
+-- RemoteEvent untuk spawn boat
+local SpawnBoat = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/SpawnBoat")
+
+-- Daftar Boat
+local BoatList = {
+    ["Small Boat"] = 1,
+    ["Kayak"] = 2,
+    ["Jetski"] = 3,
+    ["Highfield Boat"] = 4,
+    ["Speed Boat"] = 5,
+    ["Fishing Boat"] = 6,
+    ["Mini Yacht"] = 14,
+    ["Mini Hoverboat"] = 15,
+    ["Hyper Boat"] = 7,
+    ["Dinky Fishing Boat"] = 20,
+    ["Aura Boat"] = 17,
+    ["Burger Boat"] = 18,
+    ["Mega Hovercraft"] = 19,
+    ["Froen Boat"] = 11,
+    ["Cruiser Boat"] = 13,
+    ["Rubber Ducky"] = 16,
+}
+
+-- Convert ke nama boat untuk dropdown
+local BoatNames = {}
+for name, _ in pairs(BoatList) do
+    table.insert(BoatNames, name)
+end
+table.sort(BoatNames)
+
+-- Default pilihan
+local selectedBoatID = BoatList[BoatNames[1]]
+
+-- Dropdown Pilih Boat untuk spawn
+sections.Boat:Dropdown({
+    Name = "Select Boat to Spawn",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = BoatNames,
+    Default = BoatNames[1],
+    Callback = function(option)
+        selectedBoatID = BoatList[option]
+    end,
+}, "SpawnBoatDropdown")
+
+-- Tombol Spawn Boat
+sections.Boat:Button({
+    Name = "Spawn Boat",
+    Callback = function()
+        pcall(function()
+            SpawnBoat:InvokeServer(selectedBoatID)
+        end)
+    end,
+}, "SpawnBoatButton")
+
+sections.Boat1:Header({
+	Name = "Boat Speed"
+})
+
+local customSpeed = 1000
+
+-- Input untuk set kecepatan
+sections.Boat1:Input({
+    Name = "Set Boat Speed",
+    Placeholder = "Example: 1000",
+    AcceptedCharacters = "0123456789",
+    Callback = function(value)
+        local number = tonumber(value)
+        if number then
+            customSpeed = number
+        end
+    end,
+}, "BoatSpeedInput")
+
+-- Toggle Super Speed
+sections.Boat1:Toggle({
+    Name = "Super Speed Boats",
+    Default = false,
+    Callback = function(state)
+        local BoatsModule = require(ReplicatedStorage.Shared.BoatsHandlingData)
+
+        -- Simpan speed asli kalau belum ada
+        if not BoatsModule._OriginalSpeed then
+            BoatsModule._OriginalSpeed = {}
+            for boatName, boatData in pairs(BoatsModule) do
+                if type(boatData) == "table" and boatData.Speed then
+                    BoatsModule._OriginalSpeed[boatName] = boatData.Speed
+                end
+            end
+        end
+
+        if state then
+            for _, boatData in pairs(BoatsModule) do
+                if type(boatData) == "table" and boatData.Speed then
+                    boatData.Speed = customSpeed
+                end
+            end
+        else
+            for boatName, boatData in pairs(BoatsModule) do
+                if type(boatData) == "table" and boatData.Speed and BoatsModule._OriginalSpeed[boatName] then
+                    boatData.Speed = BoatsModule._OriginalSpeed[boatName]
+                end
+            end
+        end
+    end,
+}, "SuperSpeedToggle")
+
+sections.Tp:Header({
+	Name = "Island"
+})
+
+-- Daftar Island dengan posisi CFrame
+local islands = {
+    ["Kohana"] = CFrame.new(-642.243561, 16.0354481, 624.918884, 0.999580681, 0, -0.0289562326, 0, 1, 0, 0.0289562326, 0, 0.999580681),
+    ["Winter Fest"] = CFrame.new(1687.93079, 6.8625145, 3309.67725, 0.96799022, -3.6394315e-08, -0.250987828, 1.06909646e-08, 1, -1.0377223e-07, 0.250987828, 9.77672059e-08, 0.96799022),
+    ["Lost Isle"] = CFrame.new(-3660.07031, 26.1918774, -933.131897, -0.77232331, -7.22959044e-08, -0.635229647, -1.90984206e-08, 1, -9.05904614e-08, 0.635229647, -5.7833244e-08, -0.77232331),
+    ["Isoteric Island"] = CFrame.new(2029.47913, 27.3972206, 1393.52319, 0.438848287, -3.30229497e-08, -0.89856118, 8.09404801e-08, 1, 2.55982613e-09, 0.89856118, -7.34489944e-08, 0.438848287),
+    ["Crater Island"] = CFrame.new(973.268372, 7.36203814, 4879.09277, 0.99999994, -1.67766032e-08, -0.000279307278, 1.67553038e-08, 1, -7.62482344e-08, 0.000279307278, 7.62435519e-08, 0.99999994),
+    ["Coral Reefs"] = CFrame.new(-3134.98511, 20.9564934, 2167.80566, 0.610140502, 5.54546098e-08, -0.792293251, -1.07331415e-08, 1, 6.17270004e-08, 0.792293251, -2.91583468e-08, 0.610140502),
+    ["Kohana Volcano"] = CFrame.new(-525.122925, 24.0000591, 187.470749, 0.702778041, -1.4945584e-08, 0.711409211, 1.59372149e-09, 1, 1.18378477e-08, -0.711409211, -1.17821113e-08, 0.702778041),
+    ["Fisherman Island"] = CFrame.new(33.5687256, 17.0335217, 2834.95557, 0.999833524, -8.21432367e-10, 0.0182459373, 2.40968401e-09, 1, 8.70248726e-08, -0.0182459373, 8.7054351e-08, 0.999833524),
+    ["Esoteric Depths"] = CFrame.new(3152.74707, -1302.72986, 1438.05444, 0.442518562, -2.42594727e-08, -0.896759331, -8.6126515e-09, 1, 1.33023953e-08, 0.896759331, -2.15753335e-08, 0.442518562),
+    ["Tropical Grove"] = CFrame.new(-2046.1554, 6.26801682, 3660.56006, -0.739083588, 1.74285066e-08, 0.673613727, -5.79817758e-08, 1, -8.94902854e-08, -0.673613727, -1.05198126e-07, -0.739083588),
+    ["Treasure Room"] = CFrame.new(-3599.53491, -266.57373, -1566.98657),
+    ["Weather Machine"] = CFrame.new(-1525.72632, 6.49999952, 1892.23645, 0.0615941137, 6.608282509e-10, -0.998101294, -6.8356556e-08, 1, 3.55628549e-09, 0.998101294, 6.84458072e-08, 0.0615941137),
+    ["Sisyphus Statue"] = CFrame.new(-3692.22021, -135.574417, -1026.96167, -0.928567886, 9.83784361e-08, 0.371162564, 1.22746741e-07, 1, 4.20307664e-08, -0.371162564, 8.45874197e-08, -0.928567886),
+    ["Ancient Jungle"] = CFrame.new(1275.54553, 7.85804176, -193.749756, 0.924119413, 5.65956171e-08, -0.382103801, -3.36512187e-08, 1, 6.67302302e-08, 0.382103801, -4.88084417e-08, 0.924119413),
+    ["Underground Cellar Door "] = CFrame.new(1954.18994, -41.7413597, -577.574768, -0.817980289, 0.573605001, 0.0434255376, 0.572797239, 0.81913203, -0.0304316022, -0.0530269668, -1.84206292e-05, -0.998593211),
+    ["Underground Cellar"] = CFrame.new(2120.27417, -93.1985779, -701.552185, -0.998591185, 0, 0.0530693457, 0, 1, 0, -0.0530693457, 0, -0.998591185),
+    ["Tample Guardian"] = CFrame.new(1478.29846, 126.044891, -613.519653, -0.117893577, 0, 0.993026376, 0, 1, 0, -0.993026376, 0, -0.117893577),
+    ["Mysterious Door"] = CFrame.new(1899.19629, 13.3589745, -577.593811, -0.0531117916, 0, -0.998588562, 0, 1, 0, 0.998588562, 0, -0.0531117916),
+    ["Hourglass Diamond Artifact"] = CFrame.new(1485.66541, 5.41373634, -861.165161, -5.01871109e-05, 0.988927424, 0.148400292, -1, -5.01871109e-05, -3.74019146e-06, 3.74019146e-06, -0.148400292, 0.988927364),
+    ["Arrow Artifact"] = CFrame.new(898.490479, 5.41373587, -361.212708, 9.11951065e-06, 0.0998446345, -0.995003104, -1, 9.11951065e-06, -8.2552433e-06, 8.2552433e-06, 0.995003104, 0.0998445749),
+    ["Crescent Artifact"] = CFrame.new(1419.39148, 28.1637344, 79.5802917, 3.55243683e-05, -0.332731277, -0.943021655, -1, -3.55243683e-05, -2.51233578e-05, -2.51233578e-05, 0.943021655, -0.332731247),
+    ["Diamond Artifact"] = CFrame.new(1818.72156, 5.41373634, -285.160828, -1.15633011e-05, -0.192806393, 0.981236815, -1, 1.15633011e-05, -9.53674316e-06, -9.53674316e-06, -0.981236815, -0.192806482),
+    ["Sacred Temple"] = CFrame.new(1478.09546, 0.0774269104, -612.817993, 0.993017375, 0, 0.117968373, 0, 1, 0, -0.117968373, 0, 0.993017375),
+    ["Crystalline Passage"] = CFrame.new(6053.09717, -538.900085, 4391.29102, -0.993590963, -1.39414302e-08, 0.10982503, 1.7823354e-10, 1, -7.10982503, 1.27797193e-07, -0.10982503, -0.993590963),
+    ["Ancient Ruin"] = CFrame.new(6085.4248, -585.924194, 4638.86719, -0.696671784, 6.0984318e-08, -0.717390001, -1.9965112e-08, 1, -1.0439771e-07, -0.717390001, -8.7053305e-08, -0.696671784),
+}
+
+-- Ambil semua nama Island dan sort secara case-insensitive
+local islandNames = {}
+for name, _ in pairs(islands) do
+    table.insert(islandNames, name)
+end
+table.sort(islandNames, function(a, b) return a:lower() < b:lower() end)
+
+-- Default island yang dipilih
+local selectedIsland = islandNames[1] or "Kohana"
+
+-- Dropdown pilih island
+sections.Tp:Dropdown({
+    Name = "Select Island",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = islandNames,
+    Default = selectedIsland,
+    Callback = function(value)
+        selectedIsland = value
+    end,
+}, "SelectIslandDropdown")
+
+-- Tombol teleport
+sections.Tp:Button({
+    Name = "Teleport Now",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+
+        local targetCFrame = islands[selectedIsland]
+        if targetCFrame then
+            char:PivotTo(targetCFrame)
+        end
+    end,
+}, "TeleportButton")
+
+sections.Tp1:Header({
+	Name = "Position"
+})
+
+-- Variabel local (tanpa _G)
+local savedCFrame = nil
+local teleportEnabled = false
+
+-- Tombol Save Position
+sections.Tp1:Button({
+    Name = "Save Position",
+    Callback = function()
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            savedCFrame = hrp.CFrame   -- Simpan posisi + rotasi
+        end
+    end,
+}, "SavePositionButton")
+
+-- Fungsi freeze karakter di posisi savedCFrame
+local function freezeCharacter()
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp or not savedCFrame then return end
+
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+    bv.Velocity = Vector3.new(0, 0, 0)
+    bv.Parent = hrp
+
+    local bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+    bg.CFrame = savedCFrame
+    bg.Parent = hrp
+
+    task.spawn(function()
+        while teleportEnabled and hrp and hrp.Parent do
+            local distance = (hrp.Position - savedCFrame.Position).Magnitude
+            if distance > 2 then
+                hrp.CFrame = savedCFrame
+            end
+            task.wait(0.1)
+        end
+        
+        if bv then bv:Destroy() end
+        if bg then bg:Destroy() end
+    end)
+end
+
+-- Toggle Teleport dan Auto Freeze
+sections.Tp1:Toggle({
+    Name = "Teleport to Saved Position",
+    Default = false,
+    Callback = function(state)
+        teleportEnabled = state
+        if teleportEnabled then
+            freezeCharacter()
+        end
+    end,
+}, "TeleportToSavedPosToggle")
+
+
+sections.Player:Header({
+	Name = "LocalPlayer"
+})
+
+
+-- Variable lokal (tanpa _G)
+local AntiDrownEnabled = false
+
+-- Ambil remote OxygenChanged
+local NetFolder = ReplicatedStorage:WaitForChild("Packages")
+	:WaitForChild("_Index")
+	:WaitForChild("sleitnick_net@0.2.0")
+	:WaitForChild("net")
+
+local REOxygenChanged = NetFolder:FindFirstChild("RE/OxygenChanged")
+
+-- Loop menjaga Oxygen tetap 100
+local function MaintainOxygen()
+	while task.wait(0.3) do
+		if AntiDrownEnabled then
+			local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+			local hum = char:FindFirstChildOfClass("Humanoid")
+
+			if hum and hum:FindFirstChild("Oxygen") then
+				if hum.Oxygen.Value < 100 then
+					hum.Oxygen.Value = 100
+				end
+			end
+		end
+	end
+end
+
+-- Jalankan loop Anti Drown
+task.spawn(MaintainOxygen)
+
+-- Hook event jika server mencoba mengurangi oxygen
+if REOxygenChanged then
+	REOxygenChanged.OnClientEvent:Connect(function()
+		if AntiDrownEnabled then
+			local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			if hum and hum:FindFirstChild("Oxygen") then
+				hum.Oxygen.Value = 100
+			end
+		end
+	end)
+end
+
+----------------------------------------------------------------------
+-- TOGGLE WINDUI (TETAP FORMAT KAMU)
+----------------------------------------------------------------------
+
+sections.Player:Toggle({
+	Name = "Anti Drown",
+	Default = false,
+	Callback = function(value)
+		AntiDrownEnabled = value
+
+		Window:Notify({
+			Title = "Anti Drown",
+			Description = value and "Enabled Anti Drown" or "Disabled Anti Drown",
+		})
+	end,
+}, "AntiDrown")
 
 -- Config
 
