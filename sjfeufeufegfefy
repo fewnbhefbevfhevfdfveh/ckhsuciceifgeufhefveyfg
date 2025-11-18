@@ -2341,6 +2341,96 @@ sections.Player:Toggle({
     end,
 }, "AntiLavaToggle")
 
+sections.Player:Toggle({
+    Name = "Hide Notifications",
+    Default = false,
+    Callback = function(value)
+
+        -- GUI sudah ada dari deklarasi atas: PlayerGui
+        local notif = PlayerGui:FindFirstChild("Small Notification")
+
+        if notif and notif:FindFirstChild("Display") then
+            notif.Display.Visible = not value
+        end
+
+        Window:Notify({
+            Title = "Hide Notifications",
+            Description = value and "Enabled" or "Disabled"
+        })
+    end,
+}, "HideNotificationsToggle")
+
+-- create GUI once
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "BlackScreenGui"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.Enabled = false
+screenGui.Parent = PlayerGui
+
+local blackFrame = Instance.new("Frame")
+blackFrame.Name = "BlackFrame"
+blackFrame.Size = UDim2.new(1, 0, 1, 0)
+blackFrame.Position = UDim2.new(0, 0, 0, 0)
+blackFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+blackFrame.BorderSizePixel = 0
+blackFrame.ZIndex = 999
+blackFrame.Parent = screenGui
+
+local inputBlocker = Instance.new("TextButton")
+inputBlocker.Name = "InputBlocker"
+inputBlocker.Size = UDim2.new(1, 0, 1, 0)
+inputBlocker.Position = UDim2.new(0, 0, 0, 0)
+inputBlocker.BackgroundTransparency = 1
+inputBlocker.Text = ""
+inputBlocker.AutoButtonColor = false
+inputBlocker.ZIndex = 1000
+inputBlocker.Parent = screenGui
+
+local enabled = false
+
+local function setBlackScreen(state)
+	enabled = state
+	screenGui.Enabled = state
+	UserInputService.ModalEnabled = state
+end
+
+-- ========================================================================
+-- WINDUI TOGGLE: Black Screen
+-- ========================================================================
+sections.Player:Toggle({
+	Name = "Black Screen",
+	Default = false,
+	Callback = function(value)
+		setBlackScreen(value)
+
+		Window:Notify({
+			Title = "Black Screen",
+			Description = value and "Enabled" or "Disabled"
+		})
+	end,
+}, "BlackScreenToggle")
+
+-- ========================================================================
+-- F8 MANUAL TOGGLE
+-- ========================================================================
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+
+	if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.F8 then
+		setBlackScreen(not enabled)
+	end
+end)
+
+-- ========================================================================
+-- KEEP GUI AFTER RESPAWN
+-- ========================================================================
+LocalPlayer.CharacterAdded:Connect(function()
+	if not screenGui.Parent then
+		screenGui.Parent = PlayerGui
+	end
+end)
+
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
