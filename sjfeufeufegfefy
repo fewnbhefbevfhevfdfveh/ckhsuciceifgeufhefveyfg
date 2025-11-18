@@ -18,7 +18,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.0",
+    Subtitle = "Fish It | V0.0.1",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -384,31 +384,36 @@ sections.Fishing:Header({
 	Name = "Instant Fishing Feature"
 })
 
--- Services (Players & ReplicatedStorage sudah didefinisikan tadi)
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+-- ========================================================================
+-- REMOTES
+-- ========================================================================
+local package = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net
 
--- Remotes
-local ChargeFishingRod = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/ChargeFishingRod"]
-local RequestFishingMinigameStarted = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RF/RequestFishingMinigameStarted"]
-local REReplicateTextEffect = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/ReplicateTextEffect"]
-local REFishingCompleted = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net["RE/FishingCompleted"]
+local ChargeFishingRod = package["RF/ChargeFishingRod"]
+local RequestFishingMinigameStarted = package["RF/RequestFishingMinigameStarted"]
+local REReplicateTextEffect = package["RE/ReplicateTextEffect"]
+local REFishingCompleted = package["RE/FishingCompleted"]
+local CancelFishingInputs = package["RF/CancelFishingInputs"]
 
--- Step 2 args
+-- ========================================================================
+-- PARAMETER & STATE
+-- ========================================================================
 local miniggameArgs = {
     -1.233184814453125,
     0.9972056628181873,
     1763291794.158201
 }
 
--- Flags
 local isFishing = false
 local autoFishingEnabled = false
+local antiStuckEnabled = false
 
--- Delay Values
 local castDelay = 1.5
 local completedDelay = 1
 
--- Safe Wait
+-- ========================================================================
+-- SAFE WAIT
+-- ========================================================================
 local function SafeWait(t)
     local start = os.clock()
     while os.clock() - start < t do
@@ -418,7 +423,9 @@ local function SafeWait(t)
     return true
 end
 
--- Start Fishing Cycle
+-- ========================================================================
+-- MAIN FISHING CYCLE
+-- ========================================================================
 local function StartFishingCycle()
     if not autoFishingEnabled then return end
     if isFishing then return end
@@ -431,7 +438,9 @@ local function StartFishingCycle()
     RequestFishingMinigameStarted:InvokeServer(unpack(miniggameArgs))
 end
 
--- Detect "!" (minigame completed)
+-- ========================================================================
+-- DETECT MINIGAME COMPLETED
+-- ========================================================================
 REReplicateTextEffect.OnClientEvent:Connect(function(data)
     if not autoFishingEnabled then return end
     if not data or not data.TextData then return end
@@ -444,18 +453,68 @@ REReplicateTextEffect.OnClientEvent:Connect(function(data)
     if player ~= LocalPlayer then return end
 
     task.spawn(function()
-        if not SafeWait(tonumber(completedDelay) or 1) then return end
+        if not SafeWait(completedDelay) then return end
         REFishingCompleted:FireServer()
         isFishing = false
 
-        if not SafeWait(tonumber(castDelay) or 1.5) then return end
+        if not SafeWait(castDelay) then return end
         StartFishingCycle()
     end)
 end)
 
--- ============================================================
---  UI BARU (FORMAT SECTIONS.Fishing)
--- ============================================================
+-- ========================================================================
+-- ANTI STUCK DETECTOR (UI Freeze 10 Detik)
+-- ========================================================================
+
+task.spawn(function()
+    local notifGui
+    local notifFrame
+
+    repeat
+        task.wait(1)
+        notifGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("Small Notification")
+    until notifGui
+
+    notifFrame = notifGui:WaitForChild("Display"):WaitForChild("Container")
+
+    while true do
+        task.wait(1)
+
+        if antiStuckEnabled and autoFishingEnabled then
+            local lastPos = notifFrame.Position
+            local freezeDetected = true
+
+            for i = 1, 10 do
+                task.wait(1)
+                if not antiStuckEnabled or not autoFishingEnabled then break end
+
+                if notifFrame.Position ~= lastPos then
+                    freezeDetected = false
+                    break
+                end
+            end
+
+            if freezeDetected and antiStuckEnabled and autoFishingEnabled then
+                warn("[InstantFishing] Anti Stuck Triggered → Cancel Fishing & Restart")
+
+                pcall(function()
+                    CancelFishingInputs:InvokeServer()
+                end)
+
+                isFishing = false
+
+                task.wait(0.5)
+                if autoFishingEnabled then
+                    StartFishingCycle()
+                end
+            end
+        end
+    end
+end)
+
+-- ========================================================================
+-- WINDUI: Instant Fishing
+-- ========================================================================
 
 sections.Fishing:Toggle({
 	Name = "Instant Fishing",
@@ -476,6 +535,21 @@ sections.Fishing:Toggle({
 	end,
 }, "InstantFishingToggle")
 
+-- ========================================================================
+-- WINDUI: ANTI STUCK DETECTOR
+-- ========================================================================
+sections.Fishing:Toggle({
+	Name = "Anti Stuck Detector",
+	Default = false,
+	Callback = function(state)
+		antiStuckEnabled = state
+
+		Window:Notify({
+			Title = "Anti Stuck Detector",
+			Description = (state and "Enabled" or "Disabled") .. " Anti Stuck System"
+		})
+	end,
+}, "AntiStuckDetectorToggle")
 
 sections.Fishing:Input({
 	Name = "Cast Delay",
@@ -490,7 +564,6 @@ sections.Fishing:Input({
 	end,
 }, "InstantFishingCastDelay")
 
-
 sections.Fishing:Input({
 	Name = "Completed Delay",
 	Placeholder = "Default: 1",
@@ -503,6 +576,7 @@ sections.Fishing:Input({
 		})
 	end,
 }, "InstantFishingCompletedDelay")
+
 
 sections.Fishing1:Header({
 	Name = "Equipment Feature"
