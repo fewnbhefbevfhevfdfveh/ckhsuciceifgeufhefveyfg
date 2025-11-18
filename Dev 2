@@ -15,7 +15,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.0",
+    Subtitle = "Fish It | V0.0.1",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -43,14 +43,21 @@ local tabGroups = {
 
 local tabs = {
 	Fishing = tabGroups.TabGroup1:Tab({ Name = "Fishing", Image = "rbxassetid://97899956724998" }),
-	Quest = tabGroups.TabGroup1:Tab({ Name = "Quest", Image = "rbxassetid://10734950309" })
+	Quest = tabGroups.TabGroup1:Tab({ Name = "Quest", Image = "rbxassetid://70719631016787" })
+    Auto = tabGroups.TabGroup1:Tab({ Name = "Automatic", Image = "rbxassetid://100691400534443" }),
+	Shop = tabGroups.TabGroup1:Tab({ Name = "Shop", Image = "rbxassetid://134257769519180" })
+	Boat = tabGroups.TabGroup1:Tab({ Name = "Boat", Image = "rbxassetid://79620448065359" })
+    Tp = tabGroups.TabGroup1:Tab({ Name = "Teleport", Image = "rbxassetid://124499210049583" }),
+	Player = tabGroups.TabGroup1:Tab({ Name = "Player", Image = "rbxassetid://105274848905298" })
+	Config = tabGroups.TabGroup1:Tab({ Name = "Config", Image = "rbxassetid://111411260968321" })
 }
-
 local sections = {
 	Fishing = tabs.Fishing:Section({ Side = "Left" }),
     Fishing1 = tabs.Fishing:Section({ Side = "Right" }),
     Quest = tabs.Quest:Section({ Side = "Left" }),
     Quest1 = tabs.Quest:Section({ Side = "Right" }),
+    Auto = tabs.Auto:Section({ Side = "Left" }),
+    Auto1 = tabs.Auto:Section({ Side = "Right" }),
 }
 
 sections.Fishing:Header({
@@ -586,6 +593,7 @@ task.spawn(function()
     end
 end)
 
+
 sections.Fishing1:Header({
 	Name = "Sell Feature"
 })
@@ -834,6 +842,7 @@ end)
 sections.Quest1:Header({
 	Name = "Auto Quest"
 })
+
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
@@ -1006,6 +1015,249 @@ sections.Quest1:Toggle({
 	end,
 }, "AutoQuestToggle")
 
+sections.Auto:Header({
+	Name = "Auto Favorite & Trade"
+})
+
+local Net = require(ReplicatedStorage.Packages.Net)
+local Replion = require(ReplicatedStorage.Packages.Replion).Client
+
+local FavoriteItemEvent = Net:RemoteEvent("FavoriteItem")
+
+local tradeRemote = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/InitiateTrade")
+
+local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
+local data = Replion:WaitReplion("Data")
+
+-- // === MAP TIER === //
+local TierMap = {
+    ["Common"] = 1,
+    ["Uncommon"] = 2,
+    ["Rare"] = 3,
+    ["Epic"] = 4,
+    ["Legendary"] = 5,
+    ["Mythic"] = 6,
+    ["SECRET"] = 7,
+}
+
+-- =====================================================================
+-- UI BARU
+-- =====================================================================
+
+-- Input
+sections.Auto:Input({
+	Name = "Target Player",
+	Placeholder = "Example: Nexa1234",
+	Callback = function(value)
+		Options.PlayerInput = value
+	end,
+}, "PlayerInput")
+
+-- Dropdown
+sections.Auto:Dropdown({
+	Name = "Select Rarity",
+	Options = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" },
+	Default = "Rare",
+	Multi = false,
+	Callback = function(value)
+		Options.TierDropdown = value
+	end,
+}, "TierDropdown")
+
+-- Toggle Auto Favorite
+sections.Auto:Toggle({
+	Name = "Auto Favorite",
+	Default = false,
+	Callback = function(v)
+		Toggles.AutoFavoriteToggle = v
+	end
+}, "AutoFavoriteToggle")
+
+-- Toggle Auto Unfavorite
+sections.Auto:Toggle({
+	Name = "Auto Unfavorite",
+	Default = false,
+	Callback = function(v)
+		Toggles.AutoUnfavoriteToggle = v
+	end
+}, "AutoUnfavoriteToggle")
+
+-- Toggle Auto Trade
+sections.Auto:Toggle({
+	Name = "Auto Trade Fish",
+	Default = false,
+	Callback = function(v)
+		Toggles.AutoTradeToggle = v
+	end
+}, "AutoTradeToggle")
+
+
+-- =====================================================================
+-- FAVORITE / UNFAVORITE FUNCTION
+-- =====================================================================
+local function ProcessFavorite(tierTarget, setFavorite)
+    local inventory = data:GetExpect("Inventory")
+    local items = inventory and inventory["Items"]
+    if not items then return end
+
+    local total = 0
+
+    for _, item in pairs(items) do
+        if item and item.Favorited ~= setFavorite then
+            
+            for _, module in ipairs(ItemsFolder:GetChildren()) do
+                if module:IsA("ModuleScript") then
+                    local ok, moduleData = pcall(require, module)
+                    if ok and moduleData.Data and moduleData.Data.Id == item.Id then
+                        if moduleData.Data.Tier == tierTarget then
+                            
+                            item.Favorited = setFavorite
+                            FavoriteItemEvent:FireServer(item.UUID)
+
+                            total += 1
+                            task.wait(0.1)
+                        end
+                    end
+                end
+            end
+
+        end
+    end
+
+    if total > 0 then
+        Window:Notify({
+            Title = setFavorite and "⭐ Auto Favorite" or "💔 Auto Unfavorite",
+            Description = (setFavorite and "Added: " or "Removed: ") .. total .. " Tier " .. tierTarget .. " item(s)",
+            Lifetime = 3
+        })
+    end
+end
+
+-- =====================================================================
+-- AUTO FAVORITE LOOP (BARU)
+-- =====================================================================
+task.spawn(function()
+	while true do
+		if Toggles.AutoFavoriteToggle then
+			local tierName = Options.TierDropdown
+			local tierTarget = TierMap[tierName]
+			if tierTarget then
+				ProcessFavorite(tierTarget, true)
+			end
+		end
+		task.wait(3)
+	end
+end)
+
+-- =====================================================================
+-- AUTO UNFAVORITE LOOP (BARU)
+-- =====================================================================
+task.spawn(function()
+	while true do
+		if Toggles.AutoUnfavoriteToggle then
+			local tierName = Options.TierDropdown
+			local tierTarget = TierMap[tierName]
+			if tierTarget then
+				ProcessFavorite(tierTarget, false)
+			end
+		end
+		task.wait(3)
+	end
+end)
+
+-- =====================================================================
+-- AUTO TRADE LOOP (BARU)
+-- =====================================================================
+task.spawn(function()
+	while true do
+		if Toggles.AutoTradeToggle then
+
+			local playerName = Options.PlayerInput
+			local tierName = Options.TierDropdown
+			local tierTarget = TierMap[tierName]
+
+			if not playerName or playerName == "" then
+				Window:Notify({
+					Title = "⚠️ Error",
+					Description = "Player name is empty!",
+					Lifetime = 4
+				})
+				Toggles.AutoTradeToggle = false
+				continue
+			end
+
+			local target = Players:FindFirstChild(playerName)
+			if not target then
+				Window:Notify({
+					Title = "❌ Player Not Found",
+					Description = "Player '" .. playerName .. "' does not exist.",
+					Lifetime = 4
+				})
+				Toggles.AutoTradeToggle = false
+				continue
+			end
+
+			local inventory = data:GetExpect({ "Inventory", "Items" }) or {}
+
+			local fishTierIds = {}
+			for _, module in ipairs(ItemsFolder:GetChildren()) do
+				if module:IsA("ModuleScript") then
+					local ok, info = pcall(require, module)
+					if ok and info.Data and info.Data.Tier == tierTarget and info.Data.Type == "Fish" then
+						fishTierIds[info.Data.Id] = true
+					end
+				end
+			end
+
+			local tradeList = {}
+			for _, fish in pairs(inventory) do
+				if fishTierIds[fish.Id] then
+					table.insert(tradeList, fish.UUID)
+				end
+			end
+
+			if #tradeList == 0 then
+				Window:Notify({
+					Title = "🎣 Out of Fish",
+					Description = "No Tier " .. tierName .. " fish left!",
+					Lifetime = 4
+				})
+				Toggles.AutoTradeToggle = false
+				continue
+			end
+
+			for _, uuid in ipairs(tradeList) do
+				if not Toggles.AutoTradeToggle then break end
+				pcall(function()
+					tradeRemote:InvokeServer(target.UserId, uuid)
+				end)
+				task.wait(0.25)
+			end
+
+		end
+
+		task.wait(2)
+	end
+end)
+
+-- Config
+
+MacLib:SetFolder("Maclib")
+tabs.Config:InsertConfigSection("Left") -- karena yang ada adalah 'Config'
+
+Window.onUnloaded(function()
+	print("Unloaded!")
+end)
+
+tabs.Fishing:Select() -- pilih tab yang benar-benar ada
+MacLib:LoadAutoLoadConfig()
+
+-- ImageBotton
 
 local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
@@ -1153,4 +1405,3 @@ UIS.InputChanged:Connect(function(input)
         end
     end
 end)
-
