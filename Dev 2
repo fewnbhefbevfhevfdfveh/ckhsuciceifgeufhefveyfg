@@ -15,7 +15,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.1",
+    Subtitle = "Fish It | V0.0.0",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -1036,7 +1036,25 @@ local tradeRemote = ReplicatedStorage
 local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
 local data = Replion:WaitReplion("Data")
 
--- MAP TIER
+---------------------------------------------------------
+-- === FIX DEFAULT TABLE ===
+---------------------------------------------------------
+
+local Options = {
+    PlayerName = "",
+    SelectedTier = "Rare",
+}
+
+local Toggles = {
+    AutoFavorite = false,
+    AutoUnfavorite = false,
+    AutoTrade = false,
+}
+
+---------------------------------------------------------
+-- === TIER MAP ===
+---------------------------------------------------------
+
 local TierMap = {
     ["Common"] = 1,
     ["Uncommon"] = 2,
@@ -1048,10 +1066,9 @@ local TierMap = {
 }
 
 ---------------------------------------------------------
--- === UI BARU ===
+-- === WINDUI INPUT ===
 ---------------------------------------------------------
 
--- INPUT (TARGET PLAYER)
 sections.Auto:Input({
     Name = "Target Player",
     Placeholder = "Example: Nexa123",
@@ -1061,7 +1078,6 @@ sections.Auto:Input({
     end,
 }, "TargetInput")
 
--- DROPDOWN (TIERS)
 sections.Auto:Dropdown({
     Name = "Select Tier",
     Search = false,
@@ -1073,7 +1089,6 @@ sections.Auto:Dropdown({
     end,
 }, "TierDropdown")
 
--- TOGGLE AUTO FAVORITE
 sections.Auto:Toggle({
     Name = "Auto Favorite",
     Default = false,
@@ -1082,7 +1097,6 @@ sections.Auto:Toggle({
     end,
 }, "AutoFavoriteToggle")
 
--- TOGGLE AUTO UNFAVORITE
 sections.Auto:Toggle({
     Name = "Auto Unfavorite",
     Default = false,
@@ -1091,7 +1105,6 @@ sections.Auto:Toggle({
     end,
 }, "AutoUnfavoriteToggle")
 
--- TOGGLE AUTO TRADE
 sections.Auto:Toggle({
     Name = "Auto Trade Fish",
     Default = false,
@@ -1101,19 +1114,19 @@ sections.Auto:Toggle({
 }, "AutoTradeToggle")
 
 ---------------------------------------------------------
--- === NOTIFY WRAPPER ===
+-- === NOTIFICATION ===
 ---------------------------------------------------------
 
 local function Notify(desc)
     Window:Notify({
-        Title = "Kuzu Hub",
+        Title = "Nexa Notify",
         Description = desc,
         Lifetime = 4
     })
 end
 
 ---------------------------------------------------------
--- === FAVORITE / UNFAVORITE ===
+-- === FAVORITE / UNFAVORITE PROCESS (FIXED) ===
 ---------------------------------------------------------
 
 local function ProcessFavorite(tierTarget, setFavorite)
@@ -1122,18 +1135,25 @@ local function ProcessFavorite(tierTarget, setFavorite)
     if not items then return end
 
     local total = 0
-    for _, item in pairs(items) do
+
+    for _, item in ipairs(items) do
+        -- Hanya proses item yang favorit-nya beda (true/false)
         if item and item.Favorited ~= setFavorite then
-            for _, module in ipairs(ItemsFolder:GetChildren()) do
-                if module:IsA("ModuleScript") then
-                    local ok, moduleData = pcall(require, module)
-                    if ok and moduleData.Data and moduleData.Data.Id == item.Id then
-                        if moduleData.Data.Tier == tierTarget then
-                            item.Favorited = setFavorite
-                            FavoriteItemEvent:FireServer(item.UUID)
-                            total += 1
-                            task.wait(0.1)
-                        end
+            
+            -- Cari module berdasarkan ID (lebih cepat dari scanning semua module)
+            local module = ItemsFolder:FindFirstChild(item.Id)
+            if module and module:IsA("ModuleScript") then
+
+                local ok, moduleData = pcall(require, module)
+                if ok and moduleData and moduleData.Data then
+                    
+                    -- Cocok tier-nya
+                    if moduleData.Data.Tier == tierTarget then
+                        
+                        -- Kirim ke server
+                        FavoriteItemEvent:FireServer(item.UUID)
+                        total += 1
+                        task.wait(0.1)
                     end
                 end
             end
@@ -1181,27 +1201,37 @@ end)
 
 task.spawn(function()
     while task.wait(2) do
+        
         if Toggles.AutoTrade then
             
             local playerName = Options.PlayerName
             local tier = TierMap[Options.SelectedTier]
 
-            if not playerName or playerName == "" or not tier then
-                Notify("⚠️ Fill name & tier first!")
+            -- Validasi input
+            if not playerName or playerName == "" then
+                Notify("⚠️ Please fill target player name!")
                 Toggles.AutoTrade = false
-                return
+                continue
+            end
+
+            if not tier then
+                Notify("⚠️ Invalid tier!")
+                Toggles.AutoTrade = false
+                continue
             end
 
             local target = Players:FindFirstChild(playerName)
             if not target then
                 Notify("❌ Player not found!")
                 Toggles.AutoTrade = false
-                return
+                continue
             end
 
+            -- Ambil inventory user
             local inventory = data:GetExpect({ "Inventory", "Items" }) or {}
             local fishTierIds = {}
 
+            -- Ambil ID ikan berdasarkan tier
             for _, module in ipairs(ItemsFolder:GetChildren()) do
                 if module:IsA("ModuleScript") then
                     local ok, itemData = pcall(require, module)
@@ -1214,6 +1244,7 @@ task.spawn(function()
             end
 
             local tradeList = {}
+
             for _, item in pairs(inventory) do
                 if item and fishTierIds[item.Id] then
                     table.insert(tradeList, item.UUID)
@@ -1221,16 +1252,19 @@ task.spawn(function()
             end
 
             if #tradeList == 0 then
-                Notify("🎣 No fish left for trade!")
+                Notify("🎣 No fish left to trade!")
                 Toggles.AutoTrade = false
-                return
+                continue
             end
 
+            -- Kirim trade 1 per 1
             for _, uuid in ipairs(tradeList) do
                 if not Toggles.AutoTrade then break end
+
                 pcall(function()
                     tradeRemote:InvokeServer(target.UserId, uuid)
                 end)
+
                 task.wait(0.25)
             end
         end
