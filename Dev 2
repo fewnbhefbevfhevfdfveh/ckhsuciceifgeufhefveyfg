@@ -15,7 +15,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.0",
+    Subtitle = "Fish It | V0.0.1",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -2122,6 +2122,168 @@ rawmt.__namecall = newcclosure(function(self, ...)
 
     return oldNamecall(self, ...)
 end)
+
+sections.Player:Toggle({
+    Name = "Bypass Radar",
+    Default = false,
+    Callback = function(state)
+        Window.AlwayShowTab = state
+
+        local remoteFunc = ReplicatedStorage
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/UpdateFishingRadar")
+
+        pcall(function()
+            remoteFunc:InvokeServer(state)
+        end)
+    end,
+}, "BypassRadarToggle")
+
+local volcanoFolder = workspace.Zones["Kohana Volcano"]
+local RunService = game:GetService("RunService")
+
+local connection = nil
+
+sections.Player:Toggle({
+    Name = "Anti Lava",
+    Default = false,
+    Callback = function(state)
+        if state then
+            connection = RunService.Heartbeat:Connect(function()
+                for _, obj in ipairs(volcanoFolder:GetDescendants()) do
+                    if obj:IsA("TouchTransmitter") then
+                        obj:Destroy()
+                    end
+                end
+            end)
+        else
+            if connection then
+                connection:Disconnect()
+                connection = nil
+            end
+        end
+    end,
+}, "AntiLavaToggle")
+
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Inisialisasi: sembunyikan WebhookGUI saat script mulai jika ada
+local webhookGui = playerGui:FindFirstChild("WebhookGUI")
+if webhookGui then
+    webhookGui.Enabled = false
+end
+
+sections.Player:Toggle({
+    Name = "Show Webhook Gui",
+    Default = false,
+    Callback = function(state)
+        local webhookGui = playerGui:FindFirstChild("WebhookGUI")
+        if webhookGui then
+            webhookGui.Enabled = state
+        end
+    end,
+}, "ShowWebhookGUIToggle")
+
+sections.Player:Button({
+    Name = "Boost FPS",
+    Callback = function()
+        local Lighting = game:GetService("Lighting")
+        local Workspace = game:GetService("Workspace")
+        local Terrain = Workspace:FindFirstChildOfClass("Terrain")
+
+        -- Lighting Optimization
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 1e10
+        Lighting.Brightness = 1
+        Lighting.ExposureCompensation = 0
+        Lighting.EnvironmentDiffuseScale = 0
+        Lighting.EnvironmentSpecularScale = 0
+        Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+        Lighting.ShadowSoftness = 0
+        Lighting.ColorShift_Bottom = Color3.new(0,0,0)
+        Lighting.ColorShift_Top = Color3.new(0,0,0)
+
+        -- Terrain Optimization
+        if Terrain then
+            Terrain.WaterWaveSize = 0
+            Terrain.WaterWaveSpeed = 0
+            Terrain.WaterReflectance = 0
+            Terrain.WaterTransparency = 1
+            sethiddenproperty(Terrain, "Decoration", false)
+        end
+
+        -- Disable Visual Effects (Bloom, Blur, SunRays, dll)
+        for _, v in pairs(Lighting:GetChildren()) do
+            if v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("DepthOfFieldEffect") then
+                v.Enabled = false
+            end
+        end
+
+        -- Mass Disable Visuals (tanpa hapus animasi/suara)
+        pcall(function()
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") or obj:IsA("Explosion") then
+                    obj.Enabled = false
+                elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                    obj.Transparency = 1
+                elseif obj:IsA("MeshPart") or obj:IsA("UnionOperation") or obj:IsA("Part") then
+                    obj.Material = Enum.Material.SmoothPlastic
+                    obj.Reflectance = 0
+                end
+            end
+        end)
+
+        -- Rendering Quality to Lowest
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+
+        -- Optimize Camera
+        for _, cam in pairs(Workspace:GetDescendants()) do
+            if cam:IsA("Camera") then
+                cam.FieldOfView = 70
+            end
+        end
+
+        -- Garbage Clean
+        collectgarbage("collect")
+    end,
+}, "BoostFPSButton")
+
+sections.Player:Button({
+    Name = "Reduce Lag",
+    Callback = function()
+        local Workspace = game:GetService("Workspace")
+        local Lighting = game:GetService("Lighting")
+        local player = game.Players.LocalPlayer
+
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 9e9
+        Lighting.Brightness = 1
+        Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+        Lighting.ExposureCompensation = 0
+        Lighting.ShadowSoftness = 0
+
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Explosion") then
+                obj.Enabled = false
+            elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                obj.Transparency = 1
+            end
+        end
+
+        for _, gui in pairs(player:WaitForChild("PlayerGui"):GetDescendants()) do
+            if gui:IsA("TextLabel") or gui:IsA("TextButton") then
+                gui.TextScaled = false
+            elseif gui:IsA("ImageLabel") or gui:IsA("ImageButton") then
+                gui.ImageTransparency = 0.5
+            end
+        end
+    end,
+}, "ReduceLagButton")
+
 
 -- Config
 
