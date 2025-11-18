@@ -1,2 +1,2 @@
-- Fixed:
-[!] fixed Bug Auto Favorite
+- Changed:
+- New Ui
