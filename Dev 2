@@ -15,7 +15,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.0",
+    Subtitle = "Fish It | V0.0.1",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -1036,25 +1036,7 @@ local tradeRemote = ReplicatedStorage
 local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
 local data = Replion:WaitReplion("Data")
 
----------------------------------------------------------
--- === FIX DEFAULT TABLE ===
----------------------------------------------------------
-
-local Options = {
-    PlayerName = "",
-    SelectedTier = "Rare",
-}
-
-local Toggles = {
-    AutoFavorite = false,
-    AutoUnfavorite = false,
-    AutoTrade = false,
-}
-
----------------------------------------------------------
--- === TIER MAP ===
----------------------------------------------------------
-
+--// === MAP TIER === //--
 local TierMap = {
     ["Common"] = 1,
     ["Uncommon"] = 2,
@@ -1065,95 +1047,80 @@ local TierMap = {
     ["SECRET"] = 7,
 }
 
----------------------------------------------------------
--- === WINDUI INPUT ===
----------------------------------------------------------
-
-sections.Auto:Input({
+--// === UI ELEMENTS (baru) === //--
+sections.Auto:Input({ 
     Name = "Target Player",
-    Placeholder = "Example: Nexa123",
+    Placeholder = "Example: Nexa1234",
     AcceptedCharacters = "All",
-    Callback = function(text)
-        Options.PlayerName = text
+    Callback = function(input)
+        Options.PlayerInput.Value = input
     end,
-}, "TargetInput")
+}, "PlayerInput")
 
-sections.Auto:Dropdown({
-    Name = "Select Tier",
-    Search = false,
-    Multi = false,
+sections.Auto:Dropdown({ 
+    Name = "Select Rarity",
     Options = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" },
     Default = "Rare",
-    Callback = function(v)
-        Options.SelectedTier = v
+    Search = false,
+    Multi = false,
+    Required = true,
+    Callback = function(value)
+        Options.TierDropdown.Value = value
     end,
 }, "TierDropdown")
 
-sections.Auto:Toggle({
+sections.Auto:Toggle({ 
     Name = "Auto Favorite",
     Default = false,
-    Callback = function(value)
-        Toggles.AutoFavorite = value
+    Callback = function(state)
+        Toggles.AutoFavoriteToggle:SetValue(state)
     end,
 }, "AutoFavoriteToggle")
 
-sections.Auto:Toggle({
+sections.Auto:Toggle({ 
     Name = "Auto Unfavorite",
     Default = false,
-    Callback = function(value)
-        Toggles.AutoUnfavorite = value
+    Callback = function(state)
+        Toggles.AutoUnfavoriteToggle:SetValue(state)
     end,
 }, "AutoUnfavoriteToggle")
 
-sections.Auto:Toggle({
+sections.Auto:Toggle({ 
     Name = "Auto Trade Fish",
     Default = false,
-    Callback = function(value)
-        Toggles.AutoTrade = value
+    Callback = function(state)
+        Toggles.AutoTradeToggle:SetValue(state)
     end,
 }, "AutoTradeToggle")
 
----------------------------------------------------------
--- === NOTIFICATION ===
----------------------------------------------------------
-
-local function Notify(desc)
+--// === NOTIFY FUNGSIONAL (baru) === //--
+local function Notify(msg, time)
     Window:Notify({
-        Title = "Nexa Notify",
-        Description = desc,
-        Lifetime = 4
+        Title = "Kuzu Hub",
+        Description = msg,
+        Lifetime = time or 3
     })
 end
 
----------------------------------------------------------
--- === FAVORITE / UNFAVORITE PROCESS (FIXED) ===
----------------------------------------------------------
-
+--// === FAVORITE / UNFAVORITE LOGIC (tidak diubah) === --
 local function ProcessFavorite(tierTarget, setFavorite)
     local inventory = data:GetExpect("Inventory")
     local items = inventory and inventory["Items"]
     if not items then return end
 
     local total = 0
-
-    for _, item in ipairs(items) do
-        -- Hanya proses item yang favorit-nya beda (true/false)
+    for _, item in pairs(items) do
         if item and item.Favorited ~= setFavorite then
-            
-            -- Cari module berdasarkan ID (lebih cepat dari scanning semua module)
-            local module = ItemsFolder:FindFirstChild(item.Id)
-            if module and module:IsA("ModuleScript") then
-
-                local ok, moduleData = pcall(require, module)
-                if ok and moduleData and moduleData.Data then
-                    
-                    -- Cocok tier-nya
-                    if moduleData.Data.Tier == tierTarget then
-                        
-                        -- Kirim ke server
-                        FavoriteItemEvent:FireServer(item.UUID)
-                        total += 1
-                        task.wait(0.1)
+            for _, module in ipairs(ItemsFolder:GetChildren()) do
+                if module:IsA("ModuleScript") then
+                    local ok, moduleData = pcall(require, module)
+                    if ok and moduleData.Data and moduleData.Data.Id == item.Id then
+                        if moduleData.Data.Tier == tierTarget then
+                            item.Favorited = setFavorite
+                            FavoriteItemEvent:FireServer(item.UUID)
+                            total += 1
+                            task.wait(0.1)
+                        end
                     end
                 end
             end
@@ -1161,113 +1128,102 @@ local function ProcessFavorite(tierTarget, setFavorite)
     end
 
     if total > 0 then
-        Notify((setFavorite and "⭐ Favorited: " or "💔 Unfavorited: ") .. total .. " item(s)")
+        Notify((setFavorite and "⭐ Added to favorites: " or "💔 Removed from favorites: ") .. total .. " Tier " .. tierTarget .. " item(s)", 3)
     end
 end
 
----------------------------------------------------------
--- === AUTO FAVORITE LOOP ===
----------------------------------------------------------
-
-task.spawn(function()
-    while task.wait(1) do
-        if Toggles.AutoFavorite then
-            local tier = TierMap[Options.SelectedTier]
-            if tier then
-                ProcessFavorite(tier, true)
+--// === AUTO FAVORITE LOOP === --
+Toggles.AutoFavoriteToggle:OnChanged(function(state)
+    if state then
+        task.spawn(function()
+            local tierName = Options.TierDropdown.Value
+            local tierTarget = TierMap[tierName]
+            if not tierTarget then return end
+            while Toggles.AutoFavoriteToggle.Value do
+                ProcessFavorite(tierTarget, true)
+                task.wait(3)
             end
-        end
+        end)
     end
 end)
 
----------------------------------------------------------
--- === AUTO UNFAVORITE LOOP ===
----------------------------------------------------------
-
-task.spawn(function()
-    while task.wait(1) do
-        if Toggles.AutoUnfavorite then
-            local tier = TierMap[Options.SelectedTier]
-            if tier then
-                ProcessFavorite(tier, false)
+--// === AUTO UNFAVORITE LOOP === --
+Toggles.AutoUnfavoriteToggle:OnChanged(function(state)
+    if state then
+        task.spawn(function()
+            local tierName = Options.TierDropdown.Value
+            local tierTarget = TierMap[tierName]
+            if not tierTarget then return end
+            while Toggles.AutoUnfavoriteToggle.Value do
+                ProcessFavorite(tierTarget, false)
+                task.wait(3)
             end
-        end
+        end)
     end
 end)
 
----------------------------------------------------------
--- === AUTO TRADE LOOP ===
----------------------------------------------------------
-
-task.spawn(function()
-    while task.wait(2) do
-        
-        if Toggles.AutoTrade then
-            
-            local playerName = Options.PlayerName
-            local tier = TierMap[Options.SelectedTier]
-
-            -- Validasi input
-            if not playerName or playerName == "" then
-                Notify("⚠️ Please fill target player name!")
-                Toggles.AutoTrade = false
-                continue
+--// === AUTO TRADE LOOP === --
+Toggles.AutoTradeToggle:OnChanged(function(state)
+    if state then
+        task.spawn(function()
+            local playerName = Options.PlayerInput.Value
+            local tierName = Options.TierDropdown.Value
+            local tierTarget = TierMap[tierName]
+            if not tierTarget or not playerName or playerName == "" then
+                Notify("⚠️ Fill in the player name and select the tier!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
             end
 
-            if not tier then
-                Notify("⚠️ Invalid tier!")
-                Toggles.AutoTrade = false
-                continue
+            local targetPlayer = Players:FindFirstChild(playerName)
+            if not targetPlayer then
+                Notify("❌ Player '" .. playerName .. "' not found!", 3)
+                Toggles.AutoTradeToggle:SetValue(false)
+                return
             end
 
-            local target = Players:FindFirstChild(playerName)
-            if not target then
-                Notify("❌ Player not found!")
-                Toggles.AutoTrade = false
-                continue
-            end
+            Notify("🚀 Auto Trade to " .. playerName .. " (Tier: " .. tierName .. ")", 4)
 
-            -- Ambil inventory user
-            local inventory = data:GetExpect({ "Inventory", "Items" }) or {}
-            local fishTierIds = {}
+            while Toggles.AutoTradeToggle.Value do
+                local inventory = data:GetExpect({ "Inventory", "Items" }) or {}
 
-            -- Ambil ID ikan berdasarkan tier
-            for _, module in ipairs(ItemsFolder:GetChildren()) do
-                if module:IsA("ModuleScript") then
-                    local ok, itemData = pcall(require, module)
-                    if ok and itemData and itemData.Data then
-                        if itemData.Data.Type == "Fish" and itemData.Data.Tier == tier then
-                            fishTierIds[itemData.Data.Id] = true
+                local fishTierIds = {}
+                for _, module in ipairs(ItemsFolder:GetChildren()) do
+                    if module:IsA("ModuleScript") then
+                        local ok, itemData = pcall(require, module)
+                        if ok and itemData and itemData.Data then
+                            local info = itemData.Data
+                            if info.Type == "Fish" and info.Tier == tierTarget then
+                                fishTierIds[info.Id] = true
+                            end
                         end
                     end
                 end
-            end
 
-            local tradeList = {}
-
-            for _, item in pairs(inventory) do
-                if item and fishTierIds[item.Id] then
-                    table.insert(tradeList, item.UUID)
+                local tradeList = {}
+                for _, invItem in pairs(inventory) do
+                    if invItem and invItem.Id and fishTierIds[invItem.Id] then
+                        table.insert(tradeList, invItem.UUID)
+                    end
                 end
+
+                if #tradeList == 0 then
+                    Notify("🎣 No fish Tier " .. tierName .. " left.", 5)
+                    Toggles.AutoTradeToggle:SetValue(false)
+                    break
+                end
+
+                for _, uuid in ipairs(tradeList) do
+                    if not Toggles.AutoTradeToggle.Value then break end
+                    pcall(function()
+                        tradeRemote:InvokeServer(targetPlayer.UserId, uuid)
+                    end)
+                    task.wait(0.25)
+                end
+
+                task.wait(3)
             end
-
-            if #tradeList == 0 then
-                Notify("🎣 No fish left to trade!")
-                Toggles.AutoTrade = false
-                continue
-            end
-
-            -- Kirim trade 1 per 1
-            for _, uuid in ipairs(tradeList) do
-                if not Toggles.AutoTrade then break end
-
-                pcall(function()
-                    tradeRemote:InvokeServer(target.UserId, uuid)
-                end)
-
-                task.wait(0.25)
-            end
-        end
+        end)
     end
 end)
 
