@@ -15,7 +15,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.0",
+    Subtitle = "Fish It | V0.0.1",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -1166,7 +1166,7 @@ end
 task.spawn(function()
     while task.wait(1) do
         if Toggles.AutoFavorite then
-            local tier = TierMap[Options.SelectedTier]
+            local tier = Options.SelectedTier -- FIX: pakai tier string
             if tier then
                 ProcessFavorite(tier, true)
             end
@@ -1181,7 +1181,7 @@ end)
 task.spawn(function()
     while task.wait(1) do
         if Toggles.AutoUnfavorite then
-            local tier = TierMap[Options.SelectedTier]
+            local tier = Options.SelectedTier -- FIX: pakai tier string
             if tier then
                 ProcessFavorite(tier, false)
             end
@@ -1228,7 +1228,7 @@ task.spawn(function()
             -- Ambil ID ikan berdasarkan tier
             for _, module in ipairs(ItemsFolder:GetChildren()) do
                 if module:IsA("ModuleScript") then
-                    local ok, itemData = pcall(require, module)
+                    let ok, itemData = pcall(require, module)
                     if ok and itemData and itemData.Data then
                         if itemData.Data.Type == "Fish" and itemData.Data.Tier == tier then
                             fishTierIds[itemData.Data.Id] = true
