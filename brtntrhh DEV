@@ -43,14 +43,21 @@ local tabGroups = {
 
 local tabs = {
 	Fishing = tabGroups.TabGroup1:Tab({ Name = "Fishing", Image = "rbxassetid://97899956724998" }),
-	Quest = tabGroups.TabGroup1:Tab({ Name = "Quest", Image = "rbxassetid://10734950309" })
+	Quest = tabGroups.TabGroup1:Tab({ Name = "Quest", Image = "rbxassetid://70719631016787" })
+    Auto = tabGroups.TabGroup1:Tab({ Name = "Automatic", Image = "rbxassetid://100691400534443" }),
+	Shop = tabGroups.TabGroup1:Tab({ Name = "Shop", Image = "rbxassetid://134257769519180" })
+	Boat = tabGroups.TabGroup1:Tab({ Name = "Boat", Image = "rbxassetid://79620448065359" })
+    Tp = tabGroups.TabGroup1:Tab({ Name = "Teleport", Image = "rbxassetid://124499210049583" }),
+	Player = tabGroups.TabGroup1:Tab({ Name = "Player", Image = "rbxassetid://105274848905298" })
+	Config = tabGroups.TabGroup1:Tab({ Name = "Config", Image = "rbxassetid://111411260968321" })
 }
-
 local sections = {
 	Fishing = tabs.Fishing:Section({ Side = "Left" }),
     Fishing1 = tabs.Fishing:Section({ Side = "Right" }),
     Quest = tabs.Quest:Section({ Side = "Left" }),
     Quest1 = tabs.Quest:Section({ Side = "Right" }),
+    Auto = tabs.Auto:Section({ Side = "Left" }),
+    Auto1 = tabs.Auto:Section({ Side = "Right" }),
 }
 
 sections.Fishing:Header({
@@ -586,6 +593,7 @@ task.spawn(function()
     end
 end)
 
+
 sections.Fishing1:Header({
 	Name = "Sell Feature"
 })
@@ -603,7 +611,7 @@ local mode = "Sell Delay"
 local autoSellLoop = nil
 
 -- Slider delay jual otomatis
-sections.Sell:Slider({
+sections.Fishing1:Slider({
 	Name = "Sell Delay (seconds)",
 	Default = 2,
 	Minimum = 1,
@@ -616,7 +624,7 @@ sections.Sell:Slider({
 }, "SellDelaySlider")
 
 -- Dropdown mode auto sell
-sections.Sell:Dropdown({
+sections.Fishing1:Dropdown({
 	Name = "Select Mode",
 	Options = { "Backpack Full", "Sell Delay" },
 	Default = "Sell Delay",
@@ -629,7 +637,7 @@ sections.Sell:Dropdown({
 }, "SellModeDropdown")
 
 -- Toggle auto sell
-sections.Sell:Toggle({
+sections.Fishing1:Toggle({
 	Name = "Auto Sell All Items",
 	Default = false,
 	Callback = function(state)
@@ -671,44 +679,582 @@ sections.Sell:Toggle({
 }, "AutoSellToggle")
 
 sections.Quest:Header({
-	Name = "DeepSea Status"
+	Name = "View Quest Status"
 })
 
+-- === DEEP SEA QUEST (UI baru dengan Section:Paragraph) ===
 local board = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board
 local surfaceGui = board:WaitForChild("Gui")
 local content = surfaceGui:WaitForChild("Content")
 local labelNames = {"Label1", "Label2", "Label3", "Label4"}
 
--- Buat label Paragraph baru dengan header dan isi default
-local deepSeaParagraph = sections.Quest:Paragraph({
-	Header = "Deep Sea Quest Status",
-	Body = "Checking..."
-}, "DeepSeaQuestParagraph")
+local deepSeaParagraph = nil
+
+-- Buat paragraph satu kali
+deepSeaParagraph = sections.Quest:Paragraph({
+    Header = "Deep Sea Status",
+    Body = "Loading..."
+})
 
 local function updateDeepSea()
-	local lines = {}
-	for _, name in ipairs(labelNames) do
-		local label = content:FindFirstChild(name)
-		if label then
-			table.insert(lines, label.Text)
-		end
-	end
-	local newText = table.concat(lines, "\n")
-	deepSeaParagraph:SetBody(newText)
+    local lines = {}
+
+    for _, name in ipairs(labelNames) do
+        local label = content:FindFirstChild(name)
+        if label then
+            table.insert(lines, label.Text)
+        end
+    end
+
+    local newBody = table.concat(lines, "\n")
+
+    -- INI YANG BENAR (sesuai hasil debug)
+    if deepSeaParagraph and deepSeaParagraph.UpdateBody then
+        deepSeaParagraph:UpdateBody(newBody)
+    end
 end
 
+-- Update awal
 updateDeepSea()
 
+-- Listener setiap Label berubah
 for _, name in ipairs(labelNames) do
-	local label = content:FindFirstChild(name)
-	if label then
-		label:GetPropertyChangedSignal("Text"):Connect(updateDeepSea)
-	end
+    local label = content:FindFirstChild(name)
+    if label then
+        label:GetPropertyChangedSignal("Text"):Connect(updateDeepSea)
+    end
 end
+
+-- === AURA BOAT QUEST (UI Baru Dengan Paragraph) ===
+local auraParagraph = sections.Quest:Paragraph({
+    Header = "Aura Boat Status",
+    Body = "Loading..."
+})
+
+local function updateAura()
+    local contentAura = workspace["!!! MENU RINGS"]["Aura Tracker"].Board.Gui.Content
+    
+    local combinedText = table.concat({
+        contentAura.Label1.Text,
+        contentAura.Label2.Text,
+        contentAura.Label3.Text
+    }, "\n")
+
+    -- Update body pakai metode baru
+    if auraParagraph and auraParagraph.UpdateBody then
+        auraParagraph:UpdateBody(combinedText)
+    end
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        updateAura()
+    end
+end)
+
+-- === ELEMENT QUEST (UI Baru Dengan Paragraph) ===
+local boardElement = workspace["!!! MENU RINGS"]["Element Tracker"].Board
+local surfaceGuiElement = boardElement:WaitForChild("Gui")
+local contentElement = surfaceGuiElement:WaitForChild("Content")
+local elementLabelNames = {"Label1", "Label2", "Label3", "Label4"}
+
+-- Buat paragraph baru
+local elementParagraph = sections.Quest:Paragraph({
+    Header = "Element Status",
+    Body = "Loading..."
+})
+
+local function updateElement()
+    local lines = {}
+
+    for _, name in ipairs(elementLabelNames) do
+        local label = contentElement:FindFirstChild(name)
+        if label then
+            table.insert(lines, label.Text)
+        end
+    end
+
+    local newBody = table.concat(lines, "\n")
+
+    if elementParagraph and elementParagraph.UpdateBody then
+        elementParagraph:UpdateBody(newBody)
+    end
+end
+
+-- Update awal
+updateElement()
+
+-- Listener perubahan label
+for _, name in ipairs(elementLabelNames) do
+    local label = contentElement:FindFirstChild(name)
+    if label then
+        label:GetPropertyChangedSignal("Text"):Connect(updateElement)
+    end
+end
+
+-- === TEMPLE LEVER STATUS (UI Baru Dengan Paragraph) ===
+local Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS")
+
+local Steps = {
+    "TempleLever 1",
+    "TempleLever 2",
+    "TempleLever 3",
+    "TempleLever 4",
+}
+
+-- Buat paragraph UI baru
+local templeLeverParagraph = sections.Quest:Paragraph({
+    Header = "Temple Lever Status",
+    Body = "Checking..."
+})
+
+local function updateStatus()
+    local lines = {}
+
+    for _, name in ipairs(Steps) do
+        local lever = Jungle:FindFirstChild(name)
+        local mark = "0%"
+
+        if lever and lever:FindFirstChild("RootPart") then
+            local root = lever.RootPart
+            -- Jika ProximityPrompt hilang = lever sudah dipencet
+            if not root:FindFirstChild("ProximityPrompt") then
+                mark = "100%"
+            end
+        end
+
+        table.insert(lines, string.format("%s: %s", name, mark))
+    end
+
+    local result = table.concat(lines, "\n")
+
+    if templeLeverParagraph and templeLeverParagraph.UpdateBody then
+        templeLeverParagraph:UpdateBody(result)
+    end
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        pcall(updateStatus)
+    end
+end)
+
+sections.Quest1:Header({
+	Name = "Auto Quest"
+})
+
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Konfigurasi Quest
+local Quests = {
+    ["Deep Sea"] = {
+        Label = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content:WaitForChild("Label1"),
+        PosBelum100 = CFrame.new(-3598.26392, -275.770294, -1641.81677, 0.980732918, 1.77961817e-08, -0.195353389, -9.95774929e-09, 1, 1.49543828e-08, 0.195353389, -3.92007387e-08, 0.980732918),
+        PosSudah100 = CFrame.new(-3711.07275, -133.551468, -946.792786, 0.496201038, 3.27622705e-08, 0.868207633, -1.09039476e-07, 1, 1.24582756e-08, -0.868207633, -1.06866807e-07, 0.496201038)
+    },
+    ["Element"] = {
+        Label = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content:WaitForChild("Label2"),
+        PosBelum100 = CFrame.new(2117.75146, -91.1985855, -700.854065, 0.931628525, -2.26793677e-08, -0.363411963, -9.1509369e-09, 1, -8.58657501e-08, 0.363411963, 8.33205434e-08, 0.931628525),
+        PosSudah100 = CFrame.new(1556.35583, 4.37500525, -605.774841, -0.154411227, 1.18263046e-07, 0.988006651, 6.54793553e-08, 1, -1.09465148e-07, -0.988006651, 4.77913886e-08, -0.154411227)
+    },
+    ["Aura Boat"] = {
+        PosTarget = CFrame.new(88.2434769, 9.53157043, 2685.2605),
+        MinLevel = 200
+    },
+    ["Temple Lever"] = {
+        Steps = {
+            { Name = "TempleLever 1", CFrame = CFrame.new(1837.76038, 6.46929169, -289.37793, 0.209234059, -5.19205168e-09, -0.977865577, -1.23823077e-10, 1, -5.33607025e-09, 0.977865577, 1.23757005e-09, 0.209234059) },
+            { Name = "TempleLever 2", CFrame = CFrame.new(1407.78601, 6.59558344, 118.577896, -0.919609904, -9.32684685e-08, 0.392832845, -8.06826606e-08, 1, 4.85496443e-08, -0.392832845, 1.29519346e-08, -0.919609904) },
+            { Name = "TempleLever 3", CFrame = CFrame.new(877.883911, 4.8866396, -358.809021, -0.169639081, 7.49071702e-08, 0.985506237, -4.26608402e-08, 1, -8.3352198e-08, -0.985506237, -5.61823157e-08, -0.169639081) },
+            { Name = "TempleLever 4", CFrame = CFrame.new(1487.44971, 6.4896245, -847.88324, -0.996084929, -9.576409e-09, -0.0884061007, -1.68435523e-08, 1, 8.14600511e-08, 0.0884061007, 8.26301232e-08, -0.996084929) },
+        }
+    }
+}
+
+local selectedQuest = "Deep Sea"
+local autoQuestEnabled = false
+local freezeBV, freezeBG
+local savedCFrame
+
+local function Freeze(char, cf)
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    if freezeBV then freezeBV:Destroy() freezeBV = nil end
+    if freezeBG then freezeBG:Destroy() freezeBG = nil end
+
+    freezeBV = Instance.new("BodyVelocity")
+    freezeBV.Velocity = Vector3.zero
+    freezeBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    freezeBV.Parent = hrp
+
+    freezeBG = Instance.new("BodyGyro")
+    freezeBG.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    freezeBG.CFrame = cf or hrp.CFrame
+    freezeBG.Parent = hrp
+end
+
+local function Unfreeze()
+    if freezeBV then freezeBV:Destroy() freezeBV = nil end
+    if freezeBG then freezeBG:Destroy() freezeBG = nil end
+end
+
+local function TeleportOnce(cf)
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char:SetPrimaryPartCFrame(cf)
+        savedCFrame = cf
+        Freeze(char, cf)
+    end
+end
+
+local function RunTempleLever()
+    task.spawn(function()
+        local Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS")
+        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        local steps = Quests["Temple Lever"].Steps
+
+        for _, step in ipairs(steps) do
+            if not autoQuestEnabled or selectedQuest ~= "Temple Lever" then break end
+            local lever = Jungle:FindFirstChild(step.Name)
+
+            if lever and lever:FindFirstChild("RootPart") then
+                hrp.CFrame = step.CFrame
+                task.wait(0.5)
+                local prompt = lever.RootPart:FindFirstChild("ProximityPrompt")
+                if prompt then
+                    fireproximityprompt(prompt)
+                    task.wait(5)
+                end
+            end
+            task.wait(1)
+        end
+    end)
+end
+
+local function CheckQuest()
+    if not autoQuestEnabled or not selectedQuest then return end
+
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+
+    if selectedQuest == "Aura Boat" then
+        local overhead = hrp:WaitForChild("Overhead")
+        local levelLabel = overhead:WaitForChild("LevelContainer"):WaitForChild("Label")
+        local level = tonumber(levelLabel.Text:match("%d+")) or 0
+        if level >= Quests["Aura Boat"].MinLevel then
+            TeleportOnce(Quests["Aura Boat"].PosTarget)
+        end
+
+    elseif selectedQuest == "Temple Lever" then
+        RunTempleLever()
+
+    else
+        local quest = Quests[selectedQuest]
+        local text = quest.Label.Text
+        local persen = tonumber(text:match("(%d+)%%"))
+        if persen and persen < 100 then
+            TeleportOnce(quest.PosBelum100)
+        else
+            TeleportOnce(quest.PosSudah100)
+        end
+    end
+end
+
+for name, quest in pairs(Quests) do
+    if quest.Label then
+        quest.Label:GetPropertyChangedSignal("Text"):Connect(function()
+            if selectedQuest == name and autoQuestEnabled then
+                CheckQuest()
+            end
+        end)
+    end
+end
+
+RunService.Heartbeat:Connect(function()
+    if autoQuestEnabled and savedCFrame then
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local hrp = char.HumanoidRootPart
+            if (hrp.Position - savedCFrame.Position).Magnitude > 2 then
+                hrp.CFrame = savedCFrame
+            end
+        end
+    end
+end)
+
+-- UI Dropdown (baru)
+sections.Quest1:Dropdown({
+	Name = "Select Quest",
+	Options = { "Deep Sea", "Element", "Aura Boat", "Temple Lever" },
+	Default = "Deep Sea",
+	Multi = false,
+	Search = false,
+	Callback = function(option)
+		selectedQuest = option
+		if autoQuestEnabled then
+			CheckQuest()
+		end
+	end,
+}, "QuestDropdown")
+
+-- UI Toggle (baru)
+sections.Quest1:Toggle({
+	Name = "Auto Quest",
+	Default = false,
+	Callback = function(state)
+		autoQuestEnabled = state
+		if state then
+			CheckQuest()
+		else
+			Unfreeze()
+			savedCFrame = nil
+		end
+	end,
+}, "AutoQuestToggle")
+
+sections.Auto:Header({
+	Name = "Auto Favorite & Trade"
+})
+
+local Net = require(ReplicatedStorage.Packages.Net)
+local Replion = require(ReplicatedStorage.Packages.Replion).Client
+
+local FavoriteItemEvent = Net:RemoteEvent("FavoriteItem")
+
+local tradeRemote = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/InitiateTrade")
+
+local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
+local data = Replion:WaitReplion("Data")
+
+-- // === MAP TIER === //
+local TierMap = {
+    ["Common"] = 1,
+    ["Uncommon"] = 2,
+    ["Rare"] = 3,
+    ["Epic"] = 4,
+    ["Legendary"] = 5,
+    ["Mythic"] = 6,
+    ["SECRET"] = 7,
+}
+
+-- =====================================================================
+-- UI BARU
+-- =====================================================================
+
+-- Input
+sections.Auto:Input({
+	Name = "Target Player",
+	Placeholder = "Example: Nexa1234",
+	Callback = function(value)
+		Options.PlayerInput = value
+	end,
+}, "PlayerInput")
+
+-- Dropdown
+sections.Auto:Dropdown({
+	Name = "Select Rarity",
+	Options = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" },
+	Default = "Rare",
+	Multi = false,
+	Callback = function(value)
+		Options.TierDropdown = value
+	end,
+}, "TierDropdown")
+
+-- Toggle Auto Favorite
+sections.Auto:Toggle({
+	Name = "Auto Favorite",
+	Default = false,
+	Callback = function(v)
+		Toggles.AutoFavoriteToggle = v
+	end
+}, "AutoFavoriteToggle")
+
+-- Toggle Auto Unfavorite
+sections.Auto:Toggle({
+	Name = "Auto Unfavorite",
+	Default = false,
+	Callback = function(v)
+		Toggles.AutoUnfavoriteToggle = v
+	end
+}, "AutoUnfavoriteToggle")
+
+-- Toggle Auto Trade
+sections.Auto:Toggle({
+	Name = "Auto Trade Fish",
+	Default = false,
+	Callback = function(v)
+		Toggles.AutoTradeToggle = v
+	end
+}, "AutoTradeToggle")
+
+
+-- =====================================================================
+-- FAVORITE / UNFAVORITE FUNCTION
+-- =====================================================================
+local function ProcessFavorite(tierTarget, setFavorite)
+    local inventory = data:GetExpect("Inventory")
+    local items = inventory and inventory["Items"]
+    if not items then return end
+
+    local total = 0
+
+    for _, item in pairs(items) do
+        if item and item.Favorited ~= setFavorite then
+            
+            for _, module in ipairs(ItemsFolder:GetChildren()) do
+                if module:IsA("ModuleScript") then
+                    local ok, moduleData = pcall(require, module)
+                    if ok and moduleData.Data and moduleData.Data.Id == item.Id then
+                        if moduleData.Data.Tier == tierTarget then
+                            
+                            item.Favorited = setFavorite
+                            FavoriteItemEvent:FireServer(item.UUID)
+
+                            total += 1
+                            task.wait(0.1)
+                        end
+                    end
+                end
+            end
+
+        end
+    end
+
+    if total > 0 then
+        Window:Notify({
+            Title = setFavorite and "⭐ Auto Favorite" or "💔 Auto Unfavorite",
+            Description = (setFavorite and "Added: " or "Removed: ") .. total .. " Tier " .. tierTarget .. " item(s)",
+            Lifetime = 3
+        })
+    end
+end
+
+-- =====================================================================
+-- AUTO FAVORITE LOOP (BARU)
+-- =====================================================================
+task.spawn(function()
+	while true do
+		if Toggles.AutoFavoriteToggle then
+			local tierName = Options.TierDropdown
+			local tierTarget = TierMap[tierName]
+			if tierTarget then
+				ProcessFavorite(tierTarget, true)
+			end
+		end
+		task.wait(3)
+	end
+end)
+
+-- =====================================================================
+-- AUTO UNFAVORITE LOOP (BARU)
+-- =====================================================================
+task.spawn(function()
+	while true do
+		if Toggles.AutoUnfavoriteToggle then
+			local tierName = Options.TierDropdown
+			local tierTarget = TierMap[tierName]
+			if tierTarget then
+				ProcessFavorite(tierTarget, false)
+			end
+		end
+		task.wait(3)
+	end
+end)
+
+-- =====================================================================
+-- AUTO TRADE LOOP (BARU)
+-- =====================================================================
+task.spawn(function()
+	while true do
+		if Toggles.AutoTradeToggle then
+
+			local playerName = Options.PlayerInput
+			local tierName = Options.TierDropdown
+			local tierTarget = TierMap[tierName]
+
+			if not playerName or playerName == "" then
+				Window:Notify({
+					Title = "⚠️ Error",
+					Description = "Player name is empty!",
+					Lifetime = 4
+				})
+				Toggles.AutoTradeToggle = false
+				continue
+			end
+
+			local target = Players:FindFirstChild(playerName)
+			if not target then
+				Window:Notify({
+					Title = "❌ Player Not Found",
+					Description = "Player '" .. playerName .. "' does not exist.",
+					Lifetime = 4
+				})
+				Toggles.AutoTradeToggle = false
+				continue
+			end
+
+			local inventory = data:GetExpect({ "Inventory", "Items" }) or {}
+
+			local fishTierIds = {}
+			for _, module in ipairs(ItemsFolder:GetChildren()) do
+				if module:IsA("ModuleScript") then
+					local ok, info = pcall(require, module)
+					if ok and info.Data and info.Data.Tier == tierTarget and info.Data.Type == "Fish" then
+						fishTierIds[info.Data.Id] = true
+					end
+				end
+			end
+
+			local tradeList = {}
+			for _, fish in pairs(inventory) do
+				if fishTierIds[fish.Id] then
+					table.insert(tradeList, fish.UUID)
+				end
+			end
+
+			if #tradeList == 0 then
+				Window:Notify({
+					Title = "🎣 Out of Fish",
+					Description = "No Tier " .. tierName .. " fish left!",
+					Lifetime = 4
+				})
+				Toggles.AutoTradeToggle = false
+				continue
+			end
+
+			for _, uuid in ipairs(tradeList) do
+				if not Toggles.AutoTradeToggle then break end
+				pcall(function()
+					tradeRemote:InvokeServer(target.UserId, uuid)
+				end)
+				task.wait(0.25)
+			end
+
+		end
+
+		task.wait(2)
+	end
+end)
+
+-- Config
+
+-- ImageBotton
+
+-- ========================================================================
+-- BAGIAN YANG DITAMBAHKAN (DIGABUNG) — TANPA MENGUBAH BAGIAN ATAS
+-- ========================================================================
 
 local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
-local player = game.Players.LocalPlayer
 
 --======================================================
 -- SCREEN GUI
@@ -720,11 +1266,11 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
 --======================================================
--- FRAME KOTAK (WARNA BIRU SEPERTI FOTO)
+-- FRAME KOTAK (WARNA BIRU)
 --======================================================
 local ToggleFrame = Instance.new("Frame")
 ToggleFrame.Parent = ScreenGui
-ToggleFrame.Size = UDim2.new(0, 70, 0, 70)
+ToggleFrame.Size = UDim2.new(0, 50, 0, 50)
 ToggleFrame.Position = UDim2.new(0, 100, 0, 150)
 ToggleFrame.BackgroundColor3 = Color3.fromRGB(20, 80, 200)
 ToggleFrame.BorderSizePixel = 0
@@ -737,23 +1283,23 @@ Corner.Parent = ToggleFrame
 local Gradient = Instance.new("UIGradient")
 Gradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(36, 112, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 42, 130))
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 42, 130)),
 })
 Gradient.Rotation = 45
 Gradient.Parent = ToggleFrame
 
--- GLOW BIRU SOFT
+-- GLOW BIRU
 local Glow = Instance.new("ImageLabel")
 Glow.Parent = ToggleFrame
 Glow.Size = UDim2.new(1.7, 0, 1.7, 0)
 Glow.Position = UDim2.new(0.5, 0, 0.5, 0)
 Glow.AnchorPoint = Vector2.new(0.5, 0.5)
 Glow.BackgroundTransparency = 1
-Glow.Image = "rbxassetid://12171505282" -- soft radial glow
+Glow.Image = "rbxassetid://12171505282"
 Glow.ImageColor3 = Color3.fromRGB(0, 153, 255)
 Glow.ImageTransparency = 0.35
 
--- BORDER HALUS
+-- BORDER
 local Stroke = Instance.new("UIStroke")
 Stroke.Parent = ToggleFrame
 Stroke.Thickness = 2
@@ -765,28 +1311,27 @@ Stroke.Transparency = 0.25
 --======================================================
 local ToggleBtn = Instance.new("ImageButton")
 ToggleBtn.Parent = ToggleFrame
-ToggleBtn.Size = UDim2.new(0, 60, 0, 60)
-ToggleBtn.Position = UDim2.new(0.5, -30, 0.5, -30)
+ToggleBtn.Size = UDim2.new(0, 40, 0, 40)
+ToggleBtn.Position = UDim2.new(0.5, -20, 0.5, -20)
 ToggleBtn.BackgroundTransparency = 1
 ToggleBtn.Image = "rbxassetid://123906607434048"
 
 --======================================================
--- STATE UITOGGLE
+-- STATE UI TOGGLE
 --======================================================
 local uiVisible = true
 
 ToggleBtn.MouseButton1Click:Connect(function()
-
     -- shrink
     TweenService:Create(ToggleBtn, TweenInfo.new(0.08), {
-        Size = UDim2.new(0, 52, 0, 52)
+        Size = UDim2.new(0, 35, 0, 35)
     }):Play()
 
     task.wait(0.08)
 
     -- expand
     TweenService:Create(ToggleBtn, TweenInfo.new(0.12), {
-        Size = UDim2.new(0, 60, 0, 60)
+        Size = UDim2.new(0, 40, 0, 40)
     }):Play()
 
     uiVisible = not uiVisible
@@ -795,7 +1340,7 @@ ToggleBtn.MouseButton1Click:Connect(function()
         Window:SetState(uiVisible)
     else
         warn("Window:SetState tidak ditemukan")
-    end    
+    end
 end)
 
 --======================================================
@@ -825,12 +1370,12 @@ local function endDrag()
     dragging = false
 end
 
--- Bisa ditarik dari Frame & Button
+-- Bisa ditarik dari frame & button
 for _, object in ipairs({ToggleFrame, ToggleBtn}) do
     object.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
             or input.UserInputType == Enum.UserInputType.Touch then
-            
+
             beginDrag(input)
 
             input.Changed:Connect(function()
@@ -842,7 +1387,7 @@ for _, object in ipairs({ToggleFrame, ToggleBtn}) do
     end)
 end
 
--- Update posisi drag
+-- Update drag
 UIS.InputChanged:Connect(function(input)
     if dragging then
         if input.UserInputType == Enum.UserInputType.MouseMovement
@@ -852,3 +1397,4 @@ UIS.InputChanged:Connect(function(input)
         end
     end
 end)
+
