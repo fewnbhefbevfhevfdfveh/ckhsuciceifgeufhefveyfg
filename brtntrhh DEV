@@ -15,7 +15,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.0",
+    Subtitle = "Fish It | V0.0.1",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -43,13 +43,13 @@ local tabGroups = {
 
 local tabs = {
 	Fishing = tabGroups.TabGroup1:Tab({ Name = "Fishing", Image = "rbxassetid://97899956724998" }),
-	Quest = tabGroups.TabGroup1:Tab({ Name = "Quest", Image = "rbxassetid://70719631016787" })
+	Quest = tabGroups.TabGroup1:Tab({ Name = "Quest", Image = "rbxassetid://70719631016787" }),
     Auto = tabGroups.TabGroup1:Tab({ Name = "Automatic", Image = "rbxassetid://100691400534443" }),
-	Shop = tabGroups.TabGroup1:Tab({ Name = "Shop", Image = "rbxassetid://134257769519180" })
-	Boat = tabGroups.TabGroup1:Tab({ Name = "Boat", Image = "rbxassetid://79620448065359" })
+	Shop = tabGroups.TabGroup1:Tab({ Name = "Shop", Image = "rbxassetid://134257769519180" }),
+	Boat = tabGroups.TabGroup1:Tab({ Name = "Boat", Image = "rbxassetid://79620448065359" }),
     Tp = tabGroups.TabGroup1:Tab({ Name = "Teleport", Image = "rbxassetid://124499210049583" }),
-	Player = tabGroups.TabGroup1:Tab({ Name = "Player", Image = "rbxassetid://105274848905298" })
-	Config = tabGroups.TabGroup1:Tab({ Name = "Config", Image = "rbxassetid://111411260968321" })
+	Player = tabGroups.TabGroup1:Tab({ Name = "Player", Image = "rbxassetid://105274848905298" }),
+	Config = tabGroups.TabGroup1:Tab({ Name = "Config", Image = "rbxassetid://111411260968321" }),
 }
 local sections = {
 	Fishing = tabs.Fishing:Section({ Side = "Left" }),
@@ -1019,6 +1019,8 @@ sections.Auto:Header({
 	Name = "Auto Favorite & Trade"
 })
 
+local LocalPlayer = Players.LocalPlayer
+
 local Net = require(ReplicatedStorage.Packages.Net)
 local Replion = require(ReplicatedStorage.Packages.Replion).Client
 
@@ -1247,6 +1249,16 @@ end)
 
 -- Config
 
+MacLib:SetFolder("Maclib")
+tabs.Config:InsertConfigSection("Left") -- karena yang ada adalah 'Config'
+
+Window.onUnloaded(function()
+	print("Unloaded!")
+end)
+
+tabs.Fishing:Select() -- pilih tab yang benar-benar ada
+MacLib:LoadAutoLoadConfig()
+
 -- ImageBotton
 
 -- ========================================================================
@@ -1397,4 +1409,3 @@ UIS.InputChanged:Connect(function(input)
         end
     end
 end)
-
