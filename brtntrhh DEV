@@ -15,7 +15,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.1",
+    Subtitle = "Fish It | V0.0.0",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -1019,251 +1019,438 @@ sections.Auto:Header({
 	Name = "Auto Favorite & Trade"
 })
 
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- ========================================================================
+-- REQUIRE MODULES
+-- ========================================================================
+local Net = require(ReplicatedStorage.Packages.Net)
+local ReplionClient = require(ReplicatedStorage.Packages.Replion).Client
+local DataReplion = ReplionClient:WaitReplion("Data")
+local ItemUtility = require(ReplicatedStorage.Shared.ItemUtility)
 
+-- Remotes
+local FavoriteRemote = Net:RemoteEvent("FavoriteItem")
+local TradeRemote = ReplicatedStorage
+	:WaitForChild("Packages")
+	:WaitForChild("_Index")
+	:WaitForChild("sleitnick_net@0.2.0")
+	:WaitForChild("net")
+	:WaitForChild("RF/InitiateTrade")
+
+local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
+
+-- ========================================================================
+-- STATE (TIDAK ADA _G)
+-- ========================================================================
+local state = {
+	selectedTiers = {},
+
+	autoFavorite = false,
+	autoUnfavorite = false,
+	autoTrade = false,
+
+	workerFavorite = nil,
+	workerUnfavorite = nil,
+	workerTrade = nil,
+
+	stopFavorite = false,
+	stopUnfavorite = false,
+	stopTrade = false,
+
+	targetPlayer = "",
+}
+
+-- ========================================================================
+-- TIER LIST & NORMALIZER
+-- ========================================================================
+local TierList = { "Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET" }
+
+local nameToTier = {
+	Common = 1, Uncommon = 2, Rare = 3, Epic = 4,
+	Legendary = 5, Mythic = 6, SECRET = 7
+}
+
+local function normalize(value)
+	if not value then return {} end
+	if type(value) == "string" then return { value } end
+
+	local out = {}
+	for k, v in pairs(value) do
+		if type(k) == "string" and v == true then
+			table.insert(out, k)
+		elseif type(v) == "string" then
+			table.insert(out, v)
+		end
+	end
+	return out
+end
+
+local function isTierMatch(itemTier, selected)
+	for _, tName in ipairs(selected) do
+		if nameToTier[tName] == tonumber(itemTier) then
+			return true
+		end
+	end
+	return false
+end
+
+-- ========================================================================
+-- SAFE CALL
+-- ========================================================================
+local function safeFavorite(uuid)
+	pcall(function()
+		FavoriteRemote:FireServer(uuid)
+	end)
+end
+
+local function safeTrade(userid, uuid)
+	pcall(function()
+		TradeRemote:InvokeServer(userid, uuid)
+	end)
+end
+
+-- ========================================================================
+-- WORKER FAVORITE (REAL-TIME LOOP)
+-- ========================================================================
+local function workerFavorite()
+	local RATE = 0.06
+	local LOOP_DELAY = 1.1
+
+	while state.autoFavorite do
+		if state.stopFavorite then return end
+
+		local inventory = DataReplion:GetExpect("Inventory")
+		if inventory and inventory.Items then
+			for _, item in ipairs(inventory.Items) do
+				if state.stopFavorite then return end
+
+				local ok, data = pcall(function()
+					return ItemUtility.GetItemDataFromItemType("Items", item.Id)
+				end)
+
+				if ok and data and data.Data then
+					local tier = data.Data.Tier
+
+					if isTierMatch(tier, state.selectedTiers) and not item.Favorited then
+						safeFavorite(item.UUID)
+						task.wait(RATE)
+					end
+				end
+			end
+		end
+
+		task.wait(LOOP_DELAY)
+	end
+end
+
+-- ========================================================================
+-- WORKER UNFAVORITE (REAL-TIME LOOP)
+-- ========================================================================
+local function workerUnfavorite()
+	local RATE = 0.06
+	local LOOP_DELAY = 1.1
+
+	while state.autoUnfavorite do
+		if state.stopUnfavorite then return end
+
+		local inventory = DataReplion:GetExpect("Inventory")
+		if inventory and inventory.Items then
+			for _, item in ipairs(inventory.Items) do
+				if state.stopUnfavorite then return end
+
+				local ok, data = pcall(function()
+					return ItemUtility.GetItemDataFromItemType("Items", item.Id)
+				end)
+
+				if ok and data and data.Data then
+					local tier = data.Data.Tier
+
+					if isTierMatch(tier, state.selectedTiers) and item.Favorited then
+						safeFavorite(item.UUID)
+						task.wait(RATE)
+					end
+				end
+			end
+		end
+
+		task.wait(LOOP_DELAY)
+	end
+end
+
+-- ========================================================================
+-- WORKER TRADE (REAL-TIME LOOP)
+-- ========================================================================
+local function workerTrade()
+	local RATE = 0.15
+	local LOOP_DELAY = 1.0
+
+	while state.autoTrade do
+		if state.stopTrade then return end
+
+		local target = Players:FindFirstChild(state.targetPlayer)
+		if not target then
+			state.autoTrade = false
+			return
+		end
+
+		local inventory = DataReplion:GetExpect({ "Inventory", "Items" }) or {}
+		local list = {}
+
+		for _, item in ipairs(inventory) do
+			local ok, data = pcall(function()
+				return ItemUtility.GetItemDataFromItemType("Items", item.Id)
+			end)
+
+			if ok and data and data.Data then
+				if data.Data.Type == "Fish" and isTierMatch(data.Data.Tier, state.selectedTiers) then
+					table.insert(list, item.UUID)
+				end
+			end
+		end
+
+		if #list == 0 then
+			Window:Notify({
+				Title = "Trade",
+				Description = "No more fish for selected tier",
+			})
+			state.autoTrade = false
+			break
+		end
+
+		for _, uuid in ipairs(list) do
+			if not state.autoTrade then break end
+			safeTrade(target.UserId, uuid)
+			task.wait(RATE)
+		end
+
+		task.wait(LOOP_DELAY)
+	end
+end
+
+-- ========================================================================
+-- UI SECTION
+-- ========================================================================
+sections.Auto:Input({
+	Name = "Target Player",
+	Placeholder = "Example: Nexa123",
+	Callback = function(text)
+		state.targetPlayer = text
+	end
+}, "PlayerInput")
+
+sections.Auto:Dropdown({
+	Name = "Select Tier(s)",
+	Search = true,
+	Multi = true,
+	Options = TierList,
+	Default = {"Rare"},
+	Callback = function(val)
+		state.selectedTiers = normalize(val)
+
+		if Window then
+			Window:Notify({
+				Title = "Tier Selected",
+				Description = table.concat(state.selectedTiers, ", ")
+			})
+		end
+	end
+}, "TierDropdown")
+
+-- Toggle Auto Favorite
+sections.Auto:Toggle({
+	Name = "Auto Favorite",
+	Default = false,
+	Callback = function(b)
+		state.autoFavorite = b
+		state.stopFavorite = not b
+		if b then task.spawn(workerFavorite) end
+	end
+}, "AutoFavoriteToggle")
+
+-- Toggle Auto Unfavorite
+sections.Auto:Toggle({
+	Name = "Auto Unfavorite",
+	Default = false,
+	Callback = function(b)
+		state.autoUnfavorite = b
+		state.stopUnfavorite = not b
+		if b then task.spawn(workerUnfavorite) end
+	end
+}, "AutoUnfavoriteToggle")
+
+-- Toggle Auto Trade
+sections.Auto:Toggle({
+	Name = "Auto Trade",
+	Default = false,
+	Callback = function(b)
+		state.autoTrade = b
+		state.stopTrade = not b
+		if b then task.spawn(workerTrade) end
+	end
+}, "AutoTradeToggle")
+
+sections.Auto1:Header({
+	Name = "Auto Enchant"
+})
+
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Library utama
 local Net = require(ReplicatedStorage.Packages.Net)
 local Replion = require(ReplicatedStorage.Packages.Replion).Client
 
-local FavoriteItemEvent = Net:RemoteEvent("FavoriteItem")
-local tradeRemote = ReplicatedStorage
-    :WaitForChild("Packages")
-    :WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0")
-    :WaitForChild("net")
-    :WaitForChild("RF/InitiateTrade")
+-- RemoteEvent
+local EquipItemEvent = Net:RemoteEvent("EquipItem")
+local EquipToolEvent = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net"):WaitForChild("RE/EquipToolFromHotbar")
+local ActivateAltarEvent = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net"):WaitForChild("RE/ActivateEnchantingAltar")
 
-local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
-local data = Replion:WaitReplion("Data")
-
----------------------------------------------------------
--- === FIX: DEFAULT TABLE (WAJIB ADA AGAR TIDAK NIL) ===
----------------------------------------------------------
-
-local Options = {
-    PlayerName = "",
-    SelectedTier = "Rare", -- Default sama dengan UI
-}
-
-local Toggles = {
-    AutoFavorite = false,
-    AutoUnfavorite = false,
-    AutoTrade = false,
-}
-
----------------------------------------------------------
--- === TIER MAP ===
----------------------------------------------------------
-
-local TierMap = {
-    ["Common"] = 1,
-    ["Uncommon"] = 2,
-    ["Rare"] = 3,
-    ["Epic"] = 4,
-    ["Legendary"] = 5,
-    ["Mythic"] = 6,
-    ["SECRET"] = 7,
-}
-
----------------------------------------------------------
--- === WINDUI: INPUT / TOGGLE / DROPDOWN ===
----------------------------------------------------------
-
-sections.Auto:Input({
-    Name = "Target Player",
-    Placeholder = "Example: Nexa123",
-    AcceptedCharacters = "All",
-    Callback = function(text)
-        Options.PlayerName = text
+-- === UI baru (Dropdown dan Toggle) ===
+sections.Auto1:Dropdown({
+    Name = "Select Enchant",
+    Search = true,
+    Multi = true,
+    Required = false,
+    Options = {
+        "Leprechaun I",
+        "Leprechaun II",
+        "Mutation Hunter I",
+        "Mutation Hunter II",
+        "Gold Digger I",
+        "Reeler I",
+        "Big Hunter I",
+        "Empowered I",
+        "Glistening I",
+        "Stargazer I",
+        "Stormhunter I",
+        "XPerienced I",
+        "Cursed I",
+        "Prismatic I"
+    },
+    Default = {"Leprechaun I"},
+    Callback = function(Value)
+        Options.SelectedEnchants = {}
+        for enchantName, state in pairs(Value) do
+            if state then
+                Options.SelectedEnchants[enchantName] = true
+            end
+        end
     end,
-}, "TargetInput")
+}, "EnchantDropdown")
 
-sections.Auto:Dropdown({
-    Name = "Select Tier",
-    Search = false,
-    Multi = false,
-    Options = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET" },
-    Default = "Rare",
-    Callback = function(v)
-        Options.SelectedTier = v
-    end,
-}, "TierDropdown")
-
-sections.Auto:Toggle({
-    Name = "Auto Favorite",
+sections.Auto1:Toggle({
+    Name = "Auto Enchant",
     Default = false,
     Callback = function(value)
-        Toggles.AutoFavorite = value
+        Toggles.AutoEnchant = value
+        if value then
+            if currentTask then task.cancel(currentTask) end
+            currentTask = task.spawn(function()
+                while Toggles.AutoEnchant do
+                    local success = doEnchantCycle()
+                    if success then
+                        Toggles.AutoEnchant = false
+                        break
+                    else
+                        task.wait(3)
+                    end
+                end
+            end)
+        else
+            if currentTask then
+                task.cancel(currentTask)
+                currentTask = nil
+            end
+        end
     end,
-}, "AutoFavoriteToggle")
+}, "AutoEnchantToggle")
 
-sections.Auto:Toggle({
-    Name = "Auto Unfavorite",
-    Default = false,
-    Callback = function(value)
-        Toggles.AutoUnfavorite = value
-    end,
-}, "AutoUnfavoriteToggle")
-
-sections.Auto:Toggle({
-    Name = "Auto Trade Fish",
-    Default = false,
-    Callback = function(value)
-        Toggles.AutoTrade = value
-    end,
-}, "AutoTradeToggle")
-
----------------------------------------------------------
--- === UTILITY: NOTIFICATION ===
----------------------------------------------------------
-
-local function Notify(desc)
-    Window:Notify({
-        Title = "Nexa Notify",
-        Description = desc,
-        Lifetime = 4
-    })
+-- === Fungsi cek apakah enchant sesuai target ===
+local function isTargetEnchant(text)
+    local selected = Options.SelectedEnchants
+    if typeof(selected) == "table" then
+        for name, state in pairs(selected) do
+            if state == true and string.find(text, name) then
+                return true
+            end
+        end
+    end
+    return false
 end
 
----------------------------------------------------------
--- === FAVORITE / UNFAVORITE PROCESS ===
----------------------------------------------------------
+local currentTask
 
-local function ProcessFavorite(tierTarget, setFavorite)
+-- === Fungsi utama proses enchant ===
+function doEnchantCycle()
+    local data = Replion:WaitReplion("Data")
     local inventory = data:GetExpect("Inventory")
     local items = inventory and inventory["Items"]
-    if not items then return end
+    if not items then return false end
 
-    local total = 0
+    local moduleTarget = ReplicatedStorage.Items:FindFirstChild("Enchant Stone")
+    if not moduleTarget then return false end
 
+    local ok, moduleData = pcall(require, moduleTarget)
+    local targetId = ok and moduleData.Data and moduleData.Data.Id
+    if not targetId then return false end
+
+    -- Equip item Enchant Stone
+    local equipped = false
     for _, item in pairs(items) do
-        if item and item.Favorited ~= setFavorite then
-            for _, module in ipairs(ItemsFolder:GetChildren()) do
-                if module:IsA("ModuleScript") then
-                    local ok, moduleData = pcall(require, module)
-                    if ok and moduleData.Data and moduleData.Data.Id == item.Id then
-                        if moduleData.Data.Tier == tierTarget then
-                            item.Favorited = setFavorite
-                            FavoriteItemEvent:FireServer(item.UUID)
-                            total += 1
-                            task.wait(0.1)
-                        end
-                    end
-                end
-            end
+        if item.Id == targetId and not item.Equip then
+            EquipItemEvent:FireServer(item.UUID, "Enchant Stones")
+            item.Equip = true
+            equipped = true
+            break
         end
     end
 
-    if total > 0 then
-        Notify((setFavorite and "⭐ Favorited: " or "💔 Unfavorited: ") .. total .. " item(s)")
+    if not equipped then return false end
+    task.wait(1)
+
+    -- Equip tool di hotbar slot 5
+    EquipToolEvent:FireServer(5)
+    task.wait(1)
+
+    -- Aktifkan altar enchant
+    ActivateAltarEvent:FireServer()
+
+    -- Tunggu GUI Roll Enchant
+    local rollEnchant = playerGui:WaitForChild("Roll Enchant")
+    local main = rollEnchant:WaitForChild("Main")
+
+    local inside
+    repeat
+        inside = main:FindFirstChild("Inside")
+        task.wait(1)
+    until inside or not Toggles.AutoEnchant
+
+    if not Toggles.AutoEnchant then return false end
+
+    local top = inside:WaitForChild("Top")
+    local enchantLabel = top:WaitForChild("EnchantLabel")
+
+    task.wait(3)
+
+    -- Pantau enchant setiap detik
+    while Toggles.AutoEnchant and task.wait(1) do
+        local currentText = enchantLabel.Text
+        if isTargetEnchant(currentText) then
+            Window:Notify({
+                Title = "Enchant Found!",
+                Description = currentText,
+                Lifetime = 4
+            })
+            return true
+        end
+
+        if currentText ~= "" and currentText ~= "..." and currentText ~= "Rolling..." then
+            return false
+        end
     end
+
+    return false
 end
-
----------------------------------------------------------
--- === AUTO FAVORITE LOOP ===
----------------------------------------------------------
-
-task.spawn(function()
-    while task.wait(1) do
-        if Toggles.AutoFavorite then
-            local tier = Options.SelectedTier -- FIX: pakai tier string
-            if tier then
-                ProcessFavorite(tier, true)
-            end
-        end
-    end
-end)
-
----------------------------------------------------------
--- === AUTO UNFAVORITE LOOP ===
----------------------------------------------------------
-
-task.spawn(function()
-    while task.wait(1) do
-        if Toggles.AutoUnfavorite then
-            local tier = Options.SelectedTier -- FIX: pakai tier string
-            if tier then
-                ProcessFavorite(tier, false)
-            end
-        end
-    end
-end)
-
----------------------------------------------------------
--- === AUTO TRADE LOOP ===
----------------------------------------------------------
-
-task.spawn(function()
-    while task.wait(2) do
-        
-        if Toggles.AutoTrade then
-            
-            local playerName = Options.PlayerName
-            local tier = TierMap[Options.SelectedTier]
-
-            -- Validasi input
-            if not playerName or playerName == "" then
-                Notify("⚠️ Please fill target player name!")
-                Toggles.AutoTrade = false
-                continue
-            end
-
-            if not tier then
-                Notify("⚠️ Invalid tier!")
-                Toggles.AutoTrade = false
-                continue
-            end
-
-            local target = Players:FindFirstChild(playerName)
-            if not target then
-                Notify("❌ Player not found!")
-                Toggles.AutoTrade = false
-                continue
-            end
-
-            -- Ambil inventory user
-            local inventory = data:GetExpect({ "Inventory", "Items" }) or {}
-            local fishTierIds = {}
-
-            -- Ambil ID ikan berdasarkan tier
-            for _, module in ipairs(ItemsFolder:GetChildren()) do
-                if module:IsA("ModuleScript") then
-                    let ok, itemData = pcall(require, module)
-                    if ok and itemData and itemData.Data then
-                        if itemData.Data.Type == "Fish" and itemData.Data.Tier == tier then
-                            fishTierIds[itemData.Data.Id] = true
-                        end
-                    end
-                end
-            end
-
-            local tradeList = {}
-
-            for _, item in pairs(inventory) do
-                if item and fishTierIds[item.Id] then
-                    table.insert(tradeList, item.UUID)
-                end
-            end
-
-            if #tradeList == 0 then
-                Notify("🎣 No fish left to trade!")
-                Toggles.AutoTrade = false
-                continue
-            end
-
-            -- Kirim trade 1 per 1
-            for _, uuid in ipairs(tradeList) do
-                if not Toggles.AutoTrade then break end
-
-                pcall(function()
-                    tradeRemote:InvokeServer(target.UserId, uuid)
-                end)
-
-                task.wait(0.25)
-            end
-        end
-    end
-end)
 
 -- Config
 
