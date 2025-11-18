@@ -15,7 +15,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.1",
+    Subtitle = "Fish It | V0.0.0",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -58,6 +58,12 @@ local sections = {
     Quest1 = tabs.Quest:Section({ Side = "Right" }),
     Auto = tabs.Auto:Section({ Side = "Left" }),
     Auto1 = tabs.Auto:Section({ Side = "Right" }),
+    Shop = tabs.Shop:Section({ Side = "Left" }),
+    Shop1 = tabs.Shop:Section({ Side = "Right" }),
+    Boat = tabs.Boat:Section({ Side = "Left" }),
+    Boat1 = tabs.Boat:Section({ Side = "Right" }),
+    Tp = tabs.Tp:Section({ Side = "Left" }),
+    Tp1 = tabs.Tp:Section({ Side = "Right" }),
 }
 
 sections.Fishing:Header({
@@ -1456,6 +1462,491 @@ function doEnchantCycle()
     return false
 end
 
+sections.Shop:Header({
+	Name = "Rod Shop"
+})
+
+-- Mapping nama rod ke ID
+local rodMap = {
+    ["Starter Rod"] = 1,
+    ["Luck Rod"] = 79,
+    ["Carbon Rod"] = 76,
+    ["Grass Rod"] = 85,
+    ["Demascus Rod"] = 77,
+    ["Ice Rod"] = 78,
+    ["Lucky Rod"] = 4,
+    ["Midnight Rod"] = 80,
+    ["Steampunk Rod"] = 6,
+    ["Chrome Rod"] = 7,
+    ["Fluorescent Rod"] = 255,
+    ["Astral Rod"] = 5,
+    ["Angler Rod"] = 168,
+    ["Ares Rod"] = 126,
+    ["Bamboo Rod"] = 258,
+}
+
+local selectedRods = {}
+local autoBuyRods = false
+
+-- Dropdown untuk pilih rod
+sections.Shop:Dropdown({
+    Name = "Select Rods",
+    Search = true,
+    Multi = true,
+    Required = false,
+    Options = {
+        "Starter Rod", "Luck Rod", "Carbon Rod", "Grass Rod",
+        "Demascus Rod", "Ice Rod", "Lucky Rod", "Midnight Rod",
+        "Steampunk Rod", "Chrome Rod", "Fluorescent Rod", "Astral Rod",
+        "Angler Rod", "Ares Rod", "Bamboo Rod"
+    },
+    Default = {},
+    Callback = function(value)
+        selectedRods = {}
+        -- value adalah table key=rodName, value=bool (true/false)
+        for rodName, state in pairs(value) do
+            if state then
+                local id = rodMap[rodName]
+                if id then
+                    table.insert(selectedRods, id)
+                end
+            end
+        end
+    end,
+}, "SelectRodsDropdown")
+
+-- Tombol untuk beli rod manual
+sections.Shop:Button({
+    Name = "Purchase Selected Rods",
+    Callback = function()
+        if #selectedRods == 0 then
+            return
+        end
+
+        local remote = ReplicatedStorage
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/PurchaseFishingRod")
+
+        for _, id in ipairs(selectedRods) do
+            pcall(function()
+                remote:InvokeServer(id)
+            end)
+        end
+    end,
+}, "PurchaseRodsButton")
+
+-- Toggle untuk auto buy loop
+sections.Shop:Toggle({
+    Name = "Auto Purchase Loop",
+    Default = false,
+    Callback = function(state)
+        autoBuyRods = state
+
+        if state then
+            task.spawn(function()
+                local remote = ReplicatedStorage
+                    :WaitForChild("Packages")
+                    :WaitForChild("_Index")
+                    :WaitForChild("sleitnick_net@0.2.0")
+                    :WaitForChild("net")
+                    :WaitForChild("RF/PurchaseFishingRod")
+
+                while autoBuyRods do
+                    if #selectedRods > 0 then
+                        for _, id in ipairs(selectedRods) do
+                            pcall(function()
+                                remote:InvokeServer(id)
+                            end)
+                        end
+                    end
+                    task.wait(5)
+                end
+            end)
+        end
+    end,
+}, "AutoBuyRodToggle")
+
+sections.Shop:Header({
+	Name = "Bait Shop"
+})
+
+-- Mapping nama bait ke ID
+local BaitID = {
+    ["Topwater Bait"] = 10,
+    ["Luck Bait"] = 2,
+    ["Midnight Bait"] = 3,
+    ["Nature Bait"] = 17,
+    ["Chroma Bait"] = 6,
+    ["Dark Matter Bait"] = 8,
+    ["Corrupt Bait"] = 15,
+    ["Aether Bait"] = 16,
+    ["Floral Bait"] = 20,
+}
+
+local selectedBaits = {}
+local autoBuyBait = false
+
+-- Dropdown pilih bait
+sections.Shop:Dropdown({
+    Name = "Select Baits",
+    Search = true,
+    Multi = true,
+    Required = false,
+    Options = {
+        "Topwater Bait", "Luck Bait", "Midnight Bait", "Nature Bait",
+        "Chroma Bait", "Dark Matter Bait", "Corrupt Bait", "Aether Bait",
+        "Floral Bait"
+    },
+    Default = {},
+    Callback = function(value)
+        selectedBaits = {}
+        -- value adalah table dengan key = baitName, value = true/false
+        for baitName, state in pairs(value) do
+            if state then
+                local id = BaitID[baitName]
+                if id then
+                    table.insert(selectedBaits, id)
+                end
+            end
+        end
+    end,
+}, "SelectBaitsDropdown")
+
+-- Tombol pembelian bait manual
+sections.Shop:Button({
+    Name = "Purchase Selected Baits",
+    Callback = function()
+        if #selectedBaits == 0 then
+            return
+        end
+
+        local remote = ReplicatedStorage
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/PurchaseBait")
+
+        for _, id in ipairs(selectedBaits) do
+            pcall(function()
+                remote:InvokeServer(id)
+            end)
+        end
+    end,
+}, "PurchaseBaitsButton")
+
+-- Toggle auto purchase loop
+sections.Shop:Toggle({
+    Name = "Auto Purchase Loop",
+    Default = false,
+    Callback = function(state)
+        autoBuyBait = state
+
+        if state then
+            task.spawn(function()
+                local remote = ReplicatedStorage
+                    :WaitForChild("Packages")
+                    :WaitForChild("_Index")
+                    :WaitForChild("sleitnick_net@0.2.0")
+                    :WaitForChild("net")
+                    :WaitForChild("RF/PurchaseBait")
+
+                while autoBuyBait do
+                    if #selectedBaits > 0 then
+                        for _, id in ipairs(selectedBaits) do
+                            pcall(function()
+                                remote:InvokeServer(id)
+                            end)
+                        end
+                    end
+                    task.wait(5)
+                end
+            end)
+        end
+    end,
+}, "AutoBuyBaitToggle")
+
+sections.Shop1:Header({
+	Name = "Weather Shop"
+})
+
+-- RemoteEvent untuk beli weather
+local PurchaseWeather = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/PurchaseWeatherEvent")
+
+local selectedWeathers = {}
+local autoPurchase = false
+
+-- Dropdown multi-select weather list
+sections.Shop1:Dropdown({
+    Name = "Select Weather Events",
+    Search = true,
+    Multi = true,
+    Required = false,
+    Options = { "Snow", "Wind", "Cloudy", "Storm", "Radiant", "Shark Hunt" },
+    Default = {},
+    Callback = function(values)
+        selectedWeathers = {}
+        for weatherName, state in pairs(values) do
+            if state then
+                table.insert(selectedWeathers, weatherName)
+            end
+        end
+    end,
+}, "SelectWeatherDropdown")
+
+-- Tombol beli manual
+sections.Shop1:Button({
+    Name = "Purchase Selected Weather",
+    Callback = function()
+        if #selectedWeathers == 0 then
+            return
+        end
+
+        for _, weather in ipairs(selectedWeathers) do
+            pcall(function()
+                PurchaseWeather:InvokeServer(weather)
+            end)
+        end
+    end,
+}, "PurchaseWeatherButton")
+
+-- Toggle auto purchase loop
+sections.Shop1:Toggle({
+    Name = "Auto Purchase Weather",
+    Default = false,
+    Callback = function(state)
+        autoPurchase = state
+
+        if state then
+            task.spawn(function()
+                while autoPurchase do
+                    if #selectedWeathers > 0 then
+                        for _, weather in ipairs(selectedWeathers) do
+                            pcall(function()
+                                PurchaseWeather:InvokeServer(weather)
+                            end)
+                            task.wait(0.3)
+                        end
+                    end
+                    task.wait(1.5)
+                end
+            end)
+        end
+    end,
+}, "AutoWeatherPurchaseToggle")
+
+
+sections.Shop1:Header({
+	Name = "Boat Shop"
+})
+
+-- RemoteEvent untuk beli boat
+local PurchaseBoat = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/PurchaseBoat")
+
+-- Daftar Boat
+local BoatList = {
+    ["Small Boat"] = 1,
+    ["Kayak"] = 2,
+    ["Jetski"] = 3,
+    ["Highfield Boat"] = 4,
+    ["Speed Boat"] = 5,
+    ["Fishing Boat"] = 6,
+    ["Mini Yacht"] = 14,
+    ["Mini Hoverboat"] = 15,
+    ["Hyper Boat"] = 7,
+}
+
+local selectedBoatID = nil
+local autoBuyBoat = false
+
+-- Dropdown pilih boat (single select)
+sections.Shop1:Dropdown({
+    Name = "Select Boat to Purchase",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = {
+        "Small Boat",
+        "Kayak",
+        "Jetski",
+        "Highfield Boat",
+        "Speed Boat",
+        "Fishing Boat",
+        "Mini Yacht",
+        "Mini Hoverboat",
+        "Hyper Boat"
+    },
+    Default = nil,
+    Callback = function(option)
+        selectedBoatID = BoatList[option]
+    end,
+}, "SelectBoatDropdown")
+
+-- Tombol pembelian manual
+sections.Shop1:Button({
+    Name = "Purchase Selected Boat",
+    Callback = function()
+        if not selectedBoatID then
+            return
+        end
+
+        pcall(function()
+            PurchaseBoat:InvokeServer(selectedBoatID)
+        end)
+    end,
+}, "PurchaseBoatButton")
+
+-- Toggle auto purchase loop
+sections.Shop1:Toggle({
+    Name = "Auto Purchase Loop",
+    Default = false,
+    Callback = function(state)
+        autoBuyBoat = state
+
+        if state then
+            task.spawn(function()
+                while autoBuyBoat do
+                    if selectedBoatID then
+                        pcall(function()
+                            PurchaseBoat:InvokeServer(selectedBoatID)
+                        end)
+                    end
+                    task.wait(5)
+                end
+            end)
+        end
+    end,
+}, "AutoBuyBoatToggle")
+
+sections.Boat:Header({
+	Name = "Boat Spawn"
+})
+
+-- RemoteEvent untuk spawn boat
+local SpawnBoat = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/SpawnBoat")
+
+-- Daftar Boat
+local BoatList = {
+    ["Small Boat"] = 1,
+    ["Kayak"] = 2,
+    ["Jetski"] = 3,
+    ["Highfield Boat"] = 4,
+    ["Speed Boat"] = 5,
+    ["Fishing Boat"] = 6,
+    ["Mini Yacht"] = 14,
+    ["Mini Hoverboat"] = 15,
+    ["Hyper Boat"] = 7,
+    ["Dinky Fishing Boat"] = 20,
+    ["Aura Boat"] = 17,
+    ["Burger Boat"] = 18,
+    ["Mega Hovercraft"] = 19,
+    ["Froen Boat"] = 11,
+    ["Cruiser Boat"] = 13,
+    ["Rubber Ducky"] = 16,
+}
+
+-- Convert ke nama boat untuk dropdown
+local BoatNames = {}
+for name, _ in pairs(BoatList) do
+    table.insert(BoatNames, name)
+end
+table.sort(BoatNames)
+
+-- Default pilihan
+local selectedBoatID = BoatList[BoatNames[1]]
+
+-- Dropdown Pilih Boat untuk spawn
+sections.Boat:Dropdown({
+    Name = "Select Boat to Spawn",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = BoatNames,
+    Default = BoatNames[1],
+    Callback = function(option)
+        selectedBoatID = BoatList[option]
+    end,
+}, "SpawnBoatDropdown")
+
+-- Tombol Spawn Boat
+sections.Boat:Button({
+    Name = "Spawn Boat",
+    Callback = function()
+        pcall(function()
+            SpawnBoat:InvokeServer(selectedBoatID)
+        end)
+    end,
+}, "SpawnBoatButton")
+
+sections.Boat1:Header({
+	Name = "Boat Speed"
+})
+
+local customSpeed = 1000
+
+-- Input untuk set kecepatan
+sections.Boat1:Input({
+    Name = "Set Boat Speed",
+    Placeholder = "Example: 1000",
+    AcceptedCharacters = "0123456789",
+    Callback = function(value)
+        local number = tonumber(value)
+        if number then
+            customSpeed = number
+        end
+    end,
+}, "BoatSpeedInput")
+
+-- Toggle Super Speed
+sections.Boat1:Toggle({
+    Name = "Super Speed Boats",
+    Default = false,
+    Callback = function(state)
+        local BoatsModule = require(ReplicatedStorage.Shared.BoatsHandlingData)
+
+        -- Simpan speed asli kalau belum ada
+        if not BoatsModule._OriginalSpeed then
+            BoatsModule._OriginalSpeed = {}
+            for boatName, boatData in pairs(BoatsModule) do
+                if type(boatData) == "table" and boatData.Speed then
+                    BoatsModule._OriginalSpeed[boatName] = boatData.Speed
+                end
+            end
+        end
+
+        if state then
+            for _, boatData in pairs(BoatsModule) do
+                if type(boatData) == "table" and boatData.Speed then
+                    boatData.Speed = customSpeed
+                end
+            end
+        else
+            for boatName, boatData in pairs(BoatsModule) do
+                if type(boatData) == "table" and boatData.Speed and BoatsModule._OriginalSpeed[boatName] then
+                    boatData.Speed = BoatsModule._OriginalSpeed[boatName]
+                end
+            end
+        end
+    end,
+}, "SuperSpeedToggle")
 
 -- Config
 
