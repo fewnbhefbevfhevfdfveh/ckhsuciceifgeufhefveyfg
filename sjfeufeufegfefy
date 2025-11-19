@@ -18,47 +18,25 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.1",
+    Subtitle = "Fish It | V0.0.0",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
     ShowUserInfo = false,
-    Keybind = Enum.KeyCode.RightControl,
+    Keybind = Enum.KeyCode.G,
     AcrylicBlur = true,
 })
 
-local cg = game:GetService("CoreGui")
-
-task.spawn(function()
-    while true do
-        for _, obj in ipairs(cg:GetDescendants()) do
-            if obj.Name == "UserInfo" then
-                obj:Destroy()
-            end
-        end
-        task.wait(1)
-    end
-end)
-
--- ========================================================================
--- FIX LocalPlayer (antisometimes nil)
--- ========================================================================
 if not player then
     Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
     player = Players.LocalPlayer
 end
 
--- ========================================================================
--- CEK Window & Notify
--- ========================================================================
 if not Window or type(Window.Notify) ~= "function" then
     warn("Window:Notify tidak ditemukan. Pastikan Window tersedia sebelum menjalankan script.")
     return
 end
 
--- ========================================================================
--- SISTEM COUNTER EXECUTION
--- ========================================================================
 local counterFile = "3" .. tostring(player.UserId) .. ".txt"
 local executeCount = 0
 
@@ -81,18 +59,12 @@ if type(writefile) == "function" then
     end)
 end
 
--- ========================================================================
--- SAFE NOTIFY
--- ========================================================================
 local function safeNotify(tbl)
     pcall(function()
         Window:Notify(tbl)
     end)
 end
 
--- ========================================================================
--- NOTIFY BERURUTAN DALAM COROUTINE (TIDAK BLOCK SCRIPT UTAMA)
--- ========================================================================
 coroutine.wrap(function()
     safeNotify({
         Title = "Welcome",
@@ -129,12 +101,6 @@ coroutine.wrap(function()
         Lifetime = 2,
     })
 end)()
-
--- ========================================================================
--- SCRIPT UTAMA BERJALAN TANPA MENUNGGU NOTIFY
--- ========================================================================
-print("Script utama berjalan tanpa menunggu notify selesai")
-
 
 local tabGroups = {
 	TabGroup1 = Window:TabGroup()
@@ -1199,9 +1165,6 @@ sections.Auto:Header({
 	Name = "Auto Favorite & Trade"
 })
 
--- ========================================================================
--- REQUIRE MODULES
--- ========================================================================
 local Net = require(ReplicatedStorage.Packages.Net)
 local ReplionClient = require(ReplicatedStorage.Packages.Replion).Client
 local DataReplion = ReplionClient:WaitReplion("Data")
@@ -1209,6 +1172,7 @@ local ItemUtility = require(ReplicatedStorage.Shared.ItemUtility)
 
 -- Remotes
 local FavoriteRemote = Net:RemoteEvent("FavoriteItem")
+
 local TradeRemote = ReplicatedStorage
 	:WaitForChild("Packages")
 	:WaitForChild("_Index")
@@ -1219,7 +1183,7 @@ local TradeRemote = ReplicatedStorage
 local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
 
 -- ========================================================================
--- STATE (TIDAK ADA _G)
+-- STATE
 -- ========================================================================
 local state = {
 	selectedTiers = {},
@@ -1228,19 +1192,18 @@ local state = {
 	autoUnfavorite = false,
 	autoTrade = false,
 
-	workerFavorite = nil,
-	workerUnfavorite = nil,
-	workerTrade = nil,
-
 	stopFavorite = false,
 	stopUnfavorite = false,
 	stopTrade = false,
 
 	targetPlayer = "",
+
+	fishTarget = 0,
+	fishCount = 0,
 }
 
 -- ========================================================================
--- TIER LIST & NORMALIZER
+-- TIER LIST
 -- ========================================================================
 local TierList = { "Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET" }
 
@@ -1289,7 +1252,7 @@ local function safeTrade(userid, uuid)
 end
 
 -- ========================================================================
--- WORKER FAVORITE (REAL-TIME LOOP)
+-- WORKER FAVORITE
 -- ========================================================================
 local function workerFavorite()
 	local RATE = 0.06
@@ -1323,7 +1286,7 @@ local function workerFavorite()
 end
 
 -- ========================================================================
--- WORKER UNFAVORITE (REAL-TIME LOOP)
+-- WORKER UNFAVORITE
 -- ========================================================================
 local function workerUnfavorite()
 	local RATE = 0.06
@@ -1357,7 +1320,7 @@ local function workerUnfavorite()
 end
 
 -- ========================================================================
--- WORKER TRADE (REAL-TIME LOOP)
+-- WORKER TRADE
 -- ========================================================================
 local function workerTrade()
 	local RATE = 0.15
@@ -1407,6 +1370,53 @@ local function workerTrade()
 end
 
 -- ========================================================================
+-- TRADE COMPLETED LISTENER + COUNT
+-- ========================================================================
+local notifGui = player.PlayerGui:WaitForChild("Text Notifications")
+local notifFrame = notifGui:WaitForChild("Frame")
+
+local function checkTradeTile(tile)
+	local header = tile:FindFirstChild("Header")
+
+	if header and header:IsA("TextLabel") then
+		if header.Text == "Trade completed!" then
+
+			state.fishCount = state.fishCount + 1
+
+			Window:Notify({
+				Title = "Trade",
+				Description = "Trade completed! (" .. state.fishCount .. "/" .. state.fishTarget .. ")"
+			})
+
+			if state.fishTarget > 0 and state.fishCount >= state.fishTarget then
+				state.autoTrade = false
+				state.stopTrade = true
+
+				Window:Notify({
+					Title = "Trade",
+					Description = "Trade target reached!"
+				})
+			end
+		end
+	end
+end
+
+for _, tile in ipairs(notifFrame:GetChildren()) do
+	if tile.Name == "TextTile" then
+		checkTradeTile(tile)
+	end
+end
+
+notifFrame.ChildAdded:Connect(function(child)
+	if child.Name == "TextTile" then
+		local header = child:WaitForChild("Header", 5)
+		if header then
+			checkTradeTile(child)
+		end
+	end
+end)
+
+-- ========================================================================
 -- UI SECTION
 -- ========================================================================
 sections.Auto:Input({
@@ -1417,6 +1427,29 @@ sections.Auto:Input({
 	end
 }, "PlayerInput")
 
+sections.Auto:Input({
+	Name = "Fish Amount Trade",
+	Placeholder = "Example: 10",
+	AcceptedCharacters = "0123456789",
+	Callback = function(input)
+		local amount = tonumber(input)
+		if amount then
+			state.fishTarget = amount
+			state.fishCount = 0
+
+			Window:Notify({
+				Title = "Trade",
+				Description = "Trade target set: ".. amount
+			})
+		else
+			Window:Notify({
+				Title = "Error",
+				Description = "Input must be a number!"
+			})
+		end
+	end,
+}, "TargetAmountInput")
+
 sections.Auto:Dropdown({
 	Name = "Select Tier(s)",
 	Search = true,
@@ -1426,16 +1459,13 @@ sections.Auto:Dropdown({
 	Callback = function(val)
 		state.selectedTiers = normalize(val)
 
-		if Window then
-			Window:Notify({
-				Title = "Tier Selected",
-				Description = table.concat(state.selectedTiers, ", ")
-			})
-		end
+		Window:Notify({
+			Title = "Tier Selected",
+			Description = table.concat(state.selectedTiers, ", ")
+		})
 	end
 }, "TierDropdown")
 
--- Toggle Auto Favorite
 sections.Auto:Toggle({
 	Name = "Auto Favorite",
 	Default = false,
@@ -1446,7 +1476,6 @@ sections.Auto:Toggle({
 	end
 }, "AutoFavoriteToggle")
 
--- Toggle Auto Unfavorite
 sections.Auto:Toggle({
 	Name = "Auto Unfavorite",
 	Default = false,
@@ -1457,7 +1486,6 @@ sections.Auto:Toggle({
 	end
 }, "AutoUnfavoriteToggle")
 
--- Toggle Auto Trade
 sections.Auto:Toggle({
 	Name = "Auto Trade",
 	Default = false,
@@ -1471,8 +1499,6 @@ sections.Auto:Toggle({
 sections.Auto1:Header({
 	Name = "Auto Enchant"
 })
-
-local playerGui = player:WaitForChild("PlayerGui")
 
 -- === FIX TAMBAHAN WAJIB ===
 local Options = { SelectedEnchants = {} }
@@ -2197,27 +2223,116 @@ sections.Tp1:Header({
 	Name = "Position"
 })
 
--- Variabel local (tanpa _G)
-local savedCFrame = nil
+local savedPositions = {
+    ["Position 1"] = nil,
+    ["Position 2"] = nil,
+    ["Position 3"] = nil,
+}
+
+local selectedSlot = nil
 local teleportEnabled = false
 
--- Tombol Save Position
+local folder = "SavedPositions"
+
+if not isfolder(folder) then
+    makefolder(folder)
+end
+
+local function savePosToFile(slotName, cframe)
+    local path = folder .. "/" .. slotName .. ".txt"
+    local data = string.format(
+        "CFrame.new(%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f)",
+        cframe:GetComponents()
+    )
+    writefile(path, data)
+end
+
+local function loadPosFromFile(slotName)
+    local path = folder .. "/" .. slotName .. ".txt"
+    if not isfile(path) then return nil end
+
+    local raw = readfile(path)
+
+    local success, result = pcall(function()
+        return loadstring("return " .. raw)()
+    end)
+
+    if success and typeof(result) == "CFrame" then
+        return result
+    end
+
+    return nil
+end
+
+for slotName, _ in pairs(savedPositions) do
+    local loaded = loadPosFromFile(slotName)
+    if loaded then
+        savedPositions[slotName] = loaded
+    end
+end
+
+local function Notify(title, desc)
+    Window:Notify({
+        Title = title,
+        Description = desc,
+        Lifetime = 4
+    })
+end
+
+sections.Tp1:Dropdown({ 
+    Name = "Save Position Slot",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = {"Position 1", "Position 2", "Position 3"},
+    Default = {""},
+    Callback = function(Value)
+        selectedSlot = Value
+        local loaded = loadPosFromFile(Value)
+        if loaded then
+            savedPositions[Value] = loaded
+            Notify("Loaded", Value .. " loaded from file.")
+        else
+            Notify("Empty Slot", Value .. " has no saved file.")
+        end
+    end,
+}, "SavePositionDropdown")
+
 sections.Tp1:Button({
     Name = "Save Position",
     Callback = function()
+        if not selectedSlot then
+            Notify("Error!", "Please select a slot first!")
+            return
+        end
+
         local char = LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            savedCFrame = hrp.CFrame   -- Simpan posisi + rotasi
+        if not hrp then
+            Notify("Error!", "HumanoidRootPart not found.")
+            return
         end
+
+        savedPositions[selectedSlot] = hrp.CFrame
+        savePosToFile(selectedSlot, hrp.CFrame)
+
+        Notify("Saved!", selectedSlot .. " has been saved to file.")
     end,
 }, "SavePositionButton")
 
--- Fungsi freeze karakter di posisi savedCFrame
-local function freezeCharacter()
+local function freezeToSlot(slot)
+    local targetCFrame = savedPositions[slot]
+    if not targetCFrame then
+        Notify("Error!", slot .. " has no saved position!")
+        return
+    end
+
     local char = LocalPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp or not savedCFrame then return end
+    if not hrp then
+        Notify("Error!", "HumanoidRootPart not found.")
+        return
+    end
 
     local bv = Instance.new("BodyVelocity")
     bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
@@ -2226,34 +2341,45 @@ local function freezeCharacter()
 
     local bg = Instance.new("BodyGyro")
     bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
-    bg.CFrame = savedCFrame
+    bg.CFrame = targetCFrame
     bg.Parent = hrp
 
     task.spawn(function()
         while teleportEnabled and hrp and hrp.Parent do
-            local distance = (hrp.Position - savedCFrame.Position).Magnitude
-            if distance > 2 then
-                hrp.CFrame = savedCFrame
+            if (hrp.Position - targetCFrame.Position).Magnitude > 2 then
+                hrp.CFrame = targetCFrame
             end
             task.wait(0.1)
         end
-        
+
         if bv then bv:Destroy() end
         if bg then bg:Destroy() end
     end)
 end
 
--- Toggle Teleport dan Auto Freeze
 sections.Tp1:Toggle({
     Name = "Teleport to Saved Position",
     Default = false,
     Callback = function(state)
         teleportEnabled = state
+
         if teleportEnabled then
-            freezeCharacter()
+            if not selectedSlot then
+                Notify("Error!", "Select a position slot first!")
+                teleportEnabled = false
+                return
+            end
+
+            if not savedPositions[selectedSlot] then
+                Notify("Error!", selectedSlot .. " has no saved CFrame!")
+                teleportEnabled = false
+                return
+            end
+
+            freezeToSlot(selectedSlot)
         end
     end,
-}, "TeleportToSavedPosToggle")
+}, "TeleportToSavedPositionToggle")
 
 
 sections.Player:Header({
@@ -2340,6 +2466,113 @@ sections.Player:Toggle({
         end
     end,
 }, "AntiLavaToggle")
+
+local Lighting = game:GetService("Lighting")
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Simpan setting lighting asli
+local originalLightingSettings = {
+    GlobalShadows = Lighting.GlobalShadows,
+    Brightness = Lighting.Brightness,
+    FogEnd = Lighting.FogEnd,
+    ClockTime = Lighting.ClockTime
+}
+
+-- Simpan state partikel asli
+local originalParticles = {}
+for _, v in pairs(workspace:GetDescendants()) do
+    if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") then
+        originalParticles[v] = v.Enabled
+    end
+end
+
+local darkGui
+
+-- Fungsi toggle black screen
+local function SetBlackScreen(state)
+    if state then
+        if not darkGui then
+            darkGui = Instance.new("ScreenGui")
+            darkGui.Name = "DarkScreenGUI"
+            darkGui.ResetOnSpawn = false
+            darkGui.IgnoreGuiInset = true
+            darkGui.Parent = playerGui
+
+            local darkFrame = Instance.new("Frame")
+            darkFrame.Name = "DarkFrame"
+            darkFrame.Size = UDim2.new(1, 0, 1, 0)
+            darkFrame.Position = UDim2.new(0, 0, 0, 0)
+            darkFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+            darkFrame.BackgroundTransparency = 0
+            darkFrame.BorderSizePixel = 0
+            darkFrame.Parent = darkGui
+        end
+
+        Lighting.GlobalShadows = false
+        Lighting.Brightness = 0
+        Lighting.FogEnd = 100000
+        Lighting.ClockTime = 12
+
+        for particle, _ in pairs(originalParticles) do
+            particle.Enabled = false
+        end
+    else
+        if darkGui then
+            darkGui:Destroy()
+            darkGui = nil
+        end
+
+        Lighting.GlobalShadows = originalLightingSettings.GlobalShadows
+        Lighting.Brightness = originalLightingSettings.Brightness
+        Lighting.FogEnd = originalLightingSettings.FogEnd
+        Lighting.ClockTime = originalLightingSettings.ClockTime
+
+        for particle, enabled in pairs(originalParticles) do
+            if particle.Parent then
+                particle.Enabled = enabled
+            end
+        end
+    end
+end
+
+-- Toggle UI menggunakan WindUI
+sections.Player:Toggle({
+    Name = "Black Screen",
+    Default = false,
+    Callback = function(value)
+        SetBlackScreen(value)
+        Window:Notify({
+            Title = "Black Screen",
+            Description = (value and "Enabled " or "Disabled ") .. "Black Screen"
+        })
+    end,
+}, "BlackScreenToggle")
+
+sections.Player:Toggle({
+    Name = "Hide Notifications",
+    Default = false,
+    Callback = function(value)
+        local gui = player:WaitForChild("PlayerGui")
+        
+        -- Small Notification
+        local smallNotif = gui:FindFirstChild("Small Notification")
+        if smallNotif and smallNotif:FindFirstChild("Display") then
+            smallNotif.Display.Visible = not value  -- ON: false, OFF: true
+        end
+
+        -- Text Notifications
+        local textNotif = gui:FindFirstChild("Text Notifications")
+        if textNotif and textNotif:FindFirstChild("Frame") then
+            textNotif.Frame.Visible = not value  -- ON: false, OFF: true
+        end
+
+        -- Notifikasi WindUI
+        Window:Notify({
+            Title = "Hide Notifications",
+            Description = value and "Enabled" or "Disabled"
+        })
+    end,
+}, "HideNotificationsToggle")
 
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
