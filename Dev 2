@@ -2583,13 +2583,13 @@ sections.Player:Toggle({
         -- Small Notification
         local smallNotif = gui:FindFirstChild("Small Notification")
         if smallNotif and smallNotif:FindFirstChild("Display") then
-            smallNotif.Display.Visible = not value
+            smallNotif.Display.Visible = not value  -- ON: false, OFF: true
         end
 
         -- Text Notifications
         local textNotif = gui:FindFirstChild("Text Notifications")
         if textNotif and textNotif:FindFirstChild("Frame") then
-            textNotif.Frame.Visible = not value
+            textNotif.Frame.Visible = not value  -- ON: false, OFF: true
         end
 
         -- Notifikasi WindUI
