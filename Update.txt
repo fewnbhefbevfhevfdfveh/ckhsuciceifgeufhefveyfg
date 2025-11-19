@@ -1,2 +1,7 @@
-- Added:
-- [+] Added Anti Stuck Detector
+[/] Small Update New Ui Rework
+[/] Rework Save Position
+[+] Added Hide Notifications
+[+] Added Anti Drown
+[+] Added Input Fish Amount Trade
+[+] Added Instant Fishing
+[+] Added No Animation
