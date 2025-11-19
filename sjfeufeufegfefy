@@ -27,6 +27,19 @@ local Window = MacLib:Window({
     AcrylicBlur = true,
 })
 
+local cg = game:GetService("CoreGui")
+
+task.spawn(function()
+    while true do
+        for _, obj in ipairs(cg:GetDescendants()) do
+            if obj.Name == "UserInfo" then
+                obj:Destroy()
+            end
+        end
+        task.wait(1)
+    end
+end)
+
 if not player then
     Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
     player = Players.LocalPlayer
