@@ -1,4 +1,3 @@
-
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
@@ -1473,7 +1472,59 @@ sections.Auto1:Header({
 	Name = "Auto Enchant"
 })
 
-local playerGui = player:WaitForChild("PlayerGui")
+-- Fungsi untuk buat dan pantau enchant baru
+local function createEnchantParagraph(rollEnchant)
+    local main = rollEnchant:WaitForChild("Main")
+
+    -- Tunggu sampai Inside muncul
+    local inside
+    repeat
+        inside = main:FindFirstChild("Inside")
+        task.wait(1)
+    until inside
+
+    -- Buat paragraph baru di WindUI
+    local enchantParagraph = sections.Auto1:Paragraph({
+        Header = "Enchant Status",
+        Body = "Loading..."
+    })
+
+    if enchantParagraph and enchantParagraph.UpdateBody then
+        enchantParagraph:UpdateBody("Enchant: Inside Loaded...")
+    end
+
+    -- Tunggu sampai EnchantLabel muncul
+    local top = inside:WaitForChild("Top")
+    local enchantLabel = top:WaitForChild("EnchantLabel")
+
+    if enchantParagraph and enchantParagraph.UpdateBody then
+        enchantParagraph:UpdateBody("Enchant: Ready...")
+    end
+
+    -- Loop pemantau enchant
+    local lastText = ""
+    while task.wait(1) do
+        if not enchantLabel.Parent then break end -- jika GUI hilang, keluar loop
+        local currentText = enchantLabel.Text or "Unknown"
+        if currentText ~= lastText then
+            lastText = currentText
+            if enchantParagraph and enchantParagraph.UpdateBody then
+                enchantParagraph:UpdateBody("Enchant: " .. currentText)
+            end
+        end
+    end
+end
+
+-- Pantau kemunculan Roll Enchant baru
+PlayerGui.ChildAdded:Connect(function(child)
+    if child.Name == "Roll Enchant" then
+        task.spawn(function()
+            createEnchantParagraph(child)
+        end)
+    end
+end)
+
+sections.Auto1:Divider()
 
 -- === FIX TAMBAHAN WAJIB ===
 local Options = { SelectedEnchants = {} }
@@ -2441,6 +2492,113 @@ sections.Player:Toggle({
         end
     end,
 }, "AntiLavaToggle")
+
+local Lighting = game:GetService("Lighting")
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Simpan setting lighting asli
+local originalLightingSettings = {
+    GlobalShadows = Lighting.GlobalShadows,
+    Brightness = Lighting.Brightness,
+    FogEnd = Lighting.FogEnd,
+    ClockTime = Lighting.ClockTime
+}
+
+-- Simpan state partikel asli
+local originalParticles = {}
+for _, v in pairs(workspace:GetDescendants()) do
+    if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") then
+        originalParticles[v] = v.Enabled
+    end
+end
+
+local darkGui
+
+-- Fungsi toggle black screen
+local function SetBlackScreen(state)
+    if state then
+        if not darkGui then
+            darkGui = Instance.new("ScreenGui")
+            darkGui.Name = "DarkScreenGUI"
+            darkGui.ResetOnSpawn = false
+            darkGui.IgnoreGuiInset = true
+            darkGui.Parent = playerGui
+
+            local darkFrame = Instance.new("Frame")
+            darkFrame.Name = "DarkFrame"
+            darkFrame.Size = UDim2.new(1, 0, 1, 0)
+            darkFrame.Position = UDim2.new(0, 0, 0, 0)
+            darkFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+            darkFrame.BackgroundTransparency = 0
+            darkFrame.BorderSizePixel = 0
+            darkFrame.Parent = darkGui
+        end
+
+        Lighting.GlobalShadows = false
+        Lighting.Brightness = 0
+        Lighting.FogEnd = 100000
+        Lighting.ClockTime = 12
+
+        for particle, _ in pairs(originalParticles) do
+            particle.Enabled = false
+        end
+    else
+        if darkGui then
+            darkGui:Destroy()
+            darkGui = nil
+        end
+
+        Lighting.GlobalShadows = originalLightingSettings.GlobalShadows
+        Lighting.Brightness = originalLightingSettings.Brightness
+        Lighting.FogEnd = originalLightingSettings.FogEnd
+        Lighting.ClockTime = originalLightingSettings.ClockTime
+
+        for particle, enabled in pairs(originalParticles) do
+            if particle.Parent then
+                particle.Enabled = enabled
+            end
+        end
+    end
+end
+
+-- Toggle UI menggunakan WindUI
+sections.Player:Toggle({
+    Name = "Black Screen",
+    Default = false,
+    Callback = function(value)
+        SetBlackScreen(value)
+        Window:Notify({
+            Title = "Black Screen",
+            Description = (value and "Enabled " or "Disabled ") .. "Black Screen"
+        })
+    end,
+}, "BlackScreenToggle")
+
+sections.Player:Toggle({
+    Name = "Hide Notifications",
+    Default = false,
+    Callback = function(value)
+        local gui = player:WaitForChild("PlayerGui")
+        
+        -- Small Notification
+        local smallNotif = gui:FindFirstChild("Small Notification")
+        if smallNotif and smallNotif:FindFirstChild("Display") then
+            smallNotif.Display.Visible = not value
+        end
+
+        -- Text Notifications
+        local textNotif = gui:FindFirstChild("Text Notifications")
+        if textNotif and textNotif:FindFirstChild("Frame") then
+            textNotif.Frame.Visible = not value
+        end
+
+        -- Notifikasi WindUI
+        Window:Notify({
+            Title = "Hide Notifications",
+            Description = value and "Enabled" or "Disabled"
+        })
+    end,
+}, "HideNotificationsToggle")
 
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
