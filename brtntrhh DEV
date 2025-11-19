@@ -1,3 +1,4 @@
+
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
@@ -2197,27 +2198,116 @@ sections.Tp1:Header({
 	Name = "Position"
 })
 
--- Variabel local (tanpa _G)
-local savedCFrame = nil
+local savedPositions = {
+    ["Position 1"] = nil,
+    ["Position 2"] = nil,
+    ["Position 3"] = nil,
+}
+
+local selectedSlot = nil
 local teleportEnabled = false
 
--- Tombol Save Position
+local folder = "SavedPositions"
+
+if not isfolder(folder) then
+    makefolder(folder)
+end
+
+local function savePosToFile(slotName, cframe)
+    local path = folder .. "/" .. slotName .. ".txt"
+    local data = string.format(
+        "CFrame.new(%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f)",
+        cframe:GetComponents()
+    )
+    writefile(path, data)
+end
+
+local function loadPosFromFile(slotName)
+    local path = folder .. "/" .. slotName .. ".txt"
+    if not isfile(path) then return nil end
+
+    local raw = readfile(path)
+
+    local success, result = pcall(function()
+        return loadstring("return " .. raw)()
+    end)
+
+    if success and typeof(result) == "CFrame" then
+        return result
+    end
+
+    return nil
+end
+
+for slotName, _ in pairs(savedPositions) do
+    local loaded = loadPosFromFile(slotName)
+    if loaded then
+        savedPositions[slotName] = loaded
+    end
+end
+
+local function Notify(title, desc)
+    Window:Notify({
+        Title = title,
+        Description = desc,
+        Lifetime = 4
+    })
+end
+
+sections.Tp1:Dropdown({ 
+    Name = "Save Position Slot",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = {"Position 1", "Position 2", "Position 3"},
+    Default = {""},
+    Callback = function(Value)
+        selectedSlot = Value
+        local loaded = loadPosFromFile(Value)
+        if loaded then
+            savedPositions[Value] = loaded
+            Notify("Loaded", Value .. " loaded from file.")
+        else
+            Notify("Empty Slot", Value .. " has no saved file.")
+        end
+    end,
+}, "SavePositionDropdown")
+
 sections.Tp1:Button({
     Name = "Save Position",
     Callback = function()
+        if not selectedSlot then
+            Notify("Error!", "Please select a slot first!")
+            return
+        end
+
         local char = LocalPlayer.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            savedCFrame = hrp.CFrame   -- Simpan posisi + rotasi
+        if not hrp then
+            Notify("Error!", "HumanoidRootPart not found.")
+            return
         end
+
+        savedPositions[selectedSlot] = hrp.CFrame
+        savePosToFile(selectedSlot, hrp.CFrame)
+
+        Notify("Saved!", selectedSlot .. " has been saved to file.")
     end,
 }, "SavePositionButton")
 
--- Fungsi freeze karakter di posisi savedCFrame
-local function freezeCharacter()
+local function freezeToSlot(slot)
+    local targetCFrame = savedPositions[slot]
+    if not targetCFrame then
+        Notify("Error!", slot .. " has no saved position!")
+        return
+    end
+
     local char = LocalPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp or not savedCFrame then return end
+    if not hrp then
+        Notify("Error!", "HumanoidRootPart not found.")
+        return
+    end
 
     local bv = Instance.new("BodyVelocity")
     bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
@@ -2226,34 +2316,45 @@ local function freezeCharacter()
 
     local bg = Instance.new("BodyGyro")
     bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
-    bg.CFrame = savedCFrame
+    bg.CFrame = targetCFrame
     bg.Parent = hrp
 
     task.spawn(function()
         while teleportEnabled and hrp and hrp.Parent do
-            local distance = (hrp.Position - savedCFrame.Position).Magnitude
-            if distance > 2 then
-                hrp.CFrame = savedCFrame
+            if (hrp.Position - targetCFrame.Position).Magnitude > 2 then
+                hrp.CFrame = targetCFrame
             end
             task.wait(0.1)
         end
-        
+
         if bv then bv:Destroy() end
         if bg then bg:Destroy() end
     end)
 end
 
--- Toggle Teleport dan Auto Freeze
 sections.Tp1:Toggle({
     Name = "Teleport to Saved Position",
     Default = false,
     Callback = function(state)
         teleportEnabled = state
+
         if teleportEnabled then
-            freezeCharacter()
+            if not selectedSlot then
+                Notify("Error!", "Select a position slot first!")
+                teleportEnabled = false
+                return
+            end
+
+            if not savedPositions[selectedSlot] then
+                Notify("Error!", selectedSlot .. " has no saved CFrame!")
+                teleportEnabled = false
+                return
+            end
+
+            freezeToSlot(selectedSlot)
         end
     end,
-}, "TeleportToSavedPosToggle")
+}, "TeleportToSavedPositionToggle")
 
 
 sections.Player:Header({
