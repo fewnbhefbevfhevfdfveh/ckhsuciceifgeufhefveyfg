@@ -1199,10 +1199,7 @@ sections.Auto:Header({
 	Name = "Auto Favorite & Trade"
 })
 
--- ========================================================================
--- REQUIRE MODULES
--- ========================================================================
-local Net = require(ReplicatedStorage.Packages.Net)
+ocal Net = require(ReplicatedStorage.Packages.Net)
 local ReplionClient = require(ReplicatedStorage.Packages.Replion).Client
 local DataReplion = ReplionClient:WaitReplion("Data")
 local ItemUtility = require(ReplicatedStorage.Shared.ItemUtility)
@@ -1219,7 +1216,7 @@ local TradeRemote = ReplicatedStorage
 local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
 
 -- ========================================================================
--- STATE (TIDAK ADA _G)
+-- STATE
 -- ========================================================================
 local state = {
 	selectedTiers = {},
@@ -1228,19 +1225,18 @@ local state = {
 	autoUnfavorite = false,
 	autoTrade = false,
 
-	workerFavorite = nil,
-	workerUnfavorite = nil,
-	workerTrade = nil,
-
 	stopFavorite = false,
 	stopUnfavorite = false,
 	stopTrade = false,
 
 	targetPlayer = "",
+
+	fishTarget = 0,
+	fishCount = 0,
 }
 
 -- ========================================================================
--- TIER LIST & NORMALIZER
+-- TIER LIST
 -- ========================================================================
 local TierList = { "Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET" }
 
@@ -1289,7 +1285,7 @@ local function safeTrade(userid, uuid)
 end
 
 -- ========================================================================
--- WORKER FAVORITE (REAL-TIME LOOP)
+-- WORKER FAVORITE
 -- ========================================================================
 local function workerFavorite()
 	local RATE = 0.06
@@ -1323,7 +1319,7 @@ local function workerFavorite()
 end
 
 -- ========================================================================
--- WORKER UNFAVORITE (REAL-TIME LOOP)
+-- WORKER UNFAVORITE
 -- ========================================================================
 local function workerUnfavorite()
 	local RATE = 0.06
@@ -1357,7 +1353,7 @@ local function workerUnfavorite()
 end
 
 -- ========================================================================
--- WORKER TRADE (REAL-TIME LOOP)
+-- WORKER TRADE
 -- ========================================================================
 local function workerTrade()
 	local RATE = 0.15
@@ -1407,15 +1403,89 @@ local function workerTrade()
 end
 
 -- ========================================================================
+-- TRADE COMPLETED LISTENER + COUNT
+-- ========================================================================
+local notifGui = player.PlayerGui:WaitForChild("Text Notifications")
+local notifFrame = notifGui:WaitForChild("Frame")
+
+local function checkTradeTile(tile)
+	local header = tile:FindFirstChild("Header")
+
+	if header and header:IsA("TextLabel") then
+		if header.Text == "Trade completed!" then
+
+			-- Tambah jumlah trade berhasil
+			state.fishCount = state.fishCount + 1
+
+			Window:Notify({
+				Title = "Trade",
+				Description = "Trade completed! (" .. state.fishCount .. "/" .. state.fishTarget .. ")"
+			})
+
+			-- Stop jika target sudah tercapai
+			if state.fishTarget > 0 and state.fishCount >= state.fishTarget then
+				state.autoTrade = false
+				state.stopTrade = true
+
+				Window:Notify({
+					Title = "Trade",
+					Description = "Trade target reached!"
+				})
+			end
+		end
+	end
+end
+
+-- Cek TextTile yang sudah ada
+for _, tile in ipairs(notifFrame:GetChildren()) do
+	if tile.Name == "TextTile" then
+		checkTradeTile(tile)
+	end
+end
+
+-- Detect TextTile baru
+notifFrame.ChildAdded:Connect(function(child)
+	if child.Name == "TextTile" then
+		local header = child:WaitForChild("Header", 5)
+		if header then
+			checkTradeTile(child)
+		end
+	end
+end)
+
+-- ========================================================================
 -- UI SECTION
 -- ========================================================================
 sections.Auto:Input({
 	Name = "Target Player",
-	Placeholder = "Example: Nexa123",
+	Placeholder = "DisplayName",
 	Callback = function(text)
 		state.targetPlayer = text
 	end
 }, "PlayerInput")
+
+sections.Auto:Input({
+	Name = "Fish Amount Trade",
+	Placeholder = "Example: 10",
+	AcceptedCharacters = "0123456789",
+	Callback = function(input)
+		local amount = tonumber(input)
+		if amount then
+			state.fishTarget = amount
+			state.fishCount = 0
+
+			Window:Notify({
+				Title = "Trade",
+				Description = "Trade target set: ".. amount
+			})
+		else
+			Window:Notify({
+				Title = "Error",
+				Description = "Input must be a number!"
+			})
+		end
+	end,
+}, "TargetAmountInput")
 
 sections.Auto:Dropdown({
 	Name = "Select Tier(s)",
@@ -1426,16 +1496,13 @@ sections.Auto:Dropdown({
 	Callback = function(val)
 		state.selectedTiers = normalize(val)
 
-		if Window then
-			Window:Notify({
-				Title = "Tier Selected",
-				Description = table.concat(state.selectedTiers, ", ")
-			})
-		end
+		Window:Notify({
+			Title = "Tier Selected",
+			Description = table.concat(state.selectedTiers, ", ")
+		})
 	end
 }, "TierDropdown")
 
--- Toggle Auto Favorite
 sections.Auto:Toggle({
 	Name = "Auto Favorite",
 	Default = false,
@@ -1446,7 +1513,6 @@ sections.Auto:Toggle({
 	end
 }, "AutoFavoriteToggle")
 
--- Toggle Auto Unfavorite
 sections.Auto:Toggle({
 	Name = "Auto Unfavorite",
 	Default = false,
@@ -1457,7 +1523,6 @@ sections.Auto:Toggle({
 	end
 }, "AutoUnfavoriteToggle")
 
--- Toggle Auto Trade
 sections.Auto:Toggle({
 	Name = "Auto Trade",
 	Default = false,
@@ -1468,63 +1533,10 @@ sections.Auto:Toggle({
 	end
 }, "AutoTradeToggle")
 
+
 sections.Auto1:Header({
 	Name = "Auto Enchant"
 })
-
--- Fungsi untuk buat dan pantau enchant baru
-local function createEnchantParagraph(rollEnchant)
-    local main = rollEnchant:WaitForChild("Main")
-
-    -- Tunggu sampai Inside muncul
-    local inside
-    repeat
-        inside = main:FindFirstChild("Inside")
-        task.wait(1)
-    until inside
-
-    -- Buat paragraph baru di WindUI
-    local enchantParagraph = sections.Auto1:Paragraph({
-        Header = "Enchant Status",
-        Body = "Loading..."
-    })
-
-    if enchantParagraph and enchantParagraph.UpdateBody then
-        enchantParagraph:UpdateBody("Enchant: Inside Loaded...")
-    end
-
-    -- Tunggu sampai EnchantLabel muncul
-    local top = inside:WaitForChild("Top")
-    local enchantLabel = top:WaitForChild("EnchantLabel")
-
-    if enchantParagraph and enchantParagraph.UpdateBody then
-        enchantParagraph:UpdateBody("Enchant: Ready...")
-    end
-
-    -- Loop pemantau enchant
-    local lastText = ""
-    while task.wait(1) do
-        if not enchantLabel.Parent then break end -- jika GUI hilang, keluar loop
-        local currentText = enchantLabel.Text or "Unknown"
-        if currentText ~= lastText then
-            lastText = currentText
-            if enchantParagraph and enchantParagraph.UpdateBody then
-                enchantParagraph:UpdateBody("Enchant: " .. currentText)
-            end
-        end
-    end
-end
-
--- Pantau kemunculan Roll Enchant baru
-PlayerGui.ChildAdded:Connect(function(child)
-    if child.Name == "Roll Enchant" then
-        task.spawn(function()
-            createEnchantParagraph(child)
-        end)
-    end
-end)
-
-sections.Auto1:Divider()
 
 -- === FIX TAMBAHAN WAJIB ===
 local Options = { SelectedEnchants = {} }
