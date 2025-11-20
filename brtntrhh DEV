@@ -17,13 +17,13 @@ local camera = workspace.CurrentCamera
 local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
-    Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.2",
+    Title = "Nexa | Developer",
+    Subtitle = "Fish It | V0.0.0",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
     ShowUserInfo = false,
-    Keybind = Enum.KeyCode.RightControl,
+    Keybind = Enum.KeyCode.G,
     AcrylicBlur = true,
 })
 
@@ -40,25 +40,16 @@ task.spawn(function()
     end
 end)
 
--- ========================================================================
--- FIX LocalPlayer (antisometimes nil)
--- ========================================================================
 if not player then
     Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
     player = Players.LocalPlayer
 end
 
--- ========================================================================
--- CEK Window & Notify
--- ========================================================================
 if not Window or type(Window.Notify) ~= "function" then
     warn("Window:Notify tidak ditemukan. Pastikan Window tersedia sebelum menjalankan script.")
     return
 end
 
--- ========================================================================
--- SISTEM COUNTER EXECUTION
--- ========================================================================
 local counterFile = "3" .. tostring(player.UserId) .. ".txt"
 local executeCount = 0
 
@@ -81,18 +72,12 @@ if type(writefile) == "function" then
     end)
 end
 
--- ========================================================================
--- SAFE NOTIFY
--- ========================================================================
 local function safeNotify(tbl)
     pcall(function()
         Window:Notify(tbl)
     end)
 end
 
--- ========================================================================
--- NOTIFY BERURUTAN DALAM COROUTINE (TIDAK BLOCK SCRIPT UTAMA)
--- ========================================================================
 coroutine.wrap(function()
     safeNotify({
         Title = "Welcome",
@@ -129,12 +114,6 @@ coroutine.wrap(function()
         Lifetime = 2,
     })
 end)()
-
--- ========================================================================
--- SCRIPT UTAMA BERJALAN TANPA MENUNGGU NOTIFY
--- ========================================================================
-print("Script utama berjalan tanpa menunggu notify selesai")
-
 
 local tabGroups = {
 	TabGroup1 = Window:TabGroup()
@@ -1462,7 +1441,7 @@ sections.Auto:Input({
 }, "PlayerInput")
 
 sections.Auto:Input({
-	Name = "Fish Amount",
+	Name = "Fish Amount Trade",
 	Placeholder = "Example: 10",
 	AcceptedCharacters = "0123456789",
 	Callback = function(input)
