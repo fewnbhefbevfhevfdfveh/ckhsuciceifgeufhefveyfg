@@ -23,42 +23,20 @@ local Window = MacLib:Window({
     DragStyle = 1,
     DisabledWindowControls = {},
     ShowUserInfo = false,
-    Keybind = Enum.KeyCode.RightControl,
+    Keybind = Enum.KeyCode.G,
     AcrylicBlur = true,
 })
 
-local cg = game:GetService("CoreGui")
-
-task.spawn(function()
-    while true do
-        for _, obj in ipairs(cg:GetDescendants()) do
-            if obj.Name == "UserInfo" then
-                obj:Destroy()
-            end
-        end
-        task.wait(1)
-    end
-end)
-
--- ========================================================================
--- FIX LocalPlayer (antisometimes nil)
--- ========================================================================
 if not player then
     Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
     player = Players.LocalPlayer
 end
 
--- ========================================================================
--- CEK Window & Notify
--- ========================================================================
 if not Window or type(Window.Notify) ~= "function" then
     warn("Window:Notify tidak ditemukan. Pastikan Window tersedia sebelum menjalankan script.")
     return
 end
 
--- ========================================================================
--- SISTEM COUNTER EXECUTION
--- ========================================================================
 local counterFile = "3" .. tostring(player.UserId) .. ".txt"
 local executeCount = 0
 
@@ -81,18 +59,12 @@ if type(writefile) == "function" then
     end)
 end
 
--- ========================================================================
--- SAFE NOTIFY
--- ========================================================================
 local function safeNotify(tbl)
     pcall(function()
         Window:Notify(tbl)
     end)
 end
 
--- ========================================================================
--- NOTIFY BERURUTAN DALAM COROUTINE (TIDAK BLOCK SCRIPT UTAMA)
--- ========================================================================
 coroutine.wrap(function()
     safeNotify({
         Title = "Welcome",
@@ -129,12 +101,6 @@ coroutine.wrap(function()
         Lifetime = 2,
     })
 end)()
-
--- ========================================================================
--- SCRIPT UTAMA BERJALAN TANPA MENUNGGU NOTIFY
--- ========================================================================
-print("Script utama berjalan tanpa menunggu notify selesai")
-
 
 local tabGroups = {
 	TabGroup1 = Window:TabGroup()
@@ -362,6 +328,86 @@ sections.Fishing:Toggle({
         setGameAnimationsEnabled(state)
     end,
 })
+
+local autoEnabled = false       -- toggle state
+local remoteDelay = 1           -- default delay
+
+-- ======================================================
+-- UI INPUT (SET DELAY)
+-- ======================================================
+sections.Fishing:Input({ 
+	Name = "Delay Reel",
+	Placeholder = "Default: 1", 
+	AcceptedCharacters = "All",
+	Callback = function(input)
+		local num = tonumber(input)
+		if num then
+			remoteDelay = num
+			print("Delay set to:", remoteDelay)
+		else
+			print("Invalid Input")
+		end
+	end,
+}, "DelayReelInput")
+
+-- ======================================================
+-- UI TOGGLE (ENABLE / DISABLE AUTO)
+-- ======================================================
+sections.Fishing:Toggle({ 
+	Name = "Instant Reel",
+	Default = false,
+	Callback = function(state)
+		autoEnabled = state
+
+		Window:Notify({
+			Title = "Instant Reel",
+			Description = state and "Auto Fishing Enabled" or "Auto Fishing Disabled"
+		})
+	end,
+}, "InstantReelToggle")
+
+-- ======================================================
+-- REMOTE REFERENCES
+-- ======================================================
+local REReplicateTextEffect = ReplicatedStorage
+	:WaitForChild("Packages")
+	:WaitForChild("_Index")
+	:WaitForChild("sleitnick_net@0.2.0")
+	:WaitForChild("net")
+	:WaitForChild("RE/ReplicateTextEffect")
+
+local REFishingCompleted = ReplicatedStorage
+	:WaitForChild("Packages")
+	:WaitForChild("_Index")
+	:WaitForChild("sleitnick_net@0.2.0")
+	:WaitForChild("net")
+	:WaitForChild("RE/FishingCompleted")
+
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+-- ======================================================
+-- LISTENER AUTO FISHING
+-- ======================================================
+REReplicateTextEffect.OnClientEvent:Connect(function(data)
+	if not autoEnabled then return end
+	if not data or not data.TextData then return end
+
+	local attach = data.TextData.AttachTo
+	if not attach or not attach.Parent then return end
+
+	local character = attach.Parent
+	local player = Players:GetPlayerFromCharacter(character)
+
+	-- hanya trigger bila effect milik LocalPlayer
+	if player ~= LocalPlayer then return end
+
+	-- delay sesuai input user
+	task.delay(remoteDelay, function()
+		if autoEnabled then
+			REFishingCompleted:FireServer()
+		end
+	end)
+end)
 
 -- Ambil RemoteFunction CancelFishing
 local CancelFishing = ReplicatedStorage
@@ -1199,13 +1245,14 @@ sections.Auto:Header({
 	Name = "Auto Favorite & Trade"
 })
 
-ocal Net = require(ReplicatedStorage.Packages.Net)
+local Net = require(ReplicatedStorage.Packages.Net)
 local ReplionClient = require(ReplicatedStorage.Packages.Replion).Client
 local DataReplion = ReplionClient:WaitReplion("Data")
 local ItemUtility = require(ReplicatedStorage.Shared.ItemUtility)
 
 -- Remotes
 local FavoriteRemote = Net:RemoteEvent("FavoriteItem")
+
 local TradeRemote = ReplicatedStorage
 	:WaitForChild("Packages")
 	:WaitForChild("_Index")
@@ -1414,7 +1461,6 @@ local function checkTradeTile(tile)
 	if header and header:IsA("TextLabel") then
 		if header.Text == "Trade completed!" then
 
-			-- Tambah jumlah trade berhasil
 			state.fishCount = state.fishCount + 1
 
 			Window:Notify({
@@ -1422,7 +1468,6 @@ local function checkTradeTile(tile)
 				Description = "Trade completed! (" .. state.fishCount .. "/" .. state.fishTarget .. ")"
 			})
 
-			-- Stop jika target sudah tercapai
 			if state.fishTarget > 0 and state.fishCount >= state.fishTarget then
 				state.autoTrade = false
 				state.stopTrade = true
@@ -1436,14 +1481,12 @@ local function checkTradeTile(tile)
 	end
 end
 
--- Cek TextTile yang sudah ada
 for _, tile in ipairs(notifFrame:GetChildren()) do
 	if tile.Name == "TextTile" then
 		checkTradeTile(tile)
 	end
 end
 
--- Detect TextTile baru
 notifFrame.ChildAdded:Connect(function(child)
 	if child.Name == "TextTile" then
 		local header = child:WaitForChild("Header", 5)
@@ -1458,7 +1501,7 @@ end)
 -- ========================================================================
 sections.Auto:Input({
 	Name = "Target Player",
-	Placeholder = "DisplayName",
+	Placeholder = "Example: Nexa123",
 	Callback = function(text)
 		state.targetPlayer = text
 	end
@@ -1532,7 +1575,6 @@ sections.Auto:Toggle({
 		if b then task.spawn(workerTrade) end
 	end
 }, "AutoTradeToggle")
-
 
 sections.Auto1:Header({
 	Name = "Auto Enchant"
