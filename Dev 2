@@ -1949,6 +1949,29 @@ sections.Shop:Toggle({
     end,
 }, "AutoBuyBaitToggle")
 
+sections.Shop:Header({
+	Name = "Skin"
+})
+
+local GiftingController = require(
+    ReplicatedStorage
+        :WaitForChild("Controllers")
+        :WaitForChild("GiftingController")
+)
+
+sections.Shop:Button({
+    Name = "Gift Skin (Soul Scythe)",
+    Callback = function()
+        GiftingController:Open("Soul Scythe")
+
+        Window:Notify({
+            Title = "Gift Menu",
+            Description = "Gift Soul Scythe unlocked!",
+            Lifetime = 3
+        })
+    end,
+})
+
 sections.Shop1:Header({
 	Name = "Weather Shop"
 })
@@ -2258,7 +2281,7 @@ local islands = {
     ["Diamond Artifact"] = CFrame.new(1818.72156, 5.41373634, -285.160828, -1.15633011e-05, -0.192806393, 0.981236815, -1, 1.15633011e-05, -9.53674316e-06, -9.53674316e-06, -0.981236815, -0.192806482),
     ["Sacred Temple"] = CFrame.new(1478.09546, 0.0774269104, -612.817993, 0.993017375, 0, 0.117968373, 0, 1, 0, -0.117968373, 0, 0.993017375),
     ["Crystalline Passage"] = CFrame.new(6053.09717, -538.900085, 4391.29102, -0.993590963, -1.39414302e-08, 0.10982503, 1.7823354e-10, 1, -7.10982503, 1.27797193e-07, -0.10982503, -0.993590963),
-    ["Ancient Ruin"] = CFrame.new(6085.4248, -585.924194, 4638.86719, -0.696671784, 6.0984318e-08, -0.717390001, -1.9965112e-08, 1, -1.0439771e-07, -0.717390001, -8.7053305e-08, -0.696671784),
+    ["Ancient Ruin"] = CFrame.new(6130.33203, -584.05603, 4632.95166, -0.171970293, -9.77156915e-08, 0.985102117, -7.319955083e-08, 1, 8.64156533e-08, -0.985102117, -5.722441259e-08, -0.171970293),
 }
 
 -- Ambil semua nama Island dan sort secara case-insensitive
@@ -2785,21 +2808,18 @@ MacLib:LoadAutoLoadConfig()
 
 -- ImageBotton
 
--- ========================================================================
--- BAGIAN YANG DITAMBAHKAN (DIGABUNG) — TANPA MENGUBAH BAGIAN ATAS
--- ========================================================================
-
 local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 
 --======================================================
--- SCREEN GUI
+-- SCREEN GUI -> CoreGui
 --======================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "NexaUIToggle"
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = player:WaitForChild("PlayerGui")
+ScreenGui.Parent = CoreGui
 
 --======================================================
 -- FRAME KOTAK (WARNA BIRU)
@@ -2807,7 +2827,7 @@ ScreenGui.Parent = player:WaitForChild("PlayerGui")
 local ToggleFrame = Instance.new("Frame")
 ToggleFrame.Parent = ScreenGui
 ToggleFrame.Size = UDim2.new(0, 50, 0, 50)
-ToggleFrame.Position = UDim2.new(0, 110, 0, 95) -- POSISI BARU (lebih dekat logo Roblox)
+ToggleFrame.Position = UDim2.new(0, 110, 0, 95)
 ToggleFrame.BackgroundColor3 = Color3.fromRGB(20, 80, 200)
 ToggleFrame.BorderSizePixel = 0
 
@@ -2858,14 +2878,12 @@ ToggleBtn.Image = "rbxassetid://123906607434048"
 local uiVisible = true
 
 ToggleBtn.MouseButton1Click:Connect(function()
-    -- shrink
     TweenService:Create(ToggleBtn, TweenInfo.new(0.08), {
         Size = UDim2.new(0, 35, 0, 35)
     }):Play()
 
     task.wait(0.08)
 
-    -- expand
     TweenService:Create(ToggleBtn, TweenInfo.new(0.12), {
         Size = UDim2.new(0, 40, 0, 40)
     }):Play()
@@ -2923,12 +2941,10 @@ for _, object in ipairs({ToggleFrame, ToggleBtn}) do
     end)
 end
 
--- Update drag
 UIS.InputChanged:Connect(function(input)
     if dragging then
         if input.UserInputType == Enum.UserInputType.MouseMovement
             or input.UserInputType == Enum.UserInputType.Touch then
-
             updateDrag(input)
         end
     end
