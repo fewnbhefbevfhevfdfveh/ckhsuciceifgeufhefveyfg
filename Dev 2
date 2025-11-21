@@ -623,10 +623,267 @@ sections.Fishing:Input({
 	end,
 }, "InstantFishingCompletedDelay")
 
+WebhookURL = ""
+WebhookActive = false
+SelectedTiers = {}
+
+local TierList = {"All","Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET"}
+
+-- =====================================================
+-- UI INPUT: Webhook URL
+-- =====================================================
+sections.Fishing:Input({
+    Name = "Webhook URL",
+    Placeholder = "Masukkan Webhook",
+    AcceptedCharacters = "All",
+    Callback = function(input)
+        WebhookURL = input
+        print("[Webhook] Set URL:", WebhookURL)
+    end,
+}, "WebhookURLInput")
+
+-- =====================================================
+-- UI TOGGLE: Enable / Disable Webhook
+-- =====================================================
+sections.Fishing:Toggle({
+    Name = "Webhook Status",
+    Default = false,
+    Callback = function(value)
+        WebhookActive = value
+        Window:Notify({
+            Title = "Webhook",
+            Description = value and "Enabled Webhook" or "Disabled Webhook"
+        })
+    end,
+}, "WebhookToggle")
+
+-- =====================================================
+-- UI MULTI-DROPDOWN: Tier Filter
+-- =====================================================
+sections.Fishing:Dropdown({
+    Name = "Filter Tier",
+    Search = false,
+    Multi = true,
+    Options = TierList,
+    Default = {"All"},
+    Callback = function(Value)
+        SelectedTiers = {}
+
+        for tier, enabled in pairs(Value) do
+            if enabled then
+                table.insert(SelectedTiers, tier)
+            end
+        end
+
+        print("Selected Tier:", table.concat(SelectedTiers, ", "))
+    end,
+}, "TierFilter")
+
+-- =====================================================
+-- EXPLOIT REQUEST HANDLER
+-- =====================================================
+local Request = (syn and syn.request)
+    or (http_request)
+    or (fluxus and fluxus.request)
+    or (krnl and request)
+    or (function() return nil end)
+
+-- =====================================================
+-- TIER MAP + COUNTER
+-- =====================================================
+local TierMap = {
+    [1] = "Common",
+    [2] = "Uncommon",
+    [3] = "Rare",
+    [4] = "Epic",
+    [5] = "Legendary",
+    [6] = "Mythic",
+    [7] = "SECRET"
+}
+
+local FishCounter = {
+    Common = 0,
+    Uncommon = 0,
+    Rare = 0,
+    Epic = 0,
+    Legendary = 0,
+    Mythic = 0,
+    SECRET = 0
+}
+
+-- =====================================================
+-- HELPER FUNCTION
+-- =====================================================
+local function FormatNumber(num)
+    num = tonumber(num) or 0
+    if num >= 1e9 then return string.format("%.2fb", num/1e9) end
+    if num >= 1e6 then return string.format("%.2fm", num/1e6) end
+    if num >= 1e3 then return string.format("%.2fk", num/1e3) end
+    return tostring(num)
+end
+
+local function FormatChance(chance)
+    chance = tonumber(chance) or 0
+    return string.format("%.2f%%", chance*100)
+end
+
+local function GetRobloxImage(assetId)
+    if not assetId then return nil end
+    local url = "https://thumbnails.roblox.com/v1/assets?assetIds="..assetId.."&size=420x420&format=Png&isCircular=false"
+
+    local ok, response = pcall(game.HttpGet, game, url)
+    if not ok then return nil end
+
+    local decode = HttpService:JSONDecode(response)
+    if decode and decode.data and decode.data[1] and decode.data[1].imageUrl then
+        return decode.data[1].imageUrl
+    end
+    return nil
+end
+
+local function SendEmbed(data)
+    if WebhookURL == "" or not WebhookActive or not Request then return end
+
+    Request({
+        Url = WebhookURL,
+        Method = "POST",
+        Headers = {["Content-Type"] = "application/json"},
+        Body = HttpService:JSONEncode({embeds = data.embeds})
+    })
+end
+
+-- =====================================================
+-- FIND FISH MODULE
+-- =====================================================
+local function FindFishModule(fishName)
+    local Items = ReplicatedStorage:WaitForChild("Items")
+
+    for _, moduleScript in ipairs(Items:GetChildren()) do
+        if moduleScript:IsA("ModuleScript") then
+            local ok, data = pcall(require, moduleScript)
+            if ok and data and data.Data and data.Data.Name then
+                if string.find(string.lower(fishName), string.lower(data.Data.Name)) then
+                    return data
+                end
+            end
+        end
+    end
+    return nil
+end
+
+-- =====================================================
+-- GUI PATH (AMAN)
+-- =====================================================
+local Notification = player:WaitForChild("PlayerGui"):WaitForChild("Small Notification")
+local Container = Notification.Display.Container
+
+local ItemName = Container:WaitForChild("ItemName")
+local NewLabel = Notification.Display.NewFrame.Frame:WaitForChild("NewLabel")
+local VectorFrame = Notification.Display.VectorFrame:WaitForChild("Vector")
+
+local BagLabel = player.PlayerGui:WaitForChild("Inventory")
+    .Main.Top.Options.Fish.Label:WaitForChild("BagSize")
+
+local RarityLabel = Container:WaitForChild("Rarity")
+
+local LastFishData = nil
+
+-- =====================================================
+-- EVENT LISTENER
+-- =====================================================
+ItemName:GetPropertyChangedSignal("Text"):Connect(function()
+    if not WebhookActive or WebhookURL == "" then return end
+
+    local rawText = ItemName.Text
+    if rawText == "" then return end
+
+    local fishName, fishWeight = rawText:match("^(.-)%s*%((.-)%)$")
+    fishName = fishName or rawText
+    fishWeight = fishWeight or "Unknown"
+
+    local rarityText = RarityLabel.Text or "Unknown"
+    local bagSizeText = BagLabel.Text or "Unknown"
+
+    local fishData = FindFishModule(fishName)
+    local tierNum = fishData and fishData.Data.Tier or 0
+    local tierName = TierMap[tierNum] or "Unknown"
+
+    local newData = {
+        Fish = fishName,
+        Weight = fishWeight,
+        Bag = bagSizeText,
+        Rarity = rarityText
+    }
+
+    -- Anti Spam Embed
+    if LastFishData
+        and LastFishData.Fish == newData.Fish
+        and LastFishData.Weight == newData.Weight
+        and LastFishData.Bag == newData.Bag
+        and LastFishData.Rarity == newData.Rarity then
+        return
+    end
+    LastFishData = newData
+
+    -- Tier Filter
+    if #SelectedTiers > 0 then
+        if not table.find(SelectedTiers, "All")
+        and not table.find(SelectedTiers, tierName) then
+            return
+        end
+    end
+
+    if FishCounter[tierName] then
+        FishCounter[tierName] += 1
+    end
+
+    local assetId = string.match(VectorFrame.Image, "%d+")
+    local imageUrl = GetRobloxImage(assetId)
+
+    -- COLOR PER TIER
+    local TierColor = {
+        Common = 3092790,
+        Uncommon = 5294200,
+        Rare = 2061822,
+        Epic = 11730944,
+        Legendary = 15844367,
+        Mythic = 14423100,
+        SECRET = 16711853
+    }
+
+    local embed = {{
+        ["title"] = "🎣 Fish Caught!",
+        ["description"] = string.format(
+            "### 🐟 **%s**\n```\nWeight : %s\nTier   : %s\nRarity : %s\nBag    : %s\n```\n### 💰 Stats\n- Sell Price: `%s`\n- Chance: `%s`",
+            fishName,
+            fishWeight,
+            tierName,
+            rarityText,
+            bagSizeText,
+            FormatNumber(fishData and fishData.SellPrice or 0),
+            FormatChance(fishData and fishData.Probability and fishData.Probability.Chance or 0)
+        ),
+        ["color"] = TierColor[tierName] or 5814783,
+        ["thumbnail"] = {["url"] = imageUrl},
+        ["footer"] = {
+            ["text"] = "Caught by " .. player.Name .. " | " .. os.date("%H:%M:%S")
+        },
+        ["fields"] = {
+            {
+                ["name"] = "Total "..tierName.." Caught",
+                ["value"] = tostring(FishCounter[tierName]),
+                ["inline"] = true
+            }
+        }
+    }}
+
+    SendEmbed({embeds = embed})
+end)
 
 sections.Fishing1:Header({
 	Name = "Equipment Feature"
 })
+
 
 -- Module
 local Net = require(ReplicatedStorage.Packages.Net)
@@ -2949,3 +3206,4 @@ UIS.InputChanged:Connect(function(input)
         end
     end
 end)
+
