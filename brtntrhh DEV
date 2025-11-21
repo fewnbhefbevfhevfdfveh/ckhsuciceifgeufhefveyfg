@@ -17,8 +17,8 @@ local camera = workspace.CurrentCamera
 local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
-    Title = "Nexa | Developer",
-    Subtitle = "Fish It | V0.0.0",
+    Title = "Nexa | Premium",
+    Subtitle = "Fish It | V0.0.1",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -26,19 +26,6 @@ local Window = MacLib:Window({
     Keybind = Enum.KeyCode.G,
     AcrylicBlur = true,
 })
-
-local cg = game:GetService("CoreGui")
-
-task.spawn(function()
-    while true do
-        for _, obj in ipairs(cg:GetDescendants()) do
-            if obj.Name == "UserInfo" then
-                obj:Destroy()
-            end
-        end
-        task.wait(1)
-    end
-end)
 
 if not player then
     Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
@@ -342,6 +329,86 @@ sections.Fishing:Toggle({
     end,
 })
 
+local autoEnabled = false       -- toggle state
+local remoteDelay = 1           -- default delay
+
+-- ======================================================
+-- UI INPUT (SET DELAY)
+-- ======================================================
+sections.Fishing:Input({ 
+	Name = "Delay Reel",
+	Placeholder = "Default: 1", 
+	AcceptedCharacters = "All",
+	Callback = function(input)
+		local num = tonumber(input)
+		if num then
+			remoteDelay = num
+			print("Delay set to:", remoteDelay)
+		else
+			print("Invalid Input")
+		end
+	end,
+}, "DelayReelInput")
+
+-- ======================================================
+-- UI TOGGLE (ENABLE / DISABLE AUTO)
+-- ======================================================
+sections.Fishing:Toggle({ 
+	Name = "Instant Reel",
+	Default = false,
+	Callback = function(state)
+		autoEnabled = state
+
+		Window:Notify({
+			Title = "Instant Reel",
+			Description = state and "Auto Fishing Enabled" or "Auto Fishing Disabled"
+		})
+	end,
+}, "InstantReelToggle")
+
+-- ======================================================
+-- REMOTE REFERENCES
+-- ======================================================
+local REReplicateTextEffect = ReplicatedStorage
+	:WaitForChild("Packages")
+	:WaitForChild("_Index")
+	:WaitForChild("sleitnick_net@0.2.0")
+	:WaitForChild("net")
+	:WaitForChild("RE/ReplicateTextEffect")
+
+local REFishingCompleted = ReplicatedStorage
+	:WaitForChild("Packages")
+	:WaitForChild("_Index")
+	:WaitForChild("sleitnick_net@0.2.0")
+	:WaitForChild("net")
+	:WaitForChild("RE/FishingCompleted")
+
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+-- ======================================================
+-- LISTENER AUTO FISHING
+-- ======================================================
+REReplicateTextEffect.OnClientEvent:Connect(function(data)
+	if not autoEnabled then return end
+	if not data or not data.TextData then return end
+
+	local attach = data.TextData.AttachTo
+	if not attach or not attach.Parent then return end
+
+	local character = attach.Parent
+	local player = Players:GetPlayerFromCharacter(character)
+
+	-- hanya trigger bila effect milik LocalPlayer
+	if player ~= LocalPlayer then return end
+
+	-- delay sesuai input user
+	task.delay(remoteDelay, function()
+		if autoEnabled then
+			REFishingCompleted:FireServer()
+		end
+	end)
+end)
+
 -- Ambil RemoteFunction CancelFishing
 local CancelFishing = ReplicatedStorage
     :WaitForChild("Packages")
@@ -556,6 +623,282 @@ sections.Fishing:Input({
 	end,
 }, "InstantFishingCompletedDelay")
 
+sections.Fishing1:Header({
+	Name = "Webhook"
+})
+
+-- ====================================================
+-- VARIABLES (Webhook System)
+-- ====================================================
+WebhookURL = ""
+WebhookActive = false
+SelectedTiers = {}
+
+local TierList = {"All","Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET"}
+
+-- ====================================================
+-- UI INPUT (Webhook URL)
+-- ====================================================
+sections.Fishing1:Input({
+    Name = "Webhook URL",
+    Placeholder = "Masukkan Webhook",
+    AcceptedCharacters = "All",
+    Callback = function(input)
+        WebhookURL = input
+    end,
+}, "WebhookURLInput")
+
+-- ====================================================
+-- UI TOGGLE (Webhook Enable)
+-- ====================================================
+sections.Fishing1:Toggle({
+    Name = "Webhook Status",
+    Default = false,
+    Callback = function(value)
+        WebhookActive = value
+        Window:Notify({
+            Title = "Webhook",
+            Description = value and "Enabled Webhook" or "Disabled Webhook"
+        })
+    end,
+}, "WebhookToggle")
+
+-- ====================================================
+-- UI MULTI-DROPDOWN (Tier Filter)
+-- ====================================================
+sections.Fishing1:Dropdown({
+    Name = "Filter Tier",
+    Search = false,
+    Multi = true,
+    Required = false,
+    Options = TierList,
+    Default = {"All"},
+    Callback = function(Value)
+        SelectedTiers = {}
+        for Tier, State in pairs(Value) do
+            if State then
+                table.insert(SelectedTiers, Tier)
+            end
+        end
+    end,
+}, "TierFilter")
+
+-- ====================================================
+-- WEBHOOK SCRIPT (UTAMA)
+-- ====================================================
+local HttpService = game:GetService("HttpService")
+
+local Notification = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Small Notification")
+local Request = (syn and syn.request)
+    or (http_request)
+    or (fluxus and fluxus.request)
+    or (krnl and request)
+
+local TierMap = {
+    [1] = "Common",
+    [2] = "Uncommon",
+    [3] = "Rare",
+    [4] = "Epic",
+    [5] = "Legendary",
+    [6] = "Mythic",
+    [7] = "SECRET"
+}
+
+local FishCounter = {
+    Common = 0,
+    Uncommon = 0,
+    Rare = 0,
+    Epic = 0,
+    Legendary = 0,
+    Mythic = 0,
+    SECRET = 0
+}
+
+local function FormatNumber(num)
+    num = tonumber(num) or 0
+    if num >= 1e9 then
+        return string.format("%.2fb", num / 1e9)
+    elseif num >= 1e6 then
+        return string.format("%.2fm", num / 1e6)
+    elseif num >= 1e3 then
+        return string.format("%.2fk", num / 1e3)
+    else
+        return tostring(num)
+    end
+end
+
+local function FormatChance(chance)
+    chance = tonumber(chance) or 0
+    return string.format("%.2f%%", chance * 100)
+end
+
+local function GetRobloxImage(assetId)
+    if not assetId then return nil end
+    local url = "https://thumbnails.roblox.com/v1/assets?assetIds="..assetId.."&size=420x420&format=Png&isCircular=false"
+    local success, response = pcall(game.HttpGet, game, url)
+    if success then
+        local data = HttpService:JSONDecode(response)
+        if data and data.data and data.data[1] and data.data[1].imageUrl then
+            return data.data[1].imageUrl
+        end
+    end
+    return nil
+end
+
+local function SendEmbed(data)
+    if WebhookURL ~= "" and Request then
+        Request({
+            Url = WebhookURL,
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = HttpService:JSONEncode({embeds = data.embeds})
+        })
+    end
+end
+
+local function FindFishModule(fishName)
+    local Items = ReplicatedStorage:WaitForChild("Items")
+    for _, moduleScript in ipairs(Items:GetChildren()) do
+        if moduleScript:IsA("ModuleScript") then
+            local ok, data = pcall(require, moduleScript)
+            if ok and data and data.Data and data.Data.Name then
+                local realName = data.Data.Name
+                if string.find(string.lower(fishName), string.lower(realName)) then
+                    return data
+                end
+            end
+        end
+    end
+    return nil
+end
+
+local LastFishData = nil
+
+local Container = Notification.Display.Container
+local ItemName = Container:WaitForChild("ItemName")
+local NewLabel = Notification.Display.NewFrame.Frame:WaitForChild("NewLabel")
+local VectorFrame = Notification.Display.VectorFrame.Vector
+
+-- ====================================================
+-- LISTENER (KIRIM EMBED)
+-- ====================================================
+ItemName:GetPropertyChangedSignal("Text"):Connect(function()
+    if not WebhookActive or WebhookURL == "" or not Request then return end
+
+    local rawText = ItemName.Text
+    if rawText == "" then return end
+
+    local fishName, fishWeight = rawText:match("^(.-)%s*%((.-)%)$")
+    fishName = fishName or rawText
+    fishWeight = fishWeight or "Unknown"
+
+    local fishData = FindFishModule(fishName)
+    local tierNum = fishData and fishData.Data.Tier or 0
+    local tierName = TierMap[tierNum] or "Unknown"
+    local sellPrice = fishData and fishData.SellPrice or "Unknown"
+    local chance = fishData and fishData.Probability and fishData.Probability.Chance or 0
+
+    local rarityLabel = Container:WaitForChild("Rarity")
+    local BagLabel = Players.LocalPlayer.PlayerGui.Inventory.Main.Top.Options.Fish.Label:WaitForChild("BagSize")
+
+    local rarityText = rarityLabel.Text or "Unknown"
+    local bagSizeText = BagLabel.Text or "Unknown"
+    local newLabelText = NewLabel.Text or ""
+
+    local currentData = {
+        Fish = fishName,
+        Weight = fishWeight,
+        Bag = bagSizeText,
+        Rarity = rarityText
+    }
+
+    -- anti duplikasi embed spam
+    if LastFishData
+        and LastFishData.Fish == currentData.Fish
+        and LastFishData.Weight == currentData.Weight
+        and LastFishData.Bag == currentData.Bag
+        and LastFishData.Rarity == currentData.Rarity then
+        return
+    end
+
+    LastFishData = currentData
+
+    -- Filter Tier
+    if #SelectedTiers > 0 then
+        if not table.find(SelectedTiers, "All") and not table.find(SelectedTiers, tierName) then
+            return
+        end
+    end
+
+    if FishCounter[tierName] then
+        FishCounter[tierName] += 1
+    end
+
+    local assetId = string.match(VectorFrame.Image, "%d+")
+    local imageUrl = GetRobloxImage(assetId)
+
+    -- WARNA EMBED PER TIER
+    local TierColor = {
+        Common = 3092790,
+        Uncommon = 5294200,
+        Rare = 2061822,
+        Epic = 11730944,
+        Legendary = 15844367,
+        Mythic = 14423100,
+        SECRET = 16711853
+    }
+
+    local colorUsed = TierColor[tierName] or 5814783
+
+    local embed = {{
+        ["title"] = "🎣 **Fish Caught!**",
+        ["description"] = string.format(
+            "### 🐟 **%s**\n```\nWeight : %s\nTier   : %s\nRarity : %s\nBag    : %s\n```\n### 💰 Stats\n- **Sell Price:** `%s`\n- **Chance:** `%s`\n",
+            fishName,
+            fishWeight,
+            tierName,
+            rarityText,
+            bagSizeText,
+            FormatNumber(sellPrice),
+            FormatChance(chance)
+        ),
+
+        ["color"] = colorUsed,
+
+        ["thumbnail"] = {
+            ["url"] = imageUrl or "https://i.imgur.com/zwCkN8P.png"
+        },
+
+        ["image"] = {
+            ["url"] = "https://i.imgur.com/eX2zSNS.jpeg"
+        },
+
+        ["author"] = {
+            ["name"] = "Nexa | Fishing System",
+            ["icon_url"] = "https://i.imgur.com/k52FCzJ.jpeg"
+        },
+
+        ["footer"] = {
+            ["text"] = "Caught by " .. LocalPlayer.Name .. " | " .. os.date("%H:%M:%S"),
+            ["icon_url"] = "https://i.imgur.com/eX2zSNS.jpeg"
+        },
+
+        ["fields"] = {
+            {
+                ["name"] = "📊 Total "..tierName.." Caught",
+                ["value"] = "**"..tostring(FishCounter[tierName]).."**",
+                ["inline"] = true
+            },
+            {
+                ["name"] = "🧭 Rarity",
+                ["value"] = rarityText,
+                ["inline"] = true
+            }
+        }
+    }}
+
+    SendEmbed({embeds = embed})
+end)
 
 sections.Fishing1:Header({
 	Name = "Equipment Feature"
@@ -1882,6 +2225,29 @@ sections.Shop:Toggle({
     end,
 }, "AutoBuyBaitToggle")
 
+sections.Shop:Header({
+	Name = "Skin"
+})
+
+local GiftingController = require(
+    ReplicatedStorage
+        :WaitForChild("Controllers")
+        :WaitForChild("GiftingController")
+)
+
+sections.Shop:Button({
+    Name = "Gift Skin (Soul Scythe)",
+    Callback = function()
+        GiftingController:Open("Soul Scythe")
+
+        Window:Notify({
+            Title = "Gift Menu",
+            Description = "Gift Soul Scythe unlocked!",
+            Lifetime = 3
+        })
+    end,
+})
+
 sections.Shop1:Header({
 	Name = "Weather Shop"
 })
@@ -2191,7 +2557,7 @@ local islands = {
     ["Diamond Artifact"] = CFrame.new(1818.72156, 5.41373634, -285.160828, -1.15633011e-05, -0.192806393, 0.981236815, -1, 1.15633011e-05, -9.53674316e-06, -9.53674316e-06, -0.981236815, -0.192806482),
     ["Sacred Temple"] = CFrame.new(1478.09546, 0.0774269104, -612.817993, 0.993017375, 0, 0.117968373, 0, 1, 0, -0.117968373, 0, 0.993017375),
     ["Crystalline Passage"] = CFrame.new(6053.09717, -538.900085, 4391.29102, -0.993590963, -1.39414302e-08, 0.10982503, 1.7823354e-10, 1, -7.10982503, 1.27797193e-07, -0.10982503, -0.993590963),
-    ["Ancient Ruin"] = CFrame.new(6085.4248, -585.924194, 4638.86719, -0.696671784, 6.0984318e-08, -0.717390001, -1.9965112e-08, 1, -1.0439771e-07, -0.717390001, -8.7053305e-08, -0.696671784),
+    ["Ancient Ruin"] = CFrame.new(6130.33203, -584.05603, 4632.95166, -0.171970293, -9.77156915e-08, 0.985102117, -7.319955083e-08, 1, 8.64156533e-08, -0.985102117, -5.722441259e-08, -0.171970293),
 }
 
 -- Ambil semua nama Island dan sort secara case-insensitive
@@ -2718,21 +3084,18 @@ MacLib:LoadAutoLoadConfig()
 
 -- ImageBotton
 
--- ========================================================================
--- BAGIAN YANG DITAMBAHKAN (DIGABUNG) — TANPA MENGUBAH BAGIAN ATAS
--- ========================================================================
-
 local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 
 --======================================================
--- SCREEN GUI
+-- SCREEN GUI -> CoreGui
 --======================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "NexaUIToggle"
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = player:WaitForChild("PlayerGui")
+ScreenGui.Parent = CoreGui
 
 --======================================================
 -- FRAME KOTAK (WARNA BIRU)
@@ -2740,7 +3103,7 @@ ScreenGui.Parent = player:WaitForChild("PlayerGui")
 local ToggleFrame = Instance.new("Frame")
 ToggleFrame.Parent = ScreenGui
 ToggleFrame.Size = UDim2.new(0, 50, 0, 50)
-ToggleFrame.Position = UDim2.new(0, 110, 0, 95) -- POSISI BARU (lebih dekat logo Roblox)
+ToggleFrame.Position = UDim2.new(0, 110, 0, 95)
 ToggleFrame.BackgroundColor3 = Color3.fromRGB(20, 80, 200)
 ToggleFrame.BorderSizePixel = 0
 
@@ -2791,14 +3154,12 @@ ToggleBtn.Image = "rbxassetid://123906607434048"
 local uiVisible = true
 
 ToggleBtn.MouseButton1Click:Connect(function()
-    -- shrink
     TweenService:Create(ToggleBtn, TweenInfo.new(0.08), {
         Size = UDim2.new(0, 35, 0, 35)
     }):Play()
 
     task.wait(0.08)
 
-    -- expand
     TweenService:Create(ToggleBtn, TweenInfo.new(0.12), {
         Size = UDim2.new(0, 40, 0, 40)
     }):Play()
@@ -2856,12 +3217,10 @@ for _, object in ipairs({ToggleFrame, ToggleBtn}) do
     end)
 end
 
--- Update drag
 UIS.InputChanged:Connect(function(input)
     if dragging then
         if input.UserInputType == Enum.UserInputType.MouseMovement
             or input.UserInputType == Enum.UserInputType.Touch then
-
             updateDrag(input)
         end
     end
