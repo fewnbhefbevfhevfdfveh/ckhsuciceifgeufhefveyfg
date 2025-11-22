@@ -27,6 +27,19 @@ local Window = MacLib:Window({
     AcrylicBlur = true,
 })
 
+local cg = game:GetService("CoreGui")
+
+task.spawn(function()
+    while true do
+        for _, obj in ipairs(cg:GetDescendants()) do
+            if obj.Name == "UserInfo" then
+                obj:Destroy()
+            end
+        end
+        task.wait(1)
+    end
+end)
+
 if not player then
     Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
     player = Players.LocalPlayer
@@ -425,7 +438,289 @@ sections.Fishing:Button({
 	end,
 })
 
+sections.Fishing:Header({
+	Name = "Super Instant"
+})
 
+local Modules = {}
+
+local function customRequire(module)
+    if not module then return nil end
+    local success, result = pcall(require, module)
+    if success then
+        return result
+    else
+        local clone = module:Clone()
+        clone.Parent = nil
+        local cloneSuccess, cloneResult = pcall(require, clone)
+        if cloneSuccess then
+            return cloneResult
+        else
+            warn("Failed to load module: " .. module:GetFullName())
+            return nil
+        end
+    end
+end
+
+local success, errorMessage = pcall(function()
+    local Controllers = ReplicatedStorage:WaitForChild("Controllers", 20)
+    local NetFolder = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index")
+        :WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net", 20)
+    local Shared = ReplicatedStorage:WaitForChild("Shared", 20)
+    
+    if not (Controllers and NetFolder and Shared) then
+        error("Core game folders not found.")
+    end
+
+    Modules.Replion = customRequire(ReplicatedStorage.Packages.Replion)
+    Modules.ItemUtility = customRequire(Shared.ItemUtility)
+    Modules.FishingController = customRequire(Controllers.FishingController)
+    
+    Modules.EquipToolEvent = NetFolder["RE/EquipToolFromHotbar"]
+    Modules.ChargeRodFunc = NetFolder["RF/ChargeFishingRod"]
+    Modules.StartMinigameFunc = NetFolder["RF/RequestFishingMinigameStarted"]
+    Modules.CompleteFishingEvent = NetFolder["RE/FishingCompleted"]
+end)
+
+if not success then
+    warn("FATAL ERROR DURING MODULE LOADING: " .. tostring(errorMessage))
+    return
+end
+
+task.wait(1)
+
+
+-- =====================================================
+-- FEATURE STATE
+-- =====================================================
+local featureState = {
+    AutoFish = false,
+    Instant_ChargeDelay = 0.07,
+    Instant_StartDelay = 1.20,
+    Instant_CatchTimeout = 0.01,
+    Instant_CycleDelay = 0.01,
+    Instant_ResetCount = 10,
+    Instant_ResetPause = 0.01
+}
+
+local fishingTrove = {}
+local autoFishThread = nil
+
+local fishCaughtBindable = Instance.new("BindableEvent")
+
+
+-- =====================================================
+-- EQUIP FISHING ROD
+-- =====================================================
+local function equipFishingRod()
+    if Modules.EquipToolEvent then
+        pcall(Modules.EquipToolEvent.FireServer, Modules.EquipToolEvent, 1)
+    end
+end
+
+
+-- =====================================================
+-- DETECT FISH CAUGHT (GUI Listener)
+-- =====================================================
+task.spawn(function()
+    local lastFishName = ""
+    while task.wait(0.25) do
+        local gui = player:FindFirstChild("PlayerGui")
+        if gui then
+            local notif = gui:FindFirstChild("Small Notification")
+            if notif and notif.Enabled then
+                local disp = notif:FindFirstChild("Display", true)
+                if disp then
+                    local cont = disp:FindFirstChild("Container", true)
+                    local lbl = cont and cont:FindFirstChild("ItemName")
+                    if lbl and lbl.Text ~= "" and lbl.Text ~= lastFishName then
+                        lastFishName = lbl.Text
+                        fishCaughtBindable:Fire()
+                    end
+                end
+            else
+                lastFishName = ""
+            end
+        end
+    end
+end)
+
+
+-- =====================================================
+-- STOP WORK
+-- =====================================================
+local function stopAutoFishProcesses()
+    featureState.AutoFish = false
+
+    for _, item in ipairs(fishingTrove) do
+        if typeof(item) == "RBXScriptConnection" then
+            item:Disconnect()
+        elseif typeof(item) == "thread" then
+            task.cancel(item)
+        end
+    end
+
+    fishingTrove = {}
+
+    pcall(function()
+        if Modules.FishingController and Modules.FishingController.RequestClientStopFishing then
+            Modules.FishingController:RequestClientStopFishing(true)
+        end
+    end)
+end
+
+
+-- =====================================================
+-- X7 SPEED FISHING
+-- =====================================================
+local function startAutoFishMethod_Instant()
+    if not (Modules.ChargeRodFunc and Modules.StartMinigameFunc and Modules.CompleteFishingEvent and Modules.FishingController) then
+        return
+    end
+
+    featureState.AutoFish = true
+
+    local SPAM = 7
+    local WORKERS = 2
+    local START_DELAY = featureState.Instant_StartDelay
+    local CHARGE_DELAY = featureState.Instant_ChargeDelay
+    local CATCH_TIMEOUT = featureState.Instant_CatchTimeout
+    local CYCLE = featureState.Instant_CycleDelay
+    local RESET_COUNT = featureState.Instant_ResetCount
+    local RESET_PAUSE = featureState.Instant_ResetPause
+
+    local chargeCount = 0
+    local resetFlag = false
+
+    local function worker()
+        while featureState.AutoFish and not resetFlag do
+            if chargeCount >= RESET_COUNT then break end
+
+            pcall(function()
+                chargeCount += 1
+
+                Modules.ChargeRodFunc:InvokeServer(nil, nil, nil, workspace:GetServerTimeNow())
+                task.wait(CHARGE_DELAY)
+
+                Modules.StartMinigameFunc:InvokeServer(-139, 1, workspace:GetServerTimeNow())
+                task.wait(START_DELAY)
+
+                for _ = 1, SPAM do
+                    if not featureState.AutoFish or resetFlag then break end
+                    Modules.CompleteFishingEvent:FireServer()
+                    task.wait(0.03)
+                end
+
+                local caught = false
+                local timeout = false
+
+                task.delay(CATCH_TIMEOUT, function() timeout = true end)
+
+                local connection
+                connection = fishCaughtBindable.Event:Connect(function()
+                    caught = true
+                    if connection then connection:Disconnect() end
+                end)
+
+                while not (caught or timeout) and featureState.AutoFish do
+                    task.wait()
+                end
+
+                if connection then connection:Disconnect() end
+
+                pcall(function()
+                    Modules.FishingController:RequestClientStopFishing(true)
+                end)
+            end)
+
+            task.wait(CYCLE)
+        end
+    end
+
+    autoFishThread = task.spawn(function()
+        while featureState.AutoFish do
+            chargeCount = 0
+            resetFlag = false
+
+            local workerList = {}
+            for i = 1, WORKERS do
+                table.insert(workerList, task.spawn(worker))
+            end
+
+            while featureState.AutoFish and chargeCount < RESET_COUNT do
+                task.wait()
+            end
+
+            resetFlag = true
+
+            for _, th in ipairs(workerList) do
+                task.cancel(th)
+            end
+
+            task.wait(RESET_PAUSE)
+        end
+
+        stopAutoFishProcesses()
+    end)
+
+    table.insert(fishingTrove, autoFishThread)
+end
+
+
+-- =====================================================
+-- START / STOP Autofish
+-- =====================================================
+local function startOrStopAutoFish(state)
+    stopAutoFishProcesses()
+
+    if state then
+        featureState.AutoFish = true
+        equipFishingRod()
+        task.wait(0.05)
+        startAutoFishMethod_Instant()
+    end
+end
+
+
+-- =====================================================
+-- UI INPUT & TOGGLE (WindUI)
+-- =====================================================
+
+sections.Fishing:Input({
+    Name = "Spam Finish",
+    Placeholder = tostring(featureState.Instant_ResetCount),
+    AcceptedCharacters = "Numbers",
+    Callback = function(input)
+        local number = tonumber(input)
+        if number then
+            featureState.Instant_ResetCount = number
+        end
+    end,
+})
+
+sections.Fishing:Input({
+    Name = "Delay Cast",
+    Placeholder = tostring(featureState.Instant_ResetPause),
+    AcceptedCharacters = "Numbers",
+    Callback = function(input)
+        local number = tonumber(input)
+        if number then
+            featureState.Instant_ResetPause = number
+        end
+    end,
+})
+
+sections.Fishing:Toggle({
+    Name = "Super Instant Fishing",
+    Default = false,
+    Callback = function(state)
+        startOrStopAutoFish(state)
+        Window:Notify({
+            Title = "Super Instant Fishing",
+            Description = state and "Enabled AutoFish" or "Disabled AutoFish"
+        })
+    end,
+})
 sections.Fishing:Header({
 	Name = "Instant Fishing Feature"
 })
@@ -622,283 +917,6 @@ sections.Fishing:Input({
 		})
 	end,
 }, "InstantFishingCompletedDelay")
-
-sections.Fishing1:Header({
-	Name = "Webhook"
-})
-
--- ====================================================
--- VARIABLES (Webhook System)
--- ====================================================
-WebhookURL = ""
-WebhookActive = false
-SelectedTiers = {}
-
-local TierList = {"All","Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET"}
-
--- ====================================================
--- UI INPUT (Webhook URL)
--- ====================================================
-sections.Fishing1:Input({
-    Name = "Webhook URL",
-    Placeholder = "Masukkan Webhook",
-    AcceptedCharacters = "All",
-    Callback = function(input)
-        WebhookURL = input
-    end,
-}, "WebhookURLInput")
-
--- ====================================================
--- UI TOGGLE (Webhook Enable)
--- ====================================================
-sections.Fishing1:Toggle({
-    Name = "Webhook Status",
-    Default = false,
-    Callback = function(value)
-        WebhookActive = value
-        Window:Notify({
-            Title = "Webhook",
-            Description = value and "Enabled Webhook" or "Disabled Webhook"
-        })
-    end,
-}, "WebhookToggle")
-
--- ====================================================
--- UI MULTI-DROPDOWN (Tier Filter)
--- ====================================================
-sections.Fishing1:Dropdown({
-    Name = "Filter Tier",
-    Search = false,
-    Multi = true,
-    Required = false,
-    Options = TierList,
-    Default = {"All"},
-    Callback = function(Value)
-        SelectedTiers = {}
-        for Tier, State in pairs(Value) do
-            if State then
-                table.insert(SelectedTiers, Tier)
-            end
-        end
-    end,
-}, "TierFilter")
-
--- ====================================================
--- WEBHOOK SCRIPT (UTAMA)
--- ====================================================
-local HttpService = game:GetService("HttpService")
-
-local Notification = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Small Notification")
-local Request = (syn and syn.request)
-    or (http_request)
-    or (fluxus and fluxus.request)
-    or (krnl and request)
-
-local TierMap = {
-    [1] = "Common",
-    [2] = "Uncommon",
-    [3] = "Rare",
-    [4] = "Epic",
-    [5] = "Legendary",
-    [6] = "Mythic",
-    [7] = "SECRET"
-}
-
-local FishCounter = {
-    Common = 0,
-    Uncommon = 0,
-    Rare = 0,
-    Epic = 0,
-    Legendary = 0,
-    Mythic = 0,
-    SECRET = 0
-}
-
-local function FormatNumber(num)
-    num = tonumber(num) or 0
-    if num >= 1e9 then
-        return string.format("%.2fb", num / 1e9)
-    elseif num >= 1e6 then
-        return string.format("%.2fm", num / 1e6)
-    elseif num >= 1e3 then
-        return string.format("%.2fk", num / 1e3)
-    else
-        return tostring(num)
-    end
-end
-
-local function FormatChance(chance)
-    chance = tonumber(chance) or 0
-    return string.format("%.2f%%", chance * 100)
-end
-
-local function GetRobloxImage(assetId)
-    if not assetId then return nil end
-    local url = "https://thumbnails.roblox.com/v1/assets?assetIds="..assetId.."&size=420x420&format=Png&isCircular=false"
-    local success, response = pcall(game.HttpGet, game, url)
-    if success then
-        local data = HttpService:JSONDecode(response)
-        if data and data.data and data.data[1] and data.data[1].imageUrl then
-            return data.data[1].imageUrl
-        end
-    end
-    return nil
-end
-
-local function SendEmbed(data)
-    if WebhookURL ~= "" and Request then
-        Request({
-            Url = WebhookURL,
-            Method = "POST",
-            Headers = {["Content-Type"] = "application/json"},
-            Body = HttpService:JSONEncode({embeds = data.embeds})
-        })
-    end
-end
-
-local function FindFishModule(fishName)
-    local Items = ReplicatedStorage:WaitForChild("Items")
-    for _, moduleScript in ipairs(Items:GetChildren()) do
-        if moduleScript:IsA("ModuleScript") then
-            local ok, data = pcall(require, moduleScript)
-            if ok and data and data.Data and data.Data.Name then
-                local realName = data.Data.Name
-                if string.find(string.lower(fishName), string.lower(realName)) then
-                    return data
-                end
-            end
-        end
-    end
-    return nil
-end
-
-local LastFishData = nil
-
-local Container = Notification.Display.Container
-local ItemName = Container:WaitForChild("ItemName")
-local NewLabel = Notification.Display.NewFrame.Frame:WaitForChild("NewLabel")
-local VectorFrame = Notification.Display.VectorFrame.Vector
-
--- ====================================================
--- LISTENER (KIRIM EMBED)
--- ====================================================
-ItemName:GetPropertyChangedSignal("Text"):Connect(function()
-    if not WebhookActive or WebhookURL == "" or not Request then return end
-
-    local rawText = ItemName.Text
-    if rawText == "" then return end
-
-    local fishName, fishWeight = rawText:match("^(.-)%s*%((.-)%)$")
-    fishName = fishName or rawText
-    fishWeight = fishWeight or "Unknown"
-
-    local fishData = FindFishModule(fishName)
-    local tierNum = fishData and fishData.Data.Tier or 0
-    local tierName = TierMap[tierNum] or "Unknown"
-    local sellPrice = fishData and fishData.SellPrice or "Unknown"
-    local chance = fishData and fishData.Probability and fishData.Probability.Chance or 0
-
-    local rarityLabel = Container:WaitForChild("Rarity")
-    local BagLabel = Players.LocalPlayer.PlayerGui.Inventory.Main.Top.Options.Fish.Label:WaitForChild("BagSize")
-
-    local rarityText = rarityLabel.Text or "Unknown"
-    local bagSizeText = BagLabel.Text or "Unknown"
-    local newLabelText = NewLabel.Text or ""
-
-    local currentData = {
-        Fish = fishName,
-        Weight = fishWeight,
-        Bag = bagSizeText,
-        Rarity = rarityText
-    }
-
-    -- anti duplikasi embed spam
-    if LastFishData
-        and LastFishData.Fish == currentData.Fish
-        and LastFishData.Weight == currentData.Weight
-        and LastFishData.Bag == currentData.Bag
-        and LastFishData.Rarity == currentData.Rarity then
-        return
-    end
-
-    LastFishData = currentData
-
-    -- Filter Tier
-    if #SelectedTiers > 0 then
-        if not table.find(SelectedTiers, "All") and not table.find(SelectedTiers, tierName) then
-            return
-        end
-    end
-
-    if FishCounter[tierName] then
-        FishCounter[tierName] += 1
-    end
-
-    local assetId = string.match(VectorFrame.Image, "%d+")
-    local imageUrl = GetRobloxImage(assetId)
-
-    -- WARNA EMBED PER TIER
-    local TierColor = {
-        Common = 3092790,
-        Uncommon = 5294200,
-        Rare = 2061822,
-        Epic = 11730944,
-        Legendary = 15844367,
-        Mythic = 14423100,
-        SECRET = 16711853
-    }
-
-    local colorUsed = TierColor[tierName] or 5814783
-
-    local embed = {{
-        ["title"] = "🎣 **Fish Caught!**",
-        ["description"] = string.format(
-            "### 🐟 **%s**\n```\nWeight : %s\nTier   : %s\nRarity : %s\nBag    : %s\n```\n### 💰 Stats\n- **Sell Price:** `%s`\n- **Chance:** `%s`\n",
-            fishName,
-            fishWeight,
-            tierName,
-            rarityText,
-            bagSizeText,
-            FormatNumber(sellPrice),
-            FormatChance(chance)
-        ),
-
-        ["color"] = colorUsed,
-
-        ["thumbnail"] = {
-            ["url"] = imageUrl or "https://i.imgur.com/zwCkN8P.png"
-        },
-
-        ["image"] = {
-            ["url"] = "https://i.imgur.com/eX2zSNS.jpeg"
-        },
-
-        ["author"] = {
-            ["name"] = "Nexa | Fishing System",
-            ["icon_url"] = "https://i.imgur.com/k52FCzJ.jpeg"
-        },
-
-        ["footer"] = {
-            ["text"] = "Caught by " .. LocalPlayer.Name .. " | " .. os.date("%H:%M:%S"),
-            ["icon_url"] = "https://i.imgur.com/eX2zSNS.jpeg"
-        },
-
-        ["fields"] = {
-            {
-                ["name"] = "📊 Total "..tierName.." Caught",
-                ["value"] = "**"..tostring(FishCounter[tierName]).."**",
-                ["inline"] = true
-            },
-            {
-                ["name"] = "🧭 Rarity",
-                ["value"] = rarityText,
-                ["inline"] = true
-            }
-        }
-    }}
-
-    SendEmbed({embeds = embed})
-end)
 
 sections.Fishing1:Header({
 	Name = "Equipment Feature"
