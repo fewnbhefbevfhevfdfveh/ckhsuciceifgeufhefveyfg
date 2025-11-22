@@ -438,6 +438,406 @@ sections.Fishing:Button({
 	end,
 })
 
+sections.Fishing:Header({
+	Name = "Super Instant"
+})
+
+-- ========================================================================
+-- BASE SETUP & SERVICES
+-- ========================================================================
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = LocalPlayer
+
+-- ========================================================================
+-- REMOTES
+-- ========================================================================
+local package = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net
+
+local ChargeFishingRod = package["RF/ChargeFishingRod"]
+local RequestFishingMinigameStarted = package["RF/RequestFishingMinigameStarted"]
+local REReplicateTextEffect = package["RE/ReplicateTextEffect"]
+local REFishingCompleted = package["RE/FishingCompleted"]
+local CancelFishingInputs = package["RF/CancelFishingInputs"]
+
+-- ========================================================================
+-- STATE PARAMETER
+-- ========================================================================
+local miniggameArgs = {
+    -1.233184814453125,
+    0.9972056628181873,
+    1763291794.158201
+}
+
+local isFishing = false
+local autoFishingEnabled = false
+local antiStuckEnabled = false
+
+local castDelay = 1.5
+local completedDelay = 1
+
+-- ========================================================================
+-- SAFE WAIT
+-- ========================================================================
+local function SafeWait(t)
+    local start = os.clock()
+    while os.clock() - start < t do
+        if not autoFishingEnabled then return false end
+        task.wait()
+    end
+    return true
+end
+
+-- ========================================================================
+-- START FISHING CYCLE
+-- ========================================================================
+local function StartFishingCycle()
+    if not autoFishingEnabled then return end
+    if isFishing then return end
+
+    isFishing = true
+
+    ChargeFishingRod:InvokeServer()
+    if not SafeWait(0.2) then return end
+
+    RequestFishingMinigameStarted:InvokeServer(unpack(miniggameArgs))
+end
+
+-- ========================================================================
+-- DETECT COMPLETE
+-- ========================================================================
+REReplicateTextEffect.OnClientEvent:Connect(function(data)
+    if not autoFishingEnabled then return end
+    if not data or not data.TextData then return end
+
+    local attach = data.TextData.AttachTo
+    if not attach or not attach.Parent then return end
+
+    local character = attach.Parent
+    local player = Players:GetPlayerFromCharacter(character)
+    if player ~= LocalPlayer then return end
+
+    task.spawn(function()
+        if not SafeWait(completedDelay) then return end
+
+        REFishingCompleted:FireServer()
+        isFishing = false
+
+        if not SafeWait(castDelay) then return end
+        StartFishingCycle()
+    end)
+end)
+
+-- ========================================================================
+-- ANTI STUCK
+-- ========================================================================
+task.spawn(function()
+    local notifGui
+    local notifFrame
+
+    repeat
+        task.wait(1)
+        notifGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("Small Notification")
+    until notifGui
+
+    notifFrame = notifGui:WaitForChild("Display"):WaitForChild("Container")
+
+    while true do
+        task.wait(1)
+
+        if antiStuckEnabled and autoFishingEnabled then
+            local lastPos = notifFrame.Position
+            local freezeDetected = true
+
+            for i = 1, 10 do
+                task.wait(1)
+                if notifFrame.Position ~= lastPos then
+                    freezeDetected = false
+                    break
+                end
+            end
+
+            if freezeDetected then
+                warn("[InstantFishing] Anti Stuck Triggered → Restarting...")
+                
+                pcall(function()
+                    CancelFishingInputs:InvokeServer()
+                end)
+
+                isFishing = false
+                task.wait(0.5)
+                StartFishingCycle()
+            end
+        end
+    end
+end)
+
+-- ========================================================================
+-- WINDUI: INSTANT FISHING
+-- ========================================================================
+sections.Fishing:Toggle({
+	Name = "Instant Fishing",
+	Default = false,
+	Callback = function(state)
+		autoFishingEnabled = state
+        isFishing = false
+
+        if state then StartFishingCycle() end
+
+		Window:Notify({
+			Title = "Instant Fishing",
+			Description = state and "Enabled" or "Disabled"
+		})
+	end,
+})
+
+sections.Fishing:Toggle({
+	Name = "Anti Stuck Detector",
+	Default = false,
+	Callback = function(state)
+		antiStuckEnabled = state
+
+		Window:Notify({
+			Title = "Anti Stuck Detector",
+			Description = state and "Enabled" or "Disabled"
+		})
+	end,
+})
+
+sections.Fishing:Input({
+	Name = "Cast Delay",
+	Placeholder = "Default: 1.5",
+	AcceptedCharacters = "Numbers",
+	Callback = function(input)
+		castDelay = tonumber(input) or 1.5
+	end,
+})
+
+sections.Fishing:Input({
+	Name = "Completed Delay",
+	Placeholder = "Default: 1",
+	AcceptedCharacters = "Numbers",
+	Callback = function(input)
+		completedDelay = tonumber(input) or 1
+	end,
+})
+
+-- ========================================================================
+-- MODULE LOADER (SAFE)
+-- ========================================================================
+local Modules = {}
+
+local function customRequire(module)
+    if not module then return nil end
+    local ok, result = pcall(require, module)
+    if ok then return result end
+
+    local clone = module:Clone()
+    clone.Parent = nil
+    local ok2, result2 = pcall(require, clone)
+
+    if ok2 then
+        return result2
+    else
+        warn("Failed to load module:", module:GetFullName())
+        return nil
+    end
+end
+
+pcall(function()
+    local Controllers = ReplicatedStorage.Controllers
+    local NetFolder = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net
+    local Shared = ReplicatedStorage.Shared
+
+    Modules.Replion = customRequire(ReplicatedStorage.Packages.Replion)
+    Modules.ItemUtility = customRequire(Shared.ItemUtility)
+    Modules.FishingController = customRequire(Controllers.FishingController)
+
+    Modules.EquipToolEvent = NetFolder["RE/EquipToolFromHotbar"]
+    Modules.ChargeRodFunc = NetFolder["RF/ChargeFishingRod"]
+    Modules.StartMinigameFunc = NetFolder["RF/RequestFishingMinigameStarted"]
+    Modules.CompleteFishingEvent = NetFolder["RE/FishingCompleted"]
+end)
+
+task.wait(1)
+
+-- ========================================================================
+-- SUPER INSTANT FISHING (X7)
+-- ========================================================================
+local featureState = {
+    AutoFish = false,
+    Instant_ChargeDelay = 0.07,
+    Instant_StartDelay = 1.20,
+    Instant_CatchTimeout = 0.01,
+    Instant_CycleDelay = 0.01,
+    Instant_ResetCount = 10,
+    Instant_ResetPause = 0.01
+}
+
+local fishingTrove = {}
+local autoFishThread = nil
+local fishCaughtBindable = Instance.new("BindableEvent")
+
+-- Detect fish from notification
+task.spawn(function()
+    local lastText = ""
+    while task.wait(0.2) do
+        local gui = player:FindFirstChild("PlayerGui")
+        if gui then
+            local notif = gui:FindFirstChild("Small Notification")
+            if notif and notif.Enabled then
+                local disp = notif:FindFirstChild("Display", true)
+                local cont = disp and disp:FindFirstChild("Container", true)
+                local lbl = cont and cont:FindFirstChild("ItemName")
+
+                if lbl and lbl.Text ~= lastText and lbl.Text ~= "" then
+                    lastText = lbl.Text
+                    fishCaughtBindable:Fire()
+                end
+            else
+                lastText = ""
+            end
+        end
+    end
+end)
+
+-- STOP ALL WORKER
+local function stopAutoFishProcesses()
+    featureState.AutoFish = false
+
+    for _, obj in ipairs(fishingTrove) do
+        if typeof(obj) == "RBXScriptConnection" then obj:Disconnect()
+        elseif typeof(obj) == "thread" then task.cancel(obj) end
+    end
+
+    fishingTrove = {}
+
+    pcall(function()
+        Modules.FishingController:RequestClientStopFishing(true)
+    end)
+end
+
+-- SUPER INSTANT METHOD
+local function startAutoFishMethod_Instant()
+    featureState.AutoFish = true
+
+    local SPAM = 7
+    local WORKERS = 2
+    local CHARGE = featureState.Instant_ChargeDelay
+    local START_DELAY = featureState.Instant_StartDelay
+    local CATCH_TIMEOUT = featureState.Instant_CatchTimeout
+    local RESET_COUNT = featureState.Instant_ResetCount
+    local RESET_PAUSE = featureState.Instant_ResetPause
+
+    autoFishThread = task.spawn(function()
+        while featureState.AutoFish do
+            local chargeCount = 0
+            local resetFlag = false
+
+            local workers = {}
+
+            local function worker()
+                while featureState.AutoFish and not resetFlag do
+                    chargeCount += 1
+                    if chargeCount >= RESET_COUNT then break end
+
+                    Modules.ChargeRodFunc:InvokeServer(nil, nil, nil, workspace:GetServerTimeNow())
+                    task.wait(CHARGE)
+
+                    Modules.StartMinigameFunc:InvokeServer(-139, 1, workspace:GetServerTimeNow())
+                    task.wait(START_DELAY)
+
+                    for i = 1, SPAM do
+                        if not featureState.AutoFish then break end
+                        Modules.CompleteFishingEvent:FireServer()
+                        task.wait(0.03)
+                    end
+
+                    local caught = false
+                    local timeout = false
+
+                    task.delay(CATCH_TIMEOUT, function() timeout = true end)
+
+                    local connection
+                    connection = fishCaughtBindable.Event:Connect(function()
+                        caught = true
+                        connection:Disconnect()
+                    end)
+
+                    while not (caught or timeout) and featureState.AutoFish do
+                        task.wait()
+                    end
+
+                    pcall(function()
+                        Modules.FishingController:RequestClientStopFishing(true)
+                    end)
+                end
+            end
+
+            for i = 1, WORKERS do
+                table.insert(workers, task.spawn(worker))
+            end
+
+            while chargeCount < RESET_COUNT and featureState.AutoFish do
+                task.wait()
+            end
+
+            resetFlag = true
+
+            for _, th in ipairs(workers) do
+                task.cancel(th)
+            end
+
+            task.wait(RESET_PAUSE)
+        end
+
+        stopAutoFishProcesses()
+    end)
+
+    table.insert(fishingTrove, autoFishThread)
+end
+
+local function startOrStopAutoFish(state)
+    stopAutoFishProcesses()
+    if state then
+        featureState.AutoFish = true
+        startAutoFishMethod_Instant()
+    end
+end
+
+-- UI SUPER INSTANT
+sections.Fishing:Input({
+    Name = "Spam Finish",
+    Placeholder = tostring(featureState.Instant_ResetCount),
+    AcceptedCharacters = "Numbers",
+    Callback = function(input)
+        local number = tonumber(input)
+        if number then featureState.Instant_ResetCount = number end
+    end,
+})
+
+sections.Fishing:Input({
+    Name = "Delay Cast",
+    Placeholder = tostring(featureState.Instant_ResetPause),
+    AcceptedCharacters = "Numbers",
+    Callback = function(input)
+        local number = tonumber(input)
+        if number then featureState.Instant_ResetPause = number end
+    end,
+})
+
+sections.Fishing:Toggle({
+    Name = "Super Instant Fishing",
+    Default = false,
+    Callback = function(state)
+        startOrStopAutoFish(state)
+        Window:Notify({
+            Title = "Super Instant Fishing",
+            Description = state and "Enabled" or "Disabled"
+        })
+    end,
+})
 
 sections.Fishing:Header({
 	Name = "Instant Fishing Feature"
