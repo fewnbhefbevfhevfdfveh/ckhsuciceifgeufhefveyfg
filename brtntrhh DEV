@@ -64,6 +64,22 @@ sections.Fishing:Header({
 	Name = "Fishing Event"
 })
 
+-- Ambil label countdown dari menu
+local label = MenuRings["Event Tracker"].Main.Gui.Content.Items.Countdown.Label
+
+-- Buat Paragraph di WindUI yang update body-nya dari label.Text setiap detik
+local lochnessParagraph = sections.Fishing:Paragraph({
+    Header = "Lochness Monster Countdown",
+    Body = label.Text
+}, nil)
+
+task.spawn(function()
+    while true do
+        lochnessParagraph:UpdateBody(label.Text)
+        task.wait(1)
+    end
+end)
+
 sections.Fishing:Header({
 	Name = "Fishing Feature"
 })
