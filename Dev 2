@@ -21,7 +21,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.2",
+    Subtitle = "Fish It | V0.0.1",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -63,6 +63,72 @@ local sections = {
 sections.Fishing:Header({
 	Name = "Fishing Event"
 })
+
+-- Ambil label countdown dari menu
+local label = MenuRings["Event Tracker"].Main.Gui.Content.Items.Countdown.Label
+local humanoidRootPart = hrp
+
+-- Posisi teleport target
+local targetCFrame = CFrame.new(
+    6089.81396, -585.924194, 4637.24023,
+    -0.800617278, 5.49377476e-08, 0.599176049,
+    6.29061105e-08, 1, -7.63340946e-09,
+    -0.599176049, 3.15803952e-08, -0.800617278
+)
+
+local enabled = false
+
+-- Buat Paragraph di WindUI yang update body-nya dari label.Text setiap detik
+local lochnessParagraph = sections.Fishing:Paragraph({
+    Header = "Lochness Monster Countdown",
+    Body = label.Text
+}, nil)
+
+task.spawn(function()
+    while true do
+        lochnessParagraph:UpdateBody(label.Text)
+        task.wait(1)
+    end
+end)
+
+-- Toggle untuk Auto Lochness Monster
+sections.Fishing:Toggle({ 
+    Name = "Auto Lochness Monster",
+    Default = false,
+    Callback = function(value)
+        enabled = value
+        Window:Notify({
+            Title = "Auto Lochness Monster",
+            Description = (value and "Enabled " or "Disabled ") .. "Lochness Monster"
+        })
+    end,
+}, "AutoLochnessMonsterToggle")
+
+-- Loop cek label.Text setiap 0.1 detik, teleport dan freeze kalau kondisi terpenuhi dan toggle aktif
+task.spawn(function()
+    while true do
+        if enabled and label.Text == "0H 1M 10S" then
+            -- Teleport ke posisi target
+            humanoidRootPart.CFrame = targetCFrame
+
+            -- Freeze karakter dengan BodyVelocity
+            local bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+            bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            bodyVelocity.Parent = humanoidRootPart
+
+            -- Tunggu freeze selama 2 detik
+            wait(2)
+
+            -- Lepas freeze
+            bodyVelocity:Destroy()
+
+            -- Tambahan jeda 1 detik sebelum cek ulang
+            wait(1)
+        end
+        wait(0.1)
+    end
+end)
 
 sections.Fishing:Header({
 	Name = "Fishing Feature"
