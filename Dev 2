@@ -1,3 +1,6 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
 local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
@@ -63,21 +66,78 @@ sections.Fishing:Header({
 
 -- Mengakses countdown label di Event Tracker
 local countdownLabel = MenuRings["Event Tracker"].Main.Gui.Content.Items.Countdown.Label
+local lochnessCFrame = CFrame.new(
+    6094.31836, -584.91095, 4645.79102,
+    -0.5681768833, 1.30376534e-07, 0.827220917,
+    -7.70513597e-10, 1.15831243e-07, -0.827220917,
+    -8.94876706e-08, -0.5681768833
+)
 
--- Buat Paragraph di WindUI
 local lochnessParagraph = sections.Fishing:Paragraph({
     Header = "Lochness Monster Countdown",
     Body = countdownLabel.Text
 }, nil)
 
--- Update body setiap 1 detik
+local autoLochnessEnabled = false
+
+local function teleportToLochness()
+    local player = game.Players.LocalPlayer
+    if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = lochnessCFrame
+    end
+end
+
+-- Fungsi parsing countdown waktu dari format "0H 1M 30S" ke total detik
+local function parseCountdown(text)
+    local hours = 0
+    local minutes = 0
+    local seconds = 0
+
+    for value, unit in string.gmatch(text, "(%d+)%s*([HMS])") do
+        local num = tonumber(value)
+        if unit == "H" then
+            hours = num
+        elseif unit == "M" then
+            minutes = num
+        elseif unit == "S" then
+            seconds = num
+        end
+    end
+
+    return hours * 3600 + minutes * 60 + seconds
+end
+
+sections.MainSection1:Toggle({
+    Name = "Auto Lochness Monster",
+    Default = false,
+    Callback = function(value)
+        autoLochnessEnabled = value
+        Window:Notify({
+            Title = "Lochness Monster",
+            Description = (value and "Enabled " or "Disabled ") .. "Auto Teleport"
+        })
+    end,
+}, "LochnessMonsterToggle")
+
 spawn(function()
     while true do
-        lochnessParagraph:UpdateBody(countdownLabel.Text)
+        local countdownText = countdownLabel.Text
+        lochnessParagraph:UpdateBody(countdownText)
+
+        if autoLochnessEnabled then
+            local totalSeconds = parseCountdown(countdownText)
+
+            -- Teleport saat countdown sudah 90 detik (1 menit 30 detik) atau kurang
+            if totalSeconds <= 90 then
+                teleportToLochness()
+            end
+        end
+
         task.wait(1)
     end
 end)
 
+sections.Fishing:Spacer()
 sections.Fishing:Header({
 	Name = "Fishing Feature"
 })
@@ -1528,6 +1588,50 @@ sections.Auto1:Header({
 	Name = "Auto Enchant"
 })
 
+-- Anggap PlayerGui sudah ada dan AutoEnchant juga sudah terdefinisi
+local playerGui = PlayerGui
+
+-- Buat Paragraph status ENCHANT hanya sekali
+local EnchantParagraph = sections.Auto1:Paragraph({
+    Header = "Enchant Status",
+    Body = "Loading..."
+}, nil)
+
+task.spawn(function()
+    -- Tunggu GUI "Roll Enchant"
+    local rollEnchant = playerGui:WaitForChild("Roll Enchant")
+    local main = rollEnchant:WaitForChild("Main")
+
+    -- Tunggu folder "Inside" muncul
+    local inside
+    repeat
+        inside = main:FindFirstChild("Inside")
+        task.wait(1)
+    until inside
+
+    -- Update status awal
+    EnchantParagraph:UpdateBody("Inside Loaded...")
+
+    -- Akses label enchant
+    local top = inside:WaitForChild("Top")
+    local enchantLabel = top:WaitForChild("EnchantLabel")
+
+    -- GUI siap
+    EnchantParagraph:UpdateBody("Ready...")
+
+    -- Loop monitoring text enchant dan update body saja
+    local lastText = ""
+    while task.wait(1) do
+        local currentText = enchantLabel.Text or "Unknown"
+        if currentText ~= lastText then
+            lastText = currentText
+            EnchantParagraph:UpdateBody(currentText)
+        end
+    end
+end)
+
+sections.Auto1:Divider()
+
 -- === FIX TAMBAHAN WAJIB ===
 local Options = { SelectedEnchants = {} }
 local Toggles = { AutoEnchant = false }
@@ -2644,6 +2748,45 @@ sections.Player:Toggle({
         end
     end,
 }, "ShowWebhookGUIToggle")
+
+local camera = workspace.CurrentCamera
+local UserInputService = game:GetService("UserInputService")
+local zoomSpeed = 5
+local currentZoom = camera.CameraSubject and (camera.CFrame.Position - camera.CameraSubject.Position).Magnitude or 10
+local infiniteZoomEnabled = false
+
+-- Fungsi untuk update zoom tiap frame saat enabled
+UserInputService.InputChanged:Connect(function(input)
+	if infiniteZoomEnabled and input.UserInputType == Enum.UserInputType.MouseWheel then
+		currentZoom = currentZoom - input.Position.Z * zoomSpeed
+		currentZoom = math.clamp(currentZoom, 0.1, math.huge) -- minimal 0.1
+		camera.CFrame = CFrame.new(camera.CFrame.Position, camera.CFrame.Position + camera.CFrame.LookVector)
+		player.CameraMaxZoomDistance = currentZoom
+	end
+end)
+
+-- Toggle di WindUI
+sections.Player:Toggle({ 
+	Name = "Infinite Zoom", 
+	Default = false,
+	Callback = function(value)
+		infiniteZoomEnabled = value
+		
+		if value then
+			player.CameraMinZoomDistance = 0
+			player.CameraMaxZoomDistance = math.huge
+		else
+			-- Kembalikan ke default (misal 0.5 - 12)
+			player.CameraMinZoomDistance = 0.5
+			player.CameraMaxZoomDistance = 12
+		end
+		
+		Window:Notify({
+			Title = "Infinite Zoom", 
+			Description = (value and "Enabled " or "Disabled ") .. "Infinite Zoom"
+		})
+	end,
+}, "InfiniteZoomToggle")
 
 sections.Player:Button({
     Name = "Boost FPS",
