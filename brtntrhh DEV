@@ -21,7 +21,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.2",
+    Subtitle = "Fish It | V0.0.1",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -64,78 +64,6 @@ sections.Fishing:Header({
 	Name = "Fishing Event"
 })
 
--- Mengakses countdown label di Event Tracker
-local countdownLabel = MenuRings["Event Tracker"].Main.Gui.Content.Items.Countdown.Label
-local lochnessCFrame = CFrame.new(
-    6094.31836, -584.91095, 4645.79102,
-    -0.5681768833, 1.30376534e-07, 0.827220917,
-    -7.70513597e-10, 1.15831243e-07, -0.827220917,
-    -8.94876706e-08, -0.5681768833
-)
-
-local lochnessParagraph = sections.Fishing:Paragraph({
-    Header = "Lochness Monster Countdown",
-    Body = countdownLabel.Text
-}, nil)
-
-local autoLochnessEnabled = false
-
-local function teleportToLochness()
-    local player = game.Players.LocalPlayer
-    if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = lochnessCFrame
-    end
-end
-
--- Fungsi parsing countdown waktu dari format "0H 1M 30S" ke total detik
-local function parseCountdown(text)
-    local hours = 0
-    local minutes = 0
-    local seconds = 0
-
-    for value, unit in string.gmatch(text, "(%d+)%s*([HMS])") do
-        local num = tonumber(value)
-        if unit == "H" then
-            hours = num
-        elseif unit == "M" then
-            minutes = num
-        elseif unit == "S" then
-            seconds = num
-        end
-    end
-
-    return hours * 3600 + minutes * 60 + seconds
-end
-
-sections.Fishing:Toggle({
-    Name = "Auto Lochness Monster",
-    Default = false,
-    Callback = function(value)
-        autoLochnessEnabled = value
-        Window:Notify({
-            Title = "Lochness Monster",
-            Description = (value and "Enabled " or "Disabled ") .. "Auto Teleport"
-        })
-    end,
-}, "LochnessMonsterToggle")
-
-spawn(function()
-    while true do
-        local countdownText = countdownLabel.Text
-        lochnessParagraph:UpdateBody(countdownText)
-
-        if autoLochnessEnabled then
-            local totalSeconds = parseCountdown(countdownText)
-
-            -- Teleport saat countdown sudah 90 detik (1 menit 30 detik) atau kurang
-            if totalSeconds <= 90 then
-                teleportToLochness()
-            end
-        end
-
-        task.wait(1)
-    end
-end)
 sections.Fishing:Header({
 	Name = "Fishing Feature"
 })
