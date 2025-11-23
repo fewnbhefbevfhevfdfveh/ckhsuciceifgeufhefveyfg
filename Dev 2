@@ -21,7 +21,7 @@ local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.1",
+    Subtitle = "Fish It | V0.0.2",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
@@ -104,25 +104,15 @@ sections.Fishing:Toggle({
     end,
 }, "AutoLochnessMonsterToggle")
 
--- Loop cek label.Text setiap 0.1 detik, teleport dan freeze kalau kondisi terpenuhi dan toggle aktif
+-- Loop cek label.Text setiap 0.1 detik, teleport kalau kondisi terpenuhi dan toggle aktif
 task.spawn(function()
     while true do
         if enabled and label.Text == "0H 1M 10S" then
             -- Teleport ke posisi target
             humanoidRootPart.CFrame = targetCFrame
-
-            -- Freeze karakter dengan BodyVelocity
-            local bodyVelocity = Instance.new("BodyVelocity")
-            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-            bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-            bodyVelocity.Parent = humanoidRootPart
-
-            -- Tunggu freeze selama 2 detik
-            wait(2)
-
-            -- Lepas freeze
-            bodyVelocity:Destroy()
-
+            
+            -- Tidak ada freeze, langsung lanjut
+            
             -- Tambahan jeda 1 detik sebelum cek ulang
             wait(1)
         end
