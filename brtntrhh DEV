@@ -1,3 +1,6 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
 local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
@@ -60,23 +63,6 @@ local sections = {
 sections.Fishing:Header({
 	Name = "Fishing Event"
 })
-
--- Mengakses countdown label di Event Tracker
-local countdownLabel = MenuRings["Event Tracker"].Main.Gui.Content.Items.Countdown.Label
-
--- Buat Paragraph di WindUI
-local lochnessParagraph = sections.Fishing:Paragraph({
-    Header = "Lochness Monster Countdown",
-    Body = countdownLabel.Text
-}, nil)
-
--- Update body setiap 1 detik
-spawn(function()
-    while true do
-        lochnessParagraph:UpdateBody(countdownLabel.Text)
-        task.wait(1)
-    end
-end)
 
 sections.Fishing:Header({
 	Name = "Fishing Feature"
@@ -2688,6 +2674,45 @@ sections.Player:Toggle({
         end
     end,
 }, "ShowWebhookGUIToggle")
+
+local camera = workspace.CurrentCamera
+local UserInputService = game:GetService("UserInputService")
+local zoomSpeed = 5
+local currentZoom = camera.CameraSubject and (camera.CFrame.Position - camera.CameraSubject.Position).Magnitude or 10
+local infiniteZoomEnabled = false
+
+-- Fungsi untuk update zoom tiap frame saat enabled
+UserInputService.InputChanged:Connect(function(input)
+	if infiniteZoomEnabled and input.UserInputType == Enum.UserInputType.MouseWheel then
+		currentZoom = currentZoom - input.Position.Z * zoomSpeed
+		currentZoom = math.clamp(currentZoom, 0.1, math.huge) -- minimal 0.1
+		camera.CFrame = CFrame.new(camera.CFrame.Position, camera.CFrame.Position + camera.CFrame.LookVector)
+		player.CameraMaxZoomDistance = currentZoom
+	end
+end)
+
+-- Toggle di WindUI
+sections.Player:Toggle({ 
+	Name = "Infinite Zoom", 
+	Default = false,
+	Callback = function(value)
+		infiniteZoomEnabled = value
+		
+		if value then
+			player.CameraMinZoomDistance = 0
+			player.CameraMaxZoomDistance = math.huge
+		else
+			-- Kembalikan ke default (misal 0.5 - 12)
+			player.CameraMinZoomDistance = 0.5
+			player.CameraMaxZoomDistance = 12
+		end
+		
+		Window:Notify({
+			Title = "Infinite Zoom", 
+			Description = (value and "Enabled " or "Disabled ") .. "Infinite Zoom"
+		})
+	end,
+}, "InfiniteZoomToggle")
 
 sections.Player:Button({
     Name = "Boost FPS",
