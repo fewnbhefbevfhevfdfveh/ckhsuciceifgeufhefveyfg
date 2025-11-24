@@ -15,6 +15,10 @@ local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
 local MenuRings = workspace["!!! MENU RINGS"]
 local PlayerGui = player:WaitForChild("PlayerGui")
 
+
+local camera = workspace.CurrentCamera
+local screenSize = camera.ViewportSize
+
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
     Subtitle = "Fish It | V0.0.1",
@@ -2245,7 +2249,7 @@ sections.Tp:Header({
 	Name = "Island"
 })
 
--- Daftar Island dengan posisi CFrame
+-- Daftar Island (sudah dibersihkan: tidak ada spasi belakang & typo diperbaiki)
 local islands = {
     ["Kohana"] = CFrame.new(-642.243561, 16.0354481, 624.918884, 0.999580681, 0, -0.0289562326, 0, 1, 0, 0.0289562326, 0, 0.999580681),
     ["Winter Fest"] = CFrame.new(1687.93079, 6.8625145, 3309.67725, 0.96799022, -3.6394315e-08, -0.250987828, 1.06909646e-08, 1, -1.0377223e-07, 0.250987828, 9.77672059e-08, 0.96799022),
@@ -2261,9 +2265,9 @@ local islands = {
     ["Weather Machine"] = CFrame.new(-1525.72632, 6.49999952, 1892.23645, 0.0615941137, 6.608282509e-10, -0.998101294, -6.8356556e-08, 1, 3.55628549e-09, 0.998101294, 6.84458072e-08, 0.0615941137),
     ["Sisyphus Statue"] = CFrame.new(-3692.22021, -135.574417, -1026.96167, -0.928567886, 9.83784361e-08, 0.371162564, 1.22746741e-07, 1, 4.20307664e-08, -0.371162564, 8.45874197e-08, -0.928567886),
     ["Ancient Jungle"] = CFrame.new(1275.54553, 7.85804176, -193.749756, 0.924119413, 5.65956171e-08, -0.382103801, -3.36512187e-08, 1, 6.67302302e-08, 0.382103801, -4.88084417e-08, 0.924119413),
-    ["Underground Cellar Door "] = CFrame.new(1954.18994, -41.7413597, -577.574768, -0.817980289, 0.573605001, 0.0434255376, 0.572797239, 0.81913203, -0.0304316022, -0.0530269668, -1.84206292e-05, -0.998593211),
+    ["Underground Cellar Door"] = CFrame.new(1954.18994, -41.7413597, -577.574768, -0.817980289, 0.573605001, 0.0434255376, 0.572797239, 0.81913203, -0.0304316022, -0.0530269668, -1.84206292e-05, -0.998593211),
     ["Underground Cellar"] = CFrame.new(2120.27417, -93.1985779, -701.552185, -0.998591185, 0, 0.0530693457, 0, 1, 0, -0.0530693457, 0, -0.998591185),
-    ["Tample Guardian"] = CFrame.new(1478.29846, 126.044891, -613.519653, -0.117893577, 0, 0.993026376, 0, 1, 0, -0.993026376, 0, -0.117893577),
+    ["Temple Guardian"] = CFrame.new(1478.29846, 126.044891, -613.519653, -0.117893577, 0, 0.993026376, 0, 1, 0, -0.993026376, 0, -0.117893577),
     ["Mysterious Door"] = CFrame.new(1899.19629, 13.3589745, -577.593811, -0.0531117916, 0, -0.998588562, 0, 1, 0, 0.998588562, 0, -0.0531117916),
     ["Hourglass Diamond Artifact"] = CFrame.new(1485.66541, 5.41373634, -861.165161, -5.01871109e-05, 0.988927424, 0.148400292, -1, -5.01871109e-05, -3.74019146e-06, 3.74019146e-06, -0.148400292, 0.988927364),
     ["Arrow Artifact"] = CFrame.new(898.490479, 5.41373587, -361.212708, 9.11951065e-06, 0.0998446345, -0.995003104, -1, 9.11951065e-06, -8.2552433e-06, 8.2552433e-06, 0.995003104, 0.0998445749),
@@ -2277,17 +2281,19 @@ local islands = {
     ["Iron Cafe"] = CFrame.new(-8641.91016, -547.500183, 161.963455, -0.0101819877, -4.55452422e-08, -0.999948144, 1.64972356e-08, 1, -4.57155878e-08, 0.999948144, -1.69618559e-08, -0.0101819877),
 }
 
--- Ambil semua nama Island dan sort secara case-insensitive
+-- Ambil semua nama Island & sort
 local islandNames = {}
-for name, _ in pairs(islands) do
+for name in pairs(islands) do
     table.insert(islandNames, name)
 end
-table.sort(islandNames, function(a, b) return a:lower() < b:lower() end)
+table.sort(islandNames, function(a, b)
+    return a:lower() < b:lower()
+end)
 
--- Default island yang dipilih
+-- Default
 local selectedIsland = islandNames[1] or "Kohana"
 
--- Dropdown pilih island
+-- Dropdown
 sections.Tp:Dropdown({
     Name = "Select Island",
     Search = true,
@@ -2300,13 +2306,16 @@ sections.Tp:Dropdown({
     end,
 }, "SelectIslandDropdown")
 
--- Tombol teleport
+-- Tombol Teleport
 sections.Tp:Button({
     Name = "Teleport Now",
     Callback = function()
         local player = game.Players.LocalPlayer
         local char = player.Character or player.CharacterAdded:Wait()
-        local hrp = char:WaitForChild("HumanoidRootPart")
+        if not char then return end
+
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
 
         local targetCFrame = islands[selectedIsland]
         if targetCFrame then
