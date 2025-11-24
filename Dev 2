@@ -15,17 +15,13 @@ local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
 local MenuRings = workspace["!!! MENU RINGS"]
 local PlayerGui = player:WaitForChild("PlayerGui")
 
-
-local camera = workspace.CurrentCamera
-local screenSize = camera.ViewportSize
-
 local Window = MacLib:Window({
     Title = "Nexa | Premium",
-    Subtitle = "Fish It | V0.0.3",
+    Subtitle = "Fish It | V0.0.1",
     Size = UDim2.fromOffset(720, 410),
     DragStyle = 1,
     DisabledWindowControls = {},
-    ShowUserInfo = false,
+    ShowUserInfo = true,
     Keybind = Enum.KeyCode.G,
     AcrylicBlur = true,
 })
@@ -66,17 +62,6 @@ sections.Fishing:Header({
 
 -- Ambil label countdown dari menu
 local label = MenuRings["Event Tracker"].Main.Gui.Content.Items.Countdown.Label
-local humanoidRootPart = hrp
-
--- Posisi teleport target
-local targetCFrame = CFrame.new(
-    6089.81396, -585.924194, 4637.24023,
-    -0.800617278, 5.49377476e-08, 0.599176049,
-    6.29061105e-08, 1, -7.63340946e-09,
-    -0.599176049, 3.15803952e-08, -0.800617278
-)
-
-local enabled = false
 
 -- Buat Paragraph di WindUI yang update body-nya dari label.Text setiap detik
 local lochnessParagraph = sections.Fishing:Paragraph({
@@ -88,35 +73,6 @@ task.spawn(function()
     while true do
         lochnessParagraph:UpdateBody(label.Text)
         task.wait(1)
-    end
-end)
-
--- Toggle untuk Auto Lochness Monster
-sections.Fishing:Toggle({ 
-    Name = "Auto Lochness Monster",
-    Default = false,
-    Callback = function(value)
-        enabled = value
-        Window:Notify({
-            Title = "Auto Lochness Monster",
-            Description = (value and "Enabled " or "Disabled ") .. "Lochness Monster"
-        })
-    end,
-}, "AutoLochnessMonsterToggle")
-
--- Loop cek label.Text setiap 0.1 detik, teleport kalau kondisi terpenuhi dan toggle aktif
-task.spawn(function()
-    while true do
-        if enabled and label.Text == "0H 1M 10S" then
-            -- Teleport ke posisi target
-            humanoidRootPart.CFrame = targetCFrame
-            
-            -- Tidak ada freeze, langsung lanjut
-            
-            -- Tambahan jeda 1 detik sebelum cek ulang
-            wait(1)
-        end
-        wait(0.1)
     end
 end)
 
@@ -2316,6 +2272,9 @@ local islands = {
     ["Sacred Temple"] = CFrame.new(1478.09546, 0.0774269104, -612.817993, 0.993017375, 0, 0.117968373, 0, 1, 0, -0.117968373, 0, 0.993017375),
     ["Crystalline Passage"] = CFrame.new(6053.09717, -538.900085, 4391.29102, -0.993590963, -1.39414302e-08, 0.10982503, 1.7823354e-10, 1, -7.10982503, 1.27797193e-07, -0.10982503, -0.993590963),
     ["Ancient Ruin"] = CFrame.new(6130.33203, -584.05603, 4632.95166, -0.171970293, -9.77156915e-08, 0.985102117, -7.319955083e-08, 1, 8.64156533e-08, -0.985102117, -5.722441259e-08, -0.171970293),
+    ["Classic Island"] = CFrame.new(1258.37341, 9.999999905, 2811.14819, -0.996284008, -1.96166035e-08, 0.086129114, -2.56321329e-08, 1, -6.87372363e-08, -0.086129114, -7.068394809e-08, -0.996284008),
+    ["Iron Cavern"] = CFrame.new(8847.00293, -564.525024, 156.249344, -0.976369083, 9.58485415e-08, 0.216109693, -8.09685901e-08, 1.7777073481e-08, -0.216109693, -5.83729545e-08, -0.976369083),
+    ["Iron Cafe"] = CFrame.new(-8641.91016, -547.500183, 161.963455, -0.0101819877, -4.55452422e-08, -0.999948144, 1.64972356e-08, 1, -4.57155878e-08, 0.999948144, -1.69618559e-08, -0.0101819877),
 }
 
 -- Ambil semua nama Island dan sort secara case-insensitive
