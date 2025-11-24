@@ -1,0 +1,134 @@
+--// SERVICES
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+--// CONFIG (Daftar user premium)
+local validUsers = {
+	[9464607503] = {key = "NexaPremium_dngffvef", issuedDate = "18-09-2025"},
+	[1444873051] = {key = "NexaPremium_6DB404IG", issuedDate = "20-09-2025"},
+	[7854965065] = {key = "NexaPremium_91F3YK69", issuedDate = "22-09-2025"},
+	[9529082141] = {key = "NexaPremium_91F3YK69", issuedDate = "26-09-2025"},
+	[2314101743] = {key = "NexaPremium_U9IMV3YW", issuedDate = "01-10-2025"},
+	[9348359815] = {key = "NexaPremium_NX81SW8V", issuedDate = "03-10-2025"},
+	[8868906888] = {key = "NexaPremium_efewygwf", issuedDate = "04-10-2025"},
+	[9114573649] = {key = "NexaPremium_6V9GNUC1", issuedDate = "05-10-2025"},
+	[9383243342] = {key = "NexaPremium_P25P68X9", issuedDate = "05-10-2025"},
+	[8427443610] = {key = "NexaPremium_YF3D5B0T", issuedDate = "06-10-2025"},
+	[7962577003] = {key = "NexaPremium_R775Q6FY", issuedDate = "06-10-2025"},
+	[8001911236] = {key = "NexaPremium_NFB0GALH", issuedDate = "07-10-2025"},
+	[2322953887] = {key = "NexaPremium_NFB0GALH", issuedDate = "08-10-2025"},
+	[9480072017] = {key = "NexaPremium_15PLV0Q7", issuedDate = "09-10-2025"},
+	[9312857030] = {key = "NexaPremium_M48NWY9W", issuedDate = "12-10-2025"},
+	[9576768452] = {key = "NexaPremium_CGBC6AH7", issuedDate = "Permanen"},
+	[5464154339] = {key = "Owner", issuedDate = "Permanen"},
+	[7507528154] = {key = "One1", issuedDate = "11-10-2025"},
+	[8309815866] = {key = "Owner", issuedDate = "Permanen"},
+	[8238519054] = {key = "Owner", issuedDate = "Permanen"},
+	[8309797161] = {key = "Owner", issuedDate = "Permanen"},
+}
+
+local expireAfter = 30 * 24 * 60 * 60 -- 30 hari
+
+--// UTILITIES
+local function parseDate(str)
+	if str == "Permanen" then return nil end
+	local d, m, y = str:match("(%d+)%-(%d+)%-(%d+)")
+	if d and m and y then
+		return os.time({year = tonumber(y), month = tonumber(m), day = tonumber(d), hour = 0})
+	end
+	return os.time()
+end
+
+local function formatRemaining(secs)
+	if secs == math.huge then return "∞ Lifetime Access" end
+	if secs <= 0 then return "Expired" end
+	local d = math.floor(secs / 86400)
+	local h = math.floor((secs % 86400) / 3600)
+	local m = math.floor((secs % 3600) / 60)
+	return string.format("%d days %02d hrs %02d min", d, h, m)
+end
+
+local function getExpiration(userData)
+	if not userData then return 0 end
+	if userData.issuedDate == "Permanen" then return math.huge end
+	return parseDate(userData.issuedDate) + expireAfter
+end
+
+--// NOTIFICATION
+local function ShowNotification(text)
+	local playerGui = player:WaitForChild("PlayerGui")
+	if playerGui:FindFirstChild("NexaNotify") then playerGui.NexaNotify:Destroy() end
+
+	local gui = Instance.new("ScreenGui", playerGui)
+	gui.Name = "NexaNotify"
+
+	local frame = Instance.new("Frame", gui)
+	frame.Size = UDim2.new(0, 280, 0, 60)
+	frame.Position = UDim2.new(0.5, 0, 0, -80)
+	frame.AnchorPoint = Vector2.new(0.5, 0)
+	frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+	frame.BorderColor3 = Color3.fromRGB(60, 60, 60)
+	Instance.new("UICorner", frame)
+
+	local label = Instance.new("TextLabel", frame)
+	label.Size = UDim2.new(1, -20, 1, 0)
+	label.Position = UDim2.new(0, 10, 0, 0)
+	label.BackgroundTransparency = 1
+	label.TextWrapped = true
+	label.Font = Enum.Font.Code
+	label.TextSize = 14
+	label.TextColor3 = Color3.fromRGB(255, 130, 0)
+	label.Text = text
+
+	TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+		Position = UDim2.new(0.5, 0, 0, 40)
+	}):Play()
+
+	task.delay(2, function()
+		TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+			Position = UDim2.new(0.5, 0, 0, -80)
+		}):Play()
+		task.wait(0.3)
+		gui:Destroy()
+	end)
+end
+
+--// MAIN LOGIC
+local userData = validUsers[player.UserId]
+
+-- NOT IN LIST → NOTIF → KICK
+if not userData then
+	ShowNotification("❌ You are not a Premium user.")
+	task.wait(2)
+	player:Kick("❌ You are not a whitelisted Premium user.")
+	return
+end
+
+local expiredTimestamp = getExpiration(userData)
+local remaining = expiredTimestamp - os.time()
+
+-- PERMANENT USER
+if userData.issuedDate == "Permanen" then
+	ShowNotification("💎 Lifetime Access Granted!")
+	task.wait(1)
+	pcall(function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/jduwgfPREMIUM"))()
+	end)
+	return
+end
+
+-- EXPIRED → NOTIF → KICK
+if remaining <= 0 then
+	ShowNotification("⏰ Your Premium Access Has Expired.")
+	task.wait(2)
+	player:Kick("⏰ Your Premium Access Has Expired. Renew to continue using the script.")
+	return
+end
+
+-- VALID PREMIUM → LOAD PREMIUM
+ShowNotification("✅ Premium Access: " .. formatRemaining(remaining))
+task.wait(1)
+pcall(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/jduwgfPREMIUM"))()
+end)
