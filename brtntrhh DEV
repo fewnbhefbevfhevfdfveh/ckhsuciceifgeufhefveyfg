@@ -1,6 +1,5 @@
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
 local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
