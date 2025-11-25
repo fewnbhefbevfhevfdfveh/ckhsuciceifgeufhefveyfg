@@ -2701,6 +2701,249 @@ sections.Player:Toggle({
     end,
 }, "ShowWebhookGUIToggle")
 
+-- =====================================================
+-- GLOBAL VARIABLES (GANTI SESUAI MAU)
+-- =====================================================
+local env = getgenv()  -- bisa diganti _G kalau mau
+
+env.WebhookURL = env.WebhookURL or ""
+env.WebhookActive = env.WebhookActive or false
+env.SelectedTiers = env.SelectedTiers or {}
+
+env.TierList = {"All","Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET"}
+
+-- =====================================================
+-- UI INPUT (WEBHOOK URL)
+-- =====================================================
+sections.Player:Input({
+    Name = "Webhook URL",
+    Placeholder = "Masukkan Webhook...",
+    AcceptedCharacters = "All",
+    Callback = function(text)
+        env.WebhookURL = text
+        print("[Webhook] Set:", env.WebhookURL)
+    end
+}, "WebhookURLInput")
+
+-- =====================================================
+-- UI TOGGLE (ENABLE/DISABLE)
+-- =====================================================
+sections.Player:Toggle({
+    Name = "Webhook Status",
+    Default = false,
+    Callback = function(state)
+        env.WebhookActive = state
+        Window:Notify({
+            Title = "Webhook",
+            Description = state and "Webhook Enabled" or "Webhook Disabled"
+        })
+    end
+}, "WebhookToggle")
+
+-- =====================================================
+-- UI MULTI DROPDOWN (FILTER TIER)
+-- =====================================================
+sections.Player:Dropdown({
+    Name = "Filter Tier",
+    Multi = true,
+    Options = env.TierList,
+    Default = {"All"},
+    Callback = function(data)
+        env.SelectedTiers = {}
+        for tier, enabled in pairs(data) do
+            if enabled then
+                table.insert(env.SelectedTiers, tier)
+            end
+        end
+        print("[Tier Selected] →", table.concat(env.SelectedTiers, ", "))
+    end
+}, "TierFilter")
+
+-- =====================================================
+-- EXPLOIT REQUEST DETECTION
+-- =====================================================
+local Request = (syn and syn.request)
+    or (http_request)
+    or (fluxus and fluxus.request)
+    or (krnl and request)
+    or (function() return nil end)
+
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- =====================================================
+-- MAPPING TIER
+-- =====================================================
+env.TierMap = {
+    [1] = "Common",
+    [2] = "Uncommon",
+    [3] = "Rare",
+    [4] = "Epic",
+    [5] = "Legendary",
+    [6] = "Mythic",
+    [7] = "SECRET"
+}
+
+env.FishCounter = {
+    Common = 0,
+    Uncommon = 0,
+    Rare = 0,
+    Epic = 0,
+    Legendary = 0,
+    Mythic = 0,
+    SECRET = 0
+}
+
+-- =====================================================
+-- FUNGSI HELPER
+-- =====================================================
+local function FormatNumber(num)
+    num = tonumber(num) or 0
+    if num >= 1e9 then return string.format("%.2fb", num/1e9) end
+    if num >= 1e6 then return string.format("%.2fm", num/1e6) end
+    if num >= 1e3 then return string.format("%.2fk", num/1e3) end
+    return tostring(num)
+end
+
+local function FormatChance(c)
+    c = tonumber(c) or 0
+    return string.format("%.2f%%", c * 100)
+end
+
+local function SendEmbed(embed)
+    if not env.WebhookActive or env.WebhookURL == "" then return end
+    if not Request then return end
+
+    Request({
+        Url = env.WebhookURL,
+        Method = "POST",
+        Headers = {["Content-Type"] = "application/json"},
+        Body = HttpService:JSONEncode({embeds = embed})
+    })
+end
+
+local function GetRobloxImage(assetId)
+    if not assetId then return nil end
+    
+    local url =
+        "https://thumbnails.roblox.com/v1/assets?assetIds="
+        .. assetId .. "&size=420x420&format=Png&isCircular=false"
+
+    local ok, res = pcall(game.HttpGet, game, url)
+    if not ok then return nil end
+
+    local data = HttpService:JSONDecode(res)
+    if data and data.data and data.data[1] then
+        return data.data[1].imageUrl
+    end
+    return nil
+end
+
+local function FindFishModule(name)
+    local Items = game:GetService("ReplicatedStorage"):WaitForChild("Items")
+    for _, module in ipairs(Items:GetChildren()) do
+        if module:IsA("ModuleScript") then
+            local ok, data = pcall(require, module)
+            if ok and data and data.Data and data.Data.Name then
+                if string.find(string.lower(name), string.lower(data.Data.Name)) then
+                    return data
+                end
+            end
+        end
+    end
+    return nil
+end
+
+-- =====================================================
+-- GUI PATH AMAN
+-- =====================================================
+local Notif = player.PlayerGui:WaitForChild("Small Notification")
+local Container = Notif.Display.Container
+local ItemName = Container:WaitForChild("ItemName")
+local RarityLabel = Container:WaitForChild("Rarity")
+local BagLabel = player.PlayerGui.Inventory.Main.Top.Options.Fish.Label:WaitForChild("BagSize")
+local VectorFrame = Notif.Display.VectorFrame:WaitForChild("Vector")
+
+local LastFish = nil
+
+-- =====================================================
+-- DETECTOR (FISH CAUGHT)
+-- =====================================================
+ItemName:GetPropertyChangedSignal("Text"):Connect(function()
+    if not env.WebhookActive or env.WebhookURL == "" then
+        return
+    end
+
+    local raw = ItemName.Text
+    if raw == "" then return end
+
+    local fishName, weight = raw:match("^(.-)%s*%((.-)%)$")
+    fishName = fishName or raw
+    weight = weight or "Unknown"
+
+    local rarity = RarityLabel.Text
+    local bag = BagLabel.Text
+
+    local dataNow = fishName .. weight .. rarity .. bag
+    if LastFish == dataNow then return end
+    LastFish = dataNow
+
+    -- Tier Mapping
+    local module = FindFishModule(fishName)
+    local tier = module and env.TierMap[module.Data.Tier] or "Unknown"
+
+    -- Check Filter
+    if #env.SelectedTiers > 0 then
+        if not table.find(env.SelectedTiers, "All")
+        and not table.find(env.SelectedTiers, tier) then
+            return
+        end
+    end
+
+    env.FishCounter[tier] = (env.FishCounter[tier] or 0) + 1
+
+    -- Thumbnail
+    local assetId = string.match(VectorFrame.Image, "%d+")
+    local imageURL = GetRobloxImage(assetId)
+
+    -- Embed Color
+    local TierColor = {
+        Common = 3092790,
+        Uncommon = 5294200,
+        Rare = 2061822,
+        Epic = 11730944,
+        Legendary = 15844367,
+        Mythic = 14423100,
+        SECRET = 16711853
+    }
+
+    -- SEND EMBED
+    local embed = {{
+        title = "🎣 Fish Caught!",
+        description = string.format(
+            "### 🐟 **%s**\n```\nWeight : %s\nTier   : %s\nRarity : %s\nBag    : %s\n```\n### Stats\n- Sell Price: `%s`\n- Chance: `%s`",
+            fishName,
+            weight,
+            tier,
+            rarity,
+            bag,
+            FormatNumber(module and module.SellPrice or 0),
+            FormatChance(module and module.Probability and module.Probability.Chance or 0)
+        ),
+        color = TierColor[tier] or 5814783,
+        thumbnail = {url = imageURL},
+        footer = {text = "Caught by " .. player.Name .. " | " .. os.date("%H:%M:%S")},
+        fields = {{
+            name = "Total " .. tier .. " Caught",
+            value = tostring(env.FishCounter[tier]),
+            inline = true
+        }}
+    }}
+
+    SendEmbed(embed)
+end)
+
 sections.Player:Button({
     Name = "Boost FPS",
     Callback = function()
