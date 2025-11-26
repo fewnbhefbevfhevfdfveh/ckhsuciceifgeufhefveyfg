@@ -1,0 +1,416 @@
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+-- Ambil nama player
+local player = game.Players.LocalPlayer
+local playerName = player.Name
+local playerDisplayName = player.DisplayName
+
+-- Buat Window
+local Window = WindUI:CreateWindow({
+    Title = "Nexa | Premium",
+    Icon = "rbxassetid://123906607434048", -- lucide icon
+    Author = "Nexa Community",
+    Folder = "Nexa",
+
+    -- Ukuran & tampilan
+    Size = UDim2.fromOffset(650, 510),
+    MinSize = Vector2.new(560, 350),
+    MaxSize = Vector2.new(850, 560),
+
+    Theme = "Dark", -- pakai tema dari versi pertama
+    Transparent = true,
+    Acrylic = false,
+    HidePanelBackground = true,
+    HideSearchBar = false,
+    NewElements = true,
+    Resizable = true,
+    SideBarWidth = 200,
+    BackgroundImageTransparency = 0.42,
+    ScrollBarEnabled = true,
+
+    -- Profil user di pojok kanan atas
+    User = {
+        Enabled = true,
+        Anonymous = false,
+        Name = playerDisplayName,
+        UserName = "@" .. playerName,
+        Callback = function()
+            WindUI:Notify({
+                Title = "User Profile",
+                Content = "User profile clicked!",
+                Duration = 3
+            })
+        end
+    }
+})
+
+-- Services
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
+
+local player = Players.LocalPlayer
+local MainTrove = {} 
+local Modules = {}
+
+local globalState = {
+    isTeleporting = false
+}
+
+-- Helper Function for Modules
+local function customRequire(module)
+    if not module then return nil end
+    if not module:IsA("ModuleScript") then return nil end
+
+    local success, result = pcall(require, module)
+    if success then return result end
+
+    -- Fallback: Clone
+    local cloneSuccess, clone = pcall(function() return module:Clone() end)
+    if not cloneSuccess then return nil end
+    clone.Parent = nil
+    local cloneRequireSuccess, cloneResult = pcall(require, clone)
+    return cloneRequireSuccess and cloneResult or nil
+end
+
+-- Load Game Modules
+local success, errorMessage = pcall(function()
+    local Controllers = ReplicatedStorage:WaitForChild("Controllers", 20)
+    local NetFolder = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild(
+        "sleitnick_net@0.2.0"):WaitForChild("net", 20)
+    local Shared = ReplicatedStorage:WaitForChild("Shared", 20)
+    
+    if not (Controllers and NetFolder and Shared) then error("Core game folders not found.") end
+
+    Modules.Replion = customRequire(ReplicatedStorage.Packages.Replion)
+    Modules.ItemUtility = customRequire(Shared.ItemUtility)
+    Modules.FishingController = customRequire(Controllers.FishingController)
+    
+    -- Remote Events/Functions
+    Modules.NetFolder = NetFolder
+    Modules.EquipToolEvent = NetFolder["RE/EquipToolFromHotbar"]
+    Modules.ChargeRodFunc = NetFolder["RF/ChargeFishingRod"]
+    Modules.StartMinigameFunc = NetFolder["RF/RequestFishingMinigameStarted"]
+    Modules.CompleteFishingEvent = NetFolder["RE/FishingCompleted"]
+    Modules.CancelFishing = NetFolder["RF/CancelFishingInputs"]
+    Modules.ReplicateTextEffect = NetFolder["RE/ReplicateTextEffect"]
+end)
+
+if not success then
+    warn("FATAL ERROR LOADING MODULES: " .. tostring(errorMessage))
+    return
+end
+
+task.wait(1)
+
+-- UI Sections
+local FishingSection = Window:Section({ Title = "Main Course", Opened = true })
+local FishingTab = FishingSection:Tab({ Title = "X7 Speed", Icon = "fish", ShowTabTitle = true })
+
+-- Variables (Auto Sell DIHAPUS, sisanya tetap sama)
+local featureState = {
+    AutoFish = false,
+    AutoFishHighQuality = false,
+    
+    -- Instant Settings
+    Instant_ChargeDelay = 0.07,
+    Instant_SpamCount = 5,
+    Instant_WorkerCount = 3,
+    Instant_StartDelay = 1.20,
+    Instant_CatchTimeout = 0.25,
+    Instant_CycleDelay = 0.10,
+    Instant_ResetCount = 15,
+    Instant_ResetPause = 0.1
+}
+
+local fishingTrove = {}
+local autoFishThread = nil
+local lastEventTime = tick()
+local fishCaughtBindable = Instance.new("BindableEvent")
+local isWaitingForCorrectTier = false
+
+-- Helper: Safe Connect
+local function safeConnect(signal, callback)
+    local conn = signal:Connect(function(...)
+        pcall(callback, ...)
+    end)
+    table.insert(MainTrove, conn)
+    return conn
+end
+
+-- Helper: High Quality Filter (tetap sama, tidak diubah)
+local function isLowQualityFish(colorValue)
+    if not colorValue then return false end
+    local r, g, b
+    
+    if typeof(colorValue) == "Color3" then
+        r, g, b = colorValue.R, colorValue.G, colorValue.B
+    elseif typeof(colorValue) == "ColorSequence" and #colorValue.Keypoints > 0 then
+        local c = colorValue.Keypoints[1].Value
+        r, g, b = c.R, c.G, c.B
+    else
+        return false
+    end
+    
+    if (r > 0.9 and g > 0.9 and b > 0.9) or (b > 0.9 and r < 0.4) or (g > 0.9 and b < 0.4) then
+        return true 
+    end
+    return false
+end
+
+-- Stop Fishing (Auto Sell tidak disentuh selain dihapus, function tetap sama)
+local function stopAutoFishProcesses()
+    featureState.AutoFish = false
+    for i, item in ipairs(fishingTrove) do
+        if typeof(item) == "RBXScriptConnection" then
+            item:Disconnect()
+        elseif typeof(item) == "thread" then
+            task.cancel(item)
+        end
+    end
+    fishingTrove = {}
+    
+    pcall(function()
+        if Modules.FishingController and Modules.FishingController.RequestClientStopFishing then
+            Modules.FishingController:RequestClientStopFishing(true)
+        end
+    end)
+end
+
+-- CORE: Instant Fishing Logic (100% sama, tidak diubah)
+local function startAutoFishMethod_Instant()
+    if not (Modules.ChargeRodFunc and Modules.StartMinigameFunc and Modules.CompleteFishingEvent) then
+        warn("Modules missing for Instant Fish.")
+        return
+    end
+
+    featureState.AutoFish = true
+    local chargeCount = 0
+    local isCurrentlyResetting = false
+    local counterLock = false
+
+    local function worker()
+        while featureState.AutoFish and player do
+            local currentResetTarget_Worker = featureState.Instant_ResetCount or 15
+
+            if isCurrentlyResetting or chargeCount >= currentResetTarget_Worker then
+                break
+            end
+
+            local success, err = pcall(function()
+                if not featureState.AutoFish or isCurrentlyResetting or chargeCount >= currentResetTarget_Worker then
+                    return
+                end
+
+                local currentCount = 0
+                local lockTimeout = 0
+                while counterLock do
+                    task.wait(0.01)
+                    lockTimeout = lockTimeout + 0.01
+                    if lockTimeout > 5 then
+                        counterLock = false
+                        break
+                    end
+                end
+
+                counterLock = true
+                if chargeCount < currentResetTarget_Worker then
+                    chargeCount = chargeCount + 1
+                    currentCount = chargeCount
+                else
+                    currentCount = chargeCount
+                end
+                counterLock = false
+
+                if currentCount > currentResetTarget_Worker then
+                    return
+                end
+
+                local chargeStartTime = workspace:GetServerTimeNow()
+                Modules.ChargeRodFunc:InvokeServer(chargeStartTime)
+                task.wait(featureState.Instant_ChargeDelay)
+
+                if not featureState.AutoFish or isCurrentlyResetting then return end
+
+                Modules.StartMinigameFunc:InvokeServer(-1.25, 1, workspace:GetServerTimeNow())
+                task.wait(featureState.Instant_StartDelay)
+
+                if not featureState.AutoFish or isCurrentlyResetting then return end
+
+                for _ = 1, featureState.Instant_SpamCount do
+                    if not featureState.AutoFish or isCurrentlyResetting then break end
+                    Modules.CompleteFishingEvent:FireServer()
+                    task.wait(0.01)
+                end
+
+                if not featureState.AutoFish or isCurrentlyResetting then return end
+
+                local signalReceived = false
+                local connection
+
+                local timeoutThread = task.delay(featureState.Instant_CatchTimeout, function()
+                    if not signalReceived and connection and connection.Connected then
+                        connection:Disconnect()
+                    end
+                end)
+
+                Modules.CancelFishing:InvokeServer()
+
+                connection = fishCaughtBindable.Event:Connect(function(status)
+                    signalReceived = true
+                    if timeoutThread then task.cancel(timeoutThread) end
+                    if connection and connection.Connected then connection:Disconnect() end
+                    if status == "skipped" then
+                        pcall(function()
+                            Modules.FishingController:RequestClientStopFishing(true)
+                        end)
+                    end
+                end)
+
+                while not signalReceived and task.wait() do
+                    if not featureState.AutoFish or isCurrentlyResetting then break end
+                    if timeoutThread and coroutine.status(timeoutThread) == "dead" then break end
+                end
+
+                if connection and connection.Connected then connection:Disconnect() end
+                Modules.CancelFishing:InvokeServer()
+
+                pcall(Modules.FishingController.RequestClientStopFishing, Modules.FishingController, true)
+
+                if not isWaitingForCorrectTier then
+                    task.wait()
+                else
+                    isWaitingForCorrectTier = false
+                end
+            end)
+
+            if not success and not tostring(err):find("busy") then warn("Worker Error:", err) end
+            if not featureState.AutoFish then break end
+            task.wait(featureState.Instant_CycleDelay)
+        end
+    end
+
+    autoFishThread = task.spawn(function()
+        while featureState.AutoFish do
+            local currentResetTarget = featureState.Instant_ResetCount or 15
+            local currentPauseTime = featureState.Instant_ResetPause or 0.1
+
+            chargeCount = 0
+            isCurrentlyResetting = false
+
+            local batchTrove = {}
+
+            for i = 1, featureState.Instant_WorkerCount do
+                if not featureState.AutoFish then break end
+                local workerThread = task.spawn(worker)
+                table.insert(batchTrove, workerThread)
+                table.insert(fishingTrove, workerThread)
+            end
+
+            while featureState.AutoFish and chargeCount < currentResetTarget do
+                task.wait()
+            end
+
+            isCurrentlyResetting = true
+            if featureState.AutoFish then
+                for _, thread in ipairs(batchTrove) do
+                    task.cancel(thread)
+                end
+                task.wait(currentPauseTime)
+            end
+        end
+        stopAutoFishProcesses()
+    end)
+
+    table.insert(fishingTrove, autoFishThread)
+end
+
+-- Toggle Function (tetap sama)
+local function startOrStopAutoFish(shouldStart)
+    if shouldStart then
+        stopAutoFishProcesses()
+        featureState.AutoFish = true
+        Modules.CancelFishing:InvokeServer()
+        workspace:GetServerTimeNow()
+        task.wait(0.2)
+        Modules.CancelFishing:InvokeServer()
+        startAutoFishMethod_Instant()
+    else
+        stopAutoFishProcesses()
+    end
+end
+
+-- Detect Fish Catch (Auto Sell tidak ada lagi, filter tetap sama)
+if Modules.ReplicateTextEffect then
+    local replicateTextConn = safeConnect(Modules.ReplicateTextEffect.OnClientEvent, function(data)
+        if not featureState.AutoFish then return end
+        
+        local myHead = player.Character and player.Character:FindFirstChild("Head")
+        if not (data and data.TextData and data.TextData.EffectType == "Exclaim" and myHead and data.Container == myHead) then
+            return
+        end
+        
+        lastEventTime = tick()
+        
+        if featureState.AutoFishHighQuality then
+            local colorValue = data.TextData.TextColor
+            if colorValue and isLowQualityFish(colorValue) then
+                pcall(function()
+                    Modules.FishingController:RequestClientStopFishing(true)
+                end)
+                fishCaughtBindable:Fire("skipped")
+                return
+            end
+        end
+        
+        fishCaughtBindable:Fire("caught")
+    end)
+    table.insert(MainTrove, replicateTextConn)
+end
+
+-- Anti-Stuck Monitor (tetap sama)
+task.spawn(function()
+    while task.wait(1) do
+        if featureState.AutoFish and featureState.AutoFishHighQuality then
+            if tick() - lastEventTime > 10 then
+                pcall(Modules.FishingController.RequestClientStopFishing, Modules.FishingController, true)
+                lastEventTime = tick()
+            end
+        end
+    end
+end)
+
+-- UI Elements (tetap sama)
+FishingTab:Section({ Title = "Fishing", Opened = true })
+
+local autoFishToggle = FishingTab:Toggle({
+    Title = "Super Instant Fishing",
+    Desc = "Still in Beta and Under Development!!!",
+    Value = false,
+    Callback = startOrStopAutoFish
+})
+
+FishingTab:Slider({
+    Title = "Delay Recast",
+    Value = { Min = 0.01, Max = 5.0, Default = featureState.Instant_StartDelay },
+    Precise = 2,
+    Step = 0.01,
+    Callback = function(v) featureState.Instant_StartDelay = tonumber(v) end
+})
+
+FishingTab:Slider({
+    Title = "Spam Finish",
+    Value = { Min = 0.01, Max = 5.0, Default = featureState.Instant_CatchTimeout },
+    Precise = 2,
+    Step = 0.01,
+    Callback = function(v) featureState.Instant_CatchTimeout = tonumber(v) end
+})
+
+FishingTab:Slider({
+    Title = "Cooldown Recast",
+    Value = { Min = 0.01, Max = 5.0, Default = featureState.Instant_CycleDelay },
+    Precise = 2,
+    Step = 0.01,
+    Callback = function(v) featureState.Instant_CycleDelay = tonumber(v) end
+})
