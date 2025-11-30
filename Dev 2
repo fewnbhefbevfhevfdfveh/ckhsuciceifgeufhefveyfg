@@ -1,5 +1,6 @@
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
 local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
@@ -161,16 +162,58 @@ local GameData = {
 
     -- ================== [Island] ==================
     Islands = {
-        ["Kohana"] = CFrame.new(-642.243561, 16.0354481, 624.918884, 0.999580681, 0, -0.0289562326, 0, 1, 0, 0.0289562326, 0, 0.999580681),
-        ["Winter Fest"] = CFrame.new(1687.93079, 6.8625145, 3309.67725, 0.96799022, -3.6394315e-08, -0.250987828, 1.06909646e-08, 1, -1.0377223e-07, 0.250987828, 9.77672059e-08, 0.96799022)
+    ["Kohana"] = CFrame.new(-642.243561, 16.0354481, 624.918884, 0.999580681, 0, -0.0289562326, 0, 1, 0, 0.0289562326, 0, 0.999580681),
+    ["Winter Fest"] = CFrame.new(1687.93079, 6.8625145, 3309.67725, 0.96799022, -3.6394315e-08, -0.250987828, 1.06909646e-08, 1, -1.0377223e-07, 0.250987828, 9.77672059e-08, 0.96799022),
+    ["Lost Isle"] = CFrame.new(-3660.07031, 26.1918774, -933.131897, -0.77232331, -7.22959044e-08, -0.635229647, -1.90984206e-08, 1, -9.05904614e-08, 0.635229647, -5.7833244e-08, -0.77232331),
+    ["Isoteric Island"] = CFrame.new(2029.47913, 27.3972206, 1393.52319, 0.438848287, -3.30229497e-08, -0.89856118, 8.09404801e-08, 1, 2.55982613e-09, 0.89856118, -7.34489944e-08, 0.438848287),
+    ["Crater Island"] = CFrame.new(973.268372, 7.36203814, 4879.09277, 0.99999994, -1.67766032e-08, -0.000279307278, 1.67553038e-08, 1, -7.62482344e-08, 0.000279307278, 7.62435519e-08, 0.99999994),
+    ["Coral Reefs"] = CFrame.new(-3134.98511, 20.9564934, 2167.80566, 0.610140502, 5.54546098e-08, -0.792293251, -1.07331415e-08, 1, 6.17270004e-08, 0.792293251, -2.91583468e-08, 0.610140502),
+    ["Kohana Volcano"] = CFrame.new(-525.122925, 24.0000591, 187.470749, 0.702778041, -1.4945584e-08, 0.711409211, 1.59372149e-09, 1, 1.18378477e-08, -0.711409211, -1.17821113e-08, 0.702778041),
+    ["Fisherman Island"] = CFrame.new(33.5687256, 17.0335217, 2834.95557, 0.999833524, -8.21432367e-10, 0.0182459373, 2.40968401e-09, 1, 8.70248726e-08, -0.0182459373, 8.7054351e-08, 0.999833524),
+    ["Esoteric Depths"] = CFrame.new(3152.74707, -1302.72986, 1438.05444, 0.442518562, -2.42594727e-08, -0.896759331, -8.6126515e-09, 1, 1.33023953e-08, 0.896759331, -2.15753335e-08, 0.442518562),
+    ["Tropical Grove"] = CFrame.new(-2046.1554, 6.26801682, 3660.56006, -0.739083588, 1.74285066e-08, 0.673613727, -5.79817758e-08, 1, -8.94902854e-08, -0.673613727, -1.05198126e-07, -0.739083588),
+    ["Treasure Room"] = CFrame.new(-3599.53491, -266.57373, -1566.98657),
+    ["Weather Machine"] = CFrame.new(-1525.72632, 6.49999952, 1892.23645, 0.0615941137, 6.608282509e-10, -0.998101294, -6.8356556e-08, 1, 3.55628549e-09, 0.998101294, 6.84458072e-08, 0.0615941137),
+    ["Sisyphus Statue"] = CFrame.new(-3692.22021, -135.574417, -1026.96167, -0.928567886, 9.83784361e-08, 0.371162564, 1.22746741e-07, 1, 4.20307664e-08, -0.371162564, 8.45874197e-08, -0.928567886),
+    ["Ancient Jungle"] = CFrame.new(1275.54553, 7.85804176, -193.749756, 0.924119413, 5.65956171e-08, -0.382103801, -3.36512187e-08, 1, 6.67302302e-08, 0.382103801, -4.88084417e-08, 0.924119413),
+    ["Underground Cellar Door"] = CFrame.new(1954.18994, -41.7413597, -577.574768, -0.817980289, 0.573605001, 0.0434255376, 0.572797239, 0.81913203, -0.0304316022, -0.0530269668, -1.84206292e-05, -0.998593211),
+    ["Underground Cellar"] = CFrame.new(2120.27417, -93.1985779, -701.552185, -0.998591185, 0, 0.0530693457, 0, 1, 0, -0.0530693457, 0, -0.998591185),
+    ["Temple Guardian"] = CFrame.new(1478.29846, 126.044891, -613.519653, -0.117893577, 0, 0.993026376, 0, 1, 0, -0.993026376, 0, -0.117893577),
+    ["Mysterious Door"] = CFrame.new(1899.19629, 13.3589745, -577.593811, -0.0531117916, 0, -0.998588562, 0, 1, 0, 0.998588562, 0, -0.0531117916),
+    ["Hourglass Diamond Artifact"] = CFrame.new(1485.66541, 5.41373634, -861.165161, -5.01871109e-05, 0.988927424, 0.148400292, -1, -5.01871109e-05, -3.74019146e-06, 3.74019146e-06, -0.148400292, 0.988927364),
+    ["Arrow Artifact"] = CFrame.new(898.490479, 5.41373587, -361.212708, 9.11951065e-06, 0.0998446345, -0.995003104, -1, 9.11951065e-06, -8.2552433e-06, 8.2552433e-06, 0.995003104, 0.0998445749),
+    ["Crescent Artifact"] = CFrame.new(1419.39148, 28.1637344, 79.5802917, 3.55243683e-05, -0.332731277, -0.943021655, -1, -3.55243683e-05, -2.51233578e-05, -2.51233578e-05, 0.943021655, -0.332731247),
+    ["Diamond Artifact"] = CFrame.new(1818.72156, 5.41373634, -285.160828, -1.15633011e-05, -0.192806393, 0.981236815, -1, 1.15633011e-05, -9.53674316e-06, -9.53674316e-06, -0.981236815, -0.192806482),
+    ["Sacred Temple"] = CFrame.new(1478.09546, 0.0774269104, -612.817993, 0.993017375, 0, 0.117968373, 0, 1, 0, -0.117968373, 0, 0.993017375),
+    ["Crystalline Passage"] = CFrame.new(6053.09717, -538.900085, 4391.29102, -0.993590963, -1.39414302e-08, 0.10982503, 1.7823354e-10, 1, -7.10982503, 1.27797193e-07, -0.10982503, -0.993590963),
+    ["Ancient Ruin"] = CFrame.new(6130.33203, -584.05603, 4632.95166, -0.171970293, -9.77156915e-08, 0.985102117, -7.319955083e-08, 1, 8.64156533e-08, -0.985102117, -5.722441259e-08, -0.171970293),
+    ["Classic Island"] = CFrame.new(1258.37341, 9.999999905, 2811.14819, -0.996284008, -1.96166035e-08, 0.086129114, -2.56321329e-08, 1, -6.87372363e-08, -0.086129114, -7.068394809e-08, -0.996284008),
+    ["Iron Cavern"] = CFrame.new(-8802.55762, -583.800049, 94.9271545, 0.539917707, 4.95349006e-08, -0.84171778, 2.88506321e-08, 1, 7.7355935e-08, 0.84171778, -6.60499282e-08, 0.539917707),
+    ["Iron Cafe"] = CFrame.new(-8641.91016, -547.500183, 161.963455, -0.0101819877, -4.55452422e-08, -0.999948144, 1.64972356e-08, 1, -4.57155878e-08, 0.999948144, -1.69618559e-08, -0.0101819877),
     },
 
     -- ==================[Save Posisi] ==================
-    SavedPositions = {
-        ["Position 1"] = nil,
-        ["Position 2"] = nil,
-        ["Position 3"] = nil
-    },
+    rootFolder = "SavedPositions",
+    folder = nil,
+
+    SavedPositions = {},
+    options = {},
+
+    selectedSlot = nil,
+    customSlotName = "",
+    teleportEnabled = false,
+
+    LocalPlayer = game.Players.LocalPlayer,
+    char = nil,
+    hrp = nil,
+
+    SaveDropdown = nil,
+    SaveButton = nil,
+    DeleteButton = nil,
+    RefreshButton = nil,
+
+    bv = nil,
+    bg = nil,
 
     -- ================== [Auto Unclock Ancient Ruin] ==================
     AutoUnlock = false,
@@ -367,6 +410,21 @@ local GameData = {
     beginDrag = nil,
     updateDrag = nil,
     endDrag = nil,
+
+    -- ================== [Walkspeed, Jump Power, Gravity] ==================
+
+    Player = nil,
+    char = nil,
+    hum = nil,
+
+    WalkspeedEnabled = false,
+    WalkspeedValue = 16,
+
+    JumpEnabled = false,
+    JumpValue = 50,
+
+    GravityEnabled = false,
+    GravityValue = 196.2,
 }
 
 --====================================================--
@@ -438,6 +496,7 @@ local sections = {
     Tp = tabs.Tp:Section({ Side = "Left" }),
     Tp1 = tabs.Tp:Section({ Side = "Right" }),
     Player = tabs.Player:Section({ Side = "Left" }),
+    Player1 = tabs.Player:Section({ Side = "Right" }),
 }
 
 sections.Home:Header({
@@ -3730,68 +3789,117 @@ sections.Tp:Button({
     end,
 }, "TeleportButton")
 
+sections.Tp:Header({
+	Name = "Player"
+})
+
+GameData.lp = GameData.Players.LocalPlayer
+
+--==============================================--
+-- FUNCTION GET PLAYER LIST
+--==============================================--
+function GameData.GetPlayerList()
+    GameData.list = {}
+    for _, plr in ipairs(GameData.Players:GetPlayers()) do
+        if plr ~= GameData.lp then
+            table.insert(GameData.list, plr.Name)
+        end
+    end
+    return GameData.list
+end
+
+--==============================================--
+-- DROPDOWN
+--==============================================--
+
+GameData.TargetDropdown = sections.Tp:Dropdown({
+    Name = "Select Player", 
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = GameData.GetPlayerList(),
+    Default = {},
+    Callback = function(Value)
+        GameData.selectedTarget = Value
+    end,
+}, "TargetDropdown")
+
+
+--==============================================--
+-- AUTO REFRESH
+--==============================================--
+
+task.spawn(function()
+    while true do
+        task.wait(1)
+
+        GameData.currentOptions = GameData.TargetDropdown:GetOptions()
+        GameData.newList = GameData.GetPlayerList()
+
+        GameData.newDict = {}
+        for _, name in ipairs(GameData.newList) do
+            GameData.newDict[name] = true
+        end
+
+        -- HAPUS PLAYER KELUAR
+        for name in pairs(GameData.currentOptions) do
+            if not GameData.newDict[name] then
+                GameData.TargetDropdown:RemoveOptions({name})
+
+                if GameData.selectedTarget == name then
+                    GameData.selectedTarget = nil
+                    GameData.TargetDropdown:UpdateSelection({})
+                end
+            end
+        end
+
+        -- TAMBAH PLAYER BARU
+        for _, name in ipairs(GameData.newList) do
+            if not GameData.TargetDropdown:IsOption(name) then
+                GameData.TargetDropdown:InsertOptions({name})
+            end
+        end
+    end
+end)
+
+
+--==============================================--
+-- TELEPORT BUTTON
+--==============================================--
+
+sections.Tp:Button({
+    Name = "Teleport Now",
+    Callback = function()
+
+        if not GameData.selectedTarget or GameData.selectedTarget == "" then return end
+
+        GameData.target = GameData.Players:FindFirstChild(GameData.selectedTarget)
+        if not GameData.target then return end
+
+        GameData.char = GameData.lp.Character or GameData.lp.CharacterAdded:Wait()
+        GameData.hrp = GameData.char:WaitForChild("HumanoidRootPart")
+
+        GameData.tchar = GameData.target.Character
+        if not GameData.tchar or not GameData.tchar:FindFirstChild("HumanoidRootPart") then return end
+
+        GameData.hrp.CFrame = GameData.tchar.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+    end,
+})
+
 sections.Tp1:Header({
 	Name = "Position"
 })
 
-local SavedPositions = GameData.SavedPositions
+GameData.folder = GameData.rootFolder .. "/" .. tostring(game.PlaceId)
 
 --------------------------------------------------------------------
--- FILE SYSTEM INIT
+-- FOLDER CHECK
 --------------------------------------------------------------------
-local selectedSlot = nil
-local teleportEnabled = false
-
-local folder = "SavedPositions"
-
-if not isfolder(folder) then
-    makefolder(folder)
-end
+if not isfolder(GameData.rootFolder) then makefolder(GameData.rootFolder) end
+if not isfolder(GameData.folder) then makefolder(GameData.folder) end
 
 --------------------------------------------------------------------
--- SAVE CFRAME TO FILE
---------------------------------------------------------------------
-local function savePosToFile(slotName, cframe)
-    local path = folder .. "/" .. slotName .. ".txt"
-    local data = string.format(
-        "CFrame.new(%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f)",
-        cframe:GetComponents()
-    )
-    writefile(path, data)
-end
-
---------------------------------------------------------------------
--- LOAD CFRAME FROM FILE
---------------------------------------------------------------------
-local function loadPosFromFile(slotName)
-    local path = folder .. "/" .. slotName .. ".txt"
-    if not isfile(path) then return nil end
-
-    local raw = readfile(path)
-
-    local success, result = pcall(function()
-        return loadstring("return " .. raw)()
-    end)
-
-    if success and typeof(result) == "CFrame" then
-        return result
-    end
-
-    return nil
-end
-
---------------------------------------------------------------------
--- LOAD ALL SAVED POSITIONS ON START
---------------------------------------------------------------------
-for slotName, _ in pairs(SavedPositions) do
-    local loaded = loadPosFromFile(slotName)
-    if loaded then
-        SavedPositions[slotName] = loaded
-    end
-end
-
---------------------------------------------------------------------
--- NOTIFY
+-- NOTIFY FUNCTION
 --------------------------------------------------------------------
 local function Notify(title, desc)
     Window:Notify({
@@ -3802,123 +3910,236 @@ local function Notify(title, desc)
 end
 
 --------------------------------------------------------------------
--- DROPDOWN SELECT POSITION SLOT
+-- SAVE POSITION TO FILE
 --------------------------------------------------------------------
-sections.Tp1:Dropdown({
+local function savePosToFile(slotName, cframe)
+    local path = GameData.folder .. "/" .. slotName .. ".txt"
+    local data = string.format(
+        "CFrame.new(%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f)",
+        cframe:GetComponents()
+    )
+    writefile(path, data)
+end
+
+--------------------------------------------------------------------
+-- LOAD POSITION FROM FILE
+--------------------------------------------------------------------
+local function loadPosFromFile(slotName)
+    local path = GameData.folder .. "/" .. slotName .. ".txt"
+    if not isfile(path) then return nil end
+
+    local raw = readfile(path)
+    local ok, res = pcall(function()
+        return loadstring("return " .. raw)()
+    end)
+
+    if ok and typeof(res) == "CFrame" then
+        return res
+    end
+
+    return nil
+end
+
+--------------------------------------------------------------------
+-- LOAD ALL SAVES ON STARTUP
+--------------------------------------------------------------------
+for _, file in pairs(listfiles(GameData.folder)) do
+    local name = file:match(".+/(.+)%.txt$")
+    if name then
+        GameData.SavedPositions[name] = loadPosFromFile(name)
+    end
+end
+
+--------------------------------------------------------------------
+-- UI SETUP
+--------------------------------------------------------------------
+GameData.SaveDropdown = sections.Tp1:Dropdown({
     Name = "Save Position Slot",
     Search = true,
     Multi = false,
     Required = false,
-    Options = {"Position 1", "Position 2", "Position 3"},
+    Options = {},
     Default = "",
     Callback = function(Value)
-        selectedSlot = Value
+        if not Value or Value == "" then
+            GameData.selectedSlot = nil
+            Notify("No Selection", "Please pick a slot.")
+            return
+        end
 
-        local loaded = loadPosFromFile(Value)
-        if loaded then
-            SavedPositions[Value] = loaded
-            Notify("Loaded", Value .. " loaded from file.")
+        GameData.selectedSlot = Value
+        if GameData.SavedPositions[Value] then
+            Notify("Selected!", "Slot valid: " .. Value)
         else
-            Notify("Empty Slot", Value .. " has no saved file.")
+            Notify("Empty Slot!", Value .. " is empty.")
         end
     end,
-}, "SavePositionDropdown")
+}, "SavePosDropdown")
 
---------------------------------------------------------------------
--- BUTTON SAVE POSITION
---------------------------------------------------------------------
-sections.Tp1:Button({
+GameData.SaveButton = sections.Tp1:Button({
     Name = "Save Position",
-    Callback = function()
-        if not selectedSlot then
-            Notify("Error!", "Please select a slot first!")
-            return
-        end
+    Callback = function() end
+})
 
-        local char = LocalPlayer.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+GameData.DeleteButton = sections.Tp1:Button({
+    Name = "Delete Save",
+    Callback = function() end
+})
 
-        if not hrp then
-            Notify("Error!", "HumanoidRootPart not found.")
-            return
-        end
-
-        SavedPositions[selectedSlot] = hrp.CFrame
-        savePosToFile(selectedSlot, hrp.CFrame)
-
-        Notify("Saved!", selectedSlot .. " has been saved to file.")
-    end,
-}, "SavePositionButton")
+GameData.RefreshButton = sections.Tp1:Button({
+    Name = "Refresh Slot List",
+    Callback = function() end
+})
 
 --------------------------------------------------------------------
--- TELEPORT FREEZE SYSTEM
+-- REFRESH SLOT LIST
 --------------------------------------------------------------------
-local function freezeToSlot(slot)
-    local targetCFrame = SavedPositions[slot]
-    if not targetCFrame then
-        Notify("Error!", slot .. " has no saved position!")
-        return
+local function refreshSlots()
+    GameData.options = {}
+
+    for _, file in pairs(listfiles(GameData.folder)) do
+        local name = file:match(".+/(.+)%.txt$")
+        if name then
+            table.insert(GameData.options, name)
+        end
     end
 
-    local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp then
+    GameData.SaveDropdown:ClearOptions()
+    GameData.SaveDropdown:InsertOptions(GameData.options)
+    Notify("Refreshed!", "Total Saves: " .. tostring(#GameData.options))
+end
+refreshSlots()
+
+--------------------------------------------------------------------
+-- SLOT NAME INPUT
+--------------------------------------------------------------------
+sections.Tp1:Input({
+    Name = "Slot Name",
+    Placeholder = "Type slot name...",
+    AcceptedCharacters = "All",
+    Callback = function(text)
+        GameData.customSlotName = text:gsub("[^%w%s_%-_]", "")
+    end,
+}, "SaveSlotNameInput")
+
+--------------------------------------------------------------------
+-- SAVE POSITION CALLBACK
+--------------------------------------------------------------------
+GameData.SaveButton.Settings.Callback = function()
+    GameData.char = GameData.LocalPlayer.Character
+    GameData.hrp = GameData.char and GameData.char:FindFirstChild("HumanoidRootPart")
+
+    if GameData.customSlotName == "" then
+        Notify("Error!", "Input a slot name first.")
+        return
+    end
+    if not GameData.hrp then
         Notify("Error!", "HumanoidRootPart not found.")
         return
     end
 
-    local bv = Instance.new("BodyVelocity")
-    bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-    bv.Velocity = Vector3.new(0, 0, 0)
-    bv.Parent = hrp
+    GameData.SavedPositions[GameData.customSlotName] = GameData.hrp.CFrame
+    savePosToFile(GameData.customSlotName, GameData.hrp.CFrame)
 
-    local bg = Instance.new("BodyGyro")
-    bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
-    bg.CFrame = targetCFrame
-    bg.Parent = hrp
+    refreshSlots()
+    GameData.SaveDropdown:UpdateSelection(GameData.customSlotName)
+
+    Notify("Saved!", "Slot " .. GameData.customSlotName .. " saved!")
+end
+
+--------------------------------------------------------------------
+-- DELETE SAVE CALLBACK
+--------------------------------------------------------------------
+GameData.DeleteButton.Settings.Callback = function()
+    local slot = GameData.selectedSlot
+    if not slot then
+        Notify("Error!", "Select a slot first.")
+        return
+    end
+
+    local path = GameData.folder .. "/" .. slot .. ".txt"
+    if not isfile(path) then
+        Notify("Error!", "No file found for " .. slot)
+        return
+    end
+
+    delfile(path)
+    GameData.SavedPositions[slot] = nil
+    GameData.selectedSlot = nil
+
+    refreshSlots()
+    GameData.SaveDropdown:UpdateSelection(nil)
+
+    Notify("Deleted!", "Save removed.")
+end
+
+--------------------------------------------------------------------
+-- REFRESH BUTTON CALLBACK
+--------------------------------------------------------------------
+GameData.RefreshButton.Settings.Callback = refreshSlots
+
+--------------------------------------------------------------------
+-- TELEPORT LOCK SYSTEM
+--------------------------------------------------------------------
+local function freezeToSlot(slot)
+    local target = GameData.SavedPositions[slot]
+    if not target then
+        Notify("Error!", "Slot empty.")
+        return
+    end
+
+    GameData.char = GameData.LocalPlayer.Character
+    GameData.hrp = GameData.char and GameData.char:FindFirstChild("HumanoidRootPart")
+    if not GameData.hrp then return end
+
+    GameData.bv = Instance.new("BodyVelocity")
+    GameData.bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+    GameData.bv.Velocity = Vector3.zero
+    GameData.bv.Parent = GameData.hrp
+
+    GameData.bg = Instance.new("BodyGyro")
+    GameData.bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+    GameData.bg.CFrame = target
+    GameData.bg.Parent = GameData.hrp
 
     task.spawn(function()
-        while teleportEnabled and hrp.Parent do
-            if (hrp.Position - targetCFrame.Position).Magnitude > 2 then
-                hrp.CFrame = targetCFrame
+        while GameData.teleportEnabled and GameData.hrp.Parent do
+            if (GameData.hrp.Position - target.Position).Magnitude > 2 then
+                GameData.hrp.CFrame = target
             end
             task.wait(0.1)
         end
 
-        if bv then bv:Destroy() end
-        if bg then bg:Destroy() end
+        if GameData.bv then GameData.bv:Destroy() end
+        if GameData.bg then GameData.bg:Destroy() end
     end)
 end
 
 --------------------------------------------------------------------
--- TELEPORT TO SAVED POSITION TOGGLE
+-- TELEPORT TOGGLE
 --------------------------------------------------------------------
 sections.Tp1:Toggle({
     Name = "Teleport to Saved Position",
     Default = false,
     Callback = function(state)
-        teleportEnabled = state
+        GameData.teleportEnabled = state
 
-        if teleportEnabled then
-            if not selectedSlot then
-                Notify("Error!", "Select a position slot first!")
-                teleportEnabled = false
+        if state then
+            if not GameData.selectedSlot then
+                Notify("Error!", "Select a slot first.")
+                GameData.teleportEnabled = false
                 return
             end
-
-            if not SavedPositions[selectedSlot] then
-                Notify("Error!", selectedSlot .. " has no saved CFrame!")
-                teleportEnabled = false
-                return
-            end
-
-            freezeToSlot(selectedSlot)
+            freezeToSlot(GameData.selectedSlot)
         end
     end,
-}, "TeleportToSavedPositionToggle")
+}, "TeleportToggleConfig")
+
+print("Teleport system loaded.")
+
 
 sections.Player:Header({
-	Name = "LocalPlayer"
+	Name = "Utility"
 })
 
 --// Anti Drown Variable
@@ -4178,6 +4399,137 @@ sections.Player:Button({
         end
     end,
 }, "ReduceLagButton")
+
+sections.Player1:Header({
+	Name = "Player"
+})
+
+----------------------------------------------------
+-- =============== FUNCTIONS =======================
+----------------------------------------------------
+function GameData:GetHumanoid()
+    return self.char:WaitForChild("Humanoid")
+end
+
+function GameData:ApplyWalkspeed()
+    if self.hum then
+        self.hum.WalkSpeed = self.WalkspeedEnabled and self.WalkspeedValue or 16
+    end
+end
+
+function GameData:ApplyJumpPower()
+    if self.hum then
+        self.hum.UseJumpPower = true
+        self.hum.JumpPower = self.JumpEnabled and self.JumpValue or 50
+    end
+end
+
+function GameData:ApplyGravity()
+    workspace.Gravity = self.GravityEnabled and self.GravityValue or 196.2
+end
+----------------------------------------------------
+-- =============== INITIALIZE ======================
+----------------------------------------------------
+GameData.Player = game.Players.LocalPlayer
+GameData.char = GameData.Player.Character or GameData.Player.CharacterAdded:Wait()
+
+GameData.hum = GameData:GetHumanoid()
+----------------------------------------------------
+-- =============== RESPAWN HANDLER =================
+----------------------------------------------------
+GameData.Player.CharacterAdded:Connect(function(char)
+    GameData.char = char
+    task.wait(0.3)
+    GameData.hum = GameData:GetHumanoid()
+    GameData:ApplyWalkspeed()
+    GameData:ApplyJumpPower()
+end)
+----------------------------------------------------
+-- ================== WINDUI UI ====================
+----------------------------------------------------
+--------------------------
+-- Walkspeed Controller --
+--------------------------
+sections.Player1:Slider({
+    Name = "Set Walkspeed",
+    Default = GameData.WalkspeedValue,
+    Minimum = 0,
+    Maximum = 300,
+    DisplayMethod = "Number",
+    Callback = function(Value)
+        GameData.WalkspeedValue = Value
+        GameData:ApplyWalkspeed()
+    end,
+}, "WalkspeedSlider")
+
+sections.Player1:Toggle({
+    Name = "Walkspeed",
+    Default = GameData.WalkspeedEnabled,
+    Callback = function(state)
+        GameData.WalkspeedEnabled = state
+        Window:Notify({
+            Title = "Walkspeed",
+            Description = state and ("Enabled ("..GameData.WalkspeedValue..")") or "Disabled"
+        })
+        GameData:ApplyWalkspeed()
+    end,
+}, "WalkspeedToggle")
+
+--------------------------
+-- Jump Power Controller --
+--------------------------
+sections.Player1:Slider({
+    Name = "Set Jump Power",
+    Default = GameData.JumpValue,
+    Minimum = 0,
+    Maximum = 300,
+    DisplayMethod = "Number",
+    Callback = function(Value)
+        GameData.JumpValue = Value
+        GameData:ApplyJumpPower()
+    end,
+}, "JumpPowerSlider")
+
+sections.Player1:Toggle({
+    Name = "Auto Jump Power",
+    Default = GameData.JumpEnabled,
+    Callback = function(state)
+        GameData.JumpEnabled = state
+        Window:Notify({
+            Title = "Jump Power",
+            Description = state and ("Enabled ("..GameData.JumpValue..")") or "Disabled"
+        })
+        GameData:ApplyJumpPower()
+    end,
+}, "JumpToggle")
+
+--------------------------
+-- Gravity Controller ----
+--------------------------
+sections.Player1:Slider({
+    Name = "Set Gravity",
+    Default = GameData.GravityValue,
+    Minimum = 0,
+    Maximum = 500,
+    DisplayMethod = "Number",
+    Callback = function(Value)
+        GameData.GravityValue = Value
+        GameData:ApplyGravity()
+    end,
+}, "GravitySlider")
+
+sections.Player1:Toggle({
+    Name = "Gravity Controller",
+    Default = GameData.GravityEnabled,
+    Callback = function(state)
+        GameData.GravityEnabled = state
+        Window:Notify({
+            Title = "Gravity",
+            Description = state and ("Enabled ("..GameData.GravityValue..")") or "Disabled"
+        })
+        GameData:ApplyGravity()
+    end,
+}, "GravityToggle")
 
 
 -- Config
