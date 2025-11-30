@@ -397,7 +397,6 @@ local GameData = {
 
     -- ========================== [Event Disco] ==========================
 
-    
     -- UI
     DiscoStatus = nil,
     DiscoToggle = nil,
@@ -420,19 +419,22 @@ local GameData = {
          0.99024415, -3.88525692e-08, 0.139343381
     ),
 
-    -- Character Data
+    -- Character
     char = nil,
     hrp = nil,
 
     -- Auto Settings
     AutoDisco = false,
 
-    -- Functions Placeholder
+    -- Functions
     RefreshCharacter = nil,
     getStartPosition = nil,
+    loadSavedPosition = nil,
 
     -- Temp Values
+    savedCFrame = nil,
     startPos = nil,
+
 }
 
 -- Listener Players
@@ -3184,10 +3186,10 @@ end)
 
 EventBox:AddDivider()
 
--- UI CREATE
+-- UI STATUS
 GameData.DiscoStatus = EventBox:AddLabel("Status: Loading...", true)
 
--- FUNCTION: Refresh char
+-- FUNCTION: Refresh Character -- Fixed
 GameData.RefreshCharacter = function()
     GameData.char = player.Character or player.CharacterAdded:Wait()
     GameData.hrp  = GameData.char:WaitForChild("HumanoidRootPart")
@@ -3199,6 +3201,7 @@ player.CharacterAdded:Connect(function()
     task.wait(0.5)
     GameData.RefreshCharacter()
 end)
+
 
 -- UI Toggle
 GameData.DiscoToggle = EventBox:AddToggle("AutoDiscoEvent", {
@@ -3216,10 +3219,26 @@ GameData.DiscoToggle:OnChanged(function(state)
     })
 end)
 
--- FUNCTION: Get Saved Position
-GameData.getStartPosition = function()
-    return GameData.savedCFrame or GameData.loadSavedPosition()
+
+-- FUNCTION: Load Saved Position (dibuat agar tidak nil)
+GameData.loadSavedPosition = function()
+    if GameData.hrp then
+        return GameData.hrp.CFrame
+    end
+    return nil
 end
+
+
+-- FUNCTION: Get Start Position (fixed)
+GameData.getStartPosition = function()
+    if GameData.savedCFrame then
+        return GameData.savedCFrame
+    elseif typeof(GameData.loadSavedPosition) == "function" then
+        return GameData.loadSavedPosition()
+    end
+    return nil
+end
+
 
 -- MAIN LOOP
 task.spawn(function()
