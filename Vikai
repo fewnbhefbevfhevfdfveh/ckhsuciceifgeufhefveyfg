@@ -3173,7 +3173,6 @@ task.spawn(function()
     end
 end)
 
-EventBox:AddDivider()
 local DiscoStatus = EventBox:AddLabel("Status: Loading...", true)
 local Root = workspace.ClassicEvent.DiscoEvent.DiscoBall:WaitForChild("Root")
 
