@@ -370,12 +370,9 @@ local GameData = {
     autoLoch = false,
     lastLabel = "",
 
-    StatusLabel = nil,
-    TimeLabel = nil,
-    toggle = nil,
-
-    hrp = nil,           -- nanti diisi
-    savedCFrame = nil,   -- kalau kamu punya dari script sebelumnya
+    getStartCFrame = function()
+        return savedCFrame or loadSavedPosition()
+    end,
 
 -- ========================== [Webhook] ==========================
 
@@ -418,6 +415,45 @@ local GameData = {
     sentCount = 0,
     left = 4,
     totalSpecial = 4,
+
+    -- ========================== [Event Disco] ==========================
+
+    
+    -- UI
+    DiscoStatus = nil,
+    DiscoToggle = nil,
+
+    -- Objects
+    Root = workspace.ClassicEvent.DiscoEvent.DiscoBall:WaitForChild("Root"),
+
+    -- CFrames
+    DefaultCFrame = CFrame.new(
+        -8625, -426.221008, 161.125,
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+    ),
+
+    TeleportCFrame = CFrame.new(
+        -8642.99414, -547.500183, 159.353485,
+         0.139343381, -2.42283136e-08, -0.99024415,
+         4.18495816e-08, 1, -1.85780973e-08,
+         0.99024415, -3.88525692e-08, 0.139343381
+    ),
+
+    -- Character Data
+    char = nil,
+    hrp = nil,
+
+    -- Auto Settings
+    AutoDisco = false,
+
+    -- Functions Placeholder
+    RefreshCharacter = nil,
+    getStartPosition = nil,
+
+    -- Temp Values
+    startPos = nil,
 }
 
 -- Listener Players
@@ -3070,19 +3106,33 @@ end)
 
 -- UI ELEMENTS --------------------------------------
 
-GameData.EventBox = Tabs.Teleport:AddRightGroupbox("Auto Limited Event", "bug-play")
+local EventBox = Tabs.Teleport:AddRightGroupbox("Auto Limited Event", "bug-play")
 
-GameData.StatusLabel = GameData.EventBox:AddLabel("Status: Idle")
-GameData.TimeLabel = GameData.EventBox:AddLabel("Timer: -")
+--====================================
+-- SEMUA LOCAL DIPINDAHKAN KE GameData
+--====================================
 
+GameData = {
+
+}
+
+-- GUI ELEMENTS DIPINDAHKAN JUGA
+GameData.StatusLabel = EventBox:AddLabel("Status: Idle")
+GameData.TimeLabel = EventBox:AddLabel("Timer: -")
+
+--====================================
+-- TIMER LABEL UPDATE
+--====================================
 task.spawn(function()
     while task.wait(1) do
         GameData.TimeLabel:SetText("Timer: " .. GameData.label.Text)
     end
 end)
 
-
-GameData.toggle = GameData.EventBox:AddToggle("AutoLochness", {
+--====================================
+-- TOGGLE
+--====================================
+GameData.toggle = EventBox:AddToggle("AutoLochness", {
     Text = "Auto Lochness",
     Default = false,
 })
@@ -3099,24 +3149,26 @@ GameData.toggle:OnChanged(function(state)
     GameData.StatusLabel:SetText(state and "Status: Active" or "Status: Idle")
 end)
 
-
--- MAIN AUTO LOOP (TELEPORT EVENT START) -----------------------------
-
+--====================================
+-- TELEPORT SAAT 1 MENIT
+--====================================
 task.spawn(function()
     while task.wait(0.1) do
         if GameData.autoLoch and GameData.label.Text == "0H 1M 10S" then            
+
             GameData.StatusLabel:SetText("Status: Teleporting...")
 
-            if not GameData.hrp or not GameData.hrp.Parent then
-                GameData.hrp = RefreshHRP()
+            if not hrp or not hrp.Parent then
+                hrp = RefreshHRP()
             end
 
-            GameData.hrp.CFrame = GameData.targetCFrame
+            hrp.CFrame = GameData.targetCFrame
 
+            -- BUAT BV TANPA LOCAL
             GameData.bv = Instance.new("BodyVelocity")
             GameData.bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
             GameData.bv.Velocity = Vector3.zero
-            GameData.bv.Parent = GameData.hrp
+            GameData.bv.Parent = hrp
 
             task.wait(2)
             GameData.bv:Destroy()
@@ -3126,44 +3178,39 @@ task.spawn(function()
     end
 end)
 
-
--- FUNCTION GET START POSITION ------------------------
-
-GameData.getStartCFrame = function()
-    return GameData.savedCFrame or (loadSavedPosition and loadSavedPosition())
-end
-
-
--- MAIN RETURN LOOP (RETURN AFTER EVENT END) -------------------------
-
+--====================================
+-- RETURN KE POSISI AWAL
+--====================================
 task.spawn(function()
     while task.wait(0.2) do
         if GameData.autoLoch then
-            GameData.current = GameData.label.Text
             
-            if GameData.current ~= GameData.lastLabel then
-                GameData.lastLabel = GameData.current
+            local current = GameData.label.Text
+            
+            if current ~= GameData.lastLabel then
+                GameData.lastLabel = current
 
-                if GameData.current == "3H 48M 10S" then                   
-
-                    if not GameData.hrp or not GameData.hrp.Parent then
-                        GameData.hrp = RefreshHRP()
+                if current == "3H 48M 10S" then                   
+                    
+                    if not hrp or not hrp.Parent then
+                        hrp = RefreshHRP()
                     end
 
-                    GameData.startPosCFrame = GameData.getStartCFrame()
+                    local cf = GameData.getStartCFrame()
 
-                    if GameData.startPosCFrame then
+                    if cf then
                         GameData.StatusLabel:SetText("Status: Returning to Saved Position")
 
-                        GameData.hrp.CFrame = GameData.startPosCFrame + Vector3.new(0,5,0)
+                        hrp.CFrame = cf + Vector3.new(0,5,0)
 
-                        GameData.bv2 = Instance.new("BodyVelocity")
-                        GameData.bv2.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-                        GameData.bv2.Velocity = Vector3.zero
-                        GameData.bv2.Parent = GameData.hrp
+                        -- BV TANPA LOCAL
+                        GameData.bv = Instance.new("BodyVelocity")
+                        GameData.bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+                        GameData.bv.Velocity = Vector3.zero
+                        GameData.bv.Parent = hrp
 
                         task.wait(2)
-                        GameData.bv2:Destroy()
+                        GameData.bv:Destroy()
 
                         GameData.StatusLabel:SetText("Status: Waiting Countdown...")
                     end
@@ -3173,44 +3220,33 @@ task.spawn(function()
     end
 end)
 
-local DiscoStatus = EventBox:AddLabel("Status: Loading...", true)
-local Root = workspace.ClassicEvent.DiscoEvent.DiscoBall:WaitForChild("Root")
+EventBox:AddDivider()
 
-local DefaultCFrame = CFrame.new(
-    -8625, -426.221008, 161.125,
-    1, 0, 0,
-    0, 1, 0,
-    0, 0, 1
-)
+-- UI CREATE
+GameData.DiscoStatus = EventBox:AddLabel("Status: Loading...", true)
 
-local TeleportCFrame = CFrame.new(
-    -8642.99414, -547.500183, 159.353485,
-     0.139343381, -2.42283136e-08, -0.99024415,
-     4.18495816e-08, 1, -1.85780973e-08,
-     0.99024415, -3.88525692e-08, 0.139343381
-)
-
-local function RefreshCharacter()
-    local char = player.Character or player.CharacterAdded:Wait()
-    hrp = char:WaitForChild("HumanoidRootPart")
+-- FUNCTION: Refresh char
+GameData.RefreshCharacter = function()
+    GameData.char = player.Character or player.CharacterAdded:Wait()
+    GameData.hrp  = GameData.char:WaitForChild("HumanoidRootPart")
 end
 
-RefreshCharacter()
+GameData.RefreshCharacter()
 
 player.CharacterAdded:Connect(function()
     task.wait(0.5)
-    RefreshCharacter()
+    GameData.RefreshCharacter()
 end)
 
-_G.AutoDisco = false
-
-local DiscoToggle = EventBox:AddToggle("AutoDiscoEvent", {
+-- UI Toggle
+GameData.DiscoToggle = EventBox:AddToggle("AutoDiscoEvent", {
     Text = "Auto Disco Event",
     Default = false,
 })
 
-DiscoToggle:OnChanged(function(state)
-    _G.AutoDisco = state
+GameData.DiscoToggle:OnChanged(function(state)
+    GameData.AutoDisco = state
+
     Library:Notify({
         Title = "Disco Event",
         Description = (state and "Enabled Auto Disco" or "Disabled Auto Disco"),
@@ -3218,24 +3254,37 @@ DiscoToggle:OnChanged(function(state)
     })
 end)
 
-local function getStartPosition()
-    return savedCFrame or loadSavedPosition()
+-- FUNCTION: Get Saved Position
+GameData.getStartPosition = function()
+    return GameData.savedCFrame or GameData.loadSavedPosition()
 end
 
+-- MAIN LOOP
 task.spawn(function()
-    while task.wait(1) do        
-        local startPos = getStartPosition()
-        if not hrp then RefreshCharacter() end
-        if Root.CFrame ~= DefaultCFrame then
-            DiscoStatus:SetText("Disco STARTED!")            
-            if _G.AutoDisco and hrp then
-                hrp.CFrame = TeleportCFrame
+    while task.wait(1) do
+        
+        GameData.startPos = GameData.getStartPosition()
+
+        if not GameData.hrp then
+            GameData.RefreshCharacter()
+        end
+
+        if GameData.Root.CFrame ~= GameData.DefaultCFrame then
+            
+            GameData.DiscoStatus:SetText("Disco STARTED!")
+
+            if GameData.AutoDisco and GameData.hrp then
+                GameData.hrp.CFrame = GameData.TeleportCFrame
             end
+
         else
-            DiscoStatus:SetText("No Disco Event")
-            if _G.AutoDisco and startPos and hrp then
-                hrp.CFrame = startPos + Vector3.new(0,5,0)
+
+            GameData.DiscoStatus:SetText("No Disco Event")
+
+            if GameData.AutoDisco and GameData.startPos and GameData.hrp then
+                GameData.hrp.CFrame = GameData.startPos + Vector3.new(0,5,0)
             end
+
         end
     end
 end)
