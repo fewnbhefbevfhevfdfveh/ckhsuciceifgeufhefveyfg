@@ -293,6 +293,10 @@ local GameData = {
     DiscoRoot = workspace.ClassicEvent.DiscoEvent.DiscoBall:WaitForChild("Root"),
     Players = game:GetService("Players"),
 
+    -- ================== [Totems] ==================
+
+    ReplicatedStorage = game:GetService("ReplicatedStorage"),
+
     -- ================== [Blatant V1] ==================
 
     RS = game:GetService("ReplicatedStorage"),
@@ -419,6 +423,27 @@ local GameData = {
 
     GravityEnabled = false,
     GravityValue = 196.2,
+
+    -- ================== [Infinite Zoom] ==================
+
+    player = game:GetService("Players").LocalPlayer,
+    infiniteZoomEnabled = false,
+
+    -- ================== [Global Settings] ==================
+    userInfoState = nil,
+    notifState = nil,
+    blurState = nil,
+    GS_UserInfo = nil,
+    GS_Notifications = nil,
+    GS_Blur = nil,
+
+    -- ================== [Window Settings] ==================
+
+    windowWidth = nil,
+    windowHeight = nil,
+    windowScale = nil,
+    currentSize = nil,
+    inputValue = nil,
 }
 
 --====================================================--
@@ -443,19 +468,65 @@ local GameData2 = {
     elementParagraph = nil
 }
 
-local camera = workspace.CurrentCamera
-local screenSize = camera.ViewportSize
 
 local Window = MacLib:Window({
     Title = "NexaHub",
     Subtitle = "Fish It - Premium | V0.0.2",
-    Size = UDim2.fromOffset(720, 410),
+    Size = UDim2.fromOffset(800, 500),
     DragStyle = 2,
     DisabledWindowControls = {},
     ShowUserInfo = true,
     Keybind = Enum.KeyCode.G,
     AcrylicBlur = true,
 })
+
+Window:SetSize(UDim2.fromOffset(800, 500))
+Window:SetScale(0.70)
+
+Window:SetUserInfoState(true)
+GameData.userInfoState = Window:GetUserInfoState()
+
+GameData.GS_UserInfo = Window:GlobalSetting({
+    Name = "Hide User Info",
+    Default = false,
+    Callback = function(state)
+        GameData.userInfoState = state
+        Window:SetUserInfoState(not GameData.userInfoState)
+    end,
+})
+
+
+----------------------------------------------------
+-- NOTIFICATIONS STATE
+----------------------------------------------------
+Window:SetNotificationsState(true)
+GameData.notifState = Window:GetNotificationsState()
+
+GameData.GS_Notifications = Window:GlobalSetting({
+    Name = "Disable Notifications",
+    Default = false,
+    Callback = function(state)
+        GameData.notifState = state
+        Window:SetNotificationsState(not GameData.notifState)
+    end,
+})
+
+
+----------------------------------------------------
+-- ACRYLIC BLUR STATE
+----------------------------------------------------
+Window:SetAcrylicBlurState(true)
+GameData.blurState = Window:GetAcrylicBlurState()
+
+GameData.GS_Blur = Window:GlobalSetting({
+    Name = "Disable Acrylic Blur",
+    Default = false,
+    Callback = function(state)
+        GameData.blurState = state
+        Window:SetAcrylicBlurState(not GameData.blurState)
+    end,
+})
+
 
 local tabGroups = {
 	TabGroup1 = Window:TabGroup()
@@ -569,44 +640,20 @@ sections.Home:Button({
 sections.Home1:Paragraph({
     Header = "Update List",
     Body = [[
-[+] Added Tab Home & Event
-Tab Fishing:
-[/] Rework Fishing Counter
-[+] Added Blatant (Premium)
- - Delay Cast
- - Delay Complite Complete
-[+] Added Status Lochness Monster Countdown
-[+] Added Auto Lochness Monster
-[+] Added Status Disco Event
-[+] Added Auto Disco Event
-[/] Rework Webhook Fish
-[+] Added Skip Rarity Fish
-Tab Home:
-[+] Added Auto Claim Event Reward
-[+] Added Redeem All Codes
-Tab Event:
-[+] Auto Auto Treasure Hunt
-Tab Quest:
-[+] Added Auto Artifack
-[+] Added Status Artifack
-[+] Added Auto Unlock Iron Cafe
-[+] Added Auto Unclok Ancient Ruin
-Tab Boat:
-[+] Added Access All Boats
-Tab Telepoort:
-[/] Rework Save Position
- - Dropdown Slots
- - Save Custom Name
- - Delete Slot
- - Refresh List Slots
- - Teleport Save Position
-[+] Added Teleport Player (Premium)
 Tab Player:
-[+] Added Walkspeed (Premium)
-[+] Added Jump Power (Premium)
-[+] Added Gravity (Premium)
-[-] Delete Black Screen
-[+] Added View Bobbers
+ [+] Addded Infinite Zoom
+ [+] Added Window Settings 
+  - Window Size
+  - Window Scale
+[+] Added Global Settings 
+  - Hide User Info
+  - Disable Notifications
+  - Disable Acrylic Blur
+Tab Fishing:
+ [+] Added Blatant V1
+ [+] Added Blatant V2
+ [+] Added Dropdwon Select Totems
+ [+] Added Auto Spawn Totems
 ]]
 }, "Info")
 
@@ -1443,6 +1490,106 @@ sections.Fishing:Input({
         Window:Notify({Title = "Completed Delay", Description = "Completed Delay set to: " .. tostring(completedDelay)})
     end,
 }, "InstantFishingCompletedDelay")
+
+sections.Fishing1:Header({
+	Name = "Totems"
+})
+
+-- Modules
+GameData.Client = require(GameData.ReplicatedStorage.Packages.Replion).Client
+GameData.ItemUtility = require(GameData.ReplicatedStorage.Shared.ItemUtility)
+
+-- Data
+GameData.data = GameData.Client:WaitReplion("Data")
+GameData.inventory = GameData.data:GetExpect("Inventory")
+
+-- Remote
+GameData.SpawnTotem = GameData.ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RE/SpawnTotem")
+
+-- Totem IDs
+GameData.TOTEM_IDS = {
+    ["Luck Totem"] = 1,
+    ["Mutation Totem"] = 2,
+    ["Shiny Totem"] = 3,
+}
+
+-- State
+GameData.selectedTotem = nil
+GameData.autoSpawn = false
+GameData.id = nil
+GameData.uuid = nil
+
+
+---------------------------------------------------------
+-- SELECT TOTEM DROPDOWN
+---------------------------------------------------------
+sections.Fishing1:Dropdown({
+    Name = "Select Totem",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = {"Luck Totem", "Mutation Totem", "Shiny Totem"},
+    Default = {"Luck Totem"},
+    Callback = function(Value)
+        for name, state in next, Value do
+            if state then
+                GameData.selectedTotem = name
+            end
+        end
+    end,
+}, "SelectTotemDropdown")
+
+
+---------------------------------------------------------
+-- AUTO SPAWN TOGGLE
+---------------------------------------------------------
+sections.Fishing1:Toggle({
+    Name = "Auto Spawn Totem",
+    Default = false,
+    Callback = function(value)
+        GameData.autoSpawn = value
+
+        Window:Notify({
+            Title = "Spawn Totem",
+            Description = (value and "Enabled " or "Disabled ") .. "Auto Spawn Totem"
+        })
+
+        if value then
+            task.spawn(function()
+                while GameData.autoSpawn do
+                    
+                    if GameData.selectedTotem then
+                        
+                        -- id & uuid inside GameData
+                        GameData.id = GameData.TOTEM_IDS[GameData.selectedTotem]
+                        GameData.uuid = nil
+
+                        for _, totem in ipairs(GameData.inventory.Totems or {}) do
+                            GameData.itemData = GameData.ItemUtility.GetItemDataFromItemType("Totems", totem.Id)
+
+                            if GameData.itemData and GameData.itemData.Data.Id == GameData.id then
+                                GameData.uuid = totem.UUID
+                                break
+                            end
+                        end
+
+                        if GameData.uuid then
+                            GameData.SpawnTotem:FireServer(GameData.uuid)
+                        else
+                        end
+                    end
+
+                    task.wait(1)
+                end
+            end)
+        end
+    end,
+}, "AutoSpawnTotemToggle")
 
 sections.Fishing1:Header({
 	Name = "Blatant V1"
@@ -4455,6 +4602,30 @@ sections.Player:Toggle({
     end
 }, "ViewBobbersToggle")
 
+sections.Player:Toggle({
+    Name = "Infinite Zoom", 
+    Default = false,
+    Callback = function(val)
+
+        GameData.infiniteZoomEnabled = val
+
+        if GameData.infiniteZoomEnabled then
+            -- Enable Infinite Zoom
+            GameData.player.CameraMaxZoomDistance = math.huge
+            GameData.player.CameraMinZoomDistance = 0.5
+        else
+            -- Disable Infinite Zoom (default Roblox values)
+            GameData.player.CameraMaxZoomDistance = 16
+            GameData.player.CameraMinZoomDistance = 0.5
+        end
+
+        Window:Notify({
+            Title = "Infinite Zoom",
+            Description = (GameData.infiniteZoomEnabled and "Enabled " or "Disabled ") .. "Infinite Zoom"
+        })
+    end,
+}, "InfiniteZoomToggle")
+
 sections.Player:Button({
     Name = "Boost FPS",
     Callback = function()
@@ -4552,7 +4723,7 @@ sections.Player:Button({
 }, "ReduceLagButton")
 
 sections.Player1:Header({
-	Name = "Player"
+	Name = "User Settings"
 })
 
 ----------------------------------------------------
@@ -4683,13 +4854,73 @@ sections.Player1:Toggle({
 }, "GravityToggle")
 
 
+
+sections.Player1:Header({
+	Name = "UI Settings"
+})
+
+-----------------------------
+-- WINDOW WIDTH INPUT
+-----------------------------
+sections.Player1:Input({
+    Name = "Window Width",
+    Placeholder = "800",
+    AcceptedCharacters = "Numbers",
+    Callback = function(val)
+        GameData.inputValue = val
+        GameData.windowWidth = tonumber(GameData.inputValue)
+
+        if GameData.windowWidth then
+            GameData.currentSize = Window:GetSize()
+            Window:SetSize(UDim2.fromOffset(GameData.windowWidth, GameData.currentSize.Y.Offset))
+        end
+    end
+})
+
+-----------------------------
+-- WINDOW HEIGHT INPUT
+-----------------------------
+sections.Player1:Input({
+    Name = "Window Height",
+    Placeholder = "500",
+    AcceptedCharacters = "Numbers",
+    Callback = function(val)
+        GameData.inputValue = val
+        GameData.windowHeight = tonumber(GameData.inputValue)
+
+        if GameData.windowHeight then
+            GameData.currentSize = Window:GetSize()
+            Window:SetSize(UDim2.fromOffset(GameData.currentSize.X.Offset, GameData.windowHeight))
+        end
+    end
+})
+
+
+-----------------------------
+-- WINDOW SCALE INPUT
+-----------------------------
+sections.Player1:Input({
+    Name = "Window Scale",
+    Placeholder = "0.70",
+    AcceptedCharacters = "Numbers",
+    Callback = function(val)
+        GameData.inputValue = val
+        GameData.windowScale = tonumber(GameData.inputValue)
+
+        if GameData.windowScale then
+            Window:SetScale(GameData.windowScale)
+        end
+    end
+})
+
+
 -- Config
 
 MacLib:SetFolder("Maclib")
 tabs.Config:InsertConfigSection("Left") -- karena yang ada adalah 'Config'
 
 Window.onUnloaded(function()
-	print("Unloaded!")
+	print("Unloaded! Enjoyy my script :)")
 end)
 
 tabs.Fishing:Select() -- pilih tab yang benar-benar ada
@@ -4698,7 +4929,7 @@ MacLib:LoadAutoLoadConfig()
 
 
 -------------------------------------------------------------
--- SCREEN GUI
+-- CREATE TOGGLE GUI
 -------------------------------------------------------------
 GameData.ScreenGui = Instance.new("ScreenGui")
 GameData.ScreenGui.Name = "NexaUIToggle"
@@ -4755,7 +4986,7 @@ GameData.ToggleBtn.BackgroundTransparency = 1
 GameData.ToggleBtn.Image = "rbxassetid://123906607434048"
 
 -------------------------------------------------------------
--- DRAG FUNCTIONS (NO LOCAL)
+-- DRAG FUNCTIONS
 -------------------------------------------------------------
 GameData.beginDrag = function(input)
     GameData.Dragging = true
@@ -4784,7 +5015,7 @@ for _, obj in ipairs({GameData.ToggleFrame, GameData.ToggleBtn}) do
     obj.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
-            
+
             GameData.beginDrag(input)
 
             input.Changed:Connect(function()
@@ -4824,4 +5055,18 @@ GameData.ToggleBtn.MouseButton1Click:Connect(function()
     if Window and Window.SetState then
         Window:SetState(GameData.uiVisible)
     end
+end)
+
+-------------------------------------------------------------
+-- DELETE TOGGLE WHEN WINDOW CLOSED
+-------------------------------------------------------------
+Window.onUnloaded(function()
+    print("NexaHub Window Closed")
+
+    if GameData.ScreenGui then
+        GameData.ScreenGui:Destroy()
+        GameData.ScreenGui = nil
+    end
+
+    GameData.uiVisible = false
 end)
