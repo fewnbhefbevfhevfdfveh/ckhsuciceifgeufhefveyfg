@@ -193,11 +193,27 @@ local GameData = {
     },
 
     -- ==================[Save Posisi] ==================
-    SavedPositions = {
-        ["Position 1"] = nil,
-        ["Position 2"] = nil,
-        ["Position 3"] = nil
-    },
+    rootFolder = "SavedPositions",
+    folder = nil,
+
+    SavedPositions = {},
+    options = {},
+
+    selectedSlot = nil,
+    customSlotName = "",
+    teleportEnabled = false,
+
+    LocalPlayer = game.Players.LocalPlayer,
+    char = nil,
+    hrp = nil,
+
+    SaveDropdown = nil,
+    SaveButton = nil,
+    DeleteButton = nil,
+    RefreshButton = nil,
+
+    bv = nil,
+    bg = nil,
 
     -- ================== [Auto Unclock Ancient Ruin] ==================
     AutoUnlock = false,
