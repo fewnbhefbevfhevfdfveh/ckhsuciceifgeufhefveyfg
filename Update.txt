@@ -1,27 +1,13 @@
-[+] Added Tab Home & Event
+ [+] Addded Infinite Zoom
+ [+] Added Window Settings 
+  - Window Size
+  - Window Scale
+[+] Added Global Settings 
+  - Hide User Info
+  - Disable Notifications
+  - Disable Acrylic Blur
 Tab Fishing:
-[/] Rework Fishing Counter
-[+] Added Blatant (Premium)
- - Delay Cast
- - Delay Complite Complete
-[+] Added Status Lochness Monster Countdown
-[+] Added Auto Lochness Monster
-[+] Added Status Disco Event
-[+] Added Auto Disco Event
-[/] Rework Webhook Fish
-[+] Added Skip Rarity Fish
-Tab Home:
-[+] Added Auto Claim Event Reward
-[+] Added Redeem All Codes
-Tab Event:
-[+] Auto Auto Treasure Hunt
-Tab Quest:
-[+] Added Auto Artifack
-[+] Added Status Artifack
-[+] Added Auto Unlock Iron Cafe
-[+] Added Auto Unclok Ancient Ruin
-Tab Boat:
-[+] Added Access All Boats
-Tab Player:
-[-] Delete Black Screen
-[+] Added View Bobbers
+ [+] Added Blatant V1
+ [+] Added Blatant V2
+ [+] Added Dropdwon Select Totems
+ [+] Added Auto Spawn Totems
