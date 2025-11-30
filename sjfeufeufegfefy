@@ -410,6 +410,21 @@ local GameData = {
     beginDrag = nil,
     updateDrag = nil,
     endDrag = nil,
+
+    -- ================== [Walkspeed, Jump Power, Gravity] ==================
+
+    Player = nil,
+    char = nil,
+    hum = nil,
+
+    WalkspeedEnabled = false,
+    WalkspeedValue = 16,
+
+    JumpEnabled = false,
+    JumpValue = 50,
+
+    GravityEnabled = false,
+    GravityValue = 196.2,
 }
 
 --====================================================--
@@ -584,7 +599,18 @@ Tab Quest:
 [+] Added Auto Unclok Ancient Ruin
 Tab Boat:
 [+] Added Access All Boats
+Tab Telepoort:
+[/] Rework Save Position
+ - Dropdown Slots
+ - Save Custom Name
+ - Delete Slot
+ - Refresh List Slots
+ - Teleport Save Position
+[+] Added Teleport Player (Premium)
 Tab Player:
+[+] Added Walkspeed (Premium)
+[+] Added Jump Power (Premium)
+[+] Added Gravity (Premium)
 [-] Delete Black Screen
 [+] Added View Bobbers
 ]]
