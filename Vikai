@@ -7,6 +7,149 @@ local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "SaveManager.lua"))()
 
+local Window = Library:CreateWindow({
+	Title = "ViKai",
+	Footer = "premium version",
+	Icon = 88271133677376,
+	NotifySide = "Right",
+	Size = UDim2.fromOffset(540, 350),
+	ShowCustomCursor = false,
+})
+
+local Tabs = {
+    Info = Window:AddTab("Info", "info"),
+	Main = Window:AddTab("Main", "house"),
+	Teleport = Window:AddTab("Teleport", "map-pinned"),
+	Shop = Window:AddTab("Shop", "shopping-cart"),
+	Trade = Window:AddTab("Trade", "handshake"),
+	Quest = Window:AddTab("Quest", "book"),
+	Web = Window:AddTab("Webhooks", "webhook"),
+	Misc = Window:AddTab("Misc", "settings"),
+}
+
+local SVC = {
+    Players = game:GetService("Players"),
+    RS = game:GetService("ReplicatedStorage"),
+    UIS = game:GetService("UserInputService"),
+    VU = game:GetService("VirtualUser"),
+    Run = game:GetService("RunService"),
+    Tween = game:GetService("TweenService"),
+    HttpService = game:GetService("HttpService"),
+    TS = game:GetService("TeleportService"),
+    NC = game:GetService("NetworkClient"),
+    Vim = game:GetService("VirtualInputManager")
+}
+
+local mods                 = {
+    Net                = SVC.RS.Packages._Index["sleitnick_net@0.2.0"].net,
+    Replion            = require(SVC.RS.Packages.Replion),
+    FishingController  = require(SVC.RS.Controllers.FishingController),
+    AutoFishingController = require(SVC.RS.Controllers.AutoFishingController),
+    TradingController  = require(SVC.RS.Controllers.ItemTradingController),
+    ItemUtility        = require(SVC.RS.Shared.ItemUtility),
+    VendorUtility      = require(SVC.RS.Shared.VendorUtility),
+    PlayerStatsUtility = require(SVC.RS.Shared.PlayerStatsUtility),
+    Effects            = require(SVC.RS.Shared.Effects),
+}
+
+local player = SVC.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local humanoid = char:FindFirstChildOfClass("Humanoid")
+local playerGui = player:WaitForChild("PlayerGui")
+local Camera = workspace.CurrentCamera
+local merchantGui = playerGui:WaitForChild("Merchant")
+local exclaimFolder = workspace:WaitForChild("!!! MENU RINGS")
+local cosmeticFolder = workspace:WaitForChild("CosmeticFolder")
+local AnimModule = SVC.RS.Modules.Animations:WaitForChild("ReelIntermission")
+local net = SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
+local leaderstats = player:WaitForChild("leaderstats")
+local OnRoll = mods.Net["RE/RollEnchant"]
+local caughtStat = leaderstats:WaitForChild("Caught")  
+local gui = player:WaitForChild("PlayerGui")
+local smallNotif = gui:FindFirstChild("Small Notification")
+
+local repl                 = {
+    Data = mods.Replion.Client:WaitReplion("Data"),
+    Items = SVC.RS:WaitForChild("Items"),
+    PlayerStat = require(SVC.RS.Packages._Index:FindFirstChild("ytrev_replion@2.0.0-rc.3").replion)
+}
+
+local RF = {
+    ChargeFishingRod = net:WaitForChild("RF/ChargeFishingRod"),
+    RequestFishingMinigameStarted = net:WaitForChild("RF/RequestFishingMinigameStarted"),
+    SellAllItems = net:WaitForChild("RF/SellAllItems"),
+    PurchaseWeather = net:WaitForChild("RF/PurchaseWeatherEvent"),
+    PurchaseBait = net:WaitForChild("RF/PurchaseBait"),
+    PurchaseRod = net:WaitForChild("RF/PurchaseFishingRod"),
+    UpdateFishingRadar = net:WaitForChild("RF/UpdateFishingRadar"),
+    CancelFishing = net:WaitForChild("RF/CancelFishingInputs")
+}
+
+local RE = {
+    FishingCompleted = net:WaitForChild("RE/FishingCompleted"),
+    ReplicateCutscene = net:WaitForChild("RE/ReplicateCutscene"),
+    StopCutscene = net:WaitForChild("RE/StopCutscene"),
+    EquipTool = net:WaitForChild("RE/EquipToolFromHotbar"),
+    UnequipTool = net:WaitForChild("RE/UnequipToolFromHotbar"),
+    FavoriteItem = net:WaitForChild("RE/FavoriteItem"),
+    FavoriteStateChanged = net:WaitForChild("RE/FavoriteStateChanged"),
+    ActivateEnchanting = net:WaitForChild("RE/ActivateEnchantingAltar"),
+    EquipItem = net:WaitForChild("RE/EquipItem"),
+    SpawnTotem = net:WaitForChild("RE/SpawnTotem"),
+    FishCaughtEvent = net:WaitForChild("RE/FishCaught"),
+    PlaceCafeEvent  = net:WaitForChild("RE/PlaceCavernTotemItem"),
+    ReplicateTextEffect = net:WaitForChild("RE/ReplicateTextEffect"), 
+    ActivateSCEnchanting = net:WaitForChild("RE/ActivateSecondEnchantingAltar")
+}
+
+local st = {
+    autoEquipRod = false,
+}
+
+local ReelIntermission = AnimModule
+local now = workspace:GetServerTimeNow()
+
+getgenv().AutoSell = false
+getgenv().AutoFarmTP = false
+getgenv().SelectedWeathers = {}
+getgenv().AutoBuyWeather = false
+
+local cutsceneController
+local originalPlay, originalStop
+
+do
+    local ok, controller = pcall(function()
+        return require(game:GetService("ReplicatedStorage").Controllers.CutsceneController)
+    end)
+    if ok and controller then
+        cutsceneController = controller
+        originalPlay = cutsceneController.Play
+        originalStop = cutsceneController.Stop
+    end
+end
+
+local function EnableSkip()
+    if cutsceneController then
+        if cutsceneController.ReplicateCutscene then
+            cutsceneController.ReplicateCutscene.OnClientEvent:Connect(function() end)
+        end
+        if cutsceneController.StopCutscene then
+            cutsceneController.StopCutscene.OnClientEvent:Connect(function() end)
+        end
+        cutsceneController.Play = function() end
+        cutsceneController.Stop = function() end
+    end
+end
+
+local function DisableSkip()
+    if cutsceneController and originalPlay and originalStop then
+        cutsceneController.Play = originalPlay
+        cutsceneController.Stop = originalStop
+    end
+end
+
+EnableSkip()
 
 -- ========================== [GAMEDATA] ==========================
 local GameData = {
@@ -345,150 +488,6 @@ local GameData = {
     left = 4,
     totalSpecial = 4,
 }
-
-local Window = Library:CreateWindow({
-	Title = "ViKai",
-	Footer = "premium version",
-	Icon = 88271133677376,
-	NotifySide = "Right",
-	Size = UDim2.fromOffset(540, 350),
-	ShowCustomCursor = false,
-})
-
-local Tabs = {
-    Info = Window:AddTab("Info", "info"),
-	Main = Window:AddTab("Main", "house"),
-	Teleport = Window:AddTab("Teleport", "map-pinned"),
-	Shop = Window:AddTab("Shop", "shopping-cart"),
-	Trade = Window:AddTab("Trade", "handshake"),
-	Quest = Window:AddTab("Quest", "book"),
-	Web = Window:AddTab("Webhooks", "webhook"),
-	Misc = Window:AddTab("Misc", "settings"),
-}
-
-local SVC = {
-    Players = game:GetService("Players"),
-    RS = game:GetService("ReplicatedStorage"),
-    UIS = game:GetService("UserInputService"),
-    VU = game:GetService("VirtualUser"),
-    Run = game:GetService("RunService"),
-    Tween = game:GetService("TweenService"),
-    HttpService = game:GetService("HttpService"),
-    TS = game:GetService("TeleportService"),
-    NC = game:GetService("NetworkClient"),
-    Vim = game:GetService("VirtualInputManager")
-}
-
-local mods                 = {
-    Net                = SVC.RS.Packages._Index["sleitnick_net@0.2.0"].net,
-    Replion            = require(SVC.RS.Packages.Replion),
-    FishingController  = require(SVC.RS.Controllers.FishingController),
-    AutoFishingController = require(SVC.RS.Controllers.AutoFishingController),
-    TradingController  = require(SVC.RS.Controllers.ItemTradingController),
-    ItemUtility        = require(SVC.RS.Shared.ItemUtility),
-    VendorUtility      = require(SVC.RS.Shared.VendorUtility),
-    PlayerStatsUtility = require(SVC.RS.Shared.PlayerStatsUtility),
-    Effects            = require(SVC.RS.Shared.Effects),
-}
-
-local player = SVC.Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-local humanoid = char:FindFirstChildOfClass("Humanoid")
-local playerGui = player:WaitForChild("PlayerGui")
-local Camera = workspace.CurrentCamera
-local merchantGui = playerGui:WaitForChild("Merchant")
-local exclaimFolder = workspace:WaitForChild("!!! MENU RINGS")
-local cosmeticFolder = workspace:WaitForChild("CosmeticFolder")
-local AnimModule = SVC.RS.Modules.Animations:WaitForChild("ReelIntermission")
-local net = SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
-local leaderstats = player:WaitForChild("leaderstats")
-local OnRoll = mods.Net["RE/RollEnchant"]
-local caughtStat = leaderstats:WaitForChild("Caught")  
-local gui = player:WaitForChild("PlayerGui")
-local smallNotif = gui:FindFirstChild("Small Notification")
-
-local repl                 = {
-    Data = mods.Replion.Client:WaitReplion("Data"),
-    Items = SVC.RS:WaitForChild("Items"),
-    PlayerStat = require(SVC.RS.Packages._Index:FindFirstChild("ytrev_replion@2.0.0-rc.3").replion)
-}
-
-local RF = {
-    ChargeFishingRod = net:WaitForChild("RF/ChargeFishingRod"),
-    RequestFishingMinigameStarted = net:WaitForChild("RF/RequestFishingMinigameStarted"),
-    SellAllItems = net:WaitForChild("RF/SellAllItems"),
-    PurchaseWeather = net:WaitForChild("RF/PurchaseWeatherEvent"),
-    PurchaseBait = net:WaitForChild("RF/PurchaseBait"),
-    PurchaseRod = net:WaitForChild("RF/PurchaseFishingRod"),
-    UpdateFishingRadar = net:WaitForChild("RF/UpdateFishingRadar"),
-    CancelFishing = net:WaitForChild("RF/CancelFishingInputs")
-}
-
-local RE = {
-    FishingCompleted = net:WaitForChild("RE/FishingCompleted"),
-    ReplicateCutscene = net:WaitForChild("RE/ReplicateCutscene"),
-    StopCutscene = net:WaitForChild("RE/StopCutscene"),
-    EquipTool = net:WaitForChild("RE/EquipToolFromHotbar"),
-    UnequipTool = net:WaitForChild("RE/UnequipToolFromHotbar"),
-    FavoriteItem = net:WaitForChild("RE/FavoriteItem"),
-    FavoriteStateChanged = net:WaitForChild("RE/FavoriteStateChanged"),
-    ActivateEnchanting = net:WaitForChild("RE/ActivateEnchantingAltar"),
-    EquipItem = net:WaitForChild("RE/EquipItem"),
-    SpawnTotem = net:WaitForChild("RE/SpawnTotem"),
-    FishCaughtEvent = net:WaitForChild("RE/FishCaught"),
-    PlaceCafeEvent  = net:WaitForChild("RE/PlaceCavernTotemItem"),
-    ReplicateTextEffect = net:WaitForChild("RE/ReplicateTextEffect"), 
-    ActivateSCEnchanting = net:WaitForChild("RE/ActivateSecondEnchantingAltar")
-}
-
-local st = {
-    autoEquipRod = false,
-}
-
-local ReelIntermission = AnimModule
-local now = workspace:GetServerTimeNow()
-
-getgenv().AutoSell = false
-getgenv().AutoFarmTP = false
-getgenv().SelectedWeathers = {}
-getgenv().AutoBuyWeather = false
-
-local cutsceneController
-local originalPlay, originalStop
-
-do
-    local ok, controller = pcall(function()
-        return require(game:GetService("ReplicatedStorage").Controllers.CutsceneController)
-    end)
-    if ok and controller then
-        cutsceneController = controller
-        originalPlay = cutsceneController.Play
-        originalStop = cutsceneController.Stop
-    end
-end
-
-local function EnableSkip()
-    if cutsceneController then
-        if cutsceneController.ReplicateCutscene then
-            cutsceneController.ReplicateCutscene.OnClientEvent:Connect(function() end)
-        end
-        if cutsceneController.StopCutscene then
-            cutsceneController.StopCutscene.OnClientEvent:Connect(function() end)
-        end
-        cutsceneController.Play = function() end
-        cutsceneController.Stop = function() end
-    end
-end
-
-local function DisableSkip()
-    if cutsceneController and originalPlay and originalStop then
-        cutsceneController.Play = originalPlay
-        cutsceneController.Stop = originalStop
-    end
-end
-
-EnableSkip()
 
 -- Listener Players
 player.CharacterAdded:Connect(function(newChar)
