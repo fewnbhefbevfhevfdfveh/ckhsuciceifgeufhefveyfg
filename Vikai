@@ -346,43 +346,6 @@ local GameData = {
     AutoBuyWeather = false,
 
     -- ========================== [Teleport 2 & Save Position] ==========================
-    TeleportSpots2 = {
-        ["Enchant Altar"] = CFrame.new(3258,-1301,1390),
-        ["Coral Reefs"] = CFrame.new(-3273,3,2410),
-        ["Creater Island"] = CFrame.new(1008,8,5055),
-        ["Estoric Depths"] = CFrame.new(1994,8,1365),
-        ["Fisherman Island"] = CFrame.new(34,17,2835),
-        ["Kohana"] = CFrame.new(-688,3,802),
-        ["Kohana Volcano"] = CFrame.new(-579,41,93),
-        ["Tropical Grove"] = CFrame.new(-2151,53,3673),
-        ["Treasure Room"] = CFrame.new(-3601,-276,-1641),
-        ["Sisyphus Statue"] = CFrame.new(-3783, -135, -953),
-        ["Second Enchant Altar"] = CFrame.new(1479, 128, -591),
-        ["Underground Cellar"] = CFrame.new(2113, -91, -700),
-        ["Ancient Jungle"] = CFrame.new(1343, 5, -355),
-        ["Sacred Tample"] = CFrame.new(1476, -22, -629),
-        ["Levers 1"] = CFrame.new(1487, 7, -851),
-        ["Levers 2"] = CFrame.new(1834, 7, -288),
-        ["Levers 3"] = CFrame.new(883, 7, -359),
-        ["Levers 4"] = CFrame.new(1418, 30, 84),
-        ["Ancient Ruin"] = CFrame.new(6084, -586, 4635),
-        ["Classic Island"] = CFrame.new(1234, 10, 2842),
-        ["Iron Cafe"] = CFrame.new(-8651, -549, 163),
-        ["Iron Cavern"] = CFrame.new(-9175, -582, 159),
-    },
-
-    teleportOptions2 = {},
-    chosenTeleport = nil,
-
-    saveFile = "VikaiHub_SavedPos.txt",
-    savedCFrame = nil,
-
-    char = nil,
-    hrp = nil,
-
-    rawData = nil,
-    x = nil, y = nil, z = nil,
-    pos = nil,
 
     -- ========================== [Player Names Teleport] ==========================
 
@@ -2714,99 +2677,91 @@ do
 end
 
 local TeleportLeft = TeleportTab:AddLeftGroupbox("Teleport Features", "map-pinned")
-local GameData = {
 
+local TeleportSpots2 = {
+    ["Enchant Altar"] = CFrame.new(3258,-1301,1390),
+    ["Coral Reefs"] = CFrame.new(-3273,3,2410),
+    ["Creater Island"] = CFrame.new(1008,8,5055),
+    ["Estoric Depths"] = CFrame.new(1994,8,1365),
+    ["Fisherman Island"] = CFrame.new(34,17,2835),
+    ["Kohana"] = CFrame.new(-688,3,802),
+    ["Kohana Volcano"] = CFrame.new(-579,41,93),
+    ["Tropical Grove"] = CFrame.new(-2151,53,3673),
+    ["Treasure Room"] = CFrame.new(-3601,-276,-1641),
+    ["Sisyphus Statue"] = CFrame.new(-3783, -135, -953),
+    ["Second Enchant Altar"] = CFrame.new(1479, 128, -591),
+    ["Underground Cellar"] = CFrame.new(2113, -91, -700),
+    ["Ancient Jungle"] = CFrame.new(1343, 5, -355),
+    ["Sacred Tample"] = CFrame.new(1476, -22, -629),
+    ["Levers 1"] = CFrame.new(1487, 7, -851),
+    ["Levers 2"] = CFrame.new(1834, 7, -288),
+    ["Levers 3"] = CFrame.new(883, 7, -359),
+    ["Levers 4"] = CFrame.new(1418, 30, 84),
+    ["Ancient Ruin"] = CFrame.new(6084, -586, 4635),
+    ["Classic Island"] = CFrame.new(1234, 10, 2842),
+    ["Iron Cafe"] = CFrame.new(-8651, -549, 163),
+    ["Iron Cavern"] = CFrame.new(-9175, -582, 159),
 }
 
--- Generate teleport options
-for name,_ in pairs(GameData.TeleportSpots2) do
-    table.insert(GameData.teleportOptions2, name)
-end
-
-GameData.chosenTeleport = GameData.teleportOptions2[1]
-
-
--- SAVE / LOAD SYSTEM ----------------------------------
-
-GameData.loadSavedPosition = function()
-    if isfile and isfile(GameData.saveFile) then
-
-        GameData.rawData = readfile(GameData.saveFile)
-
-        GameData.x, GameData.y, GameData.z =
-            string.match(GameData.rawData, "(-?%d+%.?%d*),(-?%d+%.?%d*),(-?%d+%.?%d*)")
-
-        if GameData.x and GameData.y and GameData.z then
-            return CFrame.new(
-                tonumber(GameData.x),
-                tonumber(GameData.y),
-                tonumber(GameData.z)
-            )
-        end
-    end
-    return nil
-end
-
-
-GameData.savePosition = function(cframe)
-    if writefile then
-        GameData.pos = cframe.Position
-        writefile(
-            GameData.saveFile,
-            string.format("%.3f,%.3f,%.3f", GameData.pos.X, GameData.pos.Y, GameData.pos.Z)
-        )
-    end
-end
-
-
-GameData.resetSavedPosition = function()
-    if delfile and isfile and isfile(GameData.saveFile) then
-        delfile(GameData.saveFile)
-    end
-end
-
-GameData.savedCFrame = GameData.loadSavedPosition()
-
-
--- UI -------------------------------------------------------
+local teleportOptions2 = {}
+for name,_ in pairs(TeleportSpots2) do table.insert(teleportOptions2,name) end
+local chosenTeleport = teleportOptions2[1]
 
 TeleportLeft:AddDropdown("SelectIsland", {
-    Values = GameData.teleportOptions2,
-    Default = GameData.chosenTeleport,
+    Values = teleportOptions2,
+    Default = chosenTeleport,
     Text = "Select Island",
-    Callback = function(v)
-        GameData.chosenTeleport = v
-    end
+    Callback = function(v) chosenTeleport = v end
 })
 
 TeleportLeft:AddButton("TeleportIsland", {
     Text = "Teleport",
     Func = function()
-        GameData.hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if GameData.hrp and GameData.TeleportSpots2[GameData.chosenTeleport] then
-            GameData.hrp.CFrame = GameData.TeleportSpots2[GameData.chosenTeleport] + Vector3.new(0,5,0)
-            Library:Notify({
-                Title = "Teleport",
-                Description = "Teleported to " .. GameData.chosenTeleport,
-                Time = 3
-            })
+        if hrp and TeleportSpots2[chosenTeleport] then
+            hrp.CFrame = TeleportSpots2[chosenTeleport] + Vector3.new(0,5,0)
+            Library:Notify({ Title = "Teleport", Description = "Teleported to "..chosenTeleport, Time = 3 })
         end
     end
 })
 
-
--- SAVE POSITION BUTTONS ------------------------------------
+local saveFile = "VikaiHub_SavedPos.txt"
 
 TeleportLeft:AddDivider()
 TeleportLeft:AddLabel("Save Current Position")
 
+local function loadSavedPosition()
+    if isfile and isfile(saveFile) then
+        local data = readfile(saveFile)
+        local x, y, z = string.match(data, "(-?%d+%.?%d*),(-?%d+%.?%d*),(-?%d+%.?%d*)")
+        if x and y and z then
+            return CFrame.new(tonumber(x), tonumber(y), tonumber(z))
+        end
+    end
+    return nil
+end
+
+local function savePosition(cframe)
+    if writefile then
+        local pos = cframe.Position
+        writefile(saveFile, string.format("%.3f,%.3f,%.3f", pos.X, pos.Y, pos.Z))
+    end
+end
+
+local function resetSavedPosition()
+    if delfile and isfile and isfile(saveFile) then
+        delfile(saveFile)
+    end
+end
+
+local savedCFrame = loadSavedPosition()
+
 TeleportLeft:AddButton("SavePos", {
     Text = "Save Current Position",
     Func = function()
-        GameData.hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if GameData.hrp then
-            GameData.savedCFrame = GameData.hrp.CFrame
-            GameData.savePosition(GameData.savedCFrame)
+        hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            savedCFrame = hrp.CFrame
+            savePosition(savedCFrame)
             Library:Notify({
                 Title = "ViKai HUB",
                 Description = "Position saved!",
@@ -2819,10 +2774,9 @@ TeleportLeft:AddButton("SavePos", {
 TeleportLeft:AddButton("TeleportSaved", {
     Text = "Teleport Saved Position",
     Func = function()
-        GameData.hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-
-        if GameData.hrp and GameData.savedCFrame then
-            GameData.hrp.CFrame = GameData.savedCFrame + Vector3.new(0,5,0)
+        hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp and savedCFrame then
+            hrp.CFrame = savedCFrame + Vector3.new(0,5,0)
             Library:Notify({
                 Title = "ViKai HUB",
                 Description = "Teleported to saved position!",
@@ -2841,8 +2795,8 @@ TeleportLeft:AddButton("TeleportSaved", {
 TeleportLeft:AddButton("ResetSavedPos", {
     Text = "Reset Saved Position",
     Func = function()
-        GameData.resetSavedPosition()
-        GameData.savedCFrame = nil
+        resetSavedPosition()
+        savedCFrame = nil
         Library:Notify({
             Title = "ViKai HUB",
             Description = "Saved position has been reset!",
@@ -2851,17 +2805,12 @@ TeleportLeft:AddButton("ResetSavedPos", {
     end
 })
 
-
--- AUTO TELEPORT ON LOAD ------------------------------------
-
 task.spawn(function()
-    GameData.char = player.Character or player.CharacterAdded:Wait()
-    GameData.hrp = GameData.char:WaitForChild("HumanoidRootPart", 10)
-
-    if GameData.hrp and GameData.savedCFrame then
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart", 10)
+    if hrp and savedCFrame then
         task.wait(1)
-        GameData.hrp.CFrame = GameData.savedCFrame + Vector3.new(0, 5, 0)
-
+        hrp.CFrame = savedCFrame + Vector3.new(0,5,0)
         Library:Notify({
             Title = "ViKai HUB",
             Description = "Teleported to last saved position!",
