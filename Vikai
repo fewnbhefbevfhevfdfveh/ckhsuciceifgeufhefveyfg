@@ -3270,6 +3270,245 @@ task.spawn(function()
     end
 end)
 
+_G.WebhookRarities = { "Mythic", "Secret" } 
+_G.WebhookNames = {} -- Nilai default filter nama
+_G.WebhookCustomName = ""
+
+_G.httpRequest = _G.httpRequest or request or http_request or syn and syn.request or nil
+
+_G.WebhookFlags = {
+    FishCaught = { Enabled = false, URL = "https://discord.com/api/webhooks/1438931954966986803/tjNY--1kQV1w_67Eq6iC0yk07uE2wgAtbjycbLm99EgSjUX-D71wlP6wKWAcmGW1_hnq" },
+    Stats      = { Enabled = false, URL = "", Delay = 5 },
+    Disconnect = { Enabled = false, URL = "" }
+}
+
+_G.WebhookURLs = _G.WebhookURLs or {}
+
+local fishDB = {}
+function buildFishDatabase()
+    local itemsContainer = repl.Items
+    if not itemsContainer then return end
+    for _, itemModule in ipairs(itemsContainer:GetChildren()) do
+        local success, itemData = pcall(require, itemModule)
+        if success and type(itemData) == "table" and itemData.Data and itemData.Data.Type == "Fish" then
+            local data = itemData.Data
+            if data.Id and data.Name then
+                fishDB[data.Id] = {
+                    Name = data.Name,
+                    Tier = data.Tier,
+                    Icon = data.Icon,
+                    SellPrice = itemData.SellPrice
+                }
+            end
+        end
+    end
+end
+
+function getThumbnailURL(assetString)
+    local assetId = assetString:match("rbxassetid://(%d+)")
+    if not assetId then return nil end
+    local apiUrl = string.format(
+        "https://thumbnails.roblox.com/v1/assets?assetIds=%s&type=Asset&size=420x420&format=Png", assetId)
+    local success, response = pcall(function()
+        return SVC.HttpService:JSONDecode(game:HttpGet(apiUrl))
+    end)
+    return success and response and response.data and response.data[1] and response.data[1].imageUrl
+end
+
+function sendWebhook(url, payload)
+    if not _G.httpRequest or not url or url == "" then return end
+    if _G._WebhookLock and _G._WebhookLock[url] then return end
+    _G._WebhookLock = _G._WebhookLock or {}
+    _G._WebhookLock[url] = true
+    task.delay(0.25, function() _G._WebhookLock[url] = nil end)
+    pcall(function()
+        _G.httpRequest({
+            Url = url,
+            Method = "POST",
+            Headers = { ["Content-Type"] = "application/json" },
+            Body = SVC.HttpService:JSONEncode(payload)
+        })
+    end)
+end
+
+function sendNewFishWebhook(newlyCaughtFish)
+    if not _G.WebhookFlags.FishCaught.Enabled then return end
+    local url = _G.WebhookFlags.FishCaught.URL
+    if not url or not url:match("discord.com/api/webhooks") then return end    
+    local newFishDetails = fishDB[newlyCaughtFish.Id]
+    if not newFishDetails then return end   
+    local newFishRarity = (_G.TierFish and _G.TierFish[newFishDetails.Tier]) or "Unknown"    
+    if _G.WebhookRarities then
+    local allowed = false
+    for k, v in pairs(_G.WebhookRarities) do
+        if (type(k) == "string" and k == newFishRarity) or v == newFishRarity then
+            allowed = true
+            break
+        end
+    end
+    if not allowed then return end
+end
+    if _G.WebhookNames and #_G.WebhookNames > 0 and not table.find(_G.WebhookNames, newFishDetails.Name) then return end
+    local fishWeight = (newlyCaughtFish.Metadata and newlyCaughtFish.Metadata.Weight and string.format("%.2f Kg", newlyCaughtFish.Metadata.Weight)) or "N/A"
+    local mutation = (newlyCaughtFish.Metadata and newlyCaughtFish.Metadata.VariantId and tostring(newlyCaughtFish.Metadata.VariantId)) or "None"
+    local sellPrice = (newFishDetails.SellPrice and ("$" .. string.format("%d", newFishDetails.SellPrice):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))) or "N/A"
+    local payload = {
+        embeds = { {
+            title = "ViKai HUB Webhook | Fish Caught",
+            url = "https://discord.gg/BBXc8uGugt",
+            description = string.format("✦︎ Congratulations!! **%s** You have obtained a new **%s** fish!",
+                (_G.WebhookCustomName ~= "" and _G.WebhookCustomName) or game.Players.LocalPlayer.Name, newFishRarity),
+            color = 52221,
+            fields = {
+                { name = "〢Fish Name :", value = "```❯ " .. newFishDetails.Name .. "```" },
+                { name = "〢Fish Tier :", value = "```❯ " .. newFishRarity .. "```" },
+                { name = "〢Weight :", value = "```❯ " .. fishWeight .. "```" },
+                { name = "〢Mutation :", value = "```❯ " .. mutation .. "```" },
+                { name = "〢Sell Price :", value = "```❯ " .. sellPrice .. "```" },
+            },
+            image = { url = getThumbnailURL(newFishDetails.Icon) or "https://i.imgur.com/vV0LnzQ.png" },
+            footer = { text = "ViKai HUB Webhook", icon_url = "https://i.imgur.com/vV0LnzQ.png" },
+            timestamp = os.date("!%Y-%m-%dT%H:%M:%S.000Z")
+        } },
+        username = "ViKai Notification!",
+        avatar_url = "https://i.imgur.com/MP6ctIj.png"
+    }
+    sendWebhook(url, payload)
+end
+
+buildFishDatabase()
+local fishNames = {}
+for _, info in pairs(fishDB) do
+    table.insert(fishNames, info.Name)
+end
+table.sort(fishNames)
+
+task.spawn(function()
+    repeat
+        REObtainedNewFishNotification = mods.Net["RE/ObtainedNewFishNotification"]
+        task.wait(1)
+    until REObtainedNewFishNotification
+    if not _G.FishWebhookConnected then
+        _G.FishWebhookConnected = true
+        REObtainedNewFishNotification.OnClientEvent:Connect(function(fishId, extraData)
+            if st.autoWebhook then
+                local fish = {
+                    Id = fishId,
+                    Metadata = {
+                        Weight = extraData and extraData.Weight,
+                        VariantId = extraData and extraData.VariantId
+                    }
+                }
+                sendNewFishWebhook(fish)
+            end
+        end)
+    end
+end)
+
+local WebhookLeft = WebhookTab:AddLeftGroupbox("Webhook Features", "webhook")
+
+WebhookLeft:AddInput("WebhookURL", {
+    Text = "Webhook URL",
+    Default = _G.WebhookFlags and _G.WebhookFlags.FishCaught.URL or "",
+    Placeholder = "Paste your custom webhook here...",
+    Callback = function(value)
+        if value and value:match("discord.com/api/webhooks") then
+            _G.WebhookFlags.FishCaught.URL = value
+            Library:Notify({ Title = "Webhook", Description = "Webhook URL saved!", Time = 3 })
+        else
+            Library:Notify({ Title = "Webhook", Description = "Invalid webhook URL!", Time = 3 })
+        end
+    end
+})
+
+WebhookLeft:AddDropdown("TierFilter", {
+    Text = "Tier Filter",
+    Multi = true,
+    Values = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "Secret" },
+    Default = { "Mythic", "Secret" },
+    Callback = function(selected)
+        _G.WebhookRarities = selected
+        Library:Notify({ Title = "Webhook", Description = "Tier filter updated", Time = 3 })
+    end
+})
+
+local fishNames = {}
+for _, info in pairs(fishDB) do
+    table.insert(fishNames, info.Name)
+end
+table.sort(fishNames)
+
+WebhookLeft:AddDropdown("NameFilter", {
+    Text = "Name Filter",
+    Multi = true,
+    Values = fishNames,
+    Default = {},
+    Callback = function(selected)
+        _G.WebhookNames = selected
+        Library:Notify({ Title = "Webhook", Description = "Name filter updated", Time = 3 })
+    end
+})
+
+WebhookLeft:AddInput("HideIdentity", {
+    Text = "Hide Identity",
+    Default = _G.WebhookCustomName or "",
+    Placeholder = "Enter custom username for webhook...",
+    Callback = function(value)
+        _G.WebhookCustomName = value
+        Library:Notify({ Title = "Webhook", Description = "Custom name updated", Time = 3 })
+    end
+})
+
+WebhookLeft:AddToggle("SendWebhook", {
+    Text = "Send Fish Webhook",
+    Default = _G.WebhookFlags.FishCaught.Enabled,
+    Callback = function(state)
+        _G.WebhookFlags.FishCaught.Enabled = state
+        st.autoWebhook = state
+        Library:Notify({
+            Title = "Webhook",
+            Description = state and "Auto Webhook Enabled" or "Auto Webhook Disabled",
+            Time = 3
+        })
+    end
+})
+
+WebhookLeft:AddButton("TestWebhook", {
+    Text = "Test Webhook Connection",
+    Func = function()
+        local url = _G.WebhookFlags.FishCaught.URL
+        if not url or not url:match("discord.com/api/webhooks") then
+            Library:Notify({ Title = "Webhook", Description = "Invalid or missing URL!", Time = 3 })
+            return
+        end
+        local payload = {
+            embeds = { {
+                color = 44543,
+                author = { name = "Wakey Wakey Webhook Connected:D" },
+                image = { url = "https://i.imgur.com/A2VIZyF.gif" }
+            } },
+            username = "ViKai Notification!",
+            avatar_url = "https://i.imgur.com/MP6ctIj.png"
+        }
+        task.spawn(function()
+            local success, result = pcall(function()
+                return _G.httpRequest({
+                    Url = url,
+                    Method = "POST",
+                    Headers = { ["Content-Type"] = "application/json" },
+                    Body = SVC.HttpService:JSONEncode(payload)
+                })
+            end)
+            if success then
+                Library:Notify({ Title = "Webhook", Description = "Test message sent!", Time = 3 })
+            else
+                Library:Notify({ Title = "Webhook", Description = "Failed to send!", Time = 3 })
+            end
+        end)
+    end
+})
+
+
 local MiscLeft = MiscTab:AddLeftGroupbox("Players", "users")
 
 MiscLeft:AddSlider("Walkspeed", {
