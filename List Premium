@@ -26,6 +26,7 @@ local validUsers = {
 	[8309815866] = {key = "Owner", issuedDate = "Permanen"},
 	[8238519054] = {key = "Owner", issuedDate = "Permanen"},
 	[8309797161] = {key = "Owner", issuedDate = "Permanen"},
+	[2304459668] = {key = "Owner", issuedDate = "Permanen"},
 }
 
 local expireAfter = 30 * 24 * 60 * 60 -- 30 hari
