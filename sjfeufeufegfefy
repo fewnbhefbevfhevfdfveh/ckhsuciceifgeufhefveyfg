@@ -294,30 +294,23 @@ local GameData = {
     Players = game:GetService("Players"),
 
     -- ================== [Blatant] ==================
-        SVC = {
-        RS = game:GetService("ReplicatedStorage"),
-        Players = game:GetService("Players")
+
+    SVC = {
+        RS = game:GetService("ReplicatedStorage")
     },
 
-    -- Player & leaderstats
-    Player = nil,
-    Leaderstats = nil,
-    CaughtStat = nil,
-
-    -- Net
-    Net = nil,
-
+    net = nil, -- nanti diisi setelah RS
     RF = {},
     RE = {},
 
-    -- Delay
-    DelayLoopStart = 0.80,
-    DelayComplete = 1,
+    cutsceneController = nil,
+    originalPlay = nil,
+    originalStop = nil,
 
-    -- State
-    BlatantV2Running = false,
-    BlatantV2Thread = nil,
-
+    EnableSkip = nil,
+    Fastest = nil,
+    startBlatantV2 = nil,
+    
     -- ================== [Treasure] ==================
     Players = game:GetService("Players"),
     Player = nil,
@@ -1431,96 +1424,118 @@ sections.Fishing:Header({
 	Name = "Blatant Feature"
 })
 
-GameData.Player = GameData.SVC.Players.LocalPlayer
-GameData.Leaderstats = GameData.Player:WaitForChild("leaderstats")
-GameData.CaughtStat = GameData.Leaderstats:WaitForChild("Caught")
-
-GameData.Net = GameData.SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
+-- SETUP NET
+GameData.net = GameData.SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
 
 GameData.RF = {
-    ChargeFishingRod = GameData.Net:WaitForChild("RF/ChargeFishingRod"),
-    RequestFishingMinigameStarted = GameData.Net:WaitForChild("RF/RequestFishingMinigameStarted"),
-    CancelFishing = GameData.Net:WaitForChild("RF/CancelFishingInputs")
+    ChargeFishingRod = GameData.net:WaitForChild("RF/ChargeFishingRod"),
+    RequestFishingMinigameStarted = GameData.net:WaitForChild("RF/RequestFishingMinigameStarted"),
+    CancelFishing = GameData.net:WaitForChild("RF/CancelFishingInputs")
 }
 
 GameData.RE = {
-    FishingCompleted = GameData.Net:WaitForChild("RE/FishingCompleted")
+    FishingCompleted = GameData.net:WaitForChild("RE/FishingCompleted")
 }
 
--- ======================
--- FUNCTION
--- ======================
+-- CUTSCENE CONTROLLER
+do
+    local ok, controller = pcall(function()
+        return require(game:GetService("ReplicatedStorage").Controllers.CutsceneController)
+    end)
 
-function GameData.Fastest()
+    if ok and controller then
+        GameData.cutsceneController = controller
+        GameData.originalPlay = controller.Play
+        GameData.originalStop = controller.Stop
+    end
+end
+
+-- ENABLE SKIP SYSTEM
+GameData.EnableSkip = function()
+    if GameData.cutsceneController then
+        if GameData.cutsceneController.ReplicateCutscene then
+            GameData.cutsceneController.ReplicateCutscene.OnClientEvent:Connect(function() end)
+        end
+        if GameData.cutsceneController.StopCutscene then
+            GameData.cutsceneController.StopCutscene.OnClientEvent:Connect(function() end)
+        end
+
+        GameData.cutsceneController.Play = function() end
+        GameData.cutsceneController.Stop = function() end
+    end
+end
+
+GameData.EnableSkip()
+
+-- GLOBAL CONFIG
+_G.BlatantV2 = false
+_G.DelayLoopStartV2 = 0.80
+_G.DelayCompleteV2 = 1
+
+-- FASTEST FUNCTION
+GameData.Fastest = function()
     task.spawn(function()
         pcall(function() GameData.RF.CancelFishing:InvokeServer() end)
-        task.wait(1)
         pcall(function() GameData.RF.ChargeFishingRod:InvokeServer(workspace:GetServerTimeNow()) end)
-        task.wait(1)
         pcall(function() GameData.RF.RequestFishingMinigameStarted:InvokeServer(-1, 0.999) end)
-        task.wait(GameData.DelayComplete)
+
+        task.wait(_G.DelayCompleteV2)
+
         pcall(function() GameData.RE.FishingCompleted:FireServer() end)
     end)
 end
 
-function GameData.StartBlatantV2()
-    if GameData.BlatantV2Running then return end
-    GameData.BlatantV2Running = true
-    GameData.BlatantV2Thread = task.spawn(function()
-        while GameData.BlatantV2Running do
+-- LOOP START
+GameData.startBlatantV2 = function()
+    task.spawn(function()
+        while _G.BlatantV2 do
             GameData.Fastest()
-            task.wait(GameData.DelayLoopStart)
+            task.wait(_G.DelayLoopStartV2)
         end
     end)
 end
 
-function GameData.StopBlatantV2()
-    GameData.BlatantV2Running = false
-end
-
--- ======================
--- UI
--- ======================
-
+-- WINDUI
 sections.Fishing:Toggle({
-    Name = "Blatant",
-    Default = false,
+    Name = "Blatant V2",
+    Default = _G.BlatantV2,
     Callback = function(value)
+        _G.BlatantV2 = value
         if value then
-            GameData.StartBlatantV2()
-            Window:Notify({
-                Title = "Blatant V2",
-                Description = "Enabled"
-            })
-        else
-            GameData.StopBlatantV2()
-            Window:Notify({
-                Title = "Blatant V2",
-                Description = "Disabled"
-            })
+            GameData.startBlatantV2()
         end
-    end
-}, "BlatantToggle")
+
+        Window:Notify({
+            Title = "Blatant V2",
+            Description = value and "Enabled" or "Disabled"
+        })
+    end,
+}, "BlatantV2Toggle")
 
 sections.Fishing:Input({
-    Name = "Delay Cast",
+    Name = "Delay Cast V2",
     Placeholder = "0.80",
-    AcceptedCharacters = "0123456789.",
+    AcceptedCharacters = "Numbers",
     Callback = function(input)
-        local v = tonumber(input)
-        if v then GameData.DelayLoopStart = v end
-    end
-}, "DelayCast")
+        local num = tonumber(input)
+        if num then
+            _G.DelayLoopStartV2 = num
+        end
+    end,
+}, "DelayCastV2Input")
 
 sections.Fishing:Input({
-    Name = "Delay Complete",
+    Name = "Delay Complete V2",
     Placeholder = "1",
-    AcceptedCharacters = "0123456789.",
+    AcceptedCharacters = "Numbers",
     Callback = function(input)
-        local v = tonumber(input)
-        if v then GameData.DelayComplete = v end
-    end
-}, "DelayComplete")
+        local num = tonumber(input)
+        if num then
+            _G.DelayCompleteV2 = num
+        end
+    end,
+}, "DelayCompleteV2Input")
+
 
 sections.Fishing1:Header({
 	Name = "Webhook Notifier"
