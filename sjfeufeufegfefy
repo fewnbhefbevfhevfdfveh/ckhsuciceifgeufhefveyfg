@@ -293,7 +293,31 @@ local GameData = {
     DiscoRoot = workspace.ClassicEvent.DiscoEvent.DiscoBall:WaitForChild("Root"),
     Players = game:GetService("Players"),
 
-    -- ================== [Blatant] ==================
+    -- ================== [Blatant V1] ==================
+
+    RS = game:GetService("ReplicatedStorage"),
+    Players = game:GetService("Players"),
+
+    LP = nil,
+
+    net = nil,
+
+    RF_Charge = nil,
+    RF_Start = nil,
+    RF_Cancel = nil,
+    RE_Finish = nil,
+    RE_Equip = nil,
+
+    enabled = false,
+    CancelDelay = 1.05,
+    CompleteDelay = 0.16,
+
+    EquipTool = nil,
+    FastFish = nil,
+    StartLoop = nil,
+    StopLoop = nil,
+
+    -- ================== [Blatant V2] ==================
 
     SVC = {
         RS = game:GetService("ReplicatedStorage")
@@ -310,7 +334,7 @@ local GameData = {
     EnableSkip = nil,
     Fastest = nil,
     startBlatantV2 = nil,
-    
+
     -- ================== [Treasure] ==================
     Players = game:GetService("Players"),
     Player = nil,
@@ -1420,8 +1444,113 @@ sections.Fishing:Input({
     end,
 }, "InstantFishingCompletedDelay")
 
-sections.Fishing:Header({
-	Name = "Blatant Feature"
+sections.Fishing1:Header({
+	Name = "Blatant V1"
+})
+
+-- SETUP LOCALPLAYER
+GameData.LP = GameData.Players.LocalPlayer
+
+-- GET NET FOLDER
+GameData.net = GameData.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
+
+-- REMOTES
+GameData.RF_Charge = GameData.net:WaitForChild("RF/ChargeFishingRod")
+GameData.RF_Start  = GameData.net:WaitForChild("RF/RequestFishingMinigameStarted")
+GameData.RF_Cancel = GameData.net:WaitForChild("RF/CancelFishingInputs")
+GameData.RE_Finish = GameData.net:WaitForChild("RE/FishingCompleted")
+GameData.RE_Equip  = GameData.net:WaitForChild("RE/EquipToolFromHotbar")
+
+-- EQUIP TOOL FUNCTION
+GameData.EquipTool = function()
+    pcall(function() GameData.RE_Equip:FireServer(1) end)
+end
+
+-- FAST FISH FUNCTION
+GameData.FastFish = function()
+    task.spawn(function()
+        GameData.RF_Cancel:InvokeServer()
+        task.wait(GameData.CancelDelay)
+
+        GameData.RF_Charge:InvokeServer(workspace:GetServerTimeNow())
+        GameData.RF_Start:InvokeServer(-1, 0.9964)
+
+        task.wait(GameData.CompleteDelay)
+        GameData.RE_Finish:FireServer()
+    end)
+end
+
+-- START LOOP FUNCTION
+GameData.StartLoop = function()
+    if GameData.enabled then return end
+    GameData.enabled = true
+
+    GameData.EquipTool()
+
+    task.spawn(function()
+        while GameData.enabled do
+            local tickNow = tick()
+            GameData.FastFish()
+
+            while GameData.enabled and tick() - tickNow < (_G.ReelSuper or 1.05) do
+                task.wait()
+            end
+        end
+    end)
+end
+
+-- STOP LOOP FUNCTION
+GameData.StopLoop = function()
+    GameData.enabled = false
+end
+
+-- UI KUZU HUB
+sections.Fishing1:Toggle({
+    Name = "Blatant V1",
+    Default = false,
+    Callback = function(state)
+        if state then
+            GameData.StartLoop()
+            Window:Notify({ Title = "Blatant V1", Description = "Enabled Fishing" })
+        else
+            GameData.StopLoop()
+            Window:Notify({ Title = "Blatant V1", Description = "Disabled Fishing" })
+        end
+    end,
+}, "FishingToggle")
+
+sections.Fishing1:Input({
+    Name = "Cancel Delay V1",
+    Placeholder = "1.05",
+    AcceptedCharacters = "0123456789.",
+    Callback = function(txt)
+        local n = tonumber(txt)
+        if n and n > 0 then
+            GameData.CancelDelay = n
+            Window:Notify({ Title = "Blatant V1", Description = "Cancel Delay Set: "..tostring(n) })
+        else
+            Window:Notify({ Title = "Blatant V1", Description = "Invalid Cancel Delay!" })
+        end
+    end,
+}, "CancelDelayInput")
+
+sections.Fishing1:Input({
+    Name = "Complete Delay V1",
+    Placeholder = "0.16",
+    AcceptedCharacters = "0123456789.",
+    Callback = function(txt)
+        local n = tonumber(txt)
+        if n and n > 0 then
+            GameData.CompleteDelay = n
+            Window:Notify({ Title = "Blatant V1", Description = "Complete Delay Set: "..tostring(n) })
+        else
+            Window:Notify({ Title = "Blatant V1", Description = "Invalid Complete Delay!" })
+        end
+    end,
+}, "CompleteDelayInput")
+
+sections.Fishing1:Header({
+	Name = "Blatant V2"
 })
 
 -- SETUP NET
@@ -1496,7 +1625,7 @@ GameData.startBlatantV2 = function()
 end
 
 -- WINDUI
-sections.Fishing:Toggle({
+sections.Fishing1:Toggle({
     Name = "Blatant V2",
     Default = _G.BlatantV2,
     Callback = function(value)
@@ -1512,7 +1641,7 @@ sections.Fishing:Toggle({
     end,
 }, "BlatantV2Toggle")
 
-sections.Fishing:Input({
+sections.Fishing1:Input({
     Name = "Delay Cast V2",
     Placeholder = "0.80",
     AcceptedCharacters = "Numbers",
@@ -1524,7 +1653,7 @@ sections.Fishing:Input({
     end,
 }, "DelayCastV2Input")
 
-sections.Fishing:Input({
+sections.Fishing1:Input({
     Name = "Delay Complete V2",
     Placeholder = "1",
     AcceptedCharacters = "Numbers",
