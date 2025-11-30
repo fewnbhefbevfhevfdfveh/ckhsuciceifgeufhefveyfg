@@ -298,34 +298,6 @@ local GameData = {
 
     -- ========================== [Auto FAvorite] ==========================
 
-    Repl = SVC.RS,
-
-    st = {
-        selectedName = {},
-        selectedRarity = {},
-        selectedVariant = {},
-        autoFavEnabled = false
-    },
-
-    favState = {},
-
-    TierFish = {
-        [1] = "Common",
-        [2] = "Uncommon",
-        [3] = "Rare",
-        [4] = "Epic",
-        [5] = "Legendary",
-        [6] = "Mythic",
-        [7] = "Secret"
-    },
-
-    Variant = {
-        "Galaxy","Corrupt","Gemstone","Ghost","Lightning","Fairy Dust",
-        "Gold","Midnight","Radioactive","Stone","Holographic","Albino"
-    },
-
-    fishNames = {},
-    itemUtil = nil,
 
     -- ========================== [Rod Shop] ==========================
 
@@ -1836,127 +1808,145 @@ end)
 
 local AutoFavBox = Tabs.Main:AddRightGroupbox("Favorite Features", "star")
 
------------------------------------------------------
--- Load Fish Names
------------------------------------------------------
-for _, module in ipairs(GameData.Repl.Items:GetChildren()) do
+local Repl = SVC.RS
+local st = {
+    selectedName = {},
+    selectedRarity = {},
+    selectedVariant = {},
+    autoFavEnabled = false
+}
+
+local favState = {}
+
+RE.FavoriteStateChanged.OnClientEvent:Connect(function(uuid, state)
+    rawset(favState, uuid, state)
+end)
+
+_G.TierFish = {
+    [1] =  "Common",
+    [2] = "Uncommon",
+    [3] = "Rare",
+    [4] = "Epic",
+    [5] = "Legendary",
+    [6] = "Mythic",
+    [7] = "Secret"
+}
+
+_G.Variant = {
+    "Galaxy",
+    "Corrupt",
+    "Gemstone",
+    "Ghost",
+    "Lightning",
+    "Fairy Dust",
+    "Gold",
+    "Midnight",
+    "Radioactive",
+    "Stone",
+    "Holographic",
+    "Albino"
+}
+
+local fishNames = {}
+for _, module in ipairs(Repl.Items:GetChildren()) do
     if module:IsA("ModuleScript") then
-        GameData.ok, GameData.data = pcall(require, module)   -- local ok,data → GameData
-        if GameData.ok and GameData.data.Data and GameData.data.Data.Type == "Fish" then
-            table.insert(GameData.fishNames, GameData.data.Data.Name)
+        local ok, data = pcall(require, module)
+        if ok and data.Data and data.Data.Type == "Fish" then
+            table.insert(fishNames, data.Data.Name)
         end
     end
 end
+table.sort(fishNames)
 
-table.sort(GameData.fishNames)
-
------------------------------------------------------
--- Load ItemUtility
------------------------------------------------------
-GameData.ok2, GameData.module2 = pcall(function()             -- local ok,module → GameData
+local itemUtil
+local ok, module = pcall(function()
     return require(
-        GameData.Repl:FindFirstChild("Shared") and GameData.Repl.Shared:FindFirstChild("ItemUtility")
-        or GameData.Repl:FindFirstChild("Modules") and GameData.Repl.Modules:FindFirstChild("ItemUtility")
+        Repl:FindFirstChild("Shared") and Repl.Shared:FindFirstChild("ItemUtility")
+        or Repl:FindFirstChild("Modules") and Repl.Modules:FindFirstChild("ItemUtility")
     )
 end)
 
-if GameData.ok2 and GameData.module2 then
-    GameData.itemUtil = GameData.module2
+if ok and module then
+    itemUtil = module
+else
+    itemUtil = nil
 end
 
------------------------------------------------------
--- Convert table ke set
------------------------------------------------------
-GameData.toSet = function(list)
-    GameData.set = {}                                         -- local set → GameData
-    for _, v in ipairs(list) do GameData.set[v] = true end
-    return GameData.set
-end
-
------------------------------------------------------
--- Check & Favorite Automatis
------------------------------------------------------
-GameData.checkAndFavorite = function(item)
-    if not GameData.st.autoFavEnabled or not GameData.itemUtil then return end
-
-    GameData.info = GameData.itemUtil.GetItemDataFromItemType("Items", item.Id)   -- local info→GameData
-    if not GameData.info or GameData.info.Data.Type ~= "Fish" then return end
-
-    GameData.rarity  = GameData.TierFish[ GameData.info.Data.Tier ]                -- local rarity→GameData
-    GameData.name    = GameData.info.Data.Name                                     -- local name→GameData
-    GameData.variant = (item.Metadata and item.Metadata.VariantId) or "None"       -- local variant→GameData
-
-    GameData.nameMatch    = GameData.st.selectedName[GameData.name]                -- local nameMatch→GameData
-    GameData.rarityMatch  = GameData.st.selectedRarity[GameData.rarity]            -- local rarityMatch→GameData
-    GameData.variantMatch = GameData.st.selectedVariant[GameData.variant]          -- local variantMatch→GameData
-
-    GameData.isFav = rawget(GameData.favState, item.UUID)                           -- local isFav→GameData
-    if GameData.isFav == nil then
-        GameData.isFav = item.Favorited
+local function toSet(sel)
+    local set = {}
+    if type(sel) == "table" then
+        for _, v in ipairs(sel) do set[v] = true end
+        for k, v in pairs(sel) do if v then set[k] = true end end
     end
+    return set
+end
 
-    GameData.shouldFav = false                                                      -- local shouldFav→GameData
-    if next(GameData.st.selectedVariant) ~= nil and next(GameData.st.selectedName) ~= nil then
-        GameData.shouldFav = GameData.nameMatch and GameData.variantMatch
+local function checkAndFavorite(item)
+    if not st.autoFavEnabled or not itemUtil then return end
+    local info = itemUtil.GetItemDataFromItemType("Items", item.Id)
+    if not info or info.Data.Type ~= "Fish" then return end
+    local rarity = _G.TierFish[info.Data.Tier]
+    local name = info.Data.Name
+    local variant = (item.Metadata and item.Metadata.VariantId) or "None"
+    local nameMatch = st.selectedName[name]
+    local rarityMatch = st.selectedRarity[rarity]
+    local variantMatch = st.selectedVariant[variant]
+    local isFav = rawget(favState, item.UUID)
+    if isFav == nil then isFav = item.Favorited end
+    local shouldFav = false
+    if next(st.selectedVariant) ~= nil and next(st.selectedName) ~= nil then
+        shouldFav = nameMatch and variantMatch
     else
-        GameData.shouldFav = GameData.nameMatch or GameData.rarityMatch
+        shouldFav = nameMatch or rarityMatch
     end
-
-    if GameData.shouldFav and not GameData.isFav then
+    if shouldFav and not isFav then
         RE.FavoriteItem:FireServer(item.UUID)
-        rawset(GameData.favState, item.UUID, true)
+        rawset(favState, item.UUID, true)
     end
 end
 
------------------------------------------------------
--- Scan Inventory
------------------------------------------------------
-GameData.scanInventory = function()
-    if not GameData.st.autoFavEnabled then return end
-    GameData.inv = repl.Data:GetExpect({ "Inventory", "Items" })  -- local inv → GameData
-    if not GameData.inv then return end
-
-    for _, item in ipairs(GameData.inv) do
-        GameData.checkAndFavorite(item)
+local function scanInventory()
+    if not st.autoFavEnabled then return end
+    local inv = repl.Data:GetExpect({ "Inventory", "Items" })
+    if not inv then return end
+    for _, item in ipairs(inv) do
+        checkAndFavorite(item)
     end
 end
 
------------------------------------------------------
--- UI Bagian Favorite
------------------------------------------------------
 AutoFavBox:AddDropdown("FavName", {
-    Values = #GameData.fishNames > 0 and GameData.fishNames or {"No Fish Found"},
+    Values = #fishNames > 0 and fishNames or { "No Fish Found" },
     Default = {},
     Multi = true,
     Searchable = true,
-    Text = "Favorite By Name",
+    Text = "Favorite By Name (Recommended)",
     Callback = function(o)
-        GameData.st.selectedName = GameData.toSet(o)
+        st.selectedName = toSet(o)
     end
 })
 
 AutoFavBox:AddDropdown("FavRarity", {
-    Values = {"Common","Uncommon","Rare","Epic","Legendary","Mythic","Secret"},
+    Values = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "Secret" },
     Default = {},
     Multi = true,
     Searchable = true,
-    Text = "Favorite By Rarity",
+    Text = "Favorite By Rarity (Optional)",
     Callback = function(o)
-        GameData.st.selectedRarity = GameData.toSet(o)
+        st.selectedRarity = toSet(o)
     end
 })
 
 AutoFavBox:AddDropdown("FavVariant", {
-    Values = GameData.Variant,
+    Values = _G.Variant,
     Default = {},
     Multi = true,
     Searchable = true,
-    Text = "Favorite By Variant",
+    Text = "Favorite By Variant (Only with Name)",
     Callback = function(o)
-        if next(GameData.st.selectedName) ~= nil then
-            GameData.st.selectedVariant = GameData.toSet(o)
+        if next(st.selectedName) ~= nil then
+            st.selectedVariant = toSet(o)
         else
-            GameData.st.selectedVariant = {}
+            st.selectedVariant = {}
         end
     end
 })
@@ -1964,17 +1954,16 @@ AutoFavBox:AddDropdown("FavVariant", {
 AutoFavBox:AddToggle("AutoFavToggle", {
     Text = "Auto Favorite",
     Default = false,
-    Callback = function(state)
-        GameData.st.autoFavEnabled = state
-        if state then
-            GameData.scanInventory()
+    Callback = function(s)
+        st.autoFavEnabled = s
+        if s then
+            scanInventory()
             repl.Data:OnChange({ "Inventory", "Items" }, function()
-                task.spawn(GameData.scanInventory)
+                task.spawn(scanInventory)
             end)
         end
     end
 })
-
 
 local ShopTab = Tabs.Shop
 local TeleportTab = Tabs.Teleport
