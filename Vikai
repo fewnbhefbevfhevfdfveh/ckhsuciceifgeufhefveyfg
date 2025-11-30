@@ -359,7 +359,6 @@ local GameData = {
     -- ========================== [Event Tracker Auto Lochness] ==========================
 
     label = workspace["!!! MENU RINGS"]["Event Tracker"].Main.Gui.Content.Items.Countdown.Label,
-
     targetCFrame = CFrame.new(
         6089.81396, -585.924194, 4637.24023,
         -0.800617278, 5.49e-08, 0.599176049,
@@ -369,28 +368,6 @@ local GameData = {
 
     autoLoch = false,
     lastLabel = "",
-
-    getStartCFrame = function()
-        return savedCFrame or loadSavedPosition()
-    end,
-
--- ========================== [Webhook] ==========================
-
-    fishDB = nil,
-    itemsContainer = nil,
-    data = nil,
-    assetId = nil,
-    apiUrl = nil,
-    url = nil,
-    newFishDetails = nil,
-    newFishRarity = nil,
-    allowed = nil,
-    fishWeight = nil,
-    mutation = nil,
-    sellPrice = nil,
-    payload = nil,
-    fishNames = nil,
-    fish = nil,
 
 -- ========================== [Unlock Iron Cafe] ==========================
 
@@ -3108,36 +3085,27 @@ end)
 
 local EventBox = Tabs.Teleport:AddRightGroupbox("Auto Limited Event", "bug-play")
 
---====================================
--- SEMUA LOCAL DIPINDAHKAN KE GameData
---====================================
+local StatusLabel = MainLeft:AddLabel("Status: Idle")
+local TimeLabel = MainLeft:AddLabel("Timer: -")
 
-GameData = {
+-- Simpan label ke GameData
+GameData.StatusLabel = StatusLabel
+GameData.TimeLabel = TimeLabel
 
-}
-
--- GUI ELEMENTS DIPINDAHKAN JUGA
-GameData.StatusLabel = EventBox:AddLabel("Status: Idle")
-GameData.TimeLabel = EventBox:AddLabel("Timer: -")
-
---====================================
--- TIMER LABEL UPDATE
---====================================
 task.spawn(function()
     while task.wait(1) do
         GameData.TimeLabel:SetText("Timer: " .. GameData.label.Text)
     end
 end)
 
---====================================
--- TOGGLE
---====================================
-GameData.toggle = EventBox:AddToggle("AutoLochness", {
+local toggle = MainLeft:AddToggle("AutoLochness", {
     Text = "Auto Lochness",
     Default = false,
 })
 
-GameData.toggle:OnChanged(function(state)
+GameData.toggle = toggle
+
+toggle:OnChanged(function(state)
     GameData.autoLoch = state
 
     Library:Notify({
@@ -3149,13 +3117,9 @@ GameData.toggle:OnChanged(function(state)
     GameData.StatusLabel:SetText(state and "Status: Active" or "Status: Idle")
 end)
 
---====================================
--- TELEPORT SAAT 1 MENIT
---====================================
 task.spawn(function()
     while task.wait(0.1) do
         if GameData.autoLoch and GameData.label.Text == "0H 1M 10S" then            
-
             GameData.StatusLabel:SetText("Status: Teleporting...")
 
             if not hrp or not hrp.Parent then
@@ -3163,54 +3127,50 @@ task.spawn(function()
             end
 
             hrp.CFrame = GameData.targetCFrame
-
-            -- BUAT BV TANPA LOCAL
-            GameData.bv = Instance.new("BodyVelocity")
-            GameData.bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-            GameData.bv.Velocity = Vector3.zero
-            GameData.bv.Parent = hrp
+            local bv = Instance.new("BodyVelocity")
+            bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+            bv.Velocity = Vector3.zero
+            bv.Parent = hrp
 
             task.wait(2)
-            GameData.bv:Destroy()
+            bv:Destroy()
 
             GameData.StatusLabel:SetText("Status: Waiting...")
         end
     end
 end)
 
---====================================
--- RETURN KE POSISI AWAL
---====================================
+local function getStartCFrame()
+    return GameData.savedCFrame or loadSavedPosition()
+end
+
+GameData.getStartCFrame = getStartCFrame
+
 task.spawn(function()
     while task.wait(0.2) do
         if GameData.autoLoch then
-            
             local current = GameData.label.Text
             
             if current ~= GameData.lastLabel then
                 GameData.lastLabel = current
 
                 if current == "3H 48M 10S" then                   
-                    
                     if not hrp or not hrp.Parent then
                         hrp = RefreshHRP()
                     end
 
-                    local cf = GameData.getStartCFrame()
-
-                    if cf then
+                    local startPosCFrame = GameData.getStartCFrame()
+                    if startPosCFrame then
                         GameData.StatusLabel:SetText("Status: Returning to Saved Position")
+                        hrp.CFrame = startPosCFrame + Vector3.new(0,5,0)
 
-                        hrp.CFrame = cf + Vector3.new(0,5,0)
-
-                        -- BV TANPA LOCAL
-                        GameData.bv = Instance.new("BodyVelocity")
-                        GameData.bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-                        GameData.bv.Velocity = Vector3.zero
-                        GameData.bv.Parent = hrp
+                        local bv = Instance.new("BodyVelocity")
+                        bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+                        bv.Velocity = Vector3.zero
+                        bv.Parent = hrp
 
                         task.wait(2)
-                        GameData.bv:Destroy()
+                        bv:Destroy()
 
                         GameData.StatusLabel:SetText("Status: Waiting Countdown...")
                     end
@@ -3291,36 +3251,8 @@ end)
 
 
 
--- Assign basic values
-GameData.fishDB = {}
-GameData.itemsContainer = repl.Items
-GameData.data = itemData.Data
-
-GameData.assetId = assetString:match("rbxassetid://(%d+)")
-
--- FIXED string.format
-GameData.apiUrl = string.format(
-    "https://thumbnails.roblox.com/v1/assets?assetIds=%s&type=Asset&size=420x420&format=Png",
-    GameData.assetId
-)
-
-GameData.url = _G.WebhookFlags.FishCaught.URL
-
-GameData.newFishDetails = fishDB[newlyCaughtFish.Id]
-GameData.newFishRarity = (_G.TierFish and _G.TierFish[GameData.newFishDetails.Tier]) or "Unknown"
-
-GameData.allowed = false
-GameData.fishWeight = (newlyCaughtFish.Metadata and newlyCaughtFish.Metadata.Weight and string.format("%.2f Kg", newlyCaughtFish.Metadata.Weight)) or "N/A"
-GameData.mutation = (newlyCaughtFish.Metadata and newlyCaughtFish.Metadata.VariantId and tostring(newlyCaughtFish.Metadata.VariantId)) or "None"
-GameData.sellPrice = (GameData.newFishDetails.SellPrice and ("$" .. string.format("%d", GameData.newFishDetails.SellPrice):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))) or "N/A"
-
-GameData.payload = {}
-GameData.fishNames = {}
-GameData.fish = {}
-
--- GLOBALS
-_G.WebhookRarities = { "Mythic", "Secret" }
-_G.WebhookNames = {}
+_G.WebhookRarities = { "Mythic", "Secret" } 
+_G.WebhookNames = {} -- Nilai default filter nama
 _G.WebhookCustomName = ""
 
 _G.httpRequest = _G.httpRequest or request or http_request or syn and syn.request or nil
@@ -3333,17 +3265,16 @@ _G.WebhookFlags = {
 
 _G.WebhookURLs = _G.WebhookURLs or {}
 
--- BUILD FISH DB
+local fishDB = {}
 function buildFishDatabase()
-    if not GameData.itemsContainer then return end
-
-    for _, itemModule in ipairs(GameData.itemsContainer:GetChildren()) do
+    local itemsContainer = repl.Items
+    if not itemsContainer then return end
+    for _, itemModule in ipairs(itemsContainer:GetChildren()) do
         local success, itemData = pcall(require, itemModule)
-
         if success and type(itemData) == "table" and itemData.Data and itemData.Data.Type == "Fish" then
             local data = itemData.Data
             if data.Id and data.Name then
-                GameData.fishDB[data.Id] = {
+                fishDB[data.Id] = {
                     Name = data.Name,
                     Tier = data.Tier,
                     Icon = data.Icon,
@@ -3354,29 +3285,23 @@ function buildFishDatabase()
     end
 end
 
--- GET THUMBNAIL
-function getThumbnailURL()
-    if not GameData.assetId then return nil end
-
+function getThumbnailURL(assetString)
+    local assetId = assetString:match("rbxassetid://(%d+)")
+    if not assetId then return nil end
+    local apiUrl = string.format(
+        "https://thumbnails.roblox.com/v1/assets?assetIds=%s&type=Asset&size=420x420&format=Png", assetId)
     local success, response = pcall(function()
-        return SVC.HttpService:JSONDecode(game:HttpGet(GameData.apiUrl))
+        return SVC.HttpService:JSONDecode(game:HttpGet(apiUrl))
     end)
-
     return success and response and response.data and response.data[1] and response.data[1].imageUrl
 end
 
--- SEND WEBHOOK
 function sendWebhook(url, payload)
     if not _G.httpRequest or not url or url == "" then return end
     if _G._WebhookLock and _G._WebhookLock[url] then return end
-
     _G._WebhookLock = _G._WebhookLock or {}
     _G._WebhookLock[url] = true
-
-    task.delay(0.25, function()
-        _G._WebhookLock[url] = nil
-    end)
-
+    task.delay(0.25, function() _G._WebhookLock[url] = nil end)
     pcall(function()
         _G.httpRequest({
             Url = url,
@@ -3387,71 +3312,79 @@ function sendWebhook(url, payload)
     end)
 end
 
--- MAIN SEND EVENT
 function sendNewFishWebhook(newlyCaughtFish)
     if not _G.WebhookFlags.FishCaught.Enabled then return end
-
-    local url = GameData.url
+    local url = _G.WebhookFlags.FishCaught.URL
     if not url or not url:match("discord.com/api/webhooks") then return end    
-
-    local newFishDetails = GameData.newFishDetails
+    local newFishDetails = fishDB[newlyCaughtFish.Id]
     if not newFishDetails then return end   
-
-    -- Tier filter
-    GameData.allowed = false
+    local newFishRarity = (_G.TierFish and _G.TierFish[newFishDetails.Tier]) or "Unknown"    
     if _G.WebhookRarities then
-        for _, v in pairs(_G.WebhookRarities) do
-            if v == GameData.newFishRarity then
-                GameData.allowed = true
-                break
-            end
+    local allowed = false
+    for k, v in pairs(_G.WebhookRarities) do
+        if (type(k) == "string" and k == newFishRarity) or v == newFishRarity then
+            allowed = true
+            break
         end
-        if not GameData.allowed then return end
     end
-
-    -- Name filter
-    if _G.WebhookNames and #_G.WebhookNames > 0 and not table.find(_G.WebhookNames, newFishDetails.Name) then
-        return
-    end
-
-    -- Embed payload
+    if not allowed then return end
+end
+    if _G.WebhookNames and #_G.WebhookNames > 0 and not table.find(_G.WebhookNames, newFishDetails.Name) then return end
+    local fishWeight = (newlyCaughtFish.Metadata and newlyCaughtFish.Metadata.Weight and string.format("%.2f Kg", newlyCaughtFish.Metadata.Weight)) or "N/A"
+    local mutation = (newlyCaughtFish.Metadata and newlyCaughtFish.Metadata.VariantId and tostring(newlyCaughtFish.Metadata.VariantId)) or "None"
+    local sellPrice = (newFishDetails.SellPrice and ("$" .. string.format("%d", newFishDetails.SellPrice):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))) or "N/A"
     local payload = {
-        embeds = {{
+        embeds = { {
             title = "ViKai HUB Webhook | Fish Caught",
             url = "https://discord.gg/BBXc8uGugt",
-            description = string.format(
-                "✦︎ Congratulations!! **%s** You have obtained a new **%s** fish!",
-                (_G.WebhookCustomName ~= "" and _G.WebhookCustomName) or game.Players.LocalPlayer.Name, 
-                GameData.newFishRarity
-            ),
+            description = string.format("✦︎ Congratulations!! **%s** You have obtained a new **%s** fish!",
+                (_G.WebhookCustomName ~= "" and _G.WebhookCustomName) or game.Players.LocalPlayer.Name, newFishRarity),
             color = 52221,
             fields = {
                 { name = "〢Fish Name :", value = "```❯ " .. newFishDetails.Name .. "```" },
-                { name = "〢Fish Tier :", value = "```❯ " .. GameData.newFishRarity .. "```" },
-                { name = "〢Weight :", value = "```❯ " .. GameData.fishWeight .. "```" },
-                { name = "〢Mutation :", value = "```❯ " .. GameData.mutation .. "```" },
-                { name = "〢Sell Price :", value = "```❯ " .. GameData.sellPrice .. "```" },
+                { name = "〢Fish Tier :", value = "```❯ " .. newFishRarity .. "```" },
+                { name = "〢Weight :", value = "```❯ " .. fishWeight .. "```" },
+                { name = "〢Mutation :", value = "```❯ " .. mutation .. "```" },
+                { name = "〢Sell Price :", value = "```❯ " .. sellPrice .. "```" },
             },
-            image = { url = getThumbnailURL() or "https://i.imgur.com/vV0LnzQ.png" },
+            image = { url = getThumbnailURL(newFishDetails.Icon) or "https://i.imgur.com/vV0LnzQ.png" },
             footer = { text = "ViKai HUB Webhook", icon_url = "https://i.imgur.com/vV0LnzQ.png" },
             timestamp = os.date("!%Y-%m-%dT%H:%M:%S.000Z")
-        }},
+        } },
         username = "ViKai Notification!",
         avatar_url = "https://i.imgur.com/MP6ctIj.png"
     }
-
     sendWebhook(url, payload)
 end
 
------------------------------------------------------------
--- BUILD DB
 buildFishDatabase()
-
--- Build fish name list
-for _, info in pairs(GameData.fishDB) do
-    table.insert(GameData.fishNames, info.Name)
+local fishNames = {}
+for _, info in pairs(fishDB) do
+    table.insert(fishNames, info.Name)
 end
-table.sort(GameData.fishNames)
+table.sort(fishNames)
+
+task.spawn(function()
+    repeat
+        REObtainedNewFishNotification = mods.Net["RE/ObtainedNewFishNotification"]
+        task.wait(1)
+    until REObtainedNewFishNotification
+    if not _G.FishWebhookConnected then
+        _G.FishWebhookConnected = true
+        REObtainedNewFishNotification.OnClientEvent:Connect(function(fishId, extraData)
+            if st.autoWebhook then
+                local fish = {
+                    Id = fishId,
+                    Metadata = {
+                        Weight = extraData and extraData.Weight,
+                        VariantId = extraData and extraData.VariantId
+                    }
+                }
+                sendNewFishWebhook(fish)
+            end
+        end)
+    end
+end)
 
 local WebhookLeft = WebhookTab:AddLeftGroupbox("Webhook Features", "webhook")
 
@@ -3480,17 +3413,16 @@ WebhookLeft:AddDropdown("TierFilter", {
     end
 })
 
--- Refresh daftar nama ikan
-GameData.fishNames = {}
-for _, info in pairs(GameData.fishDB) do
-    table.insert(GameData.fishNames, info.Name)
+local fishNames = {}
+for _, info in pairs(fishDB) do
+    table.insert(fishNames, info.Name)
 end
-table.sort(GameData.fishNames)
+table.sort(fishNames)
 
 WebhookLeft:AddDropdown("NameFilter", {
     Text = "Name Filter",
     Multi = true,
-    Values = GameData.fishNames,
+    Values = fishNames,
     Default = {},
     Callback = function(selected)
         _G.WebhookNames = selected
@@ -3530,19 +3462,17 @@ WebhookLeft:AddButton("TestWebhook", {
             Library:Notify({ Title = "Webhook", Description = "Invalid or missing URL!", Time = 3 })
             return
         end
-
         local payload = {
-            embeds = {{
+            embeds = { {
                 color = 44543,
-                author = { name = "Wakey Wakey Webhook Connected! :D" },
+                author = { name = "Wakey Wakey Webhook Connected:D" },
                 image = { url = "https://i.imgur.com/A2VIZyF.gif" }
-            }},
+            } },
             username = "ViKai Notification!",
             avatar_url = "https://i.imgur.com/MP6ctIj.png"
         }
-
         task.spawn(function()
-            local success = pcall(function()
+            local success, result = pcall(function()
                 return _G.httpRequest({
                     Url = url,
                     Method = "POST",
@@ -3550,7 +3480,6 @@ WebhookLeft:AddButton("TestWebhook", {
                     Body = SVC.HttpService:JSONEncode(payload)
                 })
             end)
-
             if success then
                 Library:Notify({ Title = "Webhook", Description = "Test message sent!", Time = 3 })
             else
@@ -3559,6 +3488,7 @@ WebhookLeft:AddButton("TestWebhook", {
         end)
     end
 })
+
 
 
 local MiscLeft = MiscTab:AddLeftGroupbox("Players", "users")
