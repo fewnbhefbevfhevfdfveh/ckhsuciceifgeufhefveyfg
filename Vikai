@@ -1,5 +1,7 @@
-if Library then
-    pcall(function() Library:Unload() end)
+if Library and typeof(Library.Unload) == "function" then
+    pcall(function()
+        Library:Unload()
+    end)
 end
 
 local repo = "https://raw.githubusercontent.com/vinxonez/ViKai-HUB/main/"
@@ -3085,8 +3087,8 @@ end)
 
 local EventBox = Tabs.Teleport:AddRightGroupbox("Auto Limited Event", "bug-play")
 
-local StatusLabel = MainLeft:AddLabel("Status: Idle")
-local TimeLabel = MainLeft:AddLabel("Timer: -")
+local StatusLabel = EventBox:AddLabel("Status: Idle")
+local TimeLabel = EventBox:AddLabel("Timer: -")
 
 -- Simpan label ke GameData
 GameData.StatusLabel = StatusLabel
@@ -3098,7 +3100,7 @@ task.spawn(function()
     end
 end)
 
-local toggle = MainLeft:AddToggle("AutoLochness", {
+local toggle = EventBox:AddToggle("AutoLochness", {
     Text = "Auto Lochness",
     Default = false,
 })
