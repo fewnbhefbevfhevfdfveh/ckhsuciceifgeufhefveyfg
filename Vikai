@@ -462,10 +462,6 @@ local GameData = {
 
 -- ========================== [Unlock Iron Cafe] ==========================
 
-    CafeStatusLabel = QuestLeft:AddLabel("Status: Waiting..."),
-    CafeSentLabel   = QuestLeft:AddLabel("Sent: None"),
-    CafeLeftLabel   = QuestLeft:AddLabel("Remaining: 4"),
-
     -- Special fish list
     specialFish = {
         ["Brighteyes Guppy"] = true,
@@ -4444,6 +4440,10 @@ local QuestLeft = QuestTab:AddLeftGroupbox("Iron Cafe Progress")
 
 QuestLeft:AddDivider()
 
+GameData.CafeStatusLabel = QuestLeft:AddLabel("Status: Waiting...")
+GameData.CafeSentLabel   = QuestLeft:AddLabel("Sent: None")
+GameData.CafeLeftLabel   = QuestLeft:AddLabel("Remaining: 4")
+
 -- ❇️ Function DIMASUKKAN ke GameData
 GameData.onFishCaught = function(name, data)
     if not GameData.stCafe.autoUnlock then return end
@@ -4478,7 +4478,7 @@ task.spawn(function()
             GameData.sentCount = 0
             for fish in pairs(GameData.sentFish) do
                 if GameData.sentFish[fish] then
-                    GameData.sentCount = GameData.sentCount + 1 -- perbaikan disini
+                    GameData.sentCount = GameData.sentCount + 1
                 end
             end
 
@@ -4513,8 +4513,6 @@ QuestLeft:AddToggle("AutoUnlockCafeToggle", {
         end
     end
 })
-
-
 
 local rootPlr = hrp
 local Jungle = workspace:FindFirstChild("JUNGLE INTERACTIONS")
