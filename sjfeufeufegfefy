@@ -130,6 +130,9 @@ local GameData = {
     castDelay = 1.5,
     completedDelay = 1,
 
+    lastCatchTime = os.clock(),
+    antiStuckTime = 10
+
     -- ================== [Rod] ==================
     RodIDs = {
         ["Starter Rod"] = 1, ["Luck Rod"] = 79, ["Carbon Rod"] = 76,
@@ -1389,12 +1392,38 @@ local function StartFishingCycle()
     if not GameData.autoFishingEnabled or GameData.isFishing then return end
 
     GameData.isFishing = true
-    GameData.ChargeFishingRod:InvokeServer()
+    GameData.lastCatchTime = os.clock()
 
+    GameData.ChargeFishingRod:InvokeServer()
     if not SafeWait(0.2) then return end
 
     GameData.RequestFishingMinigameStarted:InvokeServer(unpack(GameData.miniggameArgs))
 end
+
+-- ==========================================================
+-- ANTI-STUCK CHECKER (AUTO RESTART)
+-- ==========================================================
+task.spawn(function()
+    while true do
+        task.wait(1)
+
+        if GameData.autoFishingEnabled and GameData.isFishing then
+            if os.clock() - GameData.lastCatchTime >= GameData.antiStuckTime then
+
+                print("[Anti-Stuck] Tidak ada FishCaught selama "..GameData.antiStuckTime.." detik. Reset fishing...")
+
+                pcall(function()
+                    GameData.CancelFishingInputs:InvokeServer()
+                end)
+
+                GameData.isFishing = false
+                task.wait(0.5)
+
+                StartFishingCycle()
+            end
+        end
+    end
+end)
 
 -- ==========================================================
 -- REPLICATE TEXT EFFECT
@@ -1420,13 +1449,14 @@ end)
 GameData.REFishCaught.OnClientEvent:Connect(function(fishName, data)
     if not GameData.autoFishingEnabled then return end
 
+    GameData.lastCatchTime = os.clock()
+
     task.spawn(function()
         pcall(function()
             GameData.CancelFishingInputs:InvokeServer()
         end)
 
         GameData.isFishing = false
-
         if not SafeWait(GameData.castDelay) then return end
 
         StartFishingCycle()
@@ -1434,14 +1464,14 @@ GameData.REFishCaught.OnClientEvent:Connect(function(fishName, data)
 end)
 
 -- ==========================================================
--- WINDUI SETTINGS (Tanpa Anti-Stuck)
+-- WINDUI SETTINGS
 -- ==========================================================
 sections.Fishing:Toggle({
     Name = "Instant Fishing",
     Default = false,
     Callback = function(state)
         GameData.autoFishingEnabled = state
-        
+
         if state then
             StartFishingCycle()
         else
@@ -1482,6 +1512,30 @@ sections.Fishing:Input({
         })
     end,
 }, "InstantFishingCompletedDelay")
+
+-- ADD NEW INPUT FOR ANTI-STUCK TIME
+sections.Fishing:Input({
+    Name = "Anti-Stuck Time (Seconds)",
+    Placeholder = "Default: 10",
+    AcceptedCharacters = "Numbers",
+    Callback = function(input)
+        local value = tonumber(input)
+
+        if value then
+            GameData.antiStuckTime = value
+
+            Window:Notify({
+                Title = "Anti-Stuck Updated",
+                Description = "Anti-Stuck time set to: " .. tostring(value) .. " seconds"
+            })
+        else
+            Window:Notify({
+                Title = "Invalid Input",
+                Description = "Please enter numbers only."
+            })
+        end
+    end,
+}, "AntiStuckTimeInput")
 
 sections.Fishing1:Header({
 	Name = "Totems"
