@@ -131,7 +131,7 @@ local GameData = {
     completedDelay = 1,
 
     lastCatchTime = os.clock(),
-    antiStuckTime = 10
+    antiStuckTime = 10,
 
     -- ================== [Rod] ==================
     RodIDs = {
