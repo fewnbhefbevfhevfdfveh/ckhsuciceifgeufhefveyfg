@@ -112,6 +112,24 @@ local GameData = {
     -- RUN-TIME UI STORAGE
     UI = {},
 
+    -- ================== [Instant Fishing] ==================
+
+    Players = game:GetService("Players"),
+    ReplicatedStorage = game:GetService("ReplicatedStorage"),
+
+    player = game:GetService("Players").LocalPlayer,
+    PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"),
+
+    package = game:GetService("ReplicatedStorage").Packages._Index["sleitnick_net@0.2.0"].net,
+
+    miniggameArgs = {-1.233184814453125, 0.9972056628181873, 1763291794.158201},
+
+    autoFishingEnabled = false,
+    isFishing = false,
+
+    castDelay = 1.5,
+    completedDelay = 1,
+
     -- ================== [Rod] ==================
     RodIDs = {
         ["Starter Rod"] = 1, ["Luck Rod"] = 79, ["Carbon Rod"] = 76,
@@ -471,7 +489,7 @@ local GameData2 = {
 
 local Window = MacLib:Window({
     Title = "NexaHub",
-    Subtitle = "Fish It - Premium | V0.0.3",
+    Subtitle = "Fish It - Premium | V0.0.2",
     Size = UDim2.fromOffset(800, 500),
     DragStyle = 2,
     DisabledWindowControls = {},
@@ -1344,25 +1362,13 @@ sections.Fishing:Header({
 	Name = "Instant Fishing Feature"
 })
 
-local package = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net
-
-local ChargeFishingRod = package["RF/ChargeFishingRod"]
-local RequestFishingMinigameStarted = package["RF/RequestFishingMinigameStarted"]
-local REReplicateTextEffect = package["RE/ReplicateTextEffect"]
-local REFishingCompleted = package["RE/FishingCompleted"]
-local CancelFishingInputs = package["RF/CancelFishingInputs"]
-
--- ==========================================================
--- PARAMETER & STATE
--- ==========================================================
-local miniggameArgs = {-1.233184814453125, 0.9972056628181873, 1763291794.158201}
-
-local autoFishingEnabled = false
-local antiStuckEnabled = false
-local isFishing = false
-
-local castDelay = 1.5
-local completedDelay = 1
+-- Remote references
+GameData.ChargeFishingRod = GameData.package["RF/ChargeFishingRod"]
+GameData.RequestFishingMinigameStarted = GameData.package["RF/RequestFishingMinigameStarted"]
+GameData.REReplicateTextEffect = GameData.package["RE/ReplicateTextEffect"]
+GameData.REFishingCompleted = GameData.package["RE/FishingCompleted"]
+GameData.REFishCaught = GameData.package["RE/FishCaught"]
+GameData.CancelFishingInputs = GameData.package["RF/CancelFishingInputs"]
 
 -- ==========================================================
 -- SAFE WAIT
@@ -1370,7 +1376,7 @@ local completedDelay = 1
 local function SafeWait(t)
     local start = os.clock()
     while os.clock() - start < t do
-        if not autoFishingEnabled then return false end
+        if not GameData.autoFishingEnabled then return false end
         task.wait()
     end
     return true
@@ -1380,104 +1386,86 @@ end
 -- MAIN FISHING CYCLE
 -- ==========================================================
 local function StartFishingCycle()
-    if not autoFishingEnabled or isFishing then return end
+    if not GameData.autoFishingEnabled or GameData.isFishing then return end
 
-    isFishing = true
-    ChargeFishingRod:InvokeServer()
+    GameData.isFishing = true
+    GameData.ChargeFishingRod:InvokeServer()
+
     if not SafeWait(0.2) then return end
-    RequestFishingMinigameStarted:InvokeServer(unpack(miniggameArgs))
+
+    GameData.RequestFishingMinigameStarted:InvokeServer(unpack(GameData.miniggameArgs))
 end
 
 -- ==========================================================
--- DETECT MINIGAME COMPLETED
+-- REPLICATE TEXT EFFECT
 -- ==========================================================
-REReplicateTextEffect.OnClientEvent:Connect(function(data)
-    if not autoFishingEnabled or not data or not data.TextData then return end
+GameData.REReplicateTextEffect.OnClientEvent:Connect(function(data)
+    if not GameData.autoFishingEnabled or not data or not data.TextData then return end
 
     local attach = data.TextData.AttachTo
     if not attach or not attach.Parent then return end
 
-    local playerFromChar = Players:GetPlayerFromCharacter(attach.Parent)
-    if playerFromChar ~= player then return end
+    local playerFromChar = GameData.Players:GetPlayerFromCharacter(attach.Parent)
+    if playerFromChar ~= GameData.player then return end
 
     task.spawn(function()
-        if not SafeWait(completedDelay) then return end
-        REFishingCompleted:FireServer()
-        isFishing = false
+        if not SafeWait(GameData.completedDelay) then return end
+        GameData.REFishingCompleted:FireServer()
+    end)
+end)
 
-        if not SafeWait(castDelay) then return end
+-- ==========================================================
+-- FISH CAUGHT = RESTART
+-- ==========================================================
+GameData.REFishCaught.OnClientEvent:Connect(function(fishName, data)
+    if not GameData.autoFishingEnabled then return end
+
+    task.spawn(function()
+        pcall(function()
+            GameData.CancelFishingInputs:InvokeServer()
+        end)
+
+        GameData.isFishing = false
+
+        if not SafeWait(GameData.castDelay) then return end
+
         StartFishingCycle()
     end)
 end)
 
 -- ==========================================================
--- ANTI STUCK DETECTOR
--- ==========================================================
-task.spawn(function()
-    local notifGui = PlayerGui:WaitForChild("Small Notification")
-    local notifFrame = notifGui.Display:WaitForChild("Container")
-
-    while true do
-        task.wait(1)
-        if antiStuckEnabled and autoFishingEnabled then
-            local lastPos = notifFrame.Position
-            local freezeDetected = true
-
-            for i = 1, 10 do
-                task.wait(1)
-                if not antiStuckEnabled or not autoFishingEnabled then break end
-                if notifFrame.Position ~= lastPos then
-                    freezeDetected = false
-                    break
-                end
-            end
-
-            if freezeDetected then
-                warn("[InstantFishing] Anti Stuck Triggered → Cancel Fishing & Restart")
-                pcall(CancelFishingInputs.InvokeServer, CancelFishingInputs)
-                isFishing = false
-                task.wait(0.5)
-                if autoFishingEnabled then StartFishingCycle() end
-            end
-        end
-    end
-end)
-
--- ==========================================================
--- WINDUI: Instant Fishing
+-- WINDUI SETTINGS (Tanpa Anti-Stuck)
 -- ==========================================================
 sections.Fishing:Toggle({
     Name = "Instant Fishing",
     Default = false,
     Callback = function(state)
-        autoFishingEnabled = state
-        if state then StartFishingCycle() else isFishing = false end
+        GameData.autoFishingEnabled = state
+        
+        if state then
+            StartFishingCycle()
+        else
+            GameData.isFishing = false
+        end
+
         Window:Notify({
             Title = "Instant Fishing",
-            Description = (state and "Enabled" or "Disabled") .. " Instant Fishing"
+            Description = state and "Enabled Instant Fishing" or "Disabled Instant Fishing"
         })
     end,
 }, "InstantFishingToggle")
-
-sections.Fishing:Toggle({
-    Name = "Anti Stuck Detector",
-    Default = false,
-    Callback = function(state)
-        antiStuckEnabled = state
-        Window:Notify({
-            Title = "Anti Stuck Detector",
-            Description = (state and "Enabled" or "Disabled") .. " Anti Stuck System"
-        })
-    end,
-}, "AntiStuckDetectorToggle")
 
 sections.Fishing:Input({
     Name = "Cast Delay",
     Placeholder = "Default: 1.5",
     AcceptedCharacters = "Numbers",
     Callback = function(input)
-        castDelay = tonumber(input) or 1.5
-        Window:Notify({Title = "Cast Delay", Description = "Cast Delay set to: " .. tostring(castDelay)})
+        GameData.castDelay = tonumber(input) or 1.5
+
+        Window:Notify({
+            Title = "Cast Delay",
+            Description = "Cast Delay set to: " .. tostring(GameData.castDelay)
+        })
     end,
 }, "InstantFishingCastDelay")
 
@@ -1486,8 +1474,12 @@ sections.Fishing:Input({
     Placeholder = "Default: 1",
     AcceptedCharacters = "Numbers",
     Callback = function(input)
-        completedDelay = tonumber(input) or 1
-        Window:Notify({Title = "Completed Delay", Description = "Completed Delay set to: " .. tostring(completedDelay)})
+        GameData.completedDelay = tonumber(input) or 1
+
+        Window:Notify({
+            Title = "Completed Delay",
+            Description = "Completed Delay set to: " .. tostring(GameData.completedDelay)
+        })
     end,
 }, "InstantFishingCompletedDelay")
 
@@ -1526,21 +1518,18 @@ GameData.uuid = nil
 
 
 ---------------------------------------------------------
--- SELECT TOTEM DROPDOWN
+-- SELECT TOTEM DROPDOWN (FIXED)
 ---------------------------------------------------------
-sections.Fishing1:Dropdown({
+sections.Fishing:Dropdown({
     Name = "Select Totem",
     Search = true,
-    Multi = false,
+    Multi = false, -- Multi = false -> Value = STRING
     Required = false,
     Options = {"Luck Totem", "Mutation Totem", "Shiny Totem"},
     Default = {"Luck Totem"},
     Callback = function(Value)
-        for name, state in next, Value do
-            if state then
-                GameData.selectedTotem = name
-            end
-        end
+        GameData.selectedTotem = Value  -- langsung ambil string
+        print("Selected Totem:", GameData.selectedTotem)
     end,
 }, "SelectTotemDropdown")
 
@@ -1548,7 +1537,7 @@ sections.Fishing1:Dropdown({
 ---------------------------------------------------------
 -- AUTO SPAWN TOGGLE
 ---------------------------------------------------------
-sections.Fishing1:Toggle({
+sections.Fishing:Toggle({
     Name = "Auto Spawn Totem",
     Default = false,
     Callback = function(value)
@@ -1565,10 +1554,10 @@ sections.Fishing1:Toggle({
                     
                     if GameData.selectedTotem then
                         
-                        -- id & uuid inside GameData
                         GameData.id = GameData.TOTEM_IDS[GameData.selectedTotem]
                         GameData.uuid = nil
 
+                        -- Cari totem di inventory
                         for _, totem in ipairs(GameData.inventory.Totems or {}) do
                             GameData.itemData = GameData.ItemUtility.GetItemDataFromItemType("Totems", totem.Id)
 
@@ -1578,9 +1567,12 @@ sections.Fishing1:Toggle({
                             end
                         end
 
+                        -- Spawn kalau ada
                         if GameData.uuid then
+                            print("Spawning:", GameData.selectedTotem, "UUID:", GameData.uuid)
                             GameData.SpawnTotem:FireServer(GameData.uuid)
                         else
+                            warn("Totem not found:", GameData.selectedTotem)
                         end
                     end
 
