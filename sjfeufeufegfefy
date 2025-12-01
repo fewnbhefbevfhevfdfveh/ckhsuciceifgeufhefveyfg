@@ -1520,7 +1520,7 @@ GameData.uuid = nil
 ---------------------------------------------------------
 -- SELECT TOTEM DROPDOWN (FIXED)
 ---------------------------------------------------------
-sections.Fishing:Dropdown({
+sections.Fishing1:Dropdown({
     Name = "Select Totem",
     Search = true,
     Multi = false, -- Multi = false -> Value = STRING
@@ -1537,7 +1537,7 @@ sections.Fishing:Dropdown({
 ---------------------------------------------------------
 -- AUTO SPAWN TOGGLE
 ---------------------------------------------------------
-sections.Fishing:Toggle({
+sections.Fishing1:Toggle({
     Name = "Auto Spawn Totem",
     Default = false,
     Callback = function(value)
