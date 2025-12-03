@@ -378,6 +378,38 @@ local GameData = {
     TempShine = nil,
     TempPrompt = nil,
 
+    -- ================== [Event Hunt] ==================
+
+        --// Services
+    Players = game:GetService("Players"),
+    RS = game:GetService("ReplicatedStorage"),
+
+    -- Player
+    player = game:GetService("Players").LocalPlayer,
+    char = nil,
+    hrp = nil,
+
+    -- Folders
+    exclaimFolder = nil,
+
+    -- Event List
+    eventsList = {
+        "Shark Hunt", "Ghost Shark Hunt", "Worm Hunt",
+        "Black Hole", "Shocked", "Ghost Worm",
+        "Meteor Rain", "Megalodon Hunt"
+    },
+
+    -- Auto settings
+    SelectedAutoEvents = {},
+    AutoEventPriority = {},
+    AutoEventToggle = false,
+
+    savedCFrame = nil,
+
+    -- Runtime objects
+    platform = nil,
+    atEvent = false,
+
     -- ================== [SKip Rraity] ==================
         SVC = {
         Players = game:GetService("Players"),
@@ -449,6 +481,37 @@ local GameData = {
 
     player = game:GetService("Players").LocalPlayer,
     infiniteZoomEnabled = false,
+
+    -- ================== [Walk On Water] ==================
+
+    Players = game:GetService("Players"),
+    RunService = game:GetService("RunService"),
+
+    -- Player data
+    player = game:GetService("Players").LocalPlayer,
+    character = nil,
+    hrp = nil,
+
+    -- Water settings
+    waterHeight = -1.8,
+
+    -- Runtime objects
+    waterPlatform = nil,
+    connection = nil,
+
+    -- ================== [Remove VFX] ==================
+
+    RS = game:GetService("ReplicatedStorage"),
+    RunService = game:GetService("RunService"),
+
+    -- VFX Folder
+    waterVFXFolder = nil,
+
+    -- Stored VFX Clones
+    storedVFX = {},
+
+    -- Connections
+    childAddedConn = nil,
 
     -- ================== [Global Settings] ==================
     userInfoState = nil,
@@ -662,8 +725,19 @@ sections.Home1:Paragraph({
     Header = "Update List",
     Body = [[
 Tab Player:
-[/] Fixed Bug Auto Totem
-[/] Improve Instant Fishing
+ [+] Addded Infinite Zoom
+ [+] Added Window Settings 
+  - Window Size
+  - Window Scale
+[+] Added Global Settings 
+  - Hide User Info
+  - Disable Notifications
+  - Disable Acrylic Blur
+Tab Fishing:
+ [+] Added Blatant V1
+ [+] Added Blatant V2
+ [+] Added Dropdwon Select Totems
+ [+] Added Auto Spawn Totems
 ]]
 }, "Info")
 
@@ -2428,7 +2502,7 @@ sections.Fishing1:Toggle({
 }, "AutoSellToggle")
 
 sections.Event:Header({
-	Name = "Hunt"
+	Name = "Event Hunt"
 })
 
 -- Setup player
@@ -2520,6 +2594,159 @@ sections.Event:Toggle({
         end
     end,
 }, "AutoTreasureHuntToggle")
+
+
+-- Character
+GameData.char = GameData.player.Character or GameData.player.CharacterAdded:Wait()
+GameData.hrp = GameData.char:WaitForChild("HumanoidRootPart")
+
+-- Folder
+GameData.exclaimFolder = workspace:WaitForChild("!!! MENU RINGS")
+
+
+---------------------------------------------------------
+--⭕ DROPDOWN BARU: Select Auto Events
+---------------------------------------------------------
+sections.Event:Dropdown({
+	Name = "Select Auto Events",
+	Search = true,
+	Multi = true,
+	Required = false,
+	Options = GameData.eventsList,
+	Default = {},
+	Callback = function(Value)
+		local result = {}
+
+		for eventName, state in next, Value do
+			if state then table.insert(result, eventName) end
+		end
+
+		GameData.SelectedAutoEvents = result
+	end
+}, "SelectAutoEventsNew")
+
+
+---------------------------------------------------------
+--⭕ DROPDOWN BARU: Auto Event Priority
+---------------------------------------------------------
+sections.Event:Dropdown({
+	Name = "Priority Events",
+	Search = true,
+	Multi = true,
+	Required = false,
+	Options = GameData.eventsList,
+	Default = {},
+	Callback = function(Value)
+		local result = {}
+
+		for eventName, state in next, Value do
+			if state then table.insert(result, eventName) end
+		end
+
+		GameData.AutoEventPriority = result
+	end
+}, "PriorityEventsNew")
+
+
+---------------------------------------------------------
+--⭕ TOGGLE BARU: Auto Join Event
+---------------------------------------------------------
+sections.Event:Toggle({
+	Name = "Auto Join Event",
+	Default = false,
+	Callback = function(v)
+
+		if v and not GameData.savedCFrame then
+			if GameData.hrp then
+				GameData.savedCFrame = GameData.hrp.CFrame
+			else
+				Window:Notify({
+					Title = "Error",
+					Description = "Character not loaded!",
+				})
+				return false
+			end
+		end
+
+		GameData.AutoEventToggle = v
+
+		if not v and GameData.savedCFrame then
+			task.wait(0.1)
+			if GameData.hrp then
+				GameData.hrp.CFrame = GameData.savedCFrame + Vector3.new(0, 5, 0)
+			end
+		end
+	end
+}, "ToggleAutoEventNew")
+
+
+---------------------------------------------------------
+--⭕ AUTO EVENT LOOP
+---------------------------------------------------------
+task.spawn(function()
+
+    while task.wait(1) do
+        if GameData.AutoEventToggle and GameData.hrp then
+            
+            local searchOrder = {}
+
+            for _, v in ipairs(GameData.AutoEventPriority) do
+                table.insert(searchOrder, v)
+            end
+
+            for _, v in ipairs(GameData.SelectedAutoEvents) do
+                if not table.find(searchOrder, v) then
+                    table.insert(searchOrder, v)
+                end
+            end
+
+            local targetFound = nil
+
+            for _, eventName in ipairs(searchOrder) do
+                for _, prop in pairs(GameData.exclaimFolder:GetChildren()) do
+                    for _, d in pairs(prop:GetDescendants()) do
+                        if d.Name == eventName then
+                            targetFound = d
+                            break
+                        end
+                    end
+                    if targetFound then break end
+                end
+                if targetFound then break end
+            end
+
+            if targetFound and targetFound:IsA("BasePart") then
+                local pos = targetFound.CFrame.Position
+
+                if not GameData.platform or not GameData.platform.Parent then
+                    GameData.platform = Instance.new("Part")
+                    GameData.platform.Anchored = true
+                    GameData.platform.CanCollide = true
+                    GameData.platform.Transparency = 1
+                    GameData.platform.Size = Vector3.new(10, 1, 10)
+                    GameData.platform.Parent = workspace
+                end
+
+                GameData.platform.Position = pos + Vector3.new(0,5,0)
+                GameData.hrp.CFrame = CFrame.new(GameData.platform.Position + Vector3.new(0, 3, 0))
+
+                GameData.atEvent = true
+            else
+                if GameData.atEvent and GameData.savedCFrame then
+                    GameData.hrp.CFrame = GameData.savedCFrame + Vector3.new(0,5,0)
+                    GameData.atEvent = false
+                    if GameData.platform then GameData.platform:Destroy() GameData.platform = nil end
+                end
+            end
+        end
+    end
+end)
+
+
+GameData.player.CharacterAdded:Connect(function()
+    task.wait(0.2)
+    GameData.hrp = GameData.player.Character:WaitForChild("HumanoidRootPart")
+end)
 
 sections.Quest:Header({
 	Name = "View Quest Status"
@@ -4501,6 +4728,144 @@ sections.Player:Toggle({
         })
     end,
 }, "InfiniteZoomToggle")
+
+-- Initialize folder
+GameData.waterVFXFolder = GameData.RS:WaitForChild("VFX")
+
+
+---------------------------------------------------------
+-- REMOVE VFX TOGGLE
+---------------------------------------------------------
+sections.Player:Toggle({
+    Name = "Remove VFX",
+    Default = false,
+    Callback = function(value)
+
+        Window:Notify({
+            Title = "Remove VFX",
+            Description = (value and "Enabled" or "Disabled")
+        })
+
+        if value then
+
+            -----------------------------------------------------
+            -- DELETE EXISTING VFX + SAVE CLONES
+            -----------------------------------------------------
+            for _, obj in ipairs(GameData.waterVFXFolder:GetChildren()) do
+                if not GameData.storedVFX[obj.Name] then
+                    GameData.storedVFX[obj.Name] = obj:Clone()
+                end
+                obj:Destroy()
+            end
+
+            -----------------------------------------------------
+            -- DELETE NEWLY ADDED VFX AUTOMATICALLY
+            -----------------------------------------------------
+            if not GameData.childAddedConn then
+                GameData.childAddedConn = GameData.waterVFXFolder.ChildAdded:Connect(function(obj)
+                    task.wait(0.05)
+                    if obj and sections.Player:Get("RemoveVFXToggle") then
+
+                        if not GameData.storedVFX[obj.Name] then
+                            GameData.storedVFX[obj.Name] = obj:Clone()
+                        end
+
+                        obj:Destroy()
+                    end
+                end)
+            end
+
+        else
+
+            -----------------------------------------------------
+            -- DISABLE LISTENER
+            -----------------------------------------------------
+            if GameData.childAddedConn then
+                GameData.childAddedConn:Disconnect()
+                GameData.childAddedConn = nil
+            end
+
+            -----------------------------------------------------
+            -- RESTORE ALL SAVED VFX
+            -----------------------------------------------------
+            for name, clone in pairs(GameData.storedVFX) do
+                if not GameData.waterVFXFolder:FindFirstChild(name) then
+                    clone:Clone().Parent = GameData.waterVFXFolder
+                end
+            end
+
+            GameData.storedVFX = {}
+        end
+    end,
+}, "RemoveVFXToggle")
+
+-- Character Handler
+GameData.character = GameData.player.Character or GameData.player.CharacterAdded:Wait()
+GameData.hrp = GameData.character:WaitForChild("HumanoidRootPart")
+
+GameData.player.CharacterAdded:Connect(function(char)
+    GameData.character = char
+    GameData.hrp = char:WaitForChild("HumanoidRootPart")
+end)
+
+
+---------------------------------------------------------
+-- 🌊 WALK ON WATER TOGGLE
+---------------------------------------------------------
+sections.Player:Toggle({ 
+    Name = "Walk On Water", 
+    Default = false,
+    Callback = function(value)
+
+        Window:Notify({
+            Title = "Walk On Water",
+            Description = (value and "Enabled" or "Disabled")
+        })
+
+        if value then
+
+            -- Create platform if not exist
+            if not GameData.waterPlatform then
+                GameData.waterPlatform = Instance.new("Part")
+                GameData.waterPlatform.Name = "WaterWalkPlatform"
+                GameData.waterPlatform.Size = Vector3.new(15, 1, 15)
+                GameData.waterPlatform.Anchored = true
+                GameData.waterPlatform.CanCollide = false
+                GameData.waterPlatform.Transparency = 1
+                GameData.waterPlatform.Material = Enum.Material.SmoothPlastic
+                GameData.waterPlatform.Parent = workspace
+            end
+
+            -- create heartbeat loop
+            if not GameData.connection then
+                GameData.connection = GameData.RunService.Heartbeat:Connect(function()
+                    if not GameData.waterPlatform or not GameData.hrp then return end
+
+                    GameData.waterPlatform.Position = Vector3.new(
+                        GameData.hrp.Position.X,
+                        GameData.waterHeight,
+                        GameData.hrp.Position.Z
+                    )
+
+                    GameData.waterPlatform.CanCollide =
+                        GameData.hrp.Position.Y > GameData.waterHeight
+                end)
+            end
+
+        else
+            -- Disable all
+            if GameData.connection then
+                GameData.connection:Disconnect()
+                GameData.connection = nil
+            end
+
+            if GameData.waterPlatform then
+                GameData.waterPlatform:Destroy()
+                GameData.waterPlatform = nil
+            end
+        end
+    end,
+}, "WalkOnWaterToggle")
 
 sections.Player:Button({
     Name = "Boost FPS",
