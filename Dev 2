@@ -112,6 +112,27 @@ local GameData = {
     -- RUN-TIME UI STORAGE
     UI = {},
 
+    -- ================== [Instant Fishing] ==================
+
+    Players = game:GetService("Players"),
+    ReplicatedStorage = game:GetService("ReplicatedStorage"),
+
+    player = game:GetService("Players").LocalPlayer,
+    PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"),
+
+    package = game:GetService("ReplicatedStorage").Packages._Index["sleitnick_net@0.2.0"].net,
+
+    miniggameArgs = {-1.233184814453125, 0.9972056628181873, 1763291794.158201},
+
+    autoFishingEnabled = false,
+    isFishing = false,
+
+    castDelay = 1.5,
+    completedDelay = 1,
+
+    lastCatchTime = os.clock(),
+    antiStuckTime = 10,
+
     -- ================== [Rod] ==================
     RodIDs = {
         ["Starter Rod"] = 1, ["Luck Rod"] = 79, ["Carbon Rod"] = 76,
@@ -279,67 +300,65 @@ local GameData = {
     paragraph = nil,
     freeze = nil,
 
-    -- ================== [Disco] ==================
+    -- ================== [Disco Paragraph] ==================
     DiscoParagraph = nil,
-
-    -- Roots & CFrame reference
     Root = workspace.ClassicEvent.DiscoEvent.DiscoBall:WaitForChild("Root"),
 
-    DefaultCFrame = CFrame.new(
-        -8625, -426.221008, 161.125,
-        1, 0, 0,
-        0, 1, 0,
-        0, 0, 1
-    ),
+    DefaultCFrame = CFrame.new(-8625, -426.221008, 161.125, 1, 0, 0, 0, 1, 0, 0, 0, 1),
 
-    TeleportCFrame = CFrame.new(
-        -8642.99414, -547.500183, 159.353485,
-         0.139343381, -2.42283136e-08, -0.99024415,
-         4.18495816e-08, 1, -1.85780973e-08,
-         0.99024415, -3.88525692e-08, 0.139343381
-    ),
-
-    -- Player Info
-    plr = game:GetService("Players").LocalPlayer,
-    char = nil,
-    hrp = nil,
-
-    -- Toggle status
-    AutoDisco = false,
-
-    -- Save posisi sebelum teleport
-    SavedPos = nil,
-
-    -- Flag status event
+    IsDiscoNow = false,
     DiscoActive = false,
 
-    -- Status disco sekarang
-    IsDiscoNow = false,
+    -- ================== [Disco Teleport] ==================
 
-    -- ================== [Blatant] ==================
-        SVC = {
-        RS = game:GetService("ReplicatedStorage"),
-        Players = game:GetService("Players")
+    DiscoRoot = workspace.ClassicEvent.DiscoEvent.DiscoBall:WaitForChild("Root"),
+    Players = game:GetService("Players"),
+
+    -- ================== [Totems] ==================
+
+    ReplicatedStorage = game:GetService("ReplicatedStorage"),
+
+    -- ================== [Blatant V1] ==================
+
+    RS = game:GetService("ReplicatedStorage"),
+    Players = game:GetService("Players"),
+
+    LP = nil,
+
+    net = nil,
+
+    RF_Charge = nil,
+    RF_Start = nil,
+    RF_Cancel = nil,
+    RE_Finish = nil,
+    RE_Equip = nil,
+
+    enabled = false,
+    CancelDelay = 1.05,
+    CompleteDelay = 0.16,
+
+    EquipTool = nil,
+    FastFish = nil,
+    StartLoop = nil,
+    StopLoop = nil,
+
+    -- ================== [Blatant V2] ==================
+
+    SVC = {
+        RS = game:GetService("ReplicatedStorage")
     },
 
-    -- Player & leaderstats
-    Player = nil,
-    Leaderstats = nil,
-    CaughtStat = nil,
-
-    -- Net
-    Net = nil,
-
+    net = nil, -- nanti diisi setelah RS
     RF = {},
     RE = {},
 
-    -- Delay
-    DelayLoopStart = 0.80,
-    DelayComplete = 1,
+    cutsceneController = nil,
+    originalPlay = nil,
+    originalStop = nil,
 
-    -- State
-    BlatantV2Running = false,
-    BlatantV2Thread = nil,
+    EnableSkip = nil,
+    Fastest = nil,
+    startBlatantV2 = nil,
 
     -- ================== [Treasure] ==================
     Players = game:GetService("Players"),
@@ -358,6 +377,38 @@ local GameData = {
     TempTreasure = nil,
     TempShine = nil,
     TempPrompt = nil,
+
+    -- ================== [Event Hunt] ==================
+
+        --// Services
+    Players = game:GetService("Players"),
+    RS = game:GetService("ReplicatedStorage"),
+
+    -- Player
+    player = game:GetService("Players").LocalPlayer,
+    char = nil,
+    hrp = nil,
+
+    -- Folders
+    exclaimFolder = nil,
+
+    -- Event List
+    eventsList = {
+        "Shark Hunt", "Ghost Shark Hunt", "Worm Hunt",
+        "Black Hole", "Shocked", "Ghost Worm",
+        "Meteor Rain", "Megalodon Hunt"
+    },
+
+    -- Auto settings
+    SelectedAutoEvents = {},
+    AutoEventPriority = {},
+    AutoEventToggle = false,
+
+    savedCFrame = nil,
+
+    -- Runtime objects
+    platform = nil,
+    atEvent = false,
 
     -- ================== [SKip Rraity] ==================
         SVC = {
@@ -425,6 +476,63 @@ local GameData = {
 
     GravityEnabled = false,
     GravityValue = 196.2,
+
+    -- ================== [Infinite Zoom] ==================
+
+    player = game:GetService("Players").LocalPlayer,
+    infiniteZoomEnabled = false,
+
+    -- ================== [Walk On Water] ==================
+
+    Players = game:GetService("Players"),
+    RunService = game:GetService("RunService"),
+
+    -- Player data
+    player = game:GetService("Players").LocalPlayer,
+    character = nil,
+    hrp = nil,
+
+    -- Water settings
+    waterHeight = -1.8,
+
+    -- Runtime objects
+    waterPlatform = nil,
+    connection = nil,
+
+    -- ================== [Remove VFX] ==================
+
+    RS = game:GetService("ReplicatedStorage"),
+    RunService = game:GetService("RunService"),
+
+    -- VFX Folder
+    waterVFXFolder = nil,
+
+    -- Stored VFX Clones
+    storedVFX = {},
+
+    -- Connections
+    childAddedConn = nil,
+
+    -- ================== [Global Settings] ==================
+    userInfoState = nil,
+    notifState = nil,
+    blurState = nil,
+    GS_UserInfo = nil,
+    GS_Notifications = nil,
+    GS_Blur = nil,
+
+    -- ================== [Window Settings] ==================
+
+    windowWidth = nil,
+    windowHeight = nil,
+    windowScale = nil,
+    currentSize = nil,
+    inputValue = nil,
+
+    -- ================== [Toggle Status] ==================
+    toggleStatus = {},
+    statusLabel = nil,
+    activeList = {},
 }
 
 --====================================================--
@@ -449,19 +557,64 @@ local GameData2 = {
     elementParagraph = nil
 }
 
-local camera = workspace.CurrentCamera
-local screenSize = camera.ViewportSize
-
 local Window = MacLib:Window({
     Title = "NexaHub",
     Subtitle = "Fish It - Premium | V0.0.2",
-    Size = UDim2.fromOffset(720, 410),
+    Size = UDim2.fromOffset(800, 500),
     DragStyle = 2,
     DisabledWindowControls = {},
     ShowUserInfo = true,
     Keybind = Enum.KeyCode.G,
     AcrylicBlur = true,
 })
+
+Window:SetSize(UDim2.fromOffset(800, 500))
+Window:SetScale(0.70)
+
+Window:SetUserInfoState(true)
+GameData.userInfoState = Window:GetUserInfoState()
+
+GameData.GS_UserInfo = Window:GlobalSetting({
+    Name = "Hide User Info",
+    Default = false,
+    Callback = function(state)
+        GameData.userInfoState = state
+        Window:SetUserInfoState(not GameData.userInfoState)
+    end,
+})
+
+
+----------------------------------------------------
+-- NOTIFICATIONS STATE
+----------------------------------------------------
+Window:SetNotificationsState(true)
+GameData.notifState = Window:GetNotificationsState()
+
+GameData.GS_Notifications = Window:GlobalSetting({
+    Name = "Disable Notifications",
+    Default = false,
+    Callback = function(state)
+        GameData.notifState = state
+        Window:SetNotificationsState(not GameData.notifState)
+    end,
+})
+
+
+----------------------------------------------------
+-- ACRYLIC BLUR STATE
+----------------------------------------------------
+Window:SetAcrylicBlurState(true)
+GameData.blurState = Window:GetAcrylicBlurState()
+
+GameData.GS_Blur = Window:GlobalSetting({
+    Name = "Disable Acrylic Blur",
+    Default = false,
+    Callback = function(state)
+        GameData.blurState = state
+        Window:SetAcrylicBlurState(not GameData.blurState)
+    end,
+})
+
 
 local tabGroups = {
 	TabGroup1 = Window:TabGroup()
@@ -575,33 +728,20 @@ sections.Home:Button({
 sections.Home1:Paragraph({
     Header = "Update List",
     Body = [[
-[+] Added Tab Home & Event
-Tab Fishing:
-[/] Rework Fishing Counter
-[+] Added Blatant (Premium)
- - Delay Cast
- - Delay Complite Complete
-[+] Added Status Lochness Monster Countdown
-[+] Added Auto Lochness Monster
-[+] Added Status Disco Event
-[+] Added Auto Disco Event
-[/] Rework Webhook Fish
-[+] Added Skip Rarity Fish
-Tab Home:
-[+] Added Auto Claim Event Reward
-[+] Added Redeem All Codes
-Tab Event:
-[+] Auto Auto Treasure Hunt
-Tab Quest:
-[+] Added Auto Artifack
-[+] Added Status Artifack
-[+] Added Auto Unlock Iron Cafe
-[+] Added Auto Unclok Ancient Ruin
-Tab Boat:
-[+] Added Access All Boats
 Tab Player:
-[-] Delete Black Screen
-[+] Added View Bobbers
+ [+] Addded Infinite Zoom
+ [+] Added Window Settings 
+  - Window Size
+  - Window Scale
+[+] Added Global Settings 
+  - Hide User Info
+  - Disable Notifications
+  - Disable Acrylic Blur
+Tab Fishing:
+ [+] Added Blatant V1
+ [+] Added Blatant V2
+ [+] Added Dropdwon Select Totems
+ [+] Added Auto Spawn Totems
 ]]
 }, "Info")
 
@@ -707,87 +847,106 @@ end)
 
 sections.Fishing:Divider()
 
-----------------------------------------------------
--- MASUKKAN FUNCTION UPDATE CHARACTER
-----------------------------------------------------
-function GameData:UpdateCharacter()
-    self.char = self.plr.Character or self.plr.CharacterAdded:Wait()
-    self.hrp = self.char:WaitForChild("HumanoidRootPart")
-end
-
-GameData:UpdateCharacter()
-
-GameData.plr.CharacterAdded:Connect(function()
-    task.wait(1)
-    GameData:UpdateCharacter()
-end)
-
-
-----------------------------------------------------
--- PARAGRAPH UI
-----------------------------------------------------
+--------------------------
+-- UI (Paragraph Only)
+--------------------------
 GameData.DiscoParagraph = sections.Fishing:Paragraph({
     Header = "Status Event Disco",
     Body = "Loading..."
 })
 
-
-----------------------------------------------------
--- TOGGLE
-----------------------------------------------------
-sections.Fishing:Toggle({
-	Name = "Auto Disco Event",
-	Default = false,
-	Callback = function(value)
-		GameData.AutoDisco = value
-		
-		Window:Notify({
-			Title = "Disco Event",
-			Description = (value and "Enabled " or "Disabled ") .. "Disco"
-		})
-	end,
-}, "DiscoToggle")
-
-
-----------------------------------------------------
--- LOOP CEK DISCO
-----------------------------------------------------
+--------------------------
+-- MAIN LOOP (NO TELEPORT)
+--------------------------
 task.spawn(function()
     while true do
         task.wait(1)
 
-        -- TANPA LOCAL: masukkan ke GameData
-        GameData.IsDiscoNow = (GameData.Root.CFrame ~= GameData.DefaultCFrame)
+        pcall(function()
+            local dist = (GameData.Root.Position - GameData.DefaultCFrame.Position).Magnitude
+            GameData.IsDiscoNow = dist > 1
 
-        ------------------------------------------------
-        -- DISCO MULAI
-        ------------------------------------------------
-        if GameData.IsDiscoNow and not GameData.DiscoActive then
-            
-            GameData.DiscoActive = true
-            GameData.DiscoParagraph:UpdateBody("🎉 Disco BEGINS!")
-
-            if GameData.AutoDisco then
-
-                if GameData.hrp then
-                    GameData.SavedPos = GameData.hrp.CFrame
-                end
-
-                GameData.hrp.CFrame = GameData.TeleportCFrame
+            -- Disco Mulai
+            if GameData.IsDiscoNow and not GameData.DiscoActive then
+                GameData.DiscoActive = true
+                GameData.DiscoParagraph:UpdateBody("🎉 Disco BEGINS!")
             end
+
+            -- Disco Berhenti
+            if not GameData.IsDiscoNow and GameData.DiscoActive then
+                GameData.DiscoActive = false
+                GameData.DiscoParagraph:UpdateBody("❌ NO DISCO")
+            end
+        end)
+    end
+end)
+
+
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+GameData.Character = GameData.LocalPlayer.Character or GameData.LocalPlayer.CharacterAdded:Wait()
+GameData.HumanoidRootPart = GameData.Character:WaitForChild("HumanoidRootPart")
+
+GameData.eventCF = CFrame.new(
+    -8625, -532.471008, 161.125,
+    1, 0, 0,
+    0, 1, 0,
+    0, 0, 1
+)
+
+GameData.targetTP = CFrame.new(
+    -8642.99414, -547.500183, 159.353485,
+    0.139343381, -2.42283136e-08, -0.99024415,
+    4.18495816e-08, 1, -1.85780973e-08,
+    0.99024415, -3.88525692e-08, 0.139343381
+)
+
+GameData.AutoDiscoEvent = false
+GameData.savedPosition = nil
+GameData.teleported = false
+
+-- TOGGLE UI
+sections.Fishing:Toggle({
+    Name = "Auto Disco Event",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoDiscoEvent = value
+
+        Window:Notify({
+            Title = "Auto Disco Event",
+            Description = value and "Enabled" or "Disabled"
+        })
+
+        if not value then
+            if GameData.teleported and GameData.savedPosition then
+                GameData.HumanoidRootPart.CFrame = GameData.savedPosition
+            end
+            GameData.teleported = false
+            GameData.savedPosition = nil
         end
+    end,
+}, "AutoDiscoToggle")
 
-        ------------------------------------------------
-        -- DISCO SELESAI
-        ------------------------------------------------
-        if not GameData.IsDiscoNow and GameData.DiscoActive then
-            
-            GameData.DiscoActive = false
-            GameData.DiscoParagraph:UpdateBody("❌ NO DISCO!! Returning...")
+-- MAIN LOOP
+task.spawn(function()
+    while task.wait(0.1) do
+        if GameData.AutoDiscoEvent then
 
-            if GameData.AutoDisco and GameData.SavedPos then
-                GameData.hrp.CFrame = GameData.SavedPos
+            -- Event aktif → teleport sekali
+            if GameData.DiscoRoot.CFrame == GameData.eventCF and not GameData.teleported then
+                GameData.savedPosition = GameData.HumanoidRootPart.CFrame
+                GameData.HumanoidRootPart.CFrame = GameData.targetTP
+                GameData.teleported = true
             end
+
+            -- Event selesai → kembalikan posisi
+            if GameData.teleported and GameData.DiscoRoot.CFrame ~= GameData.eventCF then
+                if GameData.savedPosition then
+                    GameData.HumanoidRootPart.CFrame = GameData.savedPosition
+                end
+                GameData.teleported = false
+                GameData.savedPosition = nil
+            end
+
         end
     end
 end)
@@ -795,6 +954,39 @@ end)
 sections.Fishing:Header({
 	Name = "Status Info Fishing"
 })
+
+-- Label status toggle
+GameData.statusLabel = sections.Main:Label({
+    Text = '<font color="rgb(255,0,0)">Tidak ada toggle aktif</font>'
+})
+
+---------------------------------------------------------
+-- Fungsi Update Label (Dengan Warna Hijau Untuk ON)
+---------------------------------------------------------
+GameData.UpdateStatusLabel = function()
+
+    -- Bersihkan list
+    GameData.activeList = {}
+
+    -- Cari toggle yang ON
+    for name, state in pairs(GameData.toggleStatus) do
+        if state == true then
+            table.insert(
+                GameData.activeList,
+                '<font color="rgb(0,255,0)">' .. name .. ' ON</font>'
+            )
+        end
+    end
+
+    -- Update label
+    if #GameData.activeList == 0 then
+        GameData.statusLabel:UpdateName('<font color="rgb(255,0,0)">Tidak ada toggle aktif</font>')
+    else
+        GameData.statusLabel:UpdateName(table.concat(GameData.activeList, ", "))
+    end
+
+    GameData.statusLabel:SetVisibility(true)
+end
 
 -- Fishing Notification References (safely)
 local smallNotif = PlayerGui:WaitForChild("Small Notification")
@@ -1053,9 +1245,15 @@ sections.Fishing:Toggle({
 	Name = "Auto Fishing",
 	Default = false,
 	Callback = function(state)
-		-- Kirim remote setiap toggle
-		updateRemoteState(state)
 
+		-- Update status label (wajib)
+		GameData.toggleStatus["Normal Fishing"] = state
+		GameData.UpdateStatusLabel()
+
+		-- Kirim remote setiap toggle
+        updateRemoteState(state)
+
+		-- Mode selector
 		if SelectedMode == "Click" then
 			AutoClickEnabled = state
 			InstantEnabled = false
@@ -1070,6 +1268,7 @@ sections.Fishing:Toggle({
 		})
 	end,
 }, "UniversalAutoFishToggle")
+
 
 -- ========= [No Animation] =========
 local stopAnimConnections = {}
@@ -1126,9 +1325,16 @@ sections.Fishing:Toggle({
     Name = "No Animation",
     Default = false,
     Callback = function(state)
+
+        -- Update status toggle
+        GameData.toggleStatus["No Animation"] = state
+        GameData.UpdateStatusLabel()
+
+        -- Logic asli kamu
         setGameAnimationsEnabled(state)
     end,
 })
+
 
 GameData.Player = GameData.SVC.Players.LocalPlayer
 GameData.Net = GameData.SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
@@ -1144,6 +1350,12 @@ sections.Fishing:Toggle({
 	Name = "Skip Rarity",
 	Default = false,
 	Callback = function(state)
+
+		-- Sistem status toggle
+		GameData.toggleStatus["Skip Rarity"] = state
+		GameData.UpdateStatusLabel()
+
+		-- Logic asli kamu
 		GameData.SkipState.Enabled = state
 
 		Window:Notify({
@@ -1273,25 +1485,13 @@ sections.Fishing:Header({
 	Name = "Instant Fishing Feature"
 })
 
-local package = ReplicatedStorage.Packages._Index["sleitnick_net@0.2.0"].net
-
-local ChargeFishingRod = package["RF/ChargeFishingRod"]
-local RequestFishingMinigameStarted = package["RF/RequestFishingMinigameStarted"]
-local REReplicateTextEffect = package["RE/ReplicateTextEffect"]
-local REFishingCompleted = package["RE/FishingCompleted"]
-local CancelFishingInputs = package["RF/CancelFishingInputs"]
-
--- ==========================================================
--- PARAMETER & STATE
--- ==========================================================
-local miniggameArgs = {-1.233184814453125, 0.9972056628181873, 1763291794.158201}
-
-local autoFishingEnabled = false
-local antiStuckEnabled = false
-local isFishing = false
-
-local castDelay = 1.5
-local completedDelay = 1
+-- Remote references
+GameData.ChargeFishingRod = GameData.package["RF/ChargeFishingRod"]
+GameData.RequestFishingMinigameStarted = GameData.package["RF/RequestFishingMinigameStarted"]
+GameData.REReplicateTextEffect = GameData.package["RE/ReplicateTextEffect"]
+GameData.REFishingCompleted = GameData.package["RE/FishingCompleted"]
+GameData.REFishCaught = GameData.package["RE/FishCaught"]
+GameData.CancelFishingInputs = GameData.package["RF/CancelFishingInputs"]
 
 -- ==========================================================
 -- SAFE WAIT
@@ -1299,7 +1499,7 @@ local completedDelay = 1
 local function SafeWait(t)
     local start = os.clock()
     while os.clock() - start < t do
-        if not autoFishingEnabled then return false end
+        if not GameData.autoFishingEnabled then return false end
         task.wait()
     end
     return true
@@ -1309,104 +1509,120 @@ end
 -- MAIN FISHING CYCLE
 -- ==========================================================
 local function StartFishingCycle()
-    if not autoFishingEnabled or isFishing then return end
+    if not GameData.autoFishingEnabled or GameData.isFishing then return end
 
-    isFishing = true
-    ChargeFishingRod:InvokeServer()
-    if not SafeWait(0.2) then return end
-    RequestFishingMinigameStarted:InvokeServer(unpack(miniggameArgs))
+    GameData.isFishing = true
+    GameData.lastCatchTime = os.clock()
+
+    GameData.ChargeFishingRod:InvokeServer()
+    if not SafeWait(0.01) then return end
+
+    GameData.RequestFishingMinigameStarted:InvokeServer(unpack(GameData.miniggameArgs))
 end
 
 -- ==========================================================
--- DETECT MINIGAME COMPLETED
--- ==========================================================
-REReplicateTextEffect.OnClientEvent:Connect(function(data)
-    if not autoFishingEnabled or not data or not data.TextData then return end
-
-    local attach = data.TextData.AttachTo
-    if not attach or not attach.Parent then return end
-
-    local playerFromChar = Players:GetPlayerFromCharacter(attach.Parent)
-    if playerFromChar ~= player then return end
-
-    task.spawn(function()
-        if not SafeWait(completedDelay) then return end
-        REFishingCompleted:FireServer()
-        isFishing = false
-
-        if not SafeWait(castDelay) then return end
-        StartFishingCycle()
-    end)
-end)
-
--- ==========================================================
--- ANTI STUCK DETECTOR
+-- ANTI-STUCK CHECKER (AUTO RESTART)
 -- ==========================================================
 task.spawn(function()
-    local notifGui = PlayerGui:WaitForChild("Small Notification")
-    local notifFrame = notifGui.Display:WaitForChild("Container")
-
     while true do
         task.wait(1)
-        if antiStuckEnabled and autoFishingEnabled then
-            local lastPos = notifFrame.Position
-            local freezeDetected = true
 
-            for i = 1, 10 do
-                task.wait(1)
-                if not antiStuckEnabled or not autoFishingEnabled then break end
-                if notifFrame.Position ~= lastPos then
-                    freezeDetected = false
-                    break
-                end
-            end
+        if GameData.autoFishingEnabled and GameData.isFishing then
+            if os.clock() - GameData.lastCatchTime >= GameData.antiStuckTime then
 
-            if freezeDetected then
-                warn("[InstantFishing] Anti Stuck Triggered → Cancel Fishing & Restart")
-                pcall(CancelFishingInputs.InvokeServer, CancelFishingInputs)
-                isFishing = false
-                task.wait(0.5)
-                if autoFishingEnabled then StartFishingCycle() end
+                print("[Anti-Stuck] Tidak ada FishCaught selama "..GameData.antiStuckTime.." detik. Reset fishing...")
+
+                pcall(function()
+                    GameData.CancelFishingInputs:InvokeServer()
+                end)
+
+                GameData.isFishing = false
+                task.wait(0.01)
+
+                StartFishingCycle()
             end
         end
     end
 end)
 
 -- ==========================================================
--- WINDUI: Instant Fishing
+-- REPLICATE TEXT EFFECT
+-- ==========================================================
+GameData.REReplicateTextEffect.OnClientEvent:Connect(function(data)
+    if not GameData.autoFishingEnabled or not data or not data.TextData then return end
+
+    local attach = data.TextData.AttachTo
+    if not attach or not attach.Parent then return end
+
+    local playerFromChar = GameData.Players:GetPlayerFromCharacter(attach.Parent)
+    if playerFromChar ~= GameData.player then return end
+
+    task.spawn(function()
+        if not SafeWait(GameData.completedDelay) then return end
+        GameData.REFishingCompleted:FireServer()
+    end)
+end)
+
+-- ==========================================================
+-- FISH CAUGHT = RESTART
+-- ==========================================================
+GameData.REFishCaught.OnClientEvent:Connect(function(fishName, data)
+    if not GameData.autoFishingEnabled then return end
+
+    GameData.lastCatchTime = os.clock()
+
+    task.spawn(function()
+        pcall(function()
+            GameData.CancelFishingInputs:InvokeServer()
+        end)
+
+        GameData.isFishing = false
+        if not SafeWait(GameData.castDelay) then return end
+
+        StartFishingCycle()
+    end)
+end)
+
+-- ==========================================================
+-- WINDUI SETTINGS
 -- ==========================================================
 sections.Fishing:Toggle({
     Name = "Instant Fishing",
     Default = false,
     Callback = function(state)
-        autoFishingEnabled = state
-        if state then StartFishingCycle() else isFishing = false end
+
+        -- Tambahan status toggle
+        GameData.toggleStatus["Instant Fishing"] = state
+        GameData.UpdateStatusLabel()
+
+        -- Logic asli kamu
+        GameData.autoFishingEnabled = state
+
+        if state then
+            StartFishingCycle()
+        else
+            GameData.isFishing = false
+        end
+
         Window:Notify({
             Title = "Instant Fishing",
-            Description = (state and "Enabled" or "Disabled") .. " Instant Fishing"
+            Description = state and "Enabled Instant Fishing" or "Disabled Instant Fishing"
         })
     end,
 }, "InstantFishingToggle")
 
-sections.Fishing:Toggle({
-    Name = "Anti Stuck Detector",
-    Default = false,
-    Callback = function(state)
-        antiStuckEnabled = state
-        Window:Notify({
-            Title = "Anti Stuck Detector",
-            Description = (state and "Enabled" or "Disabled") .. " Anti Stuck System"
-        })
-    end,
-}, "AntiStuckDetectorToggle")
 
 sections.Fishing:Input({
     Name = "Cast Delay",
     Placeholder = "Default: 1.5",
     AcceptedCharacters = "Numbers",
     Callback = function(input)
-        castDelay = tonumber(input) or 1.5
-        Window:Notify({Title = "Cast Delay", Description = "Cast Delay set to: " .. tostring(castDelay)})
+        GameData.castDelay = tonumber(input) or 1.5
+
+        Window:Notify({
+            Title = "Cast Delay",
+            Description = "Cast Delay set to: " .. tostring(GameData.castDelay)
+        })
     end,
 }, "InstantFishingCastDelay")
 
@@ -1415,105 +1631,360 @@ sections.Fishing:Input({
     Placeholder = "Default: 1",
     AcceptedCharacters = "Numbers",
     Callback = function(input)
-        completedDelay = tonumber(input) or 1
-        Window:Notify({Title = "Completed Delay", Description = "Completed Delay set to: " .. tostring(completedDelay)})
+        GameData.completedDelay = tonumber(input) or 1
+
+        Window:Notify({
+            Title = "Completed Delay",
+            Description = "Completed Delay set to: " .. tostring(GameData.completedDelay)
+        })
     end,
 }, "InstantFishingCompletedDelay")
 
-sections.Fishing:Header({
-	Name = "Blatant Feature"
+-- ADD NEW INPUT FOR ANTI-STUCK TIME
+sections.Fishing:Input({
+    Name = "Anti-Stuck Time (Seconds)",
+    Placeholder = "Default: 10",
+    AcceptedCharacters = "Numbers",
+    Callback = function(input)
+        local value = tonumber(input)
+
+        if value then
+            GameData.antiStuckTime = value
+
+            Window:Notify({
+                Title = "Anti-Stuck Updated",
+                Description = "Anti-Stuck time set to: " .. tostring(value) .. " seconds"
+            })
+        else
+            Window:Notify({
+                Title = "Invalid Input",
+                Description = "Please enter numbers only."
+            })
+        end
+    end,
+}, "AntiStuckTimeInput")
+
+sections.Fishing1:Header({
+	Name = "Totems"
 })
 
-GameData.Player = GameData.SVC.Players.LocalPlayer
-GameData.Leaderstats = GameData.Player:WaitForChild("leaderstats")
-GameData.CaughtStat = GameData.Leaderstats:WaitForChild("Caught")
+-- Modules
+GameData.Client = require(GameData.ReplicatedStorage.Packages.Replion).Client
+GameData.ItemUtility = require(GameData.ReplicatedStorage.Shared.ItemUtility)
 
-GameData.Net = GameData.SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
+-- Data
+GameData.data = GameData.Client:WaitReplion("Data")
+GameData.inventory = GameData.data:GetExpect("Inventory")
+
+-- Remote
+GameData.SpawnTotem = GameData.ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RE/SpawnTotem")
+
+-- Totem IDs
+GameData.TOTEM_IDS = {
+    ["Luck Totem"] = 1,
+    ["Mutation Totem"] = 2,
+    ["Shiny Totem"] = 3,
+}
+
+-- State
+GameData.selectedTotem = nil
+GameData.autoSpawn = false
+GameData.id = nil
+GameData.uuid = nil
+
+
+---------------------------------------------------------
+-- SELECT TOTEM DROPDOWN (FIXED)
+---------------------------------------------------------
+sections.Fishing1:Dropdown({
+    Name = "Select Totem",
+    Search = true,
+    Multi = false, -- Multi = false -> Value = STRING
+    Required = false,
+    Options = {"Luck Totem", "Mutation Totem", "Shiny Totem"},
+    Default = {"Luck Totem"},
+    Callback = function(Value)
+        GameData.selectedTotem = Value  -- langsung ambil string
+        print("Selected Totem:", GameData.selectedTotem)
+    end,
+}, "SelectTotemDropdown")
+
+
+---------------------------------------------------------
+-- AUTO SPAWN TOGGLE
+---------------------------------------------------------
+sections.Fishing1:Toggle({
+    Name = "Auto Spawn Totem",
+    Default = false,
+    Callback = function(value)
+        GameData.autoSpawn = value
+
+        Window:Notify({
+            Title = "Spawn Totem",
+            Description = (value and "Enabled " or "Disabled ") .. "Auto Spawn Totem"
+        })
+
+        if value then
+            task.spawn(function()
+                while GameData.autoSpawn do
+                    
+                    if GameData.selectedTotem then
+                        
+                        GameData.id = GameData.TOTEM_IDS[GameData.selectedTotem]
+                        GameData.uuid = nil
+
+                        -- Cari totem di inventory
+                        for _, totem in ipairs(GameData.inventory.Totems or {}) do
+                            GameData.itemData = GameData.ItemUtility.GetItemDataFromItemType("Totems", totem.Id)
+
+                            if GameData.itemData and GameData.itemData.Data.Id == GameData.id then
+                                GameData.uuid = totem.UUID
+                                break
+                            end
+                        end
+
+                        -- Spawn kalau ada
+                        if GameData.uuid then
+                            print("Spawning:", GameData.selectedTotem, "UUID:", GameData.uuid)
+                            GameData.SpawnTotem:FireServer(GameData.uuid)
+                        else
+                            warn("Totem not found:", GameData.selectedTotem)
+                        end
+                    end
+
+                    task.wait(1)
+                end
+            end)
+        end
+    end,
+}, "AutoSpawnTotemToggle")
+
+sections.Fishing1:Header({
+	Name = "Blatant V1"
+})
+
+-- SETUP LOCALPLAYER
+GameData.LP = GameData.Players.LocalPlayer
+
+-- GET NET FOLDER
+GameData.net = GameData.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
+
+-- REMOTES
+GameData.RF_Charge = GameData.net:WaitForChild("RF/ChargeFishingRod")
+GameData.RF_Start  = GameData.net:WaitForChild("RF/RequestFishingMinigameStarted")
+GameData.RF_Cancel = GameData.net:WaitForChild("RF/CancelFishingInputs")
+GameData.RE_Finish = GameData.net:WaitForChild("RE/FishingCompleted")
+GameData.RE_Equip  = GameData.net:WaitForChild("RE/EquipToolFromHotbar")
+
+-- EQUIP TOOL FUNCTION
+GameData.EquipTool = function()
+    pcall(function() GameData.RE_Equip:FireServer(1) end)
+end
+
+-- FAST FISH FUNCTION
+GameData.FastFish = function()
+    task.spawn(function()
+        GameData.RF_Cancel:InvokeServer()
+        task.wait(GameData.CancelDelay)
+
+        GameData.RF_Charge:InvokeServer(workspace:GetServerTimeNow())
+        GameData.RF_Start:InvokeServer(-1, 0.9964)
+
+        task.wait(GameData.CompleteDelay)
+        GameData.RE_Finish:FireServer()
+    end)
+end
+
+-- START LOOP FUNCTION
+GameData.StartLoop = function()
+    if GameData.enabled then return end
+    GameData.enabled = true
+
+    GameData.EquipTool()
+
+    task.spawn(function()
+        while GameData.enabled do
+            local tickNow = tick()
+            GameData.FastFish()
+
+            while GameData.enabled and tick() - tickNow < (_G.ReelSuper or 1.05) do
+                task.wait()
+            end
+        end
+    end)
+end
+
+-- STOP LOOP FUNCTION
+GameData.StopLoop = function()
+    GameData.enabled = false
+end
+
+-- UI KUZU HUB
+sections.Fishing1:Toggle({
+    Name = "Blatant V1",
+    Default = false,
+    Callback = function(state)
+        if state then
+            GameData.StartLoop()
+            Window:Notify({ Title = "Blatant V1", Description = "Enabled Fishing" })
+        else
+            GameData.StopLoop()
+            Window:Notify({ Title = "Blatant V1", Description = "Disabled Fishing" })
+        end
+    end,
+}, "FishingToggle")
+
+sections.Fishing1:Input({
+    Name = "Cancel Delay V1",
+    Placeholder = "1.05",
+    AcceptedCharacters = "0123456789.",
+    Callback = function(txt)
+        local n = tonumber(txt)
+        if n and n > 0 then
+            GameData.CancelDelay = n
+            Window:Notify({ Title = "Blatant V1", Description = "Cancel Delay Set: "..tostring(n) })
+        else
+            Window:Notify({ Title = "Blatant V1", Description = "Invalid Cancel Delay!" })
+        end
+    end,
+}, "CancelDelayInput")
+
+sections.Fishing1:Input({
+    Name = "Complete Delay V1",
+    Placeholder = "0.16",
+    AcceptedCharacters = "0123456789.",
+    Callback = function(txt)
+        local n = tonumber(txt)
+        if n and n > 0 then
+            GameData.CompleteDelay = n
+            Window:Notify({ Title = "Blatant V1", Description = "Complete Delay Set: "..tostring(n) })
+        else
+            Window:Notify({ Title = "Blatant V1", Description = "Invalid Complete Delay!" })
+        end
+    end,
+}, "CompleteDelayInput")
+
+sections.Fishing1:Header({
+	Name = "Blatant V2"
+})
+
+-- SETUP NET
+GameData.net = GameData.SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
 
 GameData.RF = {
-    ChargeFishingRod = GameData.Net:WaitForChild("RF/ChargeFishingRod"),
-    RequestFishingMinigameStarted = GameData.Net:WaitForChild("RF/RequestFishingMinigameStarted"),
-    CancelFishing = GameData.Net:WaitForChild("RF/CancelFishingInputs")
+    ChargeFishingRod = GameData.net:WaitForChild("RF/ChargeFishingRod"),
+    RequestFishingMinigameStarted = GameData.net:WaitForChild("RF/RequestFishingMinigameStarted"),
+    CancelFishing = GameData.net:WaitForChild("RF/CancelFishingInputs")
 }
 
 GameData.RE = {
-    FishingCompleted = GameData.Net:WaitForChild("RE/FishingCompleted")
+    FishingCompleted = GameData.net:WaitForChild("RE/FishingCompleted")
 }
 
--- ======================
--- FUNCTION
--- ======================
+-- CUTSCENE CONTROLLER
+do
+    local ok, controller = pcall(function()
+        return require(game:GetService("ReplicatedStorage").Controllers.CutsceneController)
+    end)
 
-function GameData.Fastest()
+    if ok and controller then
+        GameData.cutsceneController = controller
+        GameData.originalPlay = controller.Play
+        GameData.originalStop = controller.Stop
+    end
+end
+
+-- ENABLE SKIP SYSTEM
+GameData.EnableSkip = function()
+    if GameData.cutsceneController then
+        if GameData.cutsceneController.ReplicateCutscene then
+            GameData.cutsceneController.ReplicateCutscene.OnClientEvent:Connect(function() end)
+        end
+        if GameData.cutsceneController.StopCutscene then
+            GameData.cutsceneController.StopCutscene.OnClientEvent:Connect(function() end)
+        end
+
+        GameData.cutsceneController.Play = function() end
+        GameData.cutsceneController.Stop = function() end
+    end
+end
+
+GameData.EnableSkip()
+
+-- GLOBAL CONFIG
+_G.BlatantV2 = false
+_G.DelayLoopStartV2 = 0.80
+_G.DelayCompleteV2 = 1
+
+-- FASTEST FUNCTION
+GameData.Fastest = function()
     task.spawn(function()
         pcall(function() GameData.RF.CancelFishing:InvokeServer() end)
-        task.wait(1)
         pcall(function() GameData.RF.ChargeFishingRod:InvokeServer(workspace:GetServerTimeNow()) end)
-        task.wait(1)
         pcall(function() GameData.RF.RequestFishingMinigameStarted:InvokeServer(-1, 0.999) end)
-        task.wait(GameData.DelayComplete)
+
+        task.wait(_G.DelayCompleteV2)
+
         pcall(function() GameData.RE.FishingCompleted:FireServer() end)
     end)
 end
 
-function GameData.StartBlatantV2()
-    if GameData.BlatantV2Running then return end
-    GameData.BlatantV2Running = true
-    GameData.BlatantV2Thread = task.spawn(function()
-        while GameData.BlatantV2Running do
+-- LOOP START
+GameData.startBlatantV2 = function()
+    task.spawn(function()
+        while _G.BlatantV2 do
             GameData.Fastest()
-            task.wait(GameData.DelayLoopStart)
+            task.wait(_G.DelayLoopStartV2)
         end
     end)
 end
 
-function GameData.StopBlatantV2()
-    GameData.BlatantV2Running = false
-end
-
--- ======================
--- UI
--- ======================
-
-sections.Fishing:Toggle({
-    Name = "Blatant",
-    Default = false,
+-- WINDUI
+sections.Fishing1:Toggle({
+    Name = "Blatant V2",
+    Default = _G.BlatantV2,
     Callback = function(value)
+        _G.BlatantV2 = value
         if value then
-            GameData.StartBlatantV2()
-            Window:Notify({
-                Title = "Blatant V2",
-                Description = "Enabled"
-            })
-        else
-            GameData.StopBlatantV2()
-            Window:Notify({
-                Title = "Blatant V2",
-                Description = "Disabled"
-            })
+            GameData.startBlatantV2()
         end
-    end
-}, "BlatantToggle")
 
-sections.Fishing:Input({
-    Name = "Delay Cast",
+        Window:Notify({
+            Title = "Blatant V2",
+            Description = value and "Enabled" or "Disabled"
+        })
+    end,
+}, "BlatantV2Toggle")
+
+sections.Fishing1:Input({
+    Name = "Delay Cast V2",
     Placeholder = "0.80",
-    AcceptedCharacters = "0123456789.",
+    AcceptedCharacters = "Numbers",
     Callback = function(input)
-        local v = tonumber(input)
-        if v then GameData.DelayLoopStart = v end
-    end
-}, "DelayCast")
+        local num = tonumber(input)
+        if num then
+            _G.DelayLoopStartV2 = num
+        end
+    end,
+}, "DelayCastV2Input")
 
-sections.Fishing:Input({
-    Name = "Delay Complete",
+sections.Fishing1:Input({
+    Name = "Delay Complete V2",
     Placeholder = "1",
-    AcceptedCharacters = "0123456789.",
+    AcceptedCharacters = "Numbers",
     Callback = function(input)
-        local v = tonumber(input)
-        if v then GameData.DelayComplete = v end
-    end
-}, "DelayComplete")
+        local num = tonumber(input)
+        if num then
+            _G.DelayCompleteV2 = num
+        end
+    end,
+}, "DelayCompleteV2Input")
+
 
 sections.Fishing1:Header({
 	Name = "Webhook Notifier"
@@ -2095,7 +2566,7 @@ sections.Fishing1:Toggle({
 }, "AutoSellToggle")
 
 sections.Event:Header({
-	Name = "Hunt"
+	Name = "Event Hunt"
 })
 
 -- Setup player
@@ -2187,6 +2658,159 @@ sections.Event:Toggle({
         end
     end,
 }, "AutoTreasureHuntToggle")
+
+
+-- Character
+GameData.char = GameData.player.Character or GameData.player.CharacterAdded:Wait()
+GameData.hrp = GameData.char:WaitForChild("HumanoidRootPart")
+
+-- Folder
+GameData.exclaimFolder = workspace:WaitForChild("!!! MENU RINGS")
+
+
+---------------------------------------------------------
+--⭕ DROPDOWN BARU: Select Auto Events
+---------------------------------------------------------
+sections.Event:Dropdown({
+	Name = "Select Auto Events",
+	Search = true,
+	Multi = true,
+	Required = false,
+	Options = GameData.eventsList,
+	Default = {},
+	Callback = function(Value)
+		local result = {}
+
+		for eventName, state in next, Value do
+			if state then table.insert(result, eventName) end
+		end
+
+		GameData.SelectedAutoEvents = result
+	end
+}, "SelectAutoEventsNew")
+
+
+---------------------------------------------------------
+--⭕ DROPDOWN BARU: Auto Event Priority
+---------------------------------------------------------
+sections.Event:Dropdown({
+	Name = "Priority Events",
+	Search = true,
+	Multi = true,
+	Required = false,
+	Options = GameData.eventsList,
+	Default = {},
+	Callback = function(Value)
+		local result = {}
+
+		for eventName, state in next, Value do
+			if state then table.insert(result, eventName) end
+		end
+
+		GameData.AutoEventPriority = result
+	end
+}, "PriorityEventsNew")
+
+
+---------------------------------------------------------
+--⭕ TOGGLE BARU: Auto Join Event
+---------------------------------------------------------
+sections.Event:Toggle({
+	Name = "Auto Join Event",
+	Default = false,
+	Callback = function(v)
+
+		if v and not GameData.savedCFrame then
+			if GameData.hrp then
+				GameData.savedCFrame = GameData.hrp.CFrame
+			else
+				Window:Notify({
+					Title = "Error",
+					Description = "Character not loaded!",
+				})
+				return false
+			end
+		end
+
+		GameData.AutoEventToggle = v
+
+		if not v and GameData.savedCFrame then
+			task.wait(0.1)
+			if GameData.hrp then
+				GameData.hrp.CFrame = GameData.savedCFrame + Vector3.new(0, 5, 0)
+			end
+		end
+	end
+}, "ToggleAutoEventNew")
+
+
+---------------------------------------------------------
+--⭕ AUTO EVENT LOOP
+---------------------------------------------------------
+task.spawn(function()
+
+    while task.wait(1) do
+        if GameData.AutoEventToggle and GameData.hrp then
+            
+            local searchOrder = {}
+
+            for _, v in ipairs(GameData.AutoEventPriority) do
+                table.insert(searchOrder, v)
+            end
+
+            for _, v in ipairs(GameData.SelectedAutoEvents) do
+                if not table.find(searchOrder, v) then
+                    table.insert(searchOrder, v)
+                end
+            end
+
+            local targetFound = nil
+
+            for _, eventName in ipairs(searchOrder) do
+                for _, prop in pairs(GameData.exclaimFolder:GetChildren()) do
+                    for _, d in pairs(prop:GetDescendants()) do
+                        if d.Name == eventName then
+                            targetFound = d
+                            break
+                        end
+                    end
+                    if targetFound then break end
+                end
+                if targetFound then break end
+            end
+
+            if targetFound and targetFound:IsA("BasePart") then
+                local pos = targetFound.CFrame.Position
+
+                if not GameData.platform or not GameData.platform.Parent then
+                    GameData.platform = Instance.new("Part")
+                    GameData.platform.Anchored = true
+                    GameData.platform.CanCollide = true
+                    GameData.platform.Transparency = 1
+                    GameData.platform.Size = Vector3.new(10, 1, 10)
+                    GameData.platform.Parent = workspace
+                end
+
+                GameData.platform.Position = pos + Vector3.new(0,5,0)
+                GameData.hrp.CFrame = CFrame.new(GameData.platform.Position + Vector3.new(0, 3, 0))
+
+                GameData.atEvent = true
+            else
+                if GameData.atEvent and GameData.savedCFrame then
+                    GameData.hrp.CFrame = GameData.savedCFrame + Vector3.new(0,5,0)
+                    GameData.atEvent = false
+                    if GameData.platform then GameData.platform:Destroy() GameData.platform = nil end
+                end
+            end
+        end
+    end
+end)
+
+
+GameData.player.CharacterAdded:Connect(function()
+    task.wait(0.2)
+    GameData.hrp = GameData.player.Character:WaitForChild("HumanoidRootPart")
+end)
 
 sections.Quest:Header({
 	Name = "View Quest Status"
@@ -2723,12 +3347,9 @@ sections.Quest1:Toggle({
 }, "IronCafeToggle")
 
 sections.Auto:Header({
-	Name = "Auto Favorite & Trade"
+	Name = "Auto Favorite"
 })
 
--- ========================================================================
---  BAGIAN REMOTE, REPLION, UTIL, STATE
--- ========================================================================
 local Net = require(ReplicatedStorage.Packages.Net)
 local ReplionClient = require(ReplicatedStorage.Packages.Replion).Client
 local DataReplion = ReplionClient:WaitReplion("Data")
@@ -2736,12 +3357,6 @@ local ItemUtility = require(ReplicatedStorage.Shared.ItemUtility)
 
 -- Remotes
 local FavoriteRemote = Net:RemoteEvent("FavoriteItem")
-local TradeRemote = ReplicatedStorage
-	:WaitForChild("Packages")
-	:WaitForChild("_Index")
-	:WaitForChild("sleitnick_net@0.2.0")
-	:WaitForChild("net")
-	:WaitForChild("RF/InitiateTrade")
 
 local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
 
@@ -2749,20 +3364,13 @@ local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
 -- STATE
 -- ========================================================================
 local state = {
-	selectedTiers = {},
+    selectedTiers = {},
 
-	autoFavorite = false,
-	autoUnfavorite = false,
-	autoTrade = false,
+    autoFavorite = false,
+    autoUnfavorite = false,
 
-	stopFavorite = false,
-	stopUnfavorite = false,
-	stopTrade = false,
-
-	targetPlayer = "",
-
-	fishTarget = 0,
-	fishCount = 0,
+    stopFavorite = false,
+    stopUnfavorite = false,
 }
 
 local TierList = GameData.TierList
@@ -2775,242 +3383,109 @@ end
 
 -- normalizer dropdown multi
 local function normalize(value)
-	if not value then return {} end
-	if type(value) == "string" then return { value } end
+    if not value then return {} end
+    if type(value) == "string" then return { value } end
 
-	local out = {}
-	for k, v in pairs(value) do
-		if type(k) == "string" and v == true then
-			table.insert(out, k)
-		elseif type(v) == "string" then
-			table.insert(out, v)
-		end
-	end
-	return out
+    local out = {}
+    for k, v in pairs(value) do
+        if type(k) == "string" and v == true then
+            table.insert(out, k)
+        elseif type(v) == "string" then
+            table.insert(out, v)
+        end
+    end
+    return out
 end
 
 local function isTierMatch(itemTier, selected)
-	for _, tName in ipairs(selected) do
-		if nameToTier[tName] == tonumber(itemTier) then
-			return true
-		end
-	end
-	return false
+    for _, tName in ipairs(selected) do
+        if nameToTier[tName] == tonumber(itemTier) then
+            return true
+        end
+    end
+    return false
 end
 
 -- ========================================================================
 -- SAFE CALL
 -- ========================================================================
 local function safeFavorite(uuid)
-	pcall(function()
-		FavoriteRemote:FireServer(uuid)
-	end)
-end
-
-local function safeTrade(userid, uuid)
-	pcall(function()
-		TradeRemote:InvokeServer(userid, uuid)
-	end)
+    pcall(function()
+        FavoriteRemote:FireServer(uuid)
+    end)
 end
 
 -- ========================================================================
 -- WORKER FAVORITE
 -- ========================================================================
 local function workerFavorite()
-	local RATE = 0.06
-	local LOOP_DELAY = 1.1
+    local RATE = 0.06
+    local LOOP_DELAY = 1.1
 
-	while state.autoFavorite do
-		if state.stopFavorite then return end
+    while state.autoFavorite do
+        if state.stopFavorite then return end
 
-		local inventory = DataReplion:GetExpect("Inventory")
-		if inventory and inventory.Items then
-			for _, item in ipairs(inventory.Items) do
-				if state.stopFavorite then return end
+        local inventory = DataReplion:GetExpect("Inventory")
+        if inventory and inventory.Items then
+            for _, item in ipairs(inventory.Items) do
+                if state.stopFavorite then return end
 
-				local ok, data = pcall(function()
-					return ItemUtility.GetItemDataFromItemType("Items", item.Id)
-				end)
+                local ok, data = pcall(function()
+                    return ItemUtility.GetItemDataFromItemType("Items", item.Id)
+                end)
 
-				if ok and data and data.Data then
-					local tier = data.Data.Tier
+                if ok and data and data.Data then
+                    local tier = data.Data.Tier
 
-					if isTierMatch(tier, state.selectedTiers) and not item.Favorited then
-						safeFavorite(item.UUID)
-						task.wait(RATE)
-					end
-				end
-			end
-		end
+                    if isTierMatch(tier, state.selectedTiers) and not item.Favorited then
+                        safeFavorite(item.UUID)
+                        task.wait(RATE)
+                    end
+                end
+            end
+        end
 
-		task.wait(LOOP_DELAY)
-	end
+        task.wait(LOOP_DELAY)
+    end
 end
 
 -- ========================================================================
 -- WORKER UNFAVORITE
 -- ========================================================================
 local function workerUnfavorite()
-	local RATE = 0.06
-	local LOOP_DELAY = 1.1
+    local RATE = 0.06
+    local LOOP_DELAY = 1.1
 
-	while state.autoUnfavorite do
-		if state.stopUnfavorite then return end
+    while state.autoUnfavorite do
+        if state.stopUnfavorite then return end
 
-		local inventory = DataReplion:GetExpect("Inventory")
-		if inventory and inventory.Items then
-			for _, item in ipairs(inventory.Items) do
-				if state.stopUnfavorite then return end
+        local inventory = DataReplion:GetExpect("Inventory")
+        if inventory and inventory.Items then
+            for _, item in ipairs(inventory.Items) do
+                if state.stopUnfavorite then return end
 
-				local ok, data = pcall(function()
-					return ItemUtility.GetItemDataFromItemType("Items", item.Id)
-				end)
+                local ok, data = pcall(function()
+                    return ItemUtility.GetItemDataFromItemType("Items", item.Id)
+                end)
 
-				if ok and data and data.Data then
-					local tier = data.Data.Tier
+                if ok and data and data.Data then
+                    local tier = data.Data.Tier
 
-					if isTierMatch(tier, state.selectedTiers) and item.Favorited then
-						safeFavorite(item.UUID)
-						task.wait(RATE)
-					end
-				end
-			end
-		end
+                    if isTierMatch(tier, state.selectedTiers) and item.Favorited then
+                        safeFavorite(item.UUID)
+                        task.wait(RATE)
+                    end
+                end
+            end
+        end
 
-		task.wait(LOOP_DELAY)
-	end
+        task.wait(LOOP_DELAY)
+    end
 end
 
 -- ========================================================================
--- WORKER TRADE
+-- UI SECTION (TRADE DIHAPUS TOTAL)
 -- ========================================================================
-local function workerTrade()
-	local RATE = 0.15
-	local LOOP_DELAY = 1.0
-
-	while state.autoTrade do
-		if state.stopTrade then return end
-
-		local target = Players:FindFirstChild(state.targetPlayer)
-		if not target then
-			state.autoTrade = false
-			return
-		end
-
-		local inventory = DataReplion:GetExpect({ "Inventory", "Items" }) or {}
-		local list = {}
-
-		for _, item in ipairs(inventory) do
-			local ok, data = pcall(function()
-				return ItemUtility.GetItemDataFromItemType("Items", item.Id)
-			end)
-
-			if ok and data and data.Data then
-				if data.Data.Type == "Fish" and isTierMatch(data.Data.Tier, state.selectedTiers) then
-					table.insert(list, item.UUID)
-				end
-			end
-		end
-
-		if #list == 0 then
-			Window:Notify({
-				Title = "Trade",
-				Description = "No more fish for selected tier",
-			})
-			state.autoTrade = false
-			break
-		end
-
-		for _, uuid in ipairs(list) do
-			if not state.autoTrade then break end
-			safeTrade(target.UserId, uuid)
-			task.wait(RATE)
-		end
-
-		task.wait(LOOP_DELAY)
-	end
-end
-
--- ========================================================================
--- TRADE COMPLETED LISTENER
--- ========================================================================
-local notifGui = player.PlayerGui:WaitForChild("Text Notifications")
-local notifFrame = notifGui:WaitForChild("Frame")
-
-local function checkTradeTile(tile)
-	local header = tile:FindFirstChild("Header")
-
-	if header and header:IsA("TextLabel") then
-		if header.Text == "Trade completed!" then
-
-			state.fishCount = state.fishCount + 1
-
-			Window:Notify({
-				Title = "Trade",
-				Description = "Trade completed! (" .. state.fishCount .. "/" .. state.fishTarget .. ")"
-			})
-
-			if state.fishTarget > 0 and state.fishCount >= state.fishTarget then
-				state.autoTrade = false
-				state.stopTrade = true
-
-				Window:Notify({
-					Title = "Trade",
-					Description = "Trade target reached!"
-				})
-			end
-		end
-	end
-end
-
-for _, tile in ipairs(notifFrame:GetChildren()) do
-	if tile.Name == "TextTile" then
-		checkTradeTile(tile)
-	end
-end
-
-notifFrame.ChildAdded:Connect(function(child)
-	if child.Name == "TextTile" then
-		local header = child:WaitForChild("Header", 5)
-		if header then
-			checkTradeTile(child)
-		end
-	end
-end)
-
--- ========================================================================
--- UI SECTION
--- ========================================================================
-sections.Auto:Input({
-	Name = "Target Player",
-	Placeholder = "Example: Nexa123",
-	Callback = function(text)
-		state.targetPlayer = text
-	end
-}, "PlayerInput")
-
-sections.Auto:Input({
-	Name = "Fish Amount Trade",
-	Placeholder = "Example: 10",
-	AcceptedCharacters = "0123456789",
-	Callback = function(input)
-		local amount = tonumber(input)
-		if amount then
-			state.fishTarget = amount
-			state.fishCount = 0
-
-			Window:Notify({
-				Title = "Trade",
-				Description = "Trade target set: ".. amount
-			})
-		else
-			Window:Notify({
-				Title = "Error",
-				Description = "Input must be a number!"
-			})
-		end
-	end,
-}, "TargetAmountInput")
 
 sections.Auto:Dropdown({
 	Name = "Select Tier(s)",
@@ -3047,16 +3522,6 @@ sections.Auto:Toggle({
 		if b then task.spawn(workerUnfavorite) end
 	end
 }, "AutoUnfavoriteToggle")
-
-sections.Auto:Toggle({
-	Name = "Auto Trade",
-	Default = false,
-	Callback = function(b)
-		state.autoTrade = b
-		state.stopTrade = not b
-		if b then task.spawn(workerTrade) end
-	end
-}, "AutoTradeToggle")
 
 sections.Auto1:Header({
 	Name = "Auto Enchant"
@@ -4304,6 +4769,168 @@ sections.Player:Toggle({
     end
 }, "ViewBobbersToggle")
 
+sections.Player:Toggle({
+    Name = "Infinite Zoom", 
+    Default = false,
+    Callback = function(val)
+
+        GameData.infiniteZoomEnabled = val
+
+        if GameData.infiniteZoomEnabled then
+            -- Enable Infinite Zoom
+            GameData.player.CameraMaxZoomDistance = math.huge
+            GameData.player.CameraMinZoomDistance = 0.5
+        else
+            -- Disable Infinite Zoom (default Roblox values)
+            GameData.player.CameraMaxZoomDistance = 16
+            GameData.player.CameraMinZoomDistance = 0.5
+        end
+
+        Window:Notify({
+            Title = "Infinite Zoom",
+            Description = (GameData.infiniteZoomEnabled and "Enabled " or "Disabled ") .. "Infinite Zoom"
+        })
+    end,
+}, "InfiniteZoomToggle")
+
+-- Initialize folder
+GameData.waterVFXFolder = GameData.RS:WaitForChild("VFX")
+
+
+---------------------------------------------------------
+-- REMOVE VFX TOGGLE
+---------------------------------------------------------
+sections.Player:Toggle({
+    Name = "Remove VFX",
+    Default = false,
+    Callback = function(value)
+
+        Window:Notify({
+            Title = "Remove VFX",
+            Description = (value and "Enabled" or "Disabled")
+        })
+
+        if value then
+
+            -----------------------------------------------------
+            -- DELETE EXISTING VFX + SAVE CLONES
+            -----------------------------------------------------
+            for _, obj in ipairs(GameData.waterVFXFolder:GetChildren()) do
+                if not GameData.storedVFX[obj.Name] then
+                    GameData.storedVFX[obj.Name] = obj:Clone()
+                end
+                obj:Destroy()
+            end
+
+            -----------------------------------------------------
+            -- DELETE NEWLY ADDED VFX AUTOMATICALLY
+            -----------------------------------------------------
+            if not GameData.childAddedConn then
+                GameData.childAddedConn = GameData.waterVFXFolder.ChildAdded:Connect(function(obj)
+                    task.wait(0.05)
+                    if obj and sections.Player:Get("RemoveVFXToggle") then
+
+                        if not GameData.storedVFX[obj.Name] then
+                            GameData.storedVFX[obj.Name] = obj:Clone()
+                        end
+
+                        obj:Destroy()
+                    end
+                end)
+            end
+
+        else
+
+            -----------------------------------------------------
+            -- DISABLE LISTENER
+            -----------------------------------------------------
+            if GameData.childAddedConn then
+                GameData.childAddedConn:Disconnect()
+                GameData.childAddedConn = nil
+            end
+
+            -----------------------------------------------------
+            -- RESTORE ALL SAVED VFX
+            -----------------------------------------------------
+            for name, clone in pairs(GameData.storedVFX) do
+                if not GameData.waterVFXFolder:FindFirstChild(name) then
+                    clone:Clone().Parent = GameData.waterVFXFolder
+                end
+            end
+
+            GameData.storedVFX = {}
+        end
+    end,
+}, "RemoveVFXToggle")
+
+-- Character Handler
+GameData.character = GameData.player.Character or GameData.player.CharacterAdded:Wait()
+GameData.hrp = GameData.character:WaitForChild("HumanoidRootPart")
+
+GameData.player.CharacterAdded:Connect(function(char)
+    GameData.character = char
+    GameData.hrp = char:WaitForChild("HumanoidRootPart")
+end)
+
+
+---------------------------------------------------------
+-- 🌊 WALK ON WATER TOGGLE
+---------------------------------------------------------
+sections.Player:Toggle({ 
+    Name = "Walk On Water", 
+    Default = false,
+    Callback = function(value)
+
+        Window:Notify({
+            Title = "Walk On Water",
+            Description = (value and "Enabled" or "Disabled")
+        })
+
+        if value then
+
+            -- Create platform if not exist
+            if not GameData.waterPlatform then
+                GameData.waterPlatform = Instance.new("Part")
+                GameData.waterPlatform.Name = "WaterWalkPlatform"
+                GameData.waterPlatform.Size = Vector3.new(15, 1, 15)
+                GameData.waterPlatform.Anchored = true
+                GameData.waterPlatform.CanCollide = false
+                GameData.waterPlatform.Transparency = 1
+                GameData.waterPlatform.Material = Enum.Material.SmoothPlastic
+                GameData.waterPlatform.Parent = workspace
+            end
+
+            -- create heartbeat loop
+            if not GameData.connection then
+                GameData.connection = GameData.RunService.Heartbeat:Connect(function()
+                    if not GameData.waterPlatform or not GameData.hrp then return end
+
+                    GameData.waterPlatform.Position = Vector3.new(
+                        GameData.hrp.Position.X,
+                        GameData.waterHeight,
+                        GameData.hrp.Position.Z
+                    )
+
+                    GameData.waterPlatform.CanCollide =
+                        GameData.hrp.Position.Y > GameData.waterHeight
+                end)
+            end
+
+        else
+            -- Disable all
+            if GameData.connection then
+                GameData.connection:Disconnect()
+                GameData.connection = nil
+            end
+
+            if GameData.waterPlatform then
+                GameData.waterPlatform:Destroy()
+                GameData.waterPlatform = nil
+            end
+        end
+    end,
+}, "WalkOnWaterToggle")
+
 sections.Player:Button({
     Name = "Boost FPS",
     Callback = function()
@@ -4401,7 +5028,7 @@ sections.Player:Button({
 }, "ReduceLagButton")
 
 sections.Player1:Header({
-	Name = "Player"
+	Name = "User Settings"
 })
 
 ----------------------------------------------------
@@ -4532,13 +5159,73 @@ sections.Player1:Toggle({
 }, "GravityToggle")
 
 
+
+sections.Player1:Header({
+	Name = "UI Settings"
+})
+
+-----------------------------
+-- WINDOW WIDTH INPUT
+-----------------------------
+sections.Player1:Input({
+    Name = "Window Width",
+    Placeholder = "800",
+    AcceptedCharacters = "Numbers",
+    Callback = function(val)
+        GameData.inputValue = val
+        GameData.windowWidth = tonumber(GameData.inputValue)
+
+        if GameData.windowWidth then
+            GameData.currentSize = Window:GetSize()
+            Window:SetSize(UDim2.fromOffset(GameData.windowWidth, GameData.currentSize.Y.Offset))
+        end
+    end
+})
+
+-----------------------------
+-- WINDOW HEIGHT INPUT
+-----------------------------
+sections.Player1:Input({
+    Name = "Window Height",
+    Placeholder = "500",
+    AcceptedCharacters = "Numbers",
+    Callback = function(val)
+        GameData.inputValue = val
+        GameData.windowHeight = tonumber(GameData.inputValue)
+
+        if GameData.windowHeight then
+            GameData.currentSize = Window:GetSize()
+            Window:SetSize(UDim2.fromOffset(GameData.currentSize.X.Offset, GameData.windowHeight))
+        end
+    end
+})
+
+
+-----------------------------
+-- WINDOW SCALE INPUT
+-----------------------------
+sections.Player1:Input({
+    Name = "Window Scale",
+    Placeholder = "0.70",
+    AcceptedCharacters = "Numbers",
+    Callback = function(val)
+        GameData.inputValue = val
+        GameData.windowScale = tonumber(GameData.inputValue)
+
+        if GameData.windowScale then
+            Window:SetScale(GameData.windowScale)
+        end
+    end
+})
+
+
 -- Config
 
 MacLib:SetFolder("Maclib")
 tabs.Config:InsertConfigSection("Left") -- karena yang ada adalah 'Config'
 
 Window.onUnloaded(function()
-	print("Unloaded!")
+	print("Unloaded! Enjoyy my script :)")
 end)
 
 tabs.Fishing:Select() -- pilih tab yang benar-benar ada
@@ -4547,7 +5234,7 @@ MacLib:LoadAutoLoadConfig()
 
 
 -------------------------------------------------------------
--- SCREEN GUI
+-- CREATE TOGGLE GUI
 -------------------------------------------------------------
 GameData.ScreenGui = Instance.new("ScreenGui")
 GameData.ScreenGui.Name = "NexaUIToggle"
@@ -4604,7 +5291,7 @@ GameData.ToggleBtn.BackgroundTransparency = 1
 GameData.ToggleBtn.Image = "rbxassetid://123906607434048"
 
 -------------------------------------------------------------
--- DRAG FUNCTIONS (NO LOCAL)
+-- DRAG FUNCTIONS
 -------------------------------------------------------------
 GameData.beginDrag = function(input)
     GameData.Dragging = true
@@ -4633,7 +5320,7 @@ for _, obj in ipairs({GameData.ToggleFrame, GameData.ToggleBtn}) do
     obj.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
-            
+
             GameData.beginDrag(input)
 
             input.Changed:Connect(function()
@@ -4673,4 +5360,18 @@ GameData.ToggleBtn.MouseButton1Click:Connect(function()
     if Window and Window.SetState then
         Window:SetState(GameData.uiVisible)
     end
+end)
+
+-------------------------------------------------------------
+-- DELETE TOGGLE WHEN WINDOW CLOSED
+-------------------------------------------------------------
+Window.onUnloaded(function()
+    print("NexaHub Window Closed")
+
+    if GameData.ScreenGui then
+        GameData.ScreenGui:Destroy()
+        GameData.ScreenGui = nil
+    end
+
+    GameData.uiVisible = false
 end)
