@@ -963,7 +963,7 @@ sections.Fishing:Header({
 })
 
 -- buat label
-GameData.statusLabel = sections.Main:Label({
+GameData.statusLabel = sections.Fishing:Label({
     Text = "Loading...."
 })
 
