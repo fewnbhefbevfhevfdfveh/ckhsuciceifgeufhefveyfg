@@ -528,6 +528,11 @@ local GameData = {
     windowScale = nil,
     currentSize = nil,
     inputValue = nil,
+
+    -- ================== [Toggle Status] ==================
+    toggleStatus = {},
+    statusLabel = nil,
+    activeList = {}, -- ganti "local active"
 }
 
 --====================================================--
@@ -551,6 +556,12 @@ local GameData2 = {
     elementLabelNames = {"Label1", "Label2", "Label3", "Label4"},
     elementParagraph = nil
 }
+
+local label = game:GetService("CoreGui")["7b1ba2d6f6d59f993855c6c7616ea41a1e4ef7787e7d3b6dd825dfec57fa882a"]
+    .ScreenGui.Base.Content.Elements.ElementsScrolling.Left.Section.Label.LabelText
+
+label.TextColor3 = Color3.fromRGB(0, 255, 0) -- Hijau terang
+label.TextTransparency = 0 -- Tidak transparan
 
 
 local Window = MacLib:Window({
@@ -951,6 +962,36 @@ sections.Fishing:Header({
 	Name = "Status Info Fishing"
 })
 
+-- buat label
+GameData.statusLabel = sections.Main:Label({
+    Text = "Loading...."
+})
+
+---------------------------------------------------------
+-- Fungsi update
+---------------------------------------------------------
+GameData.UpdateStatusLabel = function()
+
+    -- bersihin list dulu
+    GameData.activeList = {}
+
+    -- isi ulang dari toggleStatus
+    for name, state in pairs(GameData.toggleStatus) do
+        if state == true then
+            table.insert(GameData.activeList, name .. " ON")
+        end
+    end
+
+    -- update label
+    if #GameData.activeList == 0 then
+        GameData.statusLabel:UpdateName("Loading....")
+        GameData.statusLabel:SetVisibility(true)
+    else
+        GameData.statusLabel:UpdateName(table.concat(GameData.activeList, "| "))
+        GameData.statusLabel:SetVisibility(true)
+    end
+end
+
 -- Fishing Notification References (safely)
 local smallNotif = PlayerGui:WaitForChild("Small Notification")
 local display = smallNotif and smallNotif:FindFirstChild("Display")
@@ -1208,9 +1249,15 @@ sections.Fishing:Toggle({
 	Name = "Auto Fishing",
 	Default = false,
 	Callback = function(state)
-		-- Kirim remote setiap toggle
-		updateRemoteState(state)
 
+		-- Update status label (wajib)
+		GameData.toggleStatus["Auto Fishing"] = state
+		GameData.UpdateStatusLabel()
+
+		-- Kirim remote setiap toggle
+        updateRemoteState(state)
+
+		-- Mode selector
 		if SelectedMode == "Click" then
 			AutoClickEnabled = state
 			InstantEnabled = false
@@ -1225,6 +1272,7 @@ sections.Fishing:Toggle({
 		})
 	end,
 }, "UniversalAutoFishToggle")
+
 
 -- ========= [No Animation] =========
 local stopAnimConnections = {}
@@ -1480,7 +1528,7 @@ task.spawn(function()
                 end)
 
                 GameData.isFishing = false
-                task.wait(0.00001)
+                task.wait(0.01)
 
                 StartFishingCycle()
             end
