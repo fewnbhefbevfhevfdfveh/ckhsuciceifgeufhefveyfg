@@ -437,6 +437,31 @@ local GameData = {
     LastProcessed = {},
     PROCESS_COOLDOWN = 1.0,
 
+    -- ================== [Fishing Counter] ==================
+
+    PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"),
+
+    -- Fishing Notification References
+    smallNotif = nil,
+    display = nil,
+    container = nil,
+    notifications = nil,
+    notifFrame = nil,
+
+    -- Counter numbers
+    successCount = 0,
+    failCount = 0,
+
+    -- Connections
+    successConn = nil,
+    failConn = nil,
+
+    -- UI Objects
+    fishingCounter = nil,
+
+    -- Success Position
+    successPos = UDim2.new(0.5, 0, 0.1, 0),
+
     -- ================== [Image Botton] ==================
 
     TweenService = game:GetService("TweenService"),
@@ -990,72 +1015,68 @@ GameData.UpdateStatusLabel = function()
     GameData.statusLabel:SetVisibility(true)
 end
 
+sections.Fishing:Divider()
 
--- Fishing Notification References (safely)
-local smallNotif = PlayerGui:WaitForChild("Small Notification")
-local display = smallNotif and smallNotif:FindFirstChild("Display")
-local container = display and display:FindFirstChild("Container")
+GameData.smallNotif = GameData.PlayerGui:WaitForChild("Small Notification")
+GameData.display = GameData.smallNotif and GameData.smallNotif:FindFirstChild("Display")
+GameData.container = GameData.display and GameData.display:FindFirstChild("Container")
 
-local notifications = PlayerGui:FindFirstChild("Text Notifications")
-local notifFrame = notifications and notifications:FindFirstChild("Frame")
+GameData.notifications = GameData.PlayerGui:FindFirstChild("Text Notifications")
+GameData.notifFrame = GameData.notifications and GameData.notifications:FindFirstChild("Frame")
 
-local successPos = UDim2.new(0.5, 0, 0.100000001, 0)
-
--- Counter
-local successCount = 0
-local failCount = 0
-
--- Buat Paragraph UI untuk counter
-local fishingCounter = sections.Fishing:Paragraph({
+-- Buat counter UI
+GameData.fishingCounter = sections.Fishing:Paragraph({
     Header = "🎣 Fishing Counter",
     Body = "✅ Success: 0  |  ❌ Failed: 0"
 }, "FishingCounterFlag")
 
--- Function untuk update teks UI
-local function updateCounter()
-    if fishingCounter and fishingCounter.UpdateBody then
-        fishingCounter:UpdateBody("✅ Success: " .. successCount .. "  |  ❌ Failed: " .. failCount)
+-- ============================================================
+-- UPDATE COUNTER FUNCTION
+-- ============================================================
+function GameData.updateCounter()
+    if GameData.fishingCounter and GameData.fishingCounter.UpdateBody then
+        GameData.fishingCounter:UpdateBody(
+            '<font color="rgb(0,255,0)">✅ Success: ' .. GameData.successCount .. '</font>' ..
+            '  |  ' ..
+            '<font color="rgb(255,0,0)">❌ Failed: ' .. GameData.failCount .. '</font>'
+        )
     end
 end
 
--- Safety: store connections so we can disconnect later if needed
-local successConn, failConn
-
 -- ============================================================
--- Success Detector
+-- SUCCESS DETECTOR
 -- ============================================================
-if container then
-    successConn = container:GetPropertyChangedSignal("Position"):Connect(function()
-        if container.Position == successPos then
-            successCount = successCount + 1
-            updateCounter()
+if GameData.container then
+    GameData.successConn = GameData.container:GetPropertyChangedSignal("Position"):Connect(function()
+        if GameData.container.Position == GameData.successPos then
+            GameData.successCount += 1
+            GameData.updateCounter()
         end
     end)
 else
     warn("Container not found; success detector not connected.")
 end
 
-
 -- ============================================================
--- Fail Detector
+-- FAIL DETECTOR
 -- ============================================================
-if notifFrame then
-    failConn = notifFrame.ChildAdded:Connect(function(child)
+if GameData.notifFrame then
+    GameData.failConn = GameData.notifFrame.ChildAdded:Connect(function(child)
         if child and child.Name == "TextTile" then
             local header = child:FindFirstChild("Header")
             if header and header:IsA("TextLabel") then
-
-                -- Jika langsung spawn dengan text gagal
+                
+                -- Direct spawn text
                 if header.Text == "The fish got away!" then
-                    failCount = failCount + 1
-                    updateCounter()
+                    GameData.failCount += 1
+                    GameData.updateCounter()
                 end
 
-                -- Jika text berubah kemudian
+                -- If text changes after spawn
                 header:GetPropertyChangedSignal("Text"):Connect(function()
                     if header.Text == "The fish got away!" then
-                        failCount = failCount + 1
-                        updateCounter()
+                        GameData.failCount += 1
+                        GameData.updateCounter()
                     end
                 end)
             end
@@ -1065,22 +1086,22 @@ else
     warn("notifFrame not found; fail detector not connected.")
 end
 
-
 -- ============================================================
 -- INITIALIZE UI
 -- ============================================================
-if fishingCounter and fishingCounter.SetVisibility then
-    fishingCounter:SetVisibility(true)
+if GameData.fishingCounter and GameData.fishingCounter.SetVisibility then
+    GameData.fishingCounter:SetVisibility(true)
 end
-updateCounter()
+GameData.updateCounter()
 
 -- ============================================================
--- Optional cleanup if needed later:
+-- CLEANUP FUNCTION
 -- ============================================================
-local function cleanup()
-    if successConn then successConn:Disconnect() end
-    if failConn then failConn:Disconnect() end
+function GameData.cleanup()
+    if GameData.successConn then GameData.successConn:Disconnect() end
+    if GameData.failConn then GameData.failConn:Disconnect() end
 end
+
 
 sections.Fishing:Header({
 	Name = "Fishing Feature"
