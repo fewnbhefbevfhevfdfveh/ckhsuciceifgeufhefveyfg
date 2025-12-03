@@ -955,20 +955,20 @@ sections.Fishing:Header({
 	Name = "Status Info Fishing"
 })
 
--- Label status toggle
-GameData.statusLabel = sections.Main:Label({
-    Text = '<font color="rgb(255,0,0)">Tidak ada toggle aktif</font>'
+-- Label awal
+GameData.statusLabel = sections.Fishing:Label({
+    Text = 'Status Offline: <font color="rgb(255,0,0)">.....</font>'
 })
 
 ---------------------------------------------------------
--- Fungsi Update Label (Dengan Warna Hijau Untuk ON)
+-- Fungsi Update Label (DIPERBAIKI)
 ---------------------------------------------------------
 GameData.UpdateStatusLabel = function()
 
-    -- Bersihkan list
+    -- Reset list
     GameData.activeList = {}
 
-    -- Cari toggle yang ON
+    -- Ambil toggle ON saja
     for name, state in pairs(GameData.toggleStatus) do
         if state == true then
             table.insert(
@@ -978,15 +978,18 @@ GameData.UpdateStatusLabel = function()
         end
     end
 
-    -- Update label
+    -- Jika tidak ada toggle yang aktif
     if #GameData.activeList == 0 then
-        GameData.statusLabel:UpdateName('<font color="rgb(255,0,0)">Tidak ada toggle aktif</font>')
+        GameData.statusLabel:UpdateName('Status Offline: <font color="rgb(255,0,0)">.....</font>')
     else
-        GameData.statusLabel:UpdateName(table.concat(GameData.activeList, ", "))
+        GameData.statusLabel:UpdateName(
+            'Status Online: ' .. table.concat(GameData.activeList, ", ")
+        )
     end
 
     GameData.statusLabel:SetVisibility(true)
 end
+
 
 -- Fishing Notification References (safely)
 local smallNotif = PlayerGui:WaitForChild("Small Notification")
