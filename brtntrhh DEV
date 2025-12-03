@@ -532,7 +532,7 @@ local GameData = {
     -- ================== [Toggle Status] ==================
     toggleStatus = {},
     statusLabel = nil,
-    activeList = {}, -- ganti "local active"
+    activeList = {},
 }
 
 --====================================================--
@@ -955,34 +955,37 @@ sections.Fishing:Header({
 	Name = "Status Info Fishing"
 })
 
--- buat label
+-- Label status toggle
 GameData.statusLabel = sections.Fishing:Label({
-    Text = "Loading...."
+    Text = 'Status Offline: <font color="rgb(255,0,0)">.....</font>'
 })
 
 ---------------------------------------------------------
--- Fungsi update
+-- Fungsi Update Label (Dengan Warna Hijau Untuk ON)
 ---------------------------------------------------------
 GameData.UpdateStatusLabel = function()
 
-    -- bersihin list dulu
+    -- Bersihkan list
     GameData.activeList = {}
 
-    -- isi ulang dari toggleStatus
+    -- Cari toggle yang ON
     for name, state in pairs(GameData.toggleStatus) do
         if state == true then
-            table.insert(GameData.activeList, name .. " ON")
+            table.insert(
+                GameData.activeList,
+                'Status Online: <font color="rgb(0,255,0)">' .. name .. ' ON</font>'
+            )
         end
     end
 
-    -- update label
+    -- Update label
     if #GameData.activeList == 0 then
-        GameData.statusLabel:UpdateName("Loading....")
-        GameData.statusLabel:SetVisibility(true)
+        GameData.statusLabel:UpdateName('Status Offline: <font color="rgb(255,0,0)">.....</font>')
     else
-        GameData.statusLabel:UpdateName(table.concat(GameData.activeList, "| "))
-        GameData.statusLabel:SetVisibility(true)
+        GameData.statusLabel:UpdateName(table.concat(GameData.activeList, ", "))
     end
+
+    GameData.statusLabel:SetVisibility(true)
 end
 
 -- Fishing Notification References (safely)
@@ -1244,7 +1247,7 @@ sections.Fishing:Toggle({
 	Callback = function(state)
 
 		-- Update status label (wajib)
-		GameData.toggleStatus["Auto Fishing"] = state
+		GameData.toggleStatus["Normal Fishing"] = state
 		GameData.UpdateStatusLabel()
 
 		-- Kirim remote setiap toggle
@@ -1322,9 +1325,16 @@ sections.Fishing:Toggle({
     Name = "No Animation",
     Default = false,
     Callback = function(state)
+
+        -- Update status toggle
+        GameData.toggleStatus["No Animation"] = state
+        GameData.UpdateStatusLabel()
+
+        -- Logic asli kamu
         setGameAnimationsEnabled(state)
     end,
 })
+
 
 GameData.Player = GameData.SVC.Players.LocalPlayer
 GameData.Net = GameData.SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
@@ -1340,6 +1350,12 @@ sections.Fishing:Toggle({
 	Name = "Skip Rarity",
 	Default = false,
 	Callback = function(state)
+
+		-- Sistem status toggle
+		GameData.toggleStatus["Skip Rarity"] = state
+		GameData.UpdateStatusLabel()
+
+		-- Logic asli kamu
 		GameData.SkipState.Enabled = state
 
 		Window:Notify({
@@ -1574,6 +1590,12 @@ sections.Fishing:Toggle({
     Name = "Instant Fishing",
     Default = false,
     Callback = function(state)
+
+        -- Tambahan status toggle
+        GameData.toggleStatus["Instant Fishing"] = state
+        GameData.UpdateStatusLabel()
+
+        -- Logic asli kamu
         GameData.autoFishingEnabled = state
 
         if state then
@@ -1588,6 +1610,7 @@ sections.Fishing:Toggle({
         })
     end,
 }, "InstantFishingToggle")
+
 
 sections.Fishing:Input({
     Name = "Cast Delay",
