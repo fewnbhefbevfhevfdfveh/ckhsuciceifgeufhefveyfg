@@ -532,7 +532,7 @@ local GameData = {
     -- ================== [Toggle Status] ==================
     toggleStatus = {},
     statusLabel = nil,
-    activeList = {}, -- ganti "local active"
+    activeList = {},
 }
 
 --====================================================--
@@ -556,13 +556,6 @@ local GameData2 = {
     elementLabelNames = {"Label1", "Label2", "Label3", "Label4"},
     elementParagraph = nil
 }
-
-local label = game:GetService("CoreGui")["7b1ba2d6f6d59f993855c6c7616ea41a1e4ef7787e7d3b6dd825dfec57fa882a"]
-    .ScreenGui.Base.Content.Elements.ElementsScrolling.Left.Section.Label.LabelText
-
-label.TextColor3 = Color3.fromRGB(0, 255, 0) -- Hijau terang
-label.TextTransparency = 0 -- Tidak transparan
-
 
 local Window = MacLib:Window({
     Title = "NexaHub",
@@ -962,34 +955,37 @@ sections.Fishing:Header({
 	Name = "Status Info Fishing"
 })
 
--- buat label
+-- Label status toggle
 GameData.statusLabel = sections.Fishing:Label({
-    Text = "Loading...."
+    Text = '<font color="rgb(255,0,0)">Tidak ada toggle aktif</font>'
 })
 
 ---------------------------------------------------------
--- Fungsi update
+-- Fungsi Update Label (Dengan Warna Hijau Untuk ON)
 ---------------------------------------------------------
 GameData.UpdateStatusLabel = function()
 
-    -- bersihin list dulu
+    -- Bersihkan list
     GameData.activeList = {}
 
-    -- isi ulang dari toggleStatus
+    -- Cari toggle yang ON
     for name, state in pairs(GameData.toggleStatus) do
         if state == true then
-            table.insert(GameData.activeList, name .. " ON")
+            table.insert(
+                GameData.activeList,
+                '<font color="rgb(0,255,0)">' .. name .. ' ON</font>'
+            )
         end
     end
 
-    -- update label
+    -- Update label
     if #GameData.activeList == 0 then
-        GameData.statusLabel:UpdateName("Loading....")
-        GameData.statusLabel:SetVisibility(true)
+        GameData.statusLabel:UpdateName('<font color="rgb(255,0,0)">Tidak ada toggle aktif</font>')
     else
-        GameData.statusLabel:UpdateName(table.concat(GameData.activeList, "| "))
-        GameData.statusLabel:SetVisibility(true)
+        GameData.statusLabel:UpdateName(table.concat(GameData.activeList, ", "))
     end
+
+    GameData.statusLabel:SetVisibility(true)
 end
 
 -- Fishing Notification References (safely)
@@ -1251,7 +1247,7 @@ sections.Fishing:Toggle({
 	Callback = function(state)
 
 		-- Update status label (wajib)
-		GameData.toggleStatus["Auto Fishing"] = state
+		GameData.toggleStatus["Normal Fishing"] = state
 		GameData.UpdateStatusLabel()
 
 		-- Kirim remote setiap toggle
@@ -1329,9 +1325,16 @@ sections.Fishing:Toggle({
     Name = "No Animation",
     Default = false,
     Callback = function(state)
+
+        -- Update status toggle
+        GameData.toggleStatus["No Animation"] = state
+        GameData.UpdateStatusLabel()
+
+        -- Logic asli kamu
         setGameAnimationsEnabled(state)
     end,
 })
+
 
 GameData.Player = GameData.SVC.Players.LocalPlayer
 GameData.Net = GameData.SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
@@ -1347,6 +1350,12 @@ sections.Fishing:Toggle({
 	Name = "Skip Rarity",
 	Default = false,
 	Callback = function(state)
+
+		-- Sistem status toggle
+		GameData.toggleStatus["Skip Rarity"] = state
+		GameData.UpdateStatusLabel()
+
+		-- Logic asli kamu
 		GameData.SkipState.Enabled = state
 
 		Window:Notify({
@@ -1581,6 +1590,12 @@ sections.Fishing:Toggle({
     Name = "Instant Fishing",
     Default = false,
     Callback = function(state)
+
+        -- Tambahan status toggle
+        GameData.toggleStatus["Instant Fishing"] = state
+        GameData.UpdateStatusLabel()
+
+        -- Logic asli kamu
         GameData.autoFishingEnabled = state
 
         if state then
@@ -1595,6 +1610,7 @@ sections.Fishing:Toggle({
         })
     end,
 }, "InstantFishingToggle")
+
 
 sections.Fishing:Input({
     Name = "Cast Delay",
