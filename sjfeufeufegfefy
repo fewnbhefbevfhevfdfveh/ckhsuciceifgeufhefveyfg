@@ -558,6 +558,29 @@ local GameData = {
     toggleStatus = {},
     statusLabel = nil,
     activeList = {},
+
+    -- ================== [Anti AFK Time] ==================
+
+    UserInputService = game:GetService("UserInputService"),
+
+    intervalMinutes = 15,
+    showSeconds = 10,
+
+    lastInput = tick(),
+
+    AntiAFKParagraph = nil,
+
+    runtime = {
+        totalSeconds = 0,
+        minutes = 0,
+        seconds = 0,
+    },
+
+    connections = {
+        began = nil,
+        changed = nil,
+        ended = nil,
+    },
 }
 
 --====================================================--
@@ -5054,6 +5077,58 @@ sections.Player:Button({
 sections.Player1:Header({
 	Name = "User Settings"
 })
+
+-- Paragraph UI
+GameData.AntiAFKParagraph = sections.Player1:Paragraph({
+    Header = "Anti AFK Time",
+    Body = "AFK: 0 Min 0 Sec"
+})
+
+
+----------------------------------------------------
+-- RESET AFK SAAT PLAYER BERGERAK
+----------------------------------------------------
+function GameData.resetAFK()
+    GameData.lastInput = tick()
+end
+
+GameData.connections.began =
+    GameData.UserInputService.InputBegan:Connect(GameData.resetAFK)
+
+GameData.connections.changed =
+    GameData.UserInputService.InputChanged:Connect(GameData.resetAFK)
+
+GameData.connections.ended =
+    GameData.UserInputService.InputEnded:Connect(GameData.resetAFK)
+
+
+----------------------------------------------------
+-- LOOP UTAMA
+----------------------------------------------------
+task.spawn(function()
+    while true do
+        task.wait(1)
+
+        -- ⛔ Tidak ada local ⛔
+        GameData.runtime.totalSeconds = math.floor(tick() - GameData.lastInput)
+        GameData.runtime.minutes = math.floor(GameData.runtime.totalSeconds / 60)
+        GameData.runtime.seconds = GameData.runtime.totalSeconds % 60
+
+        GameData.AntiAFKParagraph:UpdateBody(
+            "AFK: " ..
+            GameData.runtime.minutes .. " Min " ..
+            GameData.runtime.seconds .. " Sec"
+        )
+
+        if GameData.runtime.totalSeconds >= GameData.intervalMinutes * 60 then
+            GameData.UserInputService.MouseIconEnabled = true
+            task.wait(GameData.showSeconds)
+            GameData.UserInputService.MouseIconEnabled = false
+
+            GameData.lastInput = tick()
+        end
+    end
+end)
 
 ----------------------------------------------------
 -- =============== FUNCTIONS =======================
