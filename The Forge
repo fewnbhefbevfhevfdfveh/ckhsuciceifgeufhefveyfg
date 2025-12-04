@@ -1,0 +1,737 @@
+local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
+
+local GameData = {
+    -- ================== [Auto Equip Tool] ==================
+
+    Players = game:GetService("Players"),
+    player = nil,
+    char = nil,
+
+    selectedTool = "Pickaxe",
+    autoEquipEnabled = false,
+
+    -- ================== [Auto Farm Mob] ==================
+
+    TweenService = game:GetService("TweenService"),
+    Players = game:GetService("Players"),
+    RunService = game:GetService("RunService"),
+
+    player = nil,
+    char = nil,
+    hrp = nil,
+
+    LivingFolder = workspace:WaitForChild("Living"),
+
+    selectedMob = "Zombie",
+    tweenSpeed = 16,
+    autoFarm1Enabled = false,
+    mobDistance = 5,
+
+    activeTween = nil,
+    targetMob = nil,
+
+    mobKeywords = {
+        ["Zombie"] = "Zombie",
+        ["Brute Zombie"] = "Brute Zombie",
+        ["Delver Zombie"] = "Delver Zombie",
+        ["EliteZombie"] = "EliteZombie",
+    },
+
+    bv = nil,
+    bg = nil,
+    heartbeatConnection = nil,
+
+    -- ================== [Auto Lock Mob] ==================
+
+    Players = game:GetService("Players"),
+    RunService = game:GetService("RunService"),
+
+    player = nil,
+
+    DownFacingLoop = nil,
+    SavedAnimate = nil,
+
+    char = nil,
+    root = nil,
+    humanoid = nil,
+    -- ================== [Global Settings] ==================
+    
+    userInfoState = nil,
+    notifState = nil,
+    blurState = nil,
+    GS_UserInfo = nil,
+    GS_Notifications = nil,
+    GS_Blur = nil,
+
+    -- ================== [Window Settings] ==================
+
+    windowWidth = nil,
+    windowHeight = nil,
+    windowScale = nil,
+    currentSize = nil,
+    inputValue = nil,
+}
+
+local Window = MacLib:Window({
+    Title = "NexaHub",
+    Subtitle = "The Forge - Dev | V0.0.0",
+    Size = UDim2.fromOffset(800, 500),
+    DragStyle = 2,
+    DisabledWindowControls = {},
+    ShowUserInfo = true,
+    Keybind = Enum.KeyCode.G,
+    AcrylicBlur = true,
+})
+
+Window:SetSize(UDim2.fromOffset(800, 500))
+Window:SetScale(0.70)
+
+Window:SetUserInfoState(true)
+GameData.userInfoState = Window:GetUserInfoState()
+
+GameData.GS_UserInfo = Window:GlobalSetting({
+    Name = "Hide User Info",
+    Default = false,
+    Callback = function(state)
+        GameData.userInfoState = state
+        Window:SetUserInfoState(not GameData.userInfoState)
+    end,
+})
+
+
+----------------------------------------------------
+-- NOTIFICATIONS STATE
+----------------------------------------------------
+Window:SetNotificationsState(true)
+GameData.notifState = Window:GetNotificationsState()
+
+GameData.GS_Notifications = Window:GlobalSetting({
+    Name = "Disable Notifications",
+    Default = false,
+    Callback = function(state)
+        GameData.notifState = state
+        Window:SetNotificationsState(not GameData.notifState)
+    end,
+})
+
+
+----------------------------------------------------
+-- ACRYLIC BLUR STATE
+----------------------------------------------------
+Window:SetAcrylicBlurState(true)
+GameData.blurState = Window:GetAcrylicBlurState()
+
+GameData.GS_Blur = Window:GlobalSetting({
+    Name = "Disable Acrylic Blur",
+    Default = false,
+    Callback = function(state)
+        GameData.blurState = state
+        Window:SetAcrylicBlurState(not GameData.blurState)
+    end,
+})
+
+
+local tabGroups = {
+	TabGroup1 = Window:TabGroup()
+}
+
+local tabs = {
+    Home = tabGroups.TabGroup1:Tab({ Name = "Home", Image = "rbxassetid://103124389616816" }),
+	Farm = tabGroups.TabGroup1:Tab({ Name = "Farm", Image = "rbxassetid://74071689995304" }),
+	Player = tabGroups.TabGroup1:Tab({ Name = "Player", Image = "rbxassetid://105274848905298" }),
+	Config = tabGroups.TabGroup1:Tab({ Name = "Config", Image = "rbxassetid://111411260968321" }),
+}
+local sections = {
+    Home = tabs.Home:Section({ Side = "Left" }),
+    Home1 = tabs.Home:Section({ Side = "Right" }),
+	Farm = tabs.Farm:Section({ Side = "Left" }),
+    Farm1 = tabs.Farm:Section({ Side = "Right" }),
+}
+
+sections.Farm:Header({
+	Name = "Farm Ore"
+})
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+local mapFolders = {
+    workspace.Rocks.Island1CaveStart,
+    workspace.Rocks.Island1CaveMid,
+    workspace.Rocks.Island1CaveDeep,
+    workspace.Rocks.Roof,
+}
+
+local tweenSpeed = 16
+local autoFarmEnabled = false
+
+-- Default pilihan rock = Pebble (selalu tabel)
+local selectedRockTypes = {"Pebble"}
+
+local function tweenTo(targetCF)
+    local distance = (hrp.Position - targetCF.Position).Magnitude
+    local duration = math.max(distance / tweenSpeed, 0.05)
+
+    local tween = TweenService:Create(
+        hrp,
+        TweenInfo.new(duration, Enum.EasingStyle.Linear),
+        {CFarme = targetCF}
+    )
+
+    tween:Play()
+    tween.Completed:Wait()
+end
+
+local function getRockHPLabelByTypes(spawn, rockTypes)
+    for _, rockName in ipairs(rockTypes) do
+        local obj = spawn:FindFirstChild(rockName)
+        if obj then
+            local info = obj:FindFirstChild("infoFarme")
+            if info then
+                local Farme = info:FindFirstChild("Farme")
+                if Farme then
+                    local rockHP = Farme:FindFirstChild("rockHP")
+                    if rockHP and rockHP:IsA("TextLabel") then
+                        return rockHP
+                    end
+                end
+            end
+        end
+    end
+    return nil
+end
+
+local function autoFarmRocks()
+    while autoFarmEnabled do
+        for _, mapFolder in ipairs(mapFolders) do
+            if not autoFarmEnabled then break end
+
+            for _, spawn in ipairs(mapFolder:GetChildren()) do
+                if not autoFarmEnabled then break end
+
+                if spawn.Name == "SpawnLocation" then
+                    local rockHP = getRockHPLabelByTypes(spawn, selectedRockTypes)
+                    if not rockHP then
+                        continue
+                    end
+
+                    local isDead = (rockHP.Text == "0" or rockHP.Text == "0 HP")
+                    if isDead then
+                        continue
+                    end
+
+                    tweenTo(spawn.CFarme)
+
+                    repeat task.wait(0.2)
+                    until (rockHP.Text == "0" or rockHP.Text == "0 HP") or not autoFarmEnabled
+                end
+            end
+        end
+        task.wait(1)
+    end
+end
+
+sections.Farm:Dropdown({
+    Name = "Select Ore", 
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = {"Pebble", "Boulder", "Rock", "Lucky Block"},
+    Default = {"Pebble"},
+    Callback = function(Value)
+        selectedRockTypes = {Value} -- DIBUNGKUS JADI TABLE
+
+        Window:Notify({
+            Title = "Rock Selection",
+            Description = "Selected Ore: " .. Value
+        })
+    end,
+}, "SelectRockDropdown")
+
+sections.Farm:Toggle({
+    Name = "Auto Farm Ore", 
+    Default = false,
+    Callback = function(value)
+        autoFarmEnabled = value
+        Window:Notify({
+            Title = "Auto Farm Ore",
+            Description = (value and "Enabled" or "Disabled")
+        })
+
+        if value then
+            task.spawn(autoFarmRocks)
+        end
+    end,
+}, "ExampleToggle")
+
+sections.Farm:Slider({
+    Name = "Tween Speed Set",
+    Default = 16,
+    Minimum = 1,
+    Maximum = 120,
+    DisplayMethod = "Percent",
+    Callback = function(Value)
+        tweenSpeed = Value
+    end,
+}, "TweenSpeedSlider")
+
+sections.Farm:Header({
+	Name = "Settings Farm"
+})
+
+GameData.player = GameData.Players.LocalPlayer
+GameData.char = GameData.player.Character or GameData.player.CharacterAdded:Wait()
+
+GameData.isHolding = function(toolName)
+    return GameData.char:FindFirstChild(toolName) ~= nil
+end
+
+GameData.equipTool = function(toolName)
+    if GameData.isHolding(toolName) then
+        return
+    end
+
+    local tool = GameData.player.Backpack:FindFirstChild(toolName)
+    if tool then
+        tool.Parent = GameData.char
+    end
+end
+
+GameData.player.CharacterAdded:Connect(function(c)
+    GameData.char = c
+    task.wait(0.3)
+
+    if GameData.autoEquipEnabled and GameData.selectedTool then
+        GameData.equipTool(GameData.selectedTool)
+    end
+end)
+
+GameData.player.Backpack.ChildAdded:Connect(function(child)
+    if GameData.autoEquipEnabled and child.Name == GameData.selectedTool then
+        GameData.equipTool(GameData.selectedTool)
+    end
+end)
+
+sections.Farm:Dropdown({
+    Name = "Select Tool",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = {"Pickaxe", "Weapon"},
+    Default = {"Pickaxe"},
+    Callback = function(Value)
+        for toolName, state in next, Value do
+            if state then
+                GameData.selectedTool = toolName
+            end
+        end
+
+        print("Selected Tool:", GameData.selectedTool)
+
+        if GameData.autoEquipEnabled then
+            GameData.equipTool(GameData.selectedTool)
+        end
+    end,
+}, "EquipDropdown")
+
+sections.Farm:Toggle({
+    Name = "Auto Equip Tool",
+    Default = false,
+    Callback = function(value)
+        GameData.autoEquipEnabled = value
+        
+        Window:Notify({
+            Title = "Equip",
+            Description = (value and "Enabled " or "Disabled ") .. "Tool"
+        })
+
+        if value then
+            GameData.equipTool(GameData.selectedTool)
+        end
+    end,
+}, "AutoEquipToggle")
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local ToolActivated = ReplicatedStorage.Shared.Packages.Knit.Services.ToolService.RF.ToolActivated
+
+local player = Players.LocalPlayer
+local autoAttackEnabled = false
+
+sections.Farm:Toggle({
+    Name = "Auto Attack",
+    Default = false,
+    Callback = function(value)
+        autoAttackEnabled = value
+
+        Window:Notify({
+            Title = "Auto Attack",
+            Description = (value and "Enabled" or "Disabled") .. " Auto Attack"
+        })
+
+        if value then
+            coroutine.wrap(function()
+                while autoAttackEnabled do
+                    local character = player.Character
+                    if character then
+                        -- Cek tool yang sedang dipegang (anak Character yang ClassName = "Tool")
+                        local currentTool = nil
+                        for _, child in ipairs(character:GetChildren()) do
+                            if child:IsA("Tool") then
+                                currentTool = child.Name
+                                break
+                            end
+                        end
+
+                        if currentTool then
+                            ToolActivated:InvokeServer(currentTool)
+                        end
+                    end
+                    wait(0.001) -- delay supaya tidak spam terlalu cepat
+                end
+            end)()
+        end
+    end,
+}, "AutoAttackToggle")
+
+sections.Farm1:Header({
+	Name = "Farm Mob"
+})
+
+GameData.player = GameData.Players.LocalPlayer
+GameData.char = GameData.player.Character or GameData.player.CharacterAdded:Wait()
+GameData.hrp = GameData.char:WaitForChild("HumanoidRootPart")
+
+GameData.isSelectedMob = function(mob)
+    if not mob or not mob.Name then return false end
+    local keyword = GameData.mobKeywords[GameData.selectedMob]
+    if not keyword then return false end
+    return string.find(mob.Name, keyword) ~= nil
+end
+
+GameData.getAliveMob = function()
+    local keyword = GameData.mobKeywords[GameData.selectedMob]
+    if not keyword then return nil end
+
+    for _, mob in pairs(GameData.LivingFolder:GetChildren()) do
+        if string.find(mob.Name, keyword) then
+            local hum = mob:FindFirstChildOfClass("Humanoid")
+            if hum and hum.Health > 0 then
+                return mob
+            end
+        end
+    end
+    return nil
+end
+
+GameData.tweenTo = function(cf)
+    if GameData.activeTween then
+        GameData.activeTween:Cancel()
+    end
+
+    local distance = (GameData.hrp.Position - cf.Position).Magnitude
+    local duration = distance / GameData.tweenSpeed
+    if duration <= 0 then duration = 0.1 end
+
+    local info = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+    local tween = GameData.TweenService:Create(GameData.hrp, info, {CFrame = cf})
+    tween:Play()
+
+    GameData.activeTween = tween
+    return tween
+end
+
+GameData.bv = Instance.new("BodyVelocity")
+GameData.bv.Parent = GameData.hrp
+GameData.bv.MaxForce = Vector3.new(0,0,0)
+GameData.bv.Velocity = Vector3.new(0,0,0)
+
+GameData.bg = Instance.new("BodyGyro")
+GameData.bg.Parent = GameData.hrp
+GameData.bg.MaxTorque = Vector3.new(0,0,0)
+GameData.bg.D = 200
+
+GameData.stopHover = function()
+    if GameData.heartbeatConnection then
+        GameData.heartbeatConnection:Disconnect()
+    end
+    GameData.heartbeatConnection = nil
+
+    GameData.bv.MaxForce = Vector3.new(0,0,0)
+    GameData.bg.MaxTorque = Vector3.new(0,0,0)
+    GameData.bv.Velocity = Vector3.new(0,0,0)
+end
+
+GameData.startHoverFollow = function(head)
+    GameData.stopHover()
+
+    GameData.bv.MaxForce = Vector3.new(1e6,1e6,1e6)
+    GameData.bg.MaxTorque = Vector3.new(1e6,1e6,1e6)
+
+    GameData.heartbeatConnection = GameData.RunService.Heartbeat:Connect(function()
+        if not head or not head.Parent then
+            GameData.stopHover()
+            return
+        end
+
+        local hoverPos = head.Position + Vector3.new(0, GameData.mobDistance, 0)
+        GameData.bv.Velocity = (hoverPos - GameData.hrp.Position) * 3
+        GameData.bg.CFrame = CFrame.new(GameData.hrp.Position, head.Position)
+    end)
+end
+
+
+--====================================================
+-- UPDATE TARGET
+--====================================================
+GameData.updateTarget = function()
+    GameData.targetMob = GameData.getAliveMob()
+end
+
+
+--====================================================
+-- LISTEN FOR NEW MOBS
+--====================================================
+GameData.LivingFolder.ChildAdded:Connect(function(child)
+    if GameData.isSelectedMob(child) then
+        GameData.updateTarget()
+    end
+end)
+
+GameData.LivingFolder.ChildRemoved:Connect(function(child)
+    if GameData.targetMob == child then
+        GameData.updateTarget()
+    end
+end)
+
+
+sections.Farm1:Dropdown({
+    Name = "Select Mobs",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = {"Brute Zombie", "Delver Zombie", "EliteZombie", "Zombie"},
+    Default = "Zombie",
+    Callback = function(Value)
+        GameData.selectedMob = Value
+        GameData.updateTarget()
+    end,
+}, "SelectMobsDropdown")
+
+
+sections.Farm1:Slider({
+    Name = "Tween Speed Set",
+    Default = 16,
+    Minimum = 1,
+    Maximum = 100,
+    Callback = function(Value)
+        GameData.tweenSpeed = Value
+    end,
+}, "TweenSpeedSet1Slider")
+
+
+sections.Farm1:Slider({
+    Name = "Mob Distance",
+    Default = 5,
+    Minimum = 0,
+    Maximum = 40,
+    Callback = function(Value)
+        GameData.mobDistance = Value
+    end,
+}, "MobDistanceSlider")
+
+sections.Farm1:Toggle({
+    Name = "Auto Farm1 Mobs",
+    Default = false,
+    Callback = function(value)
+        GameData.autoFarm1Enabled = value
+
+        if not value then
+            if GameData.activeTween then
+                GameData.activeTween:Cancel()
+                GameData.activeTween = nil
+            end
+            GameData.stopHover()
+        end
+    end,
+}, "AutoFarm1MobsToggle")
+
+
+GameData.player.CharacterAdded:Connect(function(newChar)
+    GameData.char = newChar
+    GameData.hrp = newChar:WaitForChild("HumanoidRootPart")
+
+    GameData.bv.Parent = GameData.hrp
+    GameData.bg.Parent = GameData.hrp
+
+    GameData.stopHover()
+    GameData.updateTarget()
+end)
+
+
+--====================================================
+-- MAIN LOOP
+--====================================================
+task.spawn(function()
+    while true do
+        if GameData.autoFarm1Enabled then
+            
+            GameData.updateTarget()
+
+            local mob = GameData.targetMob
+            if mob and mob.Parent then
+                local hum = mob:FindFirstChildOfClass("Humanoid")
+                local head = mob:FindFirstChild("Head")
+
+                if hum and head and hum.Health > 0 then
+
+                    GameData.stopHover()
+
+                    local mobCF = CFrame.new(head.Position + Vector3.new(0, GameData.mobDistance, 0))
+                    local tween = GameData.tweenTo(mobCF)
+
+                    if tween then tween.Completed:Wait() end
+
+                    if GameData.autoFarm1Enabled then
+                        GameData.startHoverFollow(head)
+                    end
+                end
+            end
+        else
+            GameData.stopHover()
+        end
+
+        task.wait(0.3)
+    end
+end)
+
+
+GameData.player = GameData.Players.LocalPlayer
+
+function GameData.StartFaceDown()
+    GameData.char = GameData.player.Character or GameData.player.CharacterAdded:Wait()
+    GameData.root = GameData.char:WaitForChild("HumanoidRootPart")
+    GameData.humanoid = GameData.char:WaitForChild("Humanoid")
+
+    -- Disable Animate
+    GameData.SavedAnimate = GameData.char:FindFirstChild("Animate")
+    if GameData.SavedAnimate then
+        GameData.SavedAnimate.Disabled = true
+    end
+
+    GameData.humanoid.AutoRotate = false
+
+    GameData.DownFacingLoop = GameData.RunService.RenderStepped:Connect(function()
+        if GameData.root and GameData.root.Parent then
+            GameData.root.CFrame =
+                CFrame.new(GameData.root.Position) * CFrame.Angles(math.rad(-90), 0, 0)
+        end
+    end)
+end
+
+function GameData.StopFaceDown()
+    GameData.char = GameData.player.Character
+    if not GameData.char then return end
+
+    GameData.root = GameData.char:FindFirstChild("HumanoidRootPart")
+    GameData.humanoid = GameData.char:FindFirstChild("Humanoid")
+
+    -- Stop loop
+    if GameData.DownFacingLoop then
+        GameData.DownFacingLoop:Disconnect()
+        GameData.DownFacingLoop = nil
+    end
+
+    -- Restore autorotate
+    if GameData.humanoid then
+        GameData.humanoid.AutoRotate = true
+    end
+
+    -- Re-enable Animate
+    if GameData.SavedAnimate then
+        GameData.SavedAnimate.Disabled = false
+    end
+end
+
+
+sections.Farm1:Toggle({
+    Name = "Auto Lock Mob",
+    Default = false,
+    Callback = function(value)
+        if value then
+            GameData.StartFaceDown()
+            Window:Notify({
+                Title = "Lock Mob",
+                Description = "Enabled"
+            })
+        else
+            GameData.StopFaceDown()
+            Window:Notify({
+                Title = "Lock Mob",
+                Description = "Disabled"
+            })
+        end
+    end,
+}, "LockMobToggle")
+
+sections.Player1:Header({
+	Name = "UI Settings"
+})
+
+-----------------------------
+-- WINDOW WIDTH INPUT
+-----------------------------
+sections.Player1:Input({
+    Name = "Window Width",
+    Placeholder = "800",
+    AcceptedCharacters = "Numbers",
+    Callback = function(val)
+        GameData.inputValue = val
+        GameData.windowWidth = tonumber(GameData.inputValue)
+
+        if GameData.windowWidth then
+            GameData.currentSize = Window:GetSize()
+            Window:SetSize(UDim2.fromOffset(GameData.windowWidth, GameData.currentSize.Y.Offset))
+        end
+    end
+})
+
+-----------------------------
+-- WINDOW HEIGHT INPUT
+-----------------------------
+sections.Player1:Input({
+    Name = "Window Height",
+    Placeholder = "500",
+    AcceptedCharacters = "Numbers",
+    Callback = function(val)
+        GameData.inputValue = val
+        GameData.windowHeight = tonumber(GameData.inputValue)
+
+        if GameData.windowHeight then
+            GameData.currentSize = Window:GetSize()
+            Window:SetSize(UDim2.fromOffset(GameData.currentSize.X.Offset, GameData.windowHeight))
+        end
+    end
+})
+
+
+-----------------------------
+-- WINDOW SCALE INPUT
+-----------------------------
+sections.Player1:Input({
+    Name = "Window Scale",
+    Placeholder = "0.70",
+    AcceptedCharacters = "Numbers",
+    Callback = function(val)
+        GameData.inputValue = val
+        GameData.windowScale = tonumber(GameData.inputValue)
+
+        if GameData.windowScale then
+            Window:SetScale(GameData.windowScale)
+        end
+    end
+})
