@@ -15,6 +15,26 @@ local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
 local MenuRings = workspace["!!! MENU RINGS"]
 local PlayerGui = player:WaitForChild("PlayerGui")
 
+
+-- Anti Afk
+local SHOW_EVERY = 15 * 60 -- 15 menit
+local SHOW_TIME = 3        -- tampil 3 detik
+
+local UserInputService = game:GetService("UserInputService")
+
+local function showCursor()
+    UserInputService.MouseIconEnabled = true
+    task.wait(SHOW_TIME)
+    UserInputService.MouseIconEnabled = false
+end
+
+task.spawn(function()
+    while task.wait(SHOW_EVERY) do
+        showCursor()
+    end
+end)
+
+
 local GameData = {
     -- ================== [View Bobbers] ==================
     Players = game:GetService("Players"),
@@ -1040,7 +1060,7 @@ end
 
 sections.Fishing:Divider()
 
-GameData.smallNotif = GameData.PlayerGui:WaitForChild("Small Notification")
+GameData.smallNotif = GameData.PlayerGui:FindFirstChild("Small Notification")
 GameData.display = GameData.smallNotif and GameData.smallNotif:FindFirstChild("Display")
 GameData.container = GameData.display and GameData.display:FindFirstChild("Container")
 
@@ -1048,6 +1068,7 @@ GameData.notifications = GameData.PlayerGui:FindFirstChild("Text Notifications")
 GameData.notifFrame = GameData.notifications and GameData.notifications:FindFirstChild("Frame")
 
 -- Buat counter UI
+-- (asumsikan `sections.Fishing:Paragraph` tersedia di environment)
 GameData.fishingCounter = sections.Fishing:Paragraph({
     Header = "🎣 Fishing Counter",
     Body = "✅ Success: 0  |  ❌ Failed: 0"
@@ -1071,8 +1092,9 @@ end
 -- ============================================================
 if GameData.container then
     GameData.successConn = GameData.container:GetPropertyChangedSignal("Position"):Connect(function()
+        -- bandingkan dengan successPos
         if GameData.container.Position == GameData.successPos then
-            GameData.successCount += 1
+            GameData.successCount = GameData.successCount + 1
             GameData.updateCounter()
         end
     end)
@@ -1088,17 +1110,18 @@ if GameData.notifFrame then
         if child and child.Name == "TextTile" then
             local header = child:FindFirstChild("Header")
             if header and header:IsA("TextLabel") then
-                
+
                 -- Direct spawn text
                 if header.Text == "The fish got away!" then
-                    GameData.failCount += 1
+                    GameData.failCount = GameData.failCount + 1
                     GameData.updateCounter()
                 end
 
-                -- If text changes after spawn
+                -- If text changes after spawn (lindungi reference header)
                 header:GetPropertyChangedSignal("Text"):Connect(function()
-                    if header.Text == "The fish got away!" then
-                        GameData.failCount += 1
+                    -- pastikan header masih ada dan adalah TextLabel
+                    if header and header:IsA("TextLabel") and header.Text == "The fish got away!" then
+                        GameData.failCount = GameData.failCount + 1
                         GameData.updateCounter()
                     end
                 end)
@@ -1124,7 +1147,6 @@ function GameData.cleanup()
     if GameData.successConn then GameData.successConn:Disconnect() end
     if GameData.failConn then GameData.failConn:Disconnect() end
 end
-
 
 sections.Fishing:Header({
 	Name = "Fishing Feature"
@@ -1804,7 +1826,7 @@ sections.Fishing1:Toggle({
                         end
                     end
 
-                    task.wait(1)
+                    task.wait(5)
                 end
             end)
         end
