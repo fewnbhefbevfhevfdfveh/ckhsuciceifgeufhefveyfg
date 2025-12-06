@@ -741,6 +741,7 @@ local sections = {
 
     Quest = tabs.Quest:Section({ Side = "Full" }),
     Quest1 = tabs.Quest:Section({ Side = "Full" }),
+    Quest2 = tabs.Quest:Section({ Side = "Full" }),
 
     Auto = tabs.Auto:Section({ Side = "Full" }),
     Auto1 = tabs.Auto:Section({ Side = "Full" }),
@@ -756,6 +757,7 @@ local sections = {
 
     Tp = tabs.Tp:Section({ Side = "Full" }),
     Tp1 = tabs.Tp:Section({ Side = "Full" }),
+    Tp2 = tabs.Tp:Section({ Side = "Full" }),
 
     Player = tabs.Player:Section({ Side = "Full" }),
     Player1 = tabs.Player:Section({ Side = "Full" }),
@@ -3373,11 +3375,11 @@ if sections and sections.Quest and sections.Quest.Toggle then
     }, "AutoQuestArtifact")
 end
 
-sections.Quest1:Header({
+sections.Quest2:Header({
 	Name = "Unlock Door"
 })
 
-sections.Quest1:Toggle({
+sections.Quest2:Toggle({
     Name = "Auto Unlock Ancient Ruin",
     Default = false,
     Callback = function(state)
@@ -3416,7 +3418,7 @@ sections.Quest1:Toggle({
     end
 }, "AutoUnlockAncientRuinToggle")
 
-sections.Quest1:Toggle({
+sections.Quest2:Toggle({
     Name = "Auto Unlock Iron Cafe",
     Default = false,
     Callback = function(value)
@@ -4366,7 +4368,7 @@ sections.Tp:Button({
     end,
 }, "TeleportButton")
 
-sections.Tp:Header({
+sections.Tp1:Header({
 	Name = "Player"
 })
 
@@ -4389,7 +4391,7 @@ end
 -- DROPDOWN
 --==============================================--
 
-GameData.TargetDropdown = sections.Tp:Dropdown({
+GameData.TargetDropdown = sections.Tp1:Dropdown({
     Name = "Select Player", 
     Search = true,
     Multi = false,
@@ -4444,7 +4446,7 @@ end)
 -- TELEPORT BUTTON
 --==============================================--
 
-sections.Tp:Button({
+sections.Tp1:Button({
     Name = "Teleport Now",
     Callback = function()
 
@@ -4463,7 +4465,7 @@ sections.Tp:Button({
     end,
 })
 
-sections.Tp1:Header({
+sections.Tp2:Header({
 	Name = "Position"
 })
 
@@ -4527,10 +4529,16 @@ for _, file in pairs(listfiles(GameData.folder)) do
     end
 end
 
---------------------------------------------------------------------
--- UI SETUP
---------------------------------------------------------------------
-GameData.SaveDropdown = sections.Tp1:Dropdown({
+sections.Tp2:Input({
+    Name = "Slot Name",
+    Placeholder = "Type slot name...",
+    AcceptedCharacters = "All",
+    Callback = function(text)
+        GameData.customSlotName = text:gsub("[^%w%s_%-_]", "")
+    end,
+}, "SaveSlotNameInput")
+
+GameData.SaveDropdown = sections.Tp2:Dropdown({
     Name = "Save Position Slot",
     Search = true,
     Multi = false,
@@ -4553,17 +4561,17 @@ GameData.SaveDropdown = sections.Tp1:Dropdown({
     end,
 }, "SavePosDropdown")
 
-GameData.SaveButton = sections.Tp1:Button({
+GameData.SaveButton = sections.Tp2:Button({
     Name = "Save Position",
     Callback = function() end
 })
 
-GameData.DeleteButton = sections.Tp1:Button({
+GameData.DeleteButton = sections.Tp2:Button({
     Name = "Delete Save",
     Callback = function() end
 })
 
-GameData.RefreshButton = sections.Tp1:Button({
+GameData.RefreshButton = sections.Tp2:Button({
     Name = "Refresh Slot List",
     Callback = function() end
 })
@@ -4587,17 +4595,6 @@ local function refreshSlots()
 end
 refreshSlots()
 
---------------------------------------------------------------------
--- SLOT NAME INPUT
---------------------------------------------------------------------
-sections.Tp1:Input({
-    Name = "Slot Name",
-    Placeholder = "Type slot name...",
-    AcceptedCharacters = "All",
-    Callback = function(text)
-        GameData.customSlotName = text:gsub("[^%w%s_%-_]", "")
-    end,
-}, "SaveSlotNameInput")
 
 --------------------------------------------------------------------
 -- SAVE POSITION CALLBACK
@@ -4695,7 +4692,7 @@ end
 --------------------------------------------------------------------
 -- TELEPORT TOGGLE
 --------------------------------------------------------------------
-sections.Tp1:Toggle({
+sections.Tp2:Toggle({
     Name = "Teleport to Saved Position",
     Default = false,
     Callback = function(state)
