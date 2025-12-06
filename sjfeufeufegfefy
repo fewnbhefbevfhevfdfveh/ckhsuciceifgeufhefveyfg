@@ -999,10 +999,16 @@ sections.Home3:Header({
 sections.Home3:Paragraph({
     Header = "Update List",
     Body = [[
-[/] Improved Ui
+[+] Added Executor Detector
+[+] Added Job Id Teleport Service
+[+] Added Copy Job Id Button
+[+] Added Rejoin Server Button
+[+] Added Server Hop Botton
+[/] Improved UI
 [+] Added Discord
 [+] Added Discord Link Copied Button
 [!] Fixed some bugs
+[/] Fixed Anti AFK
 ]]
 }, "Info")
 
