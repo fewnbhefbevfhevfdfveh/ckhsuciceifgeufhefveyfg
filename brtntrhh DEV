@@ -646,7 +646,6 @@ local Window = MacLib:Window({
 })
 
 Window:SetSize(UDim2.fromOffset(800, 500))
-Window:SetScale(0.85)
 
 Window:SetUserInfoState(true)
 GameData.userInfoState = Window:GetUserInfoState()
