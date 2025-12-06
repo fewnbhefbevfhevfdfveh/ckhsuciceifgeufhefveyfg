@@ -36,7 +36,12 @@ end)
 
 
 local GameData = {
+    -- ================== [Executor Detect] ==================
+
+    executorName = "Detecting...",
+
     -- ================== [View Bobbers] ==================
+
     Players = game:GetService("Players"),
     RunService = game:GetService("RunService"),
     Camera = workspace.CurrentCamera,
@@ -610,6 +615,17 @@ local GameData = {
         changed = nil,
         ended = nil,
     },
+
+    -- ================== [Teleport Service & Server Job Id] ==================
+
+    TeleportService = game:GetService("TeleportService"),
+    Players = game:GetService("Players"),
+    HttpService = game:GetService("HttpService"),
+
+    LocalPlayer = nil,
+    PlaceId = game.PlaceId,
+    targetJobId = "",
+    JobIdLabel = nil,
 }
 
 --====================================================--
@@ -725,6 +741,7 @@ local sections = {
     Home = tabs.Home:Section({ Side = "Full" }),
     Home1 = tabs.Home:Section({ Side = "Full" }),
     Home2 = tabs.Home:Section({ Side = "Full" }),
+    Home2 = tabs.Home:Section({ Side = "Full" }),
 
 	Fishing = tabs.Fishing:Section({ Side = "Full" }),
     Fishing1 = tabs.Fishing:Section({ Side = "Full" }),
@@ -761,11 +778,48 @@ local sections = {
 
     Player = tabs.Player:Section({ Side = "Full" }),
     Player1 = tabs.Player:Section({ Side = "Full" }),
+    Player2 = tabs.Player:Section({ Side = "Full" }),
 
     Config = tabs.Config:Section({ Side = "Full" }),
 }
 
 sections.Home:Header({
+	Name = "User Info"
+})
+
+GameData.detect_executor = function()
+    if type(identifyexecutor) == "function" then
+        local ok, res = pcall(identifyexecutor)
+        if ok and res then 
+            return tostring(res) 
+        end
+    end
+    if syn and syn.request then return "Synapse X" end
+    if KRNL_LOADED or type(kronos) == "table" then return "Krnl" end
+    if fluxus and fluxus.request then return "Fluxus" end
+    if secure_load then return "Sentinel / Secure" end
+    if is_sirhurt_closure then return "SirHurt" end
+    if PROTOSMASHER_LOADED then return "ProtoSmasher" end
+    if OXYGEN then return "Oxygen" end
+    if exploit and exploit.request then return "UnknownExploit (exploit.request)" end
+
+    return "Unknown / Undetected"
+end
+
+GameData.executorName = GameData.detect_executor()
+
+GameData.executorParagraph = sections.Home:Paragraph({
+    Header = "Executor Detector Exploits",
+    Body = "Current Executor: " .. tostring(GameData.executorName)
+}, "ExecutorParagraph")
+
+task.delay(1, function()
+    GameData.newName = GameData.detect_executor()
+    GameData.executorParagraph:UpdateBody("Current Executor: " .. tostring(GameData.newName))
+end)
+
+
+sections.Home1:Header({
 	Name = "Redem Code & Reward"
 })
 
@@ -778,7 +832,7 @@ local NetFolder = ReplicatedStorage:WaitForChild("Packages")
 
 local RedeemRF = NetFolder:WaitForChild("RF/RedeemCode")
 
-sections.Home:Button({
+sections.Home1:Button({
 	Name = "Redeem All Codes",
 	Callback = function()
 
@@ -819,7 +873,7 @@ sections.Home:Button({
 })
 
 
-sections.Home:Button({ 
+sections.Home1:Button({ 
     Name = "Auto Claim Event Reward", 
     Callback = function()
         local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -838,7 +892,7 @@ sections.Home:Button({
     end,
 })
 
-sections.Home1:Header({
+sections.Home2:Header({
 	Name = "Discord Server Info"
 })
 
@@ -892,7 +946,7 @@ end
 
 
 -- BUTTON REFRESH MANUAL
-sections.Home1:Button({
+sections.Home2:Button({
     Name = "Refresh Server Info",
     Callback = function()
         GameData.ServerInfoParagraph:UpdateBody("Loading...")
@@ -902,7 +956,7 @@ sections.Home1:Button({
 
 
 -- TOGGLE AUTO REFRESH (3 DETIK)
-sections.Home1:Toggle({
+sections.Home2:Toggle({
     Name = "Auto Refresh Server Info",
     Default = false,
     Callback = function(value)
@@ -918,29 +972,37 @@ sections.Home1:Toggle({
             while GameData.AutoRefresh do
                 GameData.ServerInfoParagraph:UpdateBody("Loading...")
                 GameData.FetchDiscordInfo()
-                task.wait(3)
+                task.wait(5)
             end
         end)
     end,
 }, "AutoRefreshServerInfoToggle")
 
-sections.Home2:Paragraph({
+sections.Home2:Button({
+    Name = "Copy Discord Link",
+    Callback = function()
+        local discordLink = "https://discord.gg/ECxQFc97F5"
+
+        if setclipboard then
+            setclipboard(discordLink)
+        elseif toclipboard then
+            toclipboard(discordLink)
+        end
+    end,
+})
+
+
+sections.Home3:Header({
+	Name = "What's New?"
+})
+
+sections.Home3:Paragraph({
     Header = "Update List",
     Body = [[
-Tab Player:
- [+] Addded Infinite Zoom
- [+] Added Window Settings 
-  - Window Size
-  - Window Scale
-[+] Added Global Settings 
-  - Hide User Info
-  - Disable Notifications
-  - Disable Acrylic Blur
-Tab Fishing:
- [+] Added Blatant V1
- [+] Added Blatant V2
- [+] Added Dropdwon Select Totems
- [+] Added Auto Spawn Totems
+[/] Improved Ui
+[+] Added Discord
+[+] Added Discord Link Copied Button
+[!] Fixed some bugs
 ]]
 }, "Info")
 
@@ -4038,13 +4100,13 @@ local GiftingController = require(
 )
 
 sections.Shop2:Button({
-    Name = "Gift Skin (Soul Scythe)",
+    Name = "Gift Skin (Princess Parasol)",
     Callback = function()
-        GiftingController:Open("Soul Scythe")
+        GiftingController:Open("Princess Parasol")
 
         Window:Notify({
             Title = "Gift Menu",
-            Description = "Gift Soul Scythe unlocked!",
+            Description = "Gift Princess Parasol unlocked!",
             Lifetime = 3
         })
     end,
@@ -5137,7 +5199,7 @@ sections.Player:Button({
 }, "ReduceLagButton")
 
 sections.Player1:Header({
-	Name = "User Settings"
+	Name = "Anti AFK"
 })
 
 -- Paragraph UI
@@ -5192,6 +5254,44 @@ task.spawn(function()
     end
 end)
 
+
+local VIM = game:GetService("VirtualInputManager")
+local AntiAfkRunning = false
+
+sections.Player1:Toggle({ 
+    Name = "Anti AFK",
+    Default = false,
+    Callback = function(value)
+
+        AntiAfkRunning = value
+
+        if value then
+            -- Start Anti AFK loop
+            task.spawn(function()
+                while AntiAfkRunning do
+                    -- Tekan ESC
+                    VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
+                    task.wait(0.1)
+                    -- Lepas ESC
+                    VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
+
+                    task.wait(600) -- 10 menit
+                end
+            end)
+        end
+
+        Window:Notify({
+            Title = "Anti AFK",
+            Description = (value and "Enabled" or "Disabled")
+        })
+    end,
+}, "AntiAfk!!!Toggle")
+
+
+sections.Player2:Header({
+	Name = "User Settings"
+})
+
 ----------------------------------------------------
 -- =============== FUNCTIONS =======================
 ----------------------------------------------------
@@ -5243,7 +5343,7 @@ sections.Player1:Slider({
     Default = GameData.WalkspeedValue,
     Minimum = 0,
     Maximum = 300,
-    DisplayMethod = "Number",
+    DisplayMethod = "Percent",
     Callback = function(Value)
         GameData.WalkspeedValue = Value
         GameData:ApplyWalkspeed()
@@ -5266,19 +5366,19 @@ sections.Player1:Toggle({
 --------------------------
 -- Jump Power Controller --
 --------------------------
-sections.Player1:Slider({
+sections.Player2:Slider({
     Name = "Set Jump Power",
     Default = GameData.JumpValue,
     Minimum = 0,
     Maximum = 300,
-    DisplayMethod = "Number",
+    DisplayMethod = "Percent",
     Callback = function(Value)
         GameData.JumpValue = Value
         GameData:ApplyJumpPower()
     end,
 }, "JumpPowerSlider")
 
-sections.Player1:Toggle({
+sections.Player2:Toggle({
     Name = "Auto Jump Power",
     Default = GameData.JumpEnabled,
     Callback = function(state)
@@ -5294,19 +5394,19 @@ sections.Player1:Toggle({
 --------------------------
 -- Gravity Controller ----
 --------------------------
-sections.Player1:Slider({
+sections.Player2:Slider({
     Name = "Set Gravity",
     Default = GameData.GravityValue,
     Minimum = 0,
     Maximum = 400,
-    DisplayMethod = "Number",
+    DisplayMethod = "Percent",
     Callback = function(Value)
         GameData.GravityValue = Value
         GameData:ApplyGravity()
     end,
 }, "GravitySlider")
 
-sections.Player1:Toggle({
+sections.Player2:Toggle({
     Name = "Gravity Controller",
     Default = GameData.GravityEnabled,
     Callback = function(state)
@@ -5380,6 +5480,84 @@ sections.Config:Input({
             Window:SetScale(GameData.windowScale)
         end
     end
+})
+
+sections.Config1:Header({
+	Name = "UI Settings"
+})
+
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+
+GameData.JobIdLabel = sections.Config1:Label({
+    Text = "Job ID: " .. game.JobId
+}, "JobIdLabel")
+
+sections.Config1:Button({
+    Name = "Rejoin Server",
+    Callback = function()
+        GameData.TeleportService:TeleportToPlaceInstance(
+            GameData.PlaceId,
+            game.JobId,
+            GameData.LocalPlayer
+        )
+    end,
+})
+
+sections.Config1:Button({
+    Name = "Server Hop",
+    Callback = function()
+        GameData.success, GameData.response = pcall(function()
+            GameData.url = ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100")
+                :format(GameData.PlaceId)
+            return game:HttpGet(GameData.url)
+        end)
+
+        if not GameData.success then
+            return
+        end
+
+        GameData.servers = GameData.HttpService:JSONDecode(GameData.response)
+
+        for _, server in ipairs(GameData.servers.data) do
+            if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                GameData.TeleportService:TeleportToPlaceInstance(
+                    GameData.PlaceId,
+                    server.id,
+                    GameData.LocalPlayer
+                )
+                return
+            end
+        end
+    end,
+})
+
+sections.Config1:Button({
+    Name = "Copy Job ID",
+    Callback = function()
+        setclipboard(game.JobId)
+    end,
+})
+
+sections.Config1:Input({
+    Name = "Enter Job ID",
+    Placeholder = "Enter the JobId here...",
+    AcceptedCharacters = "All",
+    Callback = function(input)
+        GameData.targetJobId = input
+    end,
+}, "input")
+
+sections.Config1:Button({
+    Name = "Teleport to Job ID",
+    Callback = function()
+        if GameData.targetJobId ~= "" then
+            GameData.TeleportService:TeleportToPlaceInstance(
+                GameData.PlaceId,
+                GameData.targetJobId,
+                GameData.LocalPlayer
+            )
+        end
+    end,
 })
 
 MacLib:SetFolder("Maclib")
