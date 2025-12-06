@@ -105,7 +105,7 @@ local GameData = {
         or (fluxus and fluxus.request)
         or (krnl and request),
 
-    -- FISHING SYSTEM DATA
+    -- Fishing1 SYSTEM DATA
     TierMap = {
         [1] = "Common",
         [2] = "Uncommon",
@@ -141,7 +141,7 @@ local GameData = {
     -- RUN-TIME UI STORAGE
     UI = {},
 
-    -- ================== [Instant Fishing] ==================
+    -- ================== [Instant Fishing1] ==================
 
     Players = game:GetService("Players"),
     ReplicatedStorage = game:GetService("ReplicatedStorage"),
@@ -153,8 +153,8 @@ local GameData = {
 
     miniggameArgs = {-1.233184814453125, 0.9972056628181873, 1763291794.158201},
 
-    autoFishingEnabled = false,
-    isFishing = false,
+    autoFishing1Enabled = false,
+    isFishing1 = false,
 
     castDelay = 1.5,
     completedDelay = 1,
@@ -186,8 +186,8 @@ local GameData = {
     -- ================== [Boat] ==================
     BoatList = {
         ["Small Boat"] = 1, ["Kayak"] = 2, ["Jetski"] = 3, ["Highfield Boat"] = 4,
-        ["Speed Boat"] = 5, ["Fishing Boat"] = 6, ["Mini Yacht"] = 14,
-        ["Mini Hoverboat"] = 15, ["Hyper Boat"] = 7, ["Dinky Fishing Boat"] = 20,
+        ["Speed Boat"] = 5, ["Fishing1 Boat"] = 6, ["Mini Yacht"] = 14,
+        ["Mini Hoverboat"] = 15, ["Hyper Boat"] = 7, ["Dinky Fishing1 Boat"] = 20,
         ["Aura Boat"] = 17, ["Burger Boat"] = 18, ["Mega Hovercraft"] = 19,
         ["Froen Boat"] = 11, ["Cruiser Boat"] = 13, ["Rubber Ducky"] = 16
     },
@@ -202,7 +202,7 @@ local GameData = {
         ["Element"] = {
             Label = MenuRings["Element Tracker"].Board.Gui.Content:WaitForChild("Label2"),
             PosBelum100 = CFrame.new(2117.75146, -91.1985855, -700.854065, 0.931628525, 0, -0.363411963, 0, 1, 0, 0.363411963, 0, 0.931628525),
-            PosSudah100 = CFrame.new(1556.35583, 4.37500525, -605.774841, -0.154411227, 0, 0.988006651, 0, 1, 0, -0.988006651, 0, -0.154411227)
+            PosSudah100 = CFrame.new(1556.35583, 4.37400525, -605.774841, -0.154411227, 0, 0.988006651, 0, 1, 0, -0.988006651, 0, -0.154411227)
         },
         ["Aura Boat"] = {
             PosTarget = CFrame.new(88.2434769, 9.53157043, 2685.2605),
@@ -226,12 +226,12 @@ local GameData = {
     ["Weather Machine"] = CFrame.new(-1525.72632, 6.49999952, 1892.23645, 0.0615941137, 6.608282509e-10, -0.998101294, -6.8356556e-08, 1, 3.55628549e-09, 0.998101294, 6.84458072e-08, 0.0615941137),
     ["Sisyphus Statue"] = CFrame.new(-3692.22021, -135.574417, -1026.96167, -0.928567886, 9.83784361e-08, 0.371162564, 1.22746741e-07, 1, 4.20307664e-08, -0.371162564, 8.45874197e-08, -0.928567886),
     ["Ancient Jungle"] = CFrame.new(1275.54553, 7.85804176, -193.749756, 0.924119413, 5.65956171e-08, -0.382103801, -3.36512187e-08, 1, 6.67302302e-08, 0.382103801, -4.88084417e-08, 0.924119413),
-    ["Underground Cellar Door"] = CFrame.new(1954.18994, -41.7413597, -577.574768, -0.817980289, 0.573605001, 0.0434255376, 0.572797239, 0.81913203, -0.0304316022, -0.0530269668, -1.84206292e-05, -0.998593211),
+    ["Underground Cellar Door"] = CFrame.new(1954.18994, -41.7413597, -577.574768, -0.817980289, 0.573604001, 0.0434255376, 0.572797239, 0.81913203, -0.0304316022, -0.0530269668, -1.84206292e-05, -0.998593211),
     ["Underground Cellar"] = CFrame.new(2120.27417, -93.1985779, -701.552185, -0.998591185, 0, 0.0530693457, 0, 1, 0, -0.0530693457, 0, -0.998591185),
     ["Temple Guardian"] = CFrame.new(1478.29846, 126.044891, -613.519653, -0.117893577, 0, 0.993026376, 0, 1, 0, -0.993026376, 0, -0.117893577),
     ["Mysterious Door"] = CFrame.new(1899.19629, 13.3589745, -577.593811, -0.0531117916, 0, -0.998588562, 0, 1, 0, 0.998588562, 0, -0.0531117916),
     ["Hourglass Diamond Artifact"] = CFrame.new(1485.66541, 5.41373634, -861.165161, -5.01871109e-05, 0.988927424, 0.148400292, -1, -5.01871109e-05, -3.74019146e-06, 3.74019146e-06, -0.148400292, 0.988927364),
-    ["Arrow Artifact"] = CFrame.new(898.490479, 5.41373587, -361.212708, 9.11951065e-06, 0.0998446345, -0.995003104, -1, 9.11951065e-06, -8.2552433e-06, 8.2552433e-06, 0.995003104, 0.0998445749),
+    ["Arrow Artifact"] = CFrame.new(898.490479, 5.41373587, -361.212708, 9.11951065e-06, 0.0998446345, -0.994003104, -1, 9.11951065e-06, -8.2552433e-06, 8.2552433e-06, 0.994003104, 0.0998445749),
     ["Crescent Artifact"] = CFrame.new(1419.39148, 28.1637344, 79.5802917, 3.55243683e-05, -0.332731277, -0.943021655, -1, -3.55243683e-05, -2.51233578e-05, -2.51233578e-05, 0.943021655, -0.332731247),
     ["Diamond Artifact"] = CFrame.new(1818.72156, 5.41373634, -285.160828, -1.15633011e-05, -0.192806393, 0.981236815, -1, 1.15633011e-05, -9.53674316e-06, -9.53674316e-06, -0.981236815, -0.192806482),
     ["Sacred Temple"] = CFrame.new(1478.09546, 0.0774269104, -612.817993, 0.993017375, 0, 0.117968373, 0, 1, 0, -0.117968373, 0, 0.993017375),
@@ -239,7 +239,7 @@ local GameData = {
     ["Ancient Ruin"] = CFrame.new(6130.33203, -584.05603, 4632.95166, -0.171970293, -9.77156915e-08, 0.985102117, -7.319955083e-08, 1, 8.64156533e-08, -0.985102117, -5.722441259e-08, -0.171970293),
     ["Classic Island"] = CFrame.new(1258.37341, 9.999999905, 2811.14819, -0.996284008, -1.96166035e-08, 0.086129114, -2.56321329e-08, 1, -6.87372363e-08, -0.086129114, -7.068394809e-08, -0.996284008),
     ["Iron Cavern"] = CFrame.new(-8802.55762, -583.800049, 94.9271545, 0.539917707, 4.95349006e-08, -0.84171778, 2.88506321e-08, 1, 7.7355935e-08, 0.84171778, -6.60499282e-08, 0.539917707),
-    ["Iron Cafe"] = CFrame.new(-8641.91016, -547.500183, 161.963455, -0.0101819877, -4.55452422e-08, -0.999948144, 1.64972356e-08, 1, -4.57155878e-08, 0.999948144, -1.69618559e-08, -0.0101819877),
+    ["Iron Cafe"] = CFrame.new(-8641.91016, -547.400183, 161.963455, -0.0101819877, -4.55452422e-08, -0.999948144, 1.64972356e-08, 1, -4.57155878e-08, 0.999948144, -1.69618559e-08, -0.0101819877),
     },
 
     -- ==================[Save Posisi] ==================
@@ -466,11 +466,11 @@ local GameData = {
     LastProcessed = {},
     PROCESS_COOLDOWN = 1.0,
 
-    -- ================== [Fishing Counter] ==================
+    -- ================== [Fishing1 Counter] ==================
 
     PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"),
 
-    -- Fishing Notification References
+    -- Fishing1 Notification References
     smallNotif = nil,
     display = nil,
     container = nil,
@@ -486,7 +486,7 @@ local GameData = {
     failConn = nil,
 
     -- UI Objects
-    fishingCounter = nil,
+    Fishing1Counter = nil,
 
     -- Success Position
     successPos = UDim2.new(0.5, 0, 0.1, 0),
@@ -636,8 +636,8 @@ local GameData2 = {
 
 local Window = MacLib:Window({
     Title = "NexaHub",
-    Subtitle = "Fish It - Premium | V0.0.2",
-    Size = UDim2.fromOffset(800, 500),
+    Subtitle = "Fish It - Premium | V0.0.3",
+    Size = UDim2.fromOffset(650, 400),
     DragStyle = 2,
     DisabledWindowControls = {},
     ShowUserInfo = true,
@@ -645,7 +645,7 @@ local Window = MacLib:Window({
     AcrylicBlur = true,
 })
 
-Window:SetSize(UDim2.fromOffset(800, 500))
+Window:SetSize(UDim2.fromOffset(650, 400))
 
 Window:SetUserInfoState(true)
 GameData.userInfoState = Window:GetUserInfoState()
@@ -711,7 +711,7 @@ local tabGroups = {
 
 local tabs = {
     Home = tabGroups.TabGroup1:Tab({ Name = "Home", Image = "rbxassetid://103124389616816" }),
-	Fishing = tabGroups.TabGroup1:Tab({ Name = "Fishing", Image = "rbxassetid://97899956724998" }),
+	Fishing1 = tabGroups.TabGroup1:Tab({ Name = "Fishing1", Image = "rbxassetid://97899956724998" }),
     Event = tabGroups.TabGroup1:Tab({ Name = "Event", Image = "rbxassetid://139605405636145" }),
 	Quest = tabGroups.TabGroup1:Tab({ Name = "Quest", Image = "rbxassetid://70719631016787" }),
     Auto = tabGroups.TabGroup1:Tab({ Name = "Automatic", Image = "rbxassetid://100691400534443" }),
@@ -725,8 +725,15 @@ local sections = {
     Home = tabs.Home:Section({ Side = "Full" }),
     Home1 = tabs.Home:Section({ Side = "Full" }),
 
-	Fishing = tabs.Fishing:Section({ Side = "Full" }),
-    Fishing1 = tabs.Fishing:Section({ Side = "Full" }),
+	Fishing = tabs.Fishing1:Section({ Side = "Full" }),
+    Fishing1 = tabs.Fishing1:Section({ Side = "Full" }),
+    Fishing2 = tabs.Fishing1:Section({ Side = "Full" }),
+    Fishing3 = tabs.Fishing1:Section({ Side = "Full" }),
+    Fishing4 = tabs.Fishing1:Section({ Side = "Full" }),
+    Fishing5 = tabs.Fishing1:Section({ Side = "Full" }),
+    Fishing6 = tabs.Fishing1:Section({ Side = "Full" }),
+    Fishing7 = tabs.Fishing1:Section({ Side = "Full" }),
+    Fishing8 = tabs.Fishing1:Section({ Side = "Full" }),
 
     Event = tabs.Event:Section({ Side = "Full" }),
     Event1 = tabs.Event:Section({ Side = "Full" }),
@@ -736,9 +743,13 @@ local sections = {
 
     Auto = tabs.Auto:Section({ Side = "Full" }),
     Auto1 = tabs.Auto:Section({ Side = "Full" }),
+    Auto2 = tabs.Auto:Section({ Side = "Full" }),
 
     Shop = tabs.Shop:Section({ Side = "Full" }),
     Shop1 = tabs.Shop:Section({ Side = "Full" }),
+    Shop2 = tabs.Shop:Section({ Side = "Full" }),
+    Shop3 = tabs.Shop:Section({ Side = "Full" }),
+    Shop4 = tabs.Shop:Section({ Side = "Full" }),
 
     Boat = tabs.Boat:Section({ Side = "Full" }),
     Boat1 = tabs.Boat:Section({ Side = "Full" }),
@@ -748,6 +759,8 @@ local sections = {
 
     Player = tabs.Player:Section({ Side = "Full" }),
     Player1 = tabs.Player:Section({ Side = "Full" }),
+
+    Config = tabs.Config:Section({ Side = "Full" }),
 }
 
 sections.Home:Header({
@@ -917,7 +930,7 @@ Tab Player:
   - Hide User Info
   - Disable Notifications
   - Disable Acrylic Blur
-Tab Fishing:
+Tab Fishing1:
  [+] Added Blatant V1
  [+] Added Blatant V2
  [+] Added Dropdwon Select Totems
@@ -926,7 +939,7 @@ Tab Fishing:
 }, "Info")
 
 
-sections.Fishing:Header({
+sections.Fishing1:Header({
 	Name = "Status Info Event"
 })
 
@@ -962,7 +975,7 @@ GameData.label = MenuRings["Event Tracker"].Main.Gui.Content.Items.Countdown.Lab
 -- ============================================================
 -- Paragraph WindUI (update setiap detik)
 -- ============================================================
-GameData.paragraph = sections.Fishing:Paragraph({
+GameData.paragraph = sections.Fishing1:Paragraph({
     Header = "Lochness Monster Countdown",
     Body = GameData.label.Text
 }, nil)
@@ -979,7 +992,7 @@ end)
 -- ============================================================
 -- Toggle Auto Lochness
 -- ============================================================
-sections.Fishing:Toggle({
+sections.Fishing1:Toggle({
     Name = "Auto Lochness Monster",
     Default = false,
     Callback = function(value)
@@ -1025,12 +1038,12 @@ task.spawn(function()
     end
 end)
 
-sections.Fishing:Divider()
+sections.Fishing1:Divider()
 
 --------------------------
 -- UI (Paragraph Only)
 --------------------------
-GameData.DiscoParagraph = sections.Fishing:Paragraph({
+GameData.DiscoParagraph = sections.Fishing1:Paragraph({
     Header = "Status Event Disco",
     Body = "Loading..."
 })
@@ -1074,7 +1087,7 @@ GameData.eventCF = CFrame.new(
 )
 
 GameData.targetTP = CFrame.new(
-    -8642.99414, -547.500183, 159.353485,
+    -8642.99414, -547.400183, 159.353485,
     0.139343381, -2.42283136e-08, -0.99024415,
     4.18495816e-08, 1, -1.85780973e-08,
     0.99024415, -3.88525692e-08, 0.139343381
@@ -1085,7 +1098,7 @@ GameData.savedPosition = nil
 GameData.teleported = false
 
 -- TOGGLE UI
-sections.Fishing:Toggle({
+sections.Fishing1:Toggle({
     Name = "Auto Disco Event",
     Default = false,
     Callback = function(value)
@@ -1131,12 +1144,12 @@ task.spawn(function()
     end
 end)
 
-sections.Fishing:Header({
-	Name = "Status Info Fishing"
+sections.Fishing1:Header({
+	Name = "Status Info Fishing1"
 })
 
 -- Label awal
-GameData.statusLabel = sections.Fishing:Label({
+GameData.statusLabel = sections.Fishing1:Label({
     Text = 'Status Offline: <font color="rgb(255,0,0)">.....</font>'
 })
 
@@ -1170,7 +1183,7 @@ GameData.UpdateStatusLabel = function()
     GameData.statusLabel:SetVisibility(true)
 end
 
-sections.Fishing:Divider()
+sections.Fishing1:Divider()
 
 GameData.smallNotif = GameData.PlayerGui:FindFirstChild("Small Notification")
 GameData.display = GameData.smallNotif and GameData.smallNotif:FindFirstChild("Display")
@@ -1180,18 +1193,18 @@ GameData.notifications = GameData.PlayerGui:FindFirstChild("Text Notifications")
 GameData.notifFrame = GameData.notifications and GameData.notifications:FindFirstChild("Frame")
 
 -- Buat counter UI
--- (asumsikan `sections.Fishing:Paragraph` tersedia di environment)
-GameData.fishingCounter = sections.Fishing:Paragraph({
-    Header = "🎣 Fishing Counter",
+-- (asumsikan `sections.Fishing1:Paragraph` tersedia di environment)
+GameData.Fishing1Counter = sections.Fishing1:Paragraph({
+    Header = "🎣 Fishing1 Counter",
     Body = "✅ Success: 0  |  ❌ Failed: 0"
-}, "FishingCounterFlag")
+}, "Fishing1CounterFlag")
 
 -- ============================================================
 -- UPDATE COUNTER FUNCTION
 -- ============================================================
 function GameData.updateCounter()
-    if GameData.fishingCounter and GameData.fishingCounter.UpdateBody then
-        GameData.fishingCounter:UpdateBody(
+    if GameData.Fishing1Counter and GameData.Fishing1Counter.UpdateBody then
+        GameData.Fishing1Counter:UpdateBody(
             '<font color="rgb(0,255,0)">✅ Success: ' .. GameData.successCount .. '</font>' ..
             '  |  ' ..
             '<font color="rgb(255,0,0)">❌ Failed: ' .. GameData.failCount .. '</font>'
@@ -1247,8 +1260,8 @@ end
 -- ============================================================
 -- INITIALIZE UI
 -- ============================================================
-if GameData.fishingCounter and GameData.fishingCounter.SetVisibility then
-    GameData.fishingCounter:SetVisibility(true)
+if GameData.Fishing1Counter and GameData.Fishing1Counter.SetVisibility then
+    GameData.Fishing1Counter:SetVisibility(true)
 end
 GameData.updateCounter()
 
@@ -1260,29 +1273,29 @@ function GameData.cleanup()
     if GameData.failConn then GameData.failConn:Disconnect() end
 end
 
-sections.Fishing:Header({
-	Name = "Fishing Feature"
+sections.Fishing1:Header({
+	Name = "Fishing1 Feature"
 })
 
 -- Controllers & Packages
-local FishingController = require(ReplicatedStorage.Controllers.FishingController)
-local AutoFishingController = require(ReplicatedStorage.Controllers.AutoFishingController)
+local Fishing1Controller = require(ReplicatedStorage.Controllers.Fishing1Controller)
+local AutoFishing1Controller = require(ReplicatedStorage.Controllers.AutoFishing1Controller)
 local Replion = require(ReplicatedStorage.Packages.Replion)
 
 -- Remote Toggle
-local UpdateAutoFishingState = ReplicatedStorage
+local UpdateAutoFishing1State = ReplicatedStorage
     :WaitForChild("Packages")
     :WaitForChild("_Index")
     :WaitForChild("sleitnick_net@0.2.0")
     :WaitForChild("net")
-    :WaitForChild("RF/UpdateAutoFishingState")
+    :WaitForChild("RF/UpdateAutoFishing1State")
 
 -- Remote Instant
 local REReplicateTextEffect = ReplicatedStorage
 	.Packages._Index["sleitnick_net@0.2.0"].net["RE/ReplicateTextEffect"]
 
-local REFishingCompleted = ReplicatedStorage
-	.Packages._Index["sleitnick_net@0.2.0"].net["RE/FishingCompleted"]
+local REFishing1Completed = ReplicatedStorage
+	.Packages._Index["sleitnick_net@0.2.0"].net["RE/Fishing1Completed"]
 
 -- ==========================================================
 -- GLOBAL STATE
@@ -1298,7 +1311,7 @@ local clickThread = nil
 -- ==========================================================
 -- DROPDOWN MODE
 -- ==========================================================
-sections.Fishing:Dropdown({
+sections.Fishing1:Dropdown({
 	Name = "Select Auto Fish Mode",
 	Search = false,
 	Multi = false,
@@ -1317,7 +1330,7 @@ sections.Fishing:Dropdown({
 -- ==========================================================
 -- CLICK SPEED INPUT
 -- ==========================================================
-sections.Fishing:Input({
+sections.Fishing1:Input({
 	Name = "Click Speed",
 	Placeholder = "Default: 0.05",
 	AcceptedCharacters = "Numbers",
@@ -1337,17 +1350,17 @@ sections.Fishing:Input({
 -- CLICK FUNCTION
 -- ==========================================================
 local function performClick()
-	FishingController:RequestFishingMinigameClick()
+	Fishing1Controller:RequestFishing1MinigameClick()
 	task.wait(ClickSpeed + math.random() * ClickSpeed)
 end
 
 -- ==========================================================
 -- HOOK MINIGAME (MODE CLICK)
 -- ==========================================================
-local originalRodStarted = FishingController.FishingRodStarted
-local originalFishingStopped = FishingController.FishingStopped
+local originalRodStarted = Fishing1Controller.Fishing1RodStarted
+local originalFishing1Stopped = Fishing1Controller.Fishing1Stopped
 
-FishingController.FishingRodStarted = function(self, ...)
+Fishing1Controller.Fishing1RodStarted = function(self, ...)
 	originalRodStarted(self, ...)
 	if SelectedMode ~= "Click" then return end
 	if not AutoClickEnabled then return end
@@ -1360,8 +1373,8 @@ FishingController.FishingRodStarted = function(self, ...)
 	end)
 end
 
-FishingController.FishingStopped = function(self, ...)
-	originalFishingStopped(self, ...)
+Fishing1Controller.Fishing1Stopped = function(self, ...)
+	originalFishing1Stopped(self, ...)
 	if clickThread then
 		task.cancel(clickThread)
 		clickThread = nil
@@ -1371,7 +1384,7 @@ end
 -- ==========================================================
 -- DELAY REEL INPUT (MODE INSTANT)
 -- ==========================================================
-sections.Fishing:Input({
+sections.Fishing1:Input({
 	Name = "Delay Reel",
 	Placeholder = "Default: 1",
 	AcceptedCharacters = "Numbers",
@@ -1403,7 +1416,7 @@ REReplicateTextEffect.OnClientEvent:Connect(function(data)
 
 	task.delay(remoteDelay, function()
 		if InstantEnabled then
-			REFishingCompleted:FireServer()
+			REFishing1Completed:FireServer()
 		end
 	end)
 end)
@@ -1414,7 +1427,7 @@ end)
 local function updateRemoteState(bool)
 	task.spawn(function()
 		pcall(function()
-			UpdateAutoFishingState:InvokeServer(bool)
+			UpdateAutoFishing1State:InvokeServer(bool)
 		end)
 	end)
 end
@@ -1422,13 +1435,13 @@ end
 -- ==========================================================
 -- TOGGLE UTAMA
 -- ==========================================================
-sections.Fishing:Toggle({
-	Name = "Auto Fishing",
+sections.Fishing1:Toggle({
+	Name = "Auto Fishing1",
 	Default = false,
 	Callback = function(state)
 
 		-- Update status label (wajib)
-		GameData.toggleStatus["Normal Fishing"] = state
+		GameData.toggleStatus["Normal Fishing1"] = state
 		GameData.UpdateStatusLabel()
 
 		-- Kirim remote setiap toggle
@@ -1444,7 +1457,7 @@ sections.Fishing:Toggle({
 		end
 
 		Window:Notify({
-			Title = "Auto Fishing",
+			Title = "Auto Fishing1",
 			Description = "Mode: " .. SelectedMode .. " → " .. (state and "ON" or "OFF")
 		})
 	end,
@@ -1502,7 +1515,7 @@ end
 -- Toggle WindUI (Format Baru)
 -- =====================================================================
 
-sections.Fishing:Toggle({
+sections.Fishing1:Toggle({
     Name = "No Animation",
     Default = false,
     Callback = function(state)
@@ -1520,14 +1533,14 @@ sections.Fishing:Toggle({
 GameData.Player = GameData.SVC.Players.LocalPlayer
 GameData.Net = GameData.SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
 
-GameData.RF.CancelFishing = GameData.Net:WaitForChild("RF/CancelFishingInputs")
+GameData.RF.CancelFishing1 = GameData.Net:WaitForChild("RF/CancelFishing1Inputs")
 GameData.RE.ReplicateTextEffect = GameData.Net:WaitForChild("RE/ReplicateTextEffect")
 
 
 --========================================================--
 -- UI HANDLERS
 --========================================================--
-sections.Fishing:Toggle({
+sections.Fishing1:Toggle({
 	Name = "Skip Rarity",
 	Default = false,
 	Callback = function(state)
@@ -1547,7 +1560,7 @@ sections.Fishing:Toggle({
 }, "SkipRarityToggle")
 
 
-sections.Fishing:Dropdown({
+sections.Fishing1:Dropdown({
 	Name = "Rarity Filters",
 	Search = true,
 	Multi = true,
@@ -1636,7 +1649,7 @@ pcall(function()
 			for _, blk in ipairs(GameData.SkipState.Blacklist) do
 				if string.upper(blk) == string.upper(rarity) then
 					pcall(function()
-						GameData.RF.CancelFishing:InvokeServer()
+						GameData.RF.CancelFishing1:InvokeServer()
 					end)
 					break
 				end
@@ -1645,34 +1658,34 @@ pcall(function()
 	end
 end)
 
--- ========= [Cancel Fishing] =========
--- Ambil RemoteFunction CancelFishing
-local CancelFishing = ReplicatedStorage
+-- ========= [Cancel Fishing1] =========
+-- Ambil RemoteFunction CancelFishing1
+local CancelFishing1 = ReplicatedStorage
     :WaitForChild("Packages")
     :WaitForChild("_Index")
     :WaitForChild("sleitnick_net@0.2.0")
     :WaitForChild("net")
-    :WaitForChild("RF/CancelFishingInputs")
+    :WaitForChild("RF/CancelFishing1Inputs")
 
--- Button Baru Format sections.Fishing
-sections.Fishing:Button({
-	Name = "Cancel Fishing",
+-- Button Baru Format sections.Fishing1
+sections.Fishing1:Button({
+	Name = "Cancel Fishing1",
 	Callback = function()
-		CancelFishing:InvokeServer()
+		CancelFishing1:InvokeServer()
 	end,
 })
 
-sections.Fishing:Header({
-	Name = "Instant Fishing Feature"
+sections.Fishing2:Header({
+	Name = "Instant Fishing1 Feature"
 })
 
 -- Remote references
-GameData.ChargeFishingRod = GameData.package["RF/ChargeFishingRod"]
-GameData.RequestFishingMinigameStarted = GameData.package["RF/RequestFishingMinigameStarted"]
+GameData.ChargeFishing1Rod = GameData.package["RF/ChargeFishing1Rod"]
+GameData.RequestFishing1MinigameStarted = GameData.package["RF/RequestFishing1MinigameStarted"]
 GameData.REReplicateTextEffect = GameData.package["RE/ReplicateTextEffect"]
-GameData.REFishingCompleted = GameData.package["RE/FishingCompleted"]
+GameData.REFishing1Completed = GameData.package["RE/Fishing1Completed"]
 GameData.REFishCaught = GameData.package["RE/FishCaught"]
-GameData.CancelFishingInputs = GameData.package["RF/CancelFishingInputs"]
+GameData.CancelFishing1Inputs = GameData.package["RF/CancelFishing1Inputs"]
 
 -- ==========================================================
 -- SAFE WAIT
@@ -1680,25 +1693,25 @@ GameData.CancelFishingInputs = GameData.package["RF/CancelFishingInputs"]
 local function SafeWait(t)
     local start = os.clock()
     while os.clock() - start < t do
-        if not GameData.autoFishingEnabled then return false end
+        if not GameData.autoFishing1Enabled then return false end
         task.wait()
     end
     return true
 end
 
 -- ==========================================================
--- MAIN FISHING CYCLE
+-- MAIN Fishing1 CYCLE
 -- ==========================================================
-local function StartFishingCycle()
-    if not GameData.autoFishingEnabled or GameData.isFishing then return end
+local function StartFishing1Cycle()
+    if not GameData.autoFishing1Enabled or GameData.isFishing1 then return end
 
-    GameData.isFishing = true
+    GameData.isFishing1 = true
     GameData.lastCatchTime = os.clock()
 
-    GameData.ChargeFishingRod:InvokeServer()
+    GameData.ChargeFishing1Rod:InvokeServer()
     if not SafeWait(0.01) then return end
 
-    GameData.RequestFishingMinigameStarted:InvokeServer(unpack(GameData.miniggameArgs))
+    GameData.RequestFishing1MinigameStarted:InvokeServer(unpack(GameData.miniggameArgs))
 end
 
 -- ==========================================================
@@ -1708,19 +1721,19 @@ task.spawn(function()
     while true do
         task.wait(1)
 
-        if GameData.autoFishingEnabled and GameData.isFishing then
+        if GameData.autoFishing1Enabled and GameData.isFishing1 then
             if os.clock() - GameData.lastCatchTime >= GameData.antiStuckTime then
 
-                print("[Anti-Stuck] Tidak ada FishCaught selama "..GameData.antiStuckTime.." detik. Reset fishing...")
+                print("[Anti-Stuck] Tidak ada FishCaught selama "..GameData.antiStuckTime.." detik. Reset Fishing1...")
 
                 pcall(function()
-                    GameData.CancelFishingInputs:InvokeServer()
+                    GameData.CancelFishing1Inputs:InvokeServer()
                 end)
 
-                GameData.isFishing = false
+                GameData.isFishing1 = false
                 task.wait(0.01)
 
-                StartFishingCycle()
+                StartFishing1Cycle()
             end
         end
     end
@@ -1730,7 +1743,7 @@ end)
 -- REPLICATE TEXT EFFECT
 -- ==========================================================
 GameData.REReplicateTextEffect.OnClientEvent:Connect(function(data)
-    if not GameData.autoFishingEnabled or not data or not data.TextData then return end
+    if not GameData.autoFishing1Enabled or not data or not data.TextData then return end
 
     local attach = data.TextData.AttachTo
     if not attach or not attach.Parent then return end
@@ -1740,7 +1753,7 @@ GameData.REReplicateTextEffect.OnClientEvent:Connect(function(data)
 
     task.spawn(function()
         if not SafeWait(GameData.completedDelay) then return end
-        GameData.REFishingCompleted:FireServer()
+        GameData.REFishing1Completed:FireServer()
     end)
 end)
 
@@ -1748,52 +1761,52 @@ end)
 -- FISH CAUGHT = RESTART
 -- ==========================================================
 GameData.REFishCaught.OnClientEvent:Connect(function(fishName, data)
-    if not GameData.autoFishingEnabled then return end
+    if not GameData.autoFishing1Enabled then return end
 
     GameData.lastCatchTime = os.clock()
 
     task.spawn(function()
         pcall(function()
-            GameData.CancelFishingInputs:InvokeServer()
+            GameData.CancelFishing1Inputs:InvokeServer()
         end)
 
-        GameData.isFishing = false
+        GameData.isFishing1 = false
         if not SafeWait(GameData.castDelay) then return end
 
-        StartFishingCycle()
+        StartFishing1Cycle()
     end)
 end)
 
 -- ==========================================================
 -- WINDUI SETTINGS
 -- ==========================================================
-sections.Fishing:Toggle({
+sections.Fishing2:Toggle({
     Name = "Instant Fishing",
     Default = false,
     Callback = function(state)
 
         -- Tambahan status toggle
-        GameData.toggleStatus["Instant Fishing"] = state
+        GameData.toggleStatus["Instant Fishing1"] = state
         GameData.UpdateStatusLabel()
 
         -- Logic asli kamu
-        GameData.autoFishingEnabled = state
+        GameData.autoFishing1Enabled = state
 
         if state then
-            StartFishingCycle()
+            StartFishing1Cycle()
         else
-            GameData.isFishing = false
+            GameData.isFishing1 = false
         end
 
         Window:Notify({
-            Title = "Instant Fishing",
-            Description = state and "Enabled Instant Fishing" or "Disabled Instant Fishing"
+            Title = "Instant Fishing1",
+            Description = state and "Enabled Instant Fishing1" or "Disabled Instant Fishing1"
         })
     end,
-}, "InstantFishingToggle")
+}, "InstantFishing1Toggle")
 
 
-sections.Fishing:Input({
+sections.Fishing2:Input({
     Name = "Cast Delay",
     Placeholder = "Default: 1.5",
     AcceptedCharacters = "Numbers",
@@ -1805,9 +1818,9 @@ sections.Fishing:Input({
             Description = "Cast Delay set to: " .. tostring(GameData.castDelay)
         })
     end,
-}, "InstantFishingCastDelay")
+}, "InstantFishing1CastDelay")
 
-sections.Fishing:Input({
+sections.Fishing2:Input({
     Name = "Completed Delay",
     Placeholder = "Default: 1",
     AcceptedCharacters = "Numbers",
@@ -1819,10 +1832,10 @@ sections.Fishing:Input({
             Description = "Completed Delay set to: " .. tostring(GameData.completedDelay)
         })
     end,
-}, "InstantFishingCompletedDelay")
+}, "InstantFishing1CompletedDelay")
 
 -- ADD NEW INPUT FOR ANTI-STUCK TIME
-sections.Fishing:Input({
+sections.Fishing2:Input({
     Name = "Anti-Stuck Time (Seconds)",
     Placeholder = "Default: 10",
     AcceptedCharacters = "Numbers",
@@ -1845,7 +1858,7 @@ sections.Fishing:Input({
     end,
 }, "AntiStuckTimeInput")
 
-sections.Fishing1:Header({
+sections.Fishing3:Header({
 	Name = "Totems"
 })
 
@@ -1882,7 +1895,7 @@ GameData.uuid = nil
 ---------------------------------------------------------
 -- SELECT TOTEM DROPDOWN (FIXED)
 ---------------------------------------------------------
-sections.Fishing1:Dropdown({
+sections.Fishing3:Dropdown({
     Name = "Select Totem",
     Search = true,
     Multi = false, -- Multi = false -> Value = STRING
@@ -1899,7 +1912,7 @@ sections.Fishing1:Dropdown({
 ---------------------------------------------------------
 -- AUTO SPAWN TOGGLE
 ---------------------------------------------------------
-sections.Fishing1:Toggle({
+sections.Fishing3:Toggle({
     Name = "Auto Spawn Totem",
     Default = false,
     Callback = function(value)
@@ -1945,7 +1958,7 @@ sections.Fishing1:Toggle({
     end,
 }, "AutoSpawnTotemToggle")
 
-sections.Fishing1:Header({
+sections.Fishing4:Header({
 	Name = "Blatant V1"
 })
 
@@ -1956,10 +1969,10 @@ GameData.LP = GameData.Players.LocalPlayer
 GameData.net = GameData.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
 
 -- REMOTES
-GameData.RF_Charge = GameData.net:WaitForChild("RF/ChargeFishingRod")
-GameData.RF_Start  = GameData.net:WaitForChild("RF/RequestFishingMinigameStarted")
-GameData.RF_Cancel = GameData.net:WaitForChild("RF/CancelFishingInputs")
-GameData.RE_Finish = GameData.net:WaitForChild("RE/FishingCompleted")
+GameData.RF_Charge = GameData.net:WaitForChild("RF/ChargeFishing1Rod")
+GameData.RF_Start  = GameData.net:WaitForChild("RF/RequestFishing1MinigameStarted")
+GameData.RF_Cancel = GameData.net:WaitForChild("RF/CancelFishing1Inputs")
+GameData.RE_Finish = GameData.net:WaitForChild("RE/Fishing1Completed")
 GameData.RE_Equip  = GameData.net:WaitForChild("RE/EquipToolFromHotbar")
 
 -- EQUIP TOOL FUNCTION
@@ -2006,21 +2019,21 @@ GameData.StopLoop = function()
 end
 
 -- UI KUZU HUB
-sections.Fishing1:Toggle({
+sections.Fishing4:Toggle({
     Name = "Blatant V1",
     Default = false,
     Callback = function(state)
         if state then
             GameData.StartLoop()
-            Window:Notify({ Title = "Blatant V1", Description = "Enabled Fishing" })
+            Window:Notify({ Title = "Blatant V1", Description = "Enabled Fishing1" })
         else
             GameData.StopLoop()
-            Window:Notify({ Title = "Blatant V1", Description = "Disabled Fishing" })
+            Window:Notify({ Title = "Blatant V1", Description = "Disabled Fishing1" })
         end
     end,
-}, "FishingToggle")
+}, "Fishing1Toggle")
 
-sections.Fishing1:Input({
+sections.Fishing4:Input({
     Name = "Cancel Delay V1",
     Placeholder = "1.05",
     AcceptedCharacters = "0123456789.",
@@ -2035,7 +2048,7 @@ sections.Fishing1:Input({
     end,
 }, "CancelDelayInput")
 
-sections.Fishing1:Input({
+sections.Fishing4:Input({
     Name = "Complete Delay V1",
     Placeholder = "0.16",
     AcceptedCharacters = "0123456789.",
@@ -2050,7 +2063,7 @@ sections.Fishing1:Input({
     end,
 }, "CompleteDelayInput")
 
-sections.Fishing1:Header({
+sections.Fishing5:Header({
 	Name = "Blatant V2"
 })
 
@@ -2058,13 +2071,13 @@ sections.Fishing1:Header({
 GameData.net = GameData.SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
 
 GameData.RF = {
-    ChargeFishingRod = GameData.net:WaitForChild("RF/ChargeFishingRod"),
-    RequestFishingMinigameStarted = GameData.net:WaitForChild("RF/RequestFishingMinigameStarted"),
-    CancelFishing = GameData.net:WaitForChild("RF/CancelFishingInputs")
+    ChargeFishing1Rod = GameData.net:WaitForChild("RF/ChargeFishing1Rod"),
+    RequestFishing1MinigameStarted = GameData.net:WaitForChild("RF/RequestFishing1MinigameStarted"),
+    CancelFishing1 = GameData.net:WaitForChild("RF/CancelFishing1Inputs")
 }
 
 GameData.RE = {
-    FishingCompleted = GameData.net:WaitForChild("RE/FishingCompleted")
+    Fishing1Completed = GameData.net:WaitForChild("RE/Fishing1Completed")
 }
 
 -- CUTSCENE CONTROLLER
@@ -2105,13 +2118,13 @@ _G.DelayCompleteV2 = 1
 -- FASTEST FUNCTION
 GameData.Fastest = function()
     task.spawn(function()
-        pcall(function() GameData.RF.CancelFishing:InvokeServer() end)
-        pcall(function() GameData.RF.ChargeFishingRod:InvokeServer(workspace:GetServerTimeNow()) end)
-        pcall(function() GameData.RF.RequestFishingMinigameStarted:InvokeServer(-1, 0.999) end)
+        pcall(function() GameData.RF.CancelFishing1:InvokeServer() end)
+        pcall(function() GameData.RF.ChargeFishing1Rod:InvokeServer(workspace:GetServerTimeNow()) end)
+        pcall(function() GameData.RF.RequestFishing1MinigameStarted:InvokeServer(-1, 0.999) end)
 
         task.wait(_G.DelayCompleteV2)
 
-        pcall(function() GameData.RE.FishingCompleted:FireServer() end)
+        pcall(function() GameData.RE.Fishing1Completed:FireServer() end)
     end)
 end
 
@@ -2126,7 +2139,7 @@ GameData.startBlatantV2 = function()
 end
 
 -- WINDUI
-sections.Fishing1:Toggle({
+sections.Fishing5:Toggle({
     Name = "Blatant V2",
     Default = _G.BlatantV2,
     Callback = function(value)
@@ -2142,7 +2155,7 @@ sections.Fishing1:Toggle({
     end,
 }, "BlatantV2Toggle")
 
-sections.Fishing1:Input({
+sections.Fishing5:Input({
     Name = "Delay Cast V2",
     Placeholder = "0.80",
     AcceptedCharacters = "Numbers",
@@ -2154,7 +2167,7 @@ sections.Fishing1:Input({
     end,
 }, "DelayCastV2Input")
 
-sections.Fishing1:Input({
+sections.Fishing5:Input({
     Name = "Delay Complete V2",
     Placeholder = "1",
     AcceptedCharacters = "Numbers",
@@ -2167,7 +2180,7 @@ sections.Fishing1:Input({
 }, "DelayCompleteV2Input")
 
 
-sections.Fishing1:Header({
+sections.Fishing6:Header({
 	Name = "Webhook Notifier"
 })
 
@@ -2181,7 +2194,7 @@ GameData.RequestExecutor     = GameData.Request
 -- UI SETUP
 --========================================================--
 
-sections.Fishing1:Input({
+sections.Fishing6:Input({
     Name = "Webhook URL",
     Placeholder = "Masukkan Webhook",
     AcceptedCharacters = "All",
@@ -2190,7 +2203,7 @@ sections.Fishing1:Input({
     end,
 }, "WebhookURLInput")
 
-sections.Fishing1:Toggle({
+sections.Fishing6:Toggle({
     Name = "Webhook Status",
     Default = false,
     Callback = function(value)
@@ -2202,7 +2215,7 @@ sections.Fishing1:Toggle({
     end,
 }, "WebhookToggle")
 
-sections.Fishing1:Dropdown({
+sections.Fishing6:Dropdown({
 	Name = "Filter Tier",
 	Search = false,
 	Multi = true,
@@ -2412,7 +2425,7 @@ GameData.UI.ItemName:GetPropertyChangedSignal("Text"):Connect(function()
         },
 
         ["author"] = {
-            ["name"] = "Nexa | Fishing System",
+            ["name"] = "Nexa | Fishing1 System",
             ["icon_url"] = "https://i.imgur.com/4PfH6rb.jpeg"
         },
 
@@ -2439,7 +2452,7 @@ GameData.UI.ItemName:GetPropertyChangedSignal("Text"):Connect(function()
 
 end)
 
-sections.Fishing1:Header({
+sections.Fishing7:Header({
 	Name = "Equipment Feature"
 })
 
@@ -2468,7 +2481,7 @@ end
 --------------------------------------------------------------------
 local SelectedRodName = "Starter Rod"
 
-sections.Fishing1:Dropdown({
+sections.Fishing7:Dropdown({
     Name = "Select Rod",
     Search = true,
     Multi = false,
@@ -2479,19 +2492,19 @@ sections.Fishing1:Dropdown({
     end,
 }, "RodDropdown")
 
-sections.Fishing1:Button({
+sections.Fishing7:Button({
     Name = "Equip Selected Rod",
     Callback = function()
 
         local selectedID = RodIDs[SelectedRodName]
         if not selectedID then return end
 
-        local rods = data:GetExpect({"Inventory", "Fishing Rods"})
+        local rods = data:GetExpect({"Inventory", "Fishing1 Rods"})
         if not rods then return end
 
         for _, rod in ipairs(rods) do
             if rod and rod.Id == selectedID then
-                EquipItemEvent:FireServer(rod.UUID, "Fishing Rods")
+                EquipItemEvent:FireServer(rod.UUID, "Fishing1 Rods")
                 break
             end
         end
@@ -2523,7 +2536,7 @@ end
 --------------------------------------------------------------------
 local selectedBaitID = BaitIDs["Starter Bait"]
 
-sections.Fishing1:Dropdown({
+sections.Fishing7:Dropdown({
     Name = "Select Bait",
     Options = baitNames,
     Default = "Starter Bait",
@@ -2534,7 +2547,7 @@ sections.Fishing1:Dropdown({
     end,
 })
 
-sections.Fishing1:Button({
+sections.Fishing7:Button({
     Name = "Equip Selected Bait",
     Callback = function()
         if selectedBaitID then
@@ -2542,93 +2555,6 @@ sections.Fishing1:Button({
         end
     end,
 })
-
---------------------------------------------------------------------
--- MULTI-SELECT BAIT PURCHASE
---------------------------------------------------------------------
-local selectedBaits = {}
-local autoBuyBait = false
-
-sections.Shop:Dropdown({
-    Name = "Select Baits",
-    Search = true,
-    Multi = true,
-    Required = false,
-    Options = baitNames,
-    Default = {},
-    Callback = function(value)
-
-        selectedBaits = {}
-
-        for baitName, state in pairs(value) do
-            if state then
-                local id = BaitIDs[baitName]
-                if id then
-                    table.insert(selectedBaits, id)
-                end
-            end
-        end
-    end,
-}, "SelectBaitsDropdown")
-
---------------------------------------------------------------------
--- PURCHASE BUTTON
---------------------------------------------------------------------
-sections.Shop:Button({
-    Name = "Purchase Selected Baits",
-    Callback = function()
-        if #selectedBaits == 0 then return end
-
-        local purchaseRemote = ReplicatedStorage
-            :WaitForChild("Packages")
-            :WaitForChild("_Index")
-            :WaitForChild("sleitnick_net@0.2.0")
-            :WaitForChild("net")
-            :WaitForChild("RF/PurchaseBait")
-
-        for _, id in ipairs(selectedBaits) do
-            pcall(function()
-                purchaseRemote:InvokeServer(id)
-            end)
-        end
-    end,
-}, "PurchaseBaitsButton")
-
---------------------------------------------------------------------
--- AUTO PURCHASE LOOP
---------------------------------------------------------------------
-sections.Shop:Toggle({
-    Name = "Auto Purchase Loop",
-    Default = false,
-    Callback = function(state)
-        autoBuyBait = state
-
-        if state then
-            task.spawn(function()
-
-                local purchaseRemote = ReplicatedStorage
-                    :WaitForChild("Packages")
-                    :WaitForChild("_Index")
-                    :WaitForChild("sleitnick_net@0.2.0")
-                    :WaitForChild("net")
-                    :WaitForChild("RF/PurchaseBait")
-
-                while autoBuyBait do
-                    if #selectedBaits > 0 then
-                        for _, id in ipairs(selectedBaits) do
-                            pcall(function()
-                                purchaseRemote:InvokeServer(id)
-                            end)
-                        end
-                    end
-                    task.wait(5)
-                end
-            end)
-        end
-    end,
-}, "AutoBuyBaitToggle")
-
-
 ---------------------------------------------------------------------
 -- AUTO EQUIP ROD
 ---------------------------------------------------------------------
@@ -2645,7 +2571,7 @@ local args = {1}
 local autoEquipRod = false
 
 -- Toggle auto-equip
-sections.Fishing1:Toggle({
+sections.Fishing7:Toggle({
 	Name = "Auto Equip Rod",
 	Default = false,
 	Callback = function(state)
@@ -2664,7 +2590,7 @@ task.spawn(function()
 end)
 
 
-sections.Fishing1:Header({
+sections.Fishing8:Header({
 	Name = "Sell Feature"
 })
 
@@ -2685,7 +2611,7 @@ local autoSellLoop = nil
 -- ==========================================================
 -- WINDUI: Slider Sell Delay
 -- ==========================================================
-sections.Fishing1:Slider({
+sections.Fishing8:Slider({
 	Name = "Sell Delay (seconds)",
 	Default = 2,
 	Minimum = 1,
@@ -2699,7 +2625,7 @@ sections.Fishing1:Slider({
 -- ==========================================================
 -- WINDUI: Dropdown Mode
 -- ==========================================================
-sections.Fishing1:Dropdown({
+sections.Fishing8:Dropdown({
 	Name = "Select Mode",
 	Options = { "Backpack Full", "Sell Delay" },
 	Default = "Sell Delay",
@@ -2714,7 +2640,7 @@ sections.Fishing1:Dropdown({
 -- ==========================================================
 -- WINDUI: Toggle Auto Sell
 -- ==========================================================
-sections.Fishing1:Toggle({
+sections.Fishing8:Toggle({
 	Name = "Auto Sell All Items",
 	Default = false,
 	Callback = function(state)
@@ -2729,7 +2655,7 @@ sections.Fishing1:Toggle({
 							task.wait(sellDelay)
 						elseif mode == "Backpack Full" then
 							local bagLabel = LocalPlayer.PlayerGui.Inventory.Main.Top.Options.Fish.Label.BagSize
-							if bagLabel and bagLabel.Text == "4,500/4,500" then
+							if bagLabel and bagLabel.Text == "4,400/4,400" then
 								sellRemote:InvokeServer()
 							end
 							task.wait(1)
@@ -3958,7 +3884,7 @@ sections.Shop:Button({
             :WaitForChild("_Index")
             :WaitForChild("sleitnick_net@0.2.0")
             :WaitForChild("net")
-            :WaitForChild("RF/PurchaseFishingRod")
+            :WaitForChild("RF/PurchaseFishing1Rod")
 
         for _, id in ipairs(selectedRods) do
             pcall(function()
@@ -3985,7 +3911,7 @@ sections.Shop:Toggle({
                     :WaitForChild("_Index")
                     :WaitForChild("sleitnick_net@0.2.0")
                     :WaitForChild("net")
-                    :WaitForChild("RF/PurchaseFishingRod")
+                    :WaitForChild("RF/PurchaseFishing1Rod")
 
                 while autoBuyRods do
                     if #selectedRods > 0 then
@@ -4004,7 +3930,7 @@ sections.Shop:Toggle({
 }, "AutoBuyRodToggle")
 
 
-sections.Shop:Header({
+sections.Shop1:Header({
 	Name = "Bait Shop"
 })
 
@@ -4014,7 +3940,7 @@ sections.Shop:Header({
 local selectedBaits = {}
 local autoBuyBait = false
 
-sections.Shop:Dropdown({
+sections.Shop1:Dropdown({
     Name = "Select Baits",
     Search = true,
     Multi = true,
@@ -4039,7 +3965,7 @@ sections.Shop:Dropdown({
 --------------------------------------------------------------------
 -- PURCHASE BUTTON
 --------------------------------------------------------------------
-sections.Shop:Button({
+sections.Shop1:Button({
     Name = "Purchase Selected Baits",
     Callback = function()
         if #selectedBaits == 0 then return end
@@ -4062,7 +3988,7 @@ sections.Shop:Button({
 --------------------------------------------------------------------
 -- AUTO PURCHASE LOOP
 --------------------------------------------------------------------
-sections.Shop:Toggle({
+sections.Shop1:Toggle({
     Name = "Auto Purchase Loop",
     Default = false,
     Callback = function(state)
@@ -4094,30 +4020,12 @@ sections.Shop:Toggle({
 }, "AutoBuyBaitToggle")
 
 
-sections.Shop:Header({
+sections.Shop2:Header({
 	Name = "Skin"
 })
 
-local GiftingController = require(
-    ReplicatedStorage
-        :WaitForChild("Controllers")
-        :WaitForChild("GiftingController")
-)
 
-sections.Shop:Button({
-    Name = "Gift Skin (Soul Scythe)",
-    Callback = function()
-        GiftingController:Open("Soul Scythe")
-
-        Window:Notify({
-            Title = "Gift Menu",
-            Description = "Gift Soul Scythe unlocked!",
-            Lifetime = 3
-        })
-    end,
-})
-
-sections.Shop1:Header({
+sections.Shop3:Header({
 	Name = "Weather Shop"
 })
 
@@ -4133,7 +4041,7 @@ local selectedWeathers = {}
 local autoPurchase = false
 
 -- Dropdown multi-select weather list
-sections.Shop1:Dropdown({
+sections.Shop3:Dropdown({
     Name = "Select Weather Events",
     Search = true,
     Multi = true,
@@ -4151,7 +4059,7 @@ sections.Shop1:Dropdown({
 }, "SelectWeatherDropdown")
 
 -- Tombol beli manual
-sections.Shop1:Button({
+sections.Shop3:Button({
     Name = "Purchase Selected Weather",
     Callback = function()
         if #selectedWeathers == 0 then
@@ -4167,7 +4075,7 @@ sections.Shop1:Button({
 }, "PurchaseWeatherButton")
 
 -- Toggle auto purchase loop
-sections.Shop1:Toggle({
+sections.Shop3:Toggle({
     Name = "Auto Purchase Weather",
     Default = false,
     Callback = function(state)
@@ -4181,10 +4089,10 @@ sections.Shop1:Toggle({
                             pcall(function()
                                 PurchaseWeather:InvokeServer(weather)
                             end)
-                            task.wait(0.3)
+                            task.wait(2)
                         end
                     end
-                    task.wait(1.5)
+                    task.wait(2)
                 end
             end)
         end
@@ -4192,7 +4100,7 @@ sections.Shop1:Toggle({
 }, "AutoWeatherPurchaseToggle")
 
 
-sections.Shop1:Header({
+sections.Shop4:Header({
 	Name = "Boat Shop"
 })
 
@@ -4217,7 +4125,7 @@ local selectedPurchaseBoatID = nil
 local autoBuyBoat = false
 
 -- Dropdown pilih boat (Auto dari GameData)
-sections.Shop1:Dropdown({
+sections.Shop4:Dropdown({
     Name = "Select Boat to Purchase",
     Search = true,
     Multi = false,
@@ -4230,7 +4138,7 @@ sections.Shop1:Dropdown({
 }, "SelectBoatDropdown")
 
 -- Tombol manual Purchase
-sections.Shop1:Button({
+sections.Shop4:Button({
     Name = "Purchase Selected Boat",
     Callback = function()
         if not selectedPurchaseBoatID then return end
@@ -4260,7 +4168,6 @@ sections.Shop1:Toggle({
         end
     end,
 }, "AutoBuyBoatToggle")
-
 
 
 sections.Boat:Header({
@@ -4835,7 +4742,7 @@ sections.Player:Toggle({
             :WaitForChild("_Index")
             :WaitForChild("sleitnick_net@0.2.0")
             :WaitForChild("net")
-            :WaitForChild("RF/UpdateFishingRadar")
+            :WaitForChild("RF/UpdateFishing1Radar")
 
         pcall(function()
             remoteFunc:InvokeServer(state)
@@ -5370,7 +5277,7 @@ sections.Player1:Slider({
     Name = "Set Gravity",
     Default = GameData.GravityValue,
     Minimum = 0,
-    Maximum = 500,
+    Maximum = 400,
     DisplayMethod = "Number",
     Callback = function(Value)
         GameData.GravityValue = Value
@@ -5393,14 +5300,17 @@ sections.Player1:Toggle({
 
 
 
-sections.Player1:Header({
+
+-- Config
+
+sections.Config:Header({
 	Name = "UI Settings"
 })
 
 -----------------------------
 -- WINDOW WIDTH INPUT
 -----------------------------
-sections.Player1:Input({
+sections.Config:Input({
     Name = "Window Width",
     Placeholder = "800",
     AcceptedCharacters = "Numbers",
@@ -5418,9 +5328,9 @@ sections.Player1:Input({
 -----------------------------
 -- WINDOW HEIGHT INPUT
 -----------------------------
-sections.Player1:Input({
-    Name = "Window Height",
-    Placeholder = "500",
+sections.Config:Input({
+    Name = "Window Height (Not Working)",
+    Placeholder = "400",
     AcceptedCharacters = "Numbers",
     Callback = function(val)
         GameData.inputValue = val
@@ -5437,7 +5347,7 @@ sections.Player1:Input({
 -----------------------------
 -- WINDOW SCALE INPUT
 -----------------------------
-sections.Player1:Input({
+sections.Config:Input({
     Name = "Window Scale",
     Placeholder = "0.70",
     AcceptedCharacters = "Numbers",
@@ -5451,9 +5361,6 @@ sections.Player1:Input({
     end
 })
 
-
--- Config
-
 MacLib:SetFolder("Maclib")
 tabs.Config:InsertConfigSection("Full") -- karena yang ada adalah 'Config'
 
@@ -5461,7 +5368,7 @@ Window.onUnloaded(function()
 	print("Unloaded! Enjoyy my script :)")
 end)
 
-tabs.Fishing:Select() -- pilih tab yang benar-benar ada
+tabs.Home:Select() -- pilih tab yang benar-benar ada
 MacLib:LoadAutoLoadConfig()
 
 
