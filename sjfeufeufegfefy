@@ -1,7 +1,7 @@
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
-local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
+local MacLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Enow-Development/maclib-extended/refs/heads/main/maclib.lua"))()
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
 local workspace = workspace
@@ -202,7 +202,7 @@ local GameData = {
         ["Element"] = {
             Label = MenuRings["Element Tracker"].Board.Gui.Content:WaitForChild("Label2"),
             PosBelum100 = CFrame.new(2117.75146, -91.1985855, -700.854065, 0.931628525, 0, -0.363411963, 0, 1, 0, 0.363411963, 0, 0.931628525),
-            PosSudah100 = CFrame.new(1556.35583, 4.37500525, -605.774841, -0.154411227, 0, 0.988006651, 0, 1, 0, -0.988006651, 0, -0.154411227)
+            PosSudah100 = CFrame.new(1556.35583, 4.37400525, -605.774841, -0.154411227, 0, 0.988006651, 0, 1, 0, -0.988006651, 0, -0.154411227)
         },
         ["Aura Boat"] = {
             PosTarget = CFrame.new(88.2434769, 9.53157043, 2685.2605),
@@ -226,12 +226,12 @@ local GameData = {
     ["Weather Machine"] = CFrame.new(-1525.72632, 6.49999952, 1892.23645, 0.0615941137, 6.608282509e-10, -0.998101294, -6.8356556e-08, 1, 3.55628549e-09, 0.998101294, 6.84458072e-08, 0.0615941137),
     ["Sisyphus Statue"] = CFrame.new(-3692.22021, -135.574417, -1026.96167, -0.928567886, 9.83784361e-08, 0.371162564, 1.22746741e-07, 1, 4.20307664e-08, -0.371162564, 8.45874197e-08, -0.928567886),
     ["Ancient Jungle"] = CFrame.new(1275.54553, 7.85804176, -193.749756, 0.924119413, 5.65956171e-08, -0.382103801, -3.36512187e-08, 1, 6.67302302e-08, 0.382103801, -4.88084417e-08, 0.924119413),
-    ["Underground Cellar Door"] = CFrame.new(1954.18994, -41.7413597, -577.574768, -0.817980289, 0.573605001, 0.0434255376, 0.572797239, 0.81913203, -0.0304316022, -0.0530269668, -1.84206292e-05, -0.998593211),
+    ["Underground Cellar Door"] = CFrame.new(1954.18994, -41.7413597, -577.574768, -0.817980289, 0.573604001, 0.0434255376, 0.572797239, 0.81913203, -0.0304316022, -0.0530269668, -1.84206292e-05, -0.998593211),
     ["Underground Cellar"] = CFrame.new(2120.27417, -93.1985779, -701.552185, -0.998591185, 0, 0.0530693457, 0, 1, 0, -0.0530693457, 0, -0.998591185),
     ["Temple Guardian"] = CFrame.new(1478.29846, 126.044891, -613.519653, -0.117893577, 0, 0.993026376, 0, 1, 0, -0.993026376, 0, -0.117893577),
     ["Mysterious Door"] = CFrame.new(1899.19629, 13.3589745, -577.593811, -0.0531117916, 0, -0.998588562, 0, 1, 0, 0.998588562, 0, -0.0531117916),
     ["Hourglass Diamond Artifact"] = CFrame.new(1485.66541, 5.41373634, -861.165161, -5.01871109e-05, 0.988927424, 0.148400292, -1, -5.01871109e-05, -3.74019146e-06, 3.74019146e-06, -0.148400292, 0.988927364),
-    ["Arrow Artifact"] = CFrame.new(898.490479, 5.41373587, -361.212708, 9.11951065e-06, 0.0998446345, -0.995003104, -1, 9.11951065e-06, -8.2552433e-06, 8.2552433e-06, 0.995003104, 0.0998445749),
+    ["Arrow Artifact"] = CFrame.new(898.490479, 5.41373587, -361.212708, 9.11951065e-06, 0.0998446345, -0.994003104, -1, 9.11951065e-06, -8.2552433e-06, 8.2552433e-06, 0.994003104, 0.0998445749),
     ["Crescent Artifact"] = CFrame.new(1419.39148, 28.1637344, 79.5802917, 3.55243683e-05, -0.332731277, -0.943021655, -1, -3.55243683e-05, -2.51233578e-05, -2.51233578e-05, 0.943021655, -0.332731247),
     ["Diamond Artifact"] = CFrame.new(1818.72156, 5.41373634, -285.160828, -1.15633011e-05, -0.192806393, 0.981236815, -1, 1.15633011e-05, -9.53674316e-06, -9.53674316e-06, -0.981236815, -0.192806482),
     ["Sacred Temple"] = CFrame.new(1478.09546, 0.0774269104, -612.817993, 0.993017375, 0, 0.117968373, 0, 1, 0, -0.117968373, 0, 0.993017375),
@@ -239,7 +239,7 @@ local GameData = {
     ["Ancient Ruin"] = CFrame.new(6130.33203, -584.05603, 4632.95166, -0.171970293, -9.77156915e-08, 0.985102117, -7.319955083e-08, 1, 8.64156533e-08, -0.985102117, -5.722441259e-08, -0.171970293),
     ["Classic Island"] = CFrame.new(1258.37341, 9.999999905, 2811.14819, -0.996284008, -1.96166035e-08, 0.086129114, -2.56321329e-08, 1, -6.87372363e-08, -0.086129114, -7.068394809e-08, -0.996284008),
     ["Iron Cavern"] = CFrame.new(-8802.55762, -583.800049, 94.9271545, 0.539917707, 4.95349006e-08, -0.84171778, 2.88506321e-08, 1, 7.7355935e-08, 0.84171778, -6.60499282e-08, 0.539917707),
-    ["Iron Cafe"] = CFrame.new(-8641.91016, -547.500183, 161.963455, -0.0101819877, -4.55452422e-08, -0.999948144, 1.64972356e-08, 1, -4.57155878e-08, 0.999948144, -1.69618559e-08, -0.0101819877),
+    ["Iron Cafe"] = CFrame.new(-8641.91016, -547.400183, 161.963455, -0.0101819877, -4.55452422e-08, -0.999948144, 1.64972356e-08, 1, -4.57155878e-08, 0.999948144, -1.69618559e-08, -0.0101819877),
     },
 
     -- ==================[Save Posisi] ==================
@@ -636,8 +636,8 @@ local GameData2 = {
 
 local Window = MacLib:Window({
     Title = "NexaHub",
-    Subtitle = "Fish It - Premium | V0.0.2",
-    Size = UDim2.fromOffset(800, 500),
+    Subtitle = "Fish It - Premium | V0.0.3",
+    Size = UDim2.fromOffset(650, 400),
     DragStyle = 2,
     DisabledWindowControls = {},
     ShowUserInfo = true,
@@ -645,8 +645,7 @@ local Window = MacLib:Window({
     AcrylicBlur = true,
 })
 
-Window:SetSize(UDim2.fromOffset(800, 500))
-Window:SetScale(0.85)
+Window:SetSize(UDim2.fromOffset(650, 400))
 
 Window:SetUserInfoState(true)
 GameData.userInfoState = Window:GetUserInfoState()
@@ -749,6 +748,8 @@ local sections = {
 
     Player = tabs.Player:Section({ Side = "Full" }),
     Player1 = tabs.Player:Section({ Side = "Full" }),
+
+    Config = tabs.Config:Section({ Side = "Full" }),
 }
 
 sections.Home:Header({
@@ -1075,7 +1076,7 @@ GameData.eventCF = CFrame.new(
 )
 
 GameData.targetTP = CFrame.new(
-    -8642.99414, -547.500183, 159.353485,
+    -8642.99414, -547.400183, 159.353485,
     0.139343381, -2.42283136e-08, -0.99024415,
     4.18495816e-08, 1, -1.85780973e-08,
     0.99024415, -3.88525692e-08, 0.139343381
@@ -2730,7 +2731,7 @@ sections.Fishing1:Toggle({
 							task.wait(sellDelay)
 						elseif mode == "Backpack Full" then
 							local bagLabel = LocalPlayer.PlayerGui.Inventory.Main.Top.Options.Fish.Label.BagSize
-							if bagLabel and bagLabel.Text == "4,500/4,500" then
+							if bagLabel and bagLabel.Text == "4,400/4,400" then
 								sellRemote:InvokeServer()
 							end
 							task.wait(1)
@@ -5371,7 +5372,7 @@ sections.Player1:Slider({
     Name = "Set Gravity",
     Default = GameData.GravityValue,
     Minimum = 0,
-    Maximum = 500,
+    Maximum = 400,
     DisplayMethod = "Number",
     Callback = function(Value)
         GameData.GravityValue = Value
@@ -5394,14 +5395,17 @@ sections.Player1:Toggle({
 
 
 
-sections.Player1:Header({
+
+-- Config
+
+sections.Config:Header({
 	Name = "UI Settings"
 })
 
 -----------------------------
 -- WINDOW WIDTH INPUT
 -----------------------------
-sections.Player1:Input({
+sections.Config:Input({
     Name = "Window Width",
     Placeholder = "800",
     AcceptedCharacters = "Numbers",
@@ -5419,9 +5423,9 @@ sections.Player1:Input({
 -----------------------------
 -- WINDOW HEIGHT INPUT
 -----------------------------
-sections.Player1:Input({
-    Name = "Window Height",
-    Placeholder = "500",
+sections.Config:Input({
+    Name = "Window Height (Not Working)",
+    Placeholder = "400",
     AcceptedCharacters = "Numbers",
     Callback = function(val)
         GameData.inputValue = val
@@ -5438,7 +5442,7 @@ sections.Player1:Input({
 -----------------------------
 -- WINDOW SCALE INPUT
 -----------------------------
-sections.Player1:Input({
+sections.Config:Input({
     Name = "Window Scale",
     Placeholder = "0.70",
     AcceptedCharacters = "Numbers",
@@ -5452,9 +5456,6 @@ sections.Player1:Input({
     end
 })
 
-
--- Config
-
 MacLib:SetFolder("Maclib")
 tabs.Config:InsertConfigSection("Full") -- karena yang ada adalah 'Config'
 
@@ -5462,7 +5463,7 @@ Window.onUnloaded(function()
 	print("Unloaded! Enjoyy my script :)")
 end)
 
-tabs.Fishing:Select() -- pilih tab yang benar-benar ada
+tabs.Home:Select() -- pilih tab yang benar-benar ada
 MacLib:LoadAutoLoadConfig()
 
 
