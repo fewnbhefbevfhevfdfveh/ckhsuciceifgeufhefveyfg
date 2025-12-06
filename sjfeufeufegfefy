@@ -44,13 +44,22 @@ local GameData = {
     UserIdString = nil, -- nanti diisi
     CosmeticFolder = workspace:WaitForChild("CosmeticFolder"),
     ViewBobbersEnabled = false,
+
    -- ================== [Codes] ==================
+
     Codes = {
         "1BILLION",
         "LUCKYTOTEM",
         "EXPANSION",
         "CRYSTALS"
     },
+
+   -- ================== [Server Info Discord] ==================
+
+    InviteCode = "ECxQFc97F5",
+    DiscordAPI = "",
+    ServerInfoParagraph = nil,
+    AutoRefresh = false,
 
     -- ==================[Jenis Ikan v1]==================
 
@@ -273,7 +282,7 @@ local GameData = {
     GuppyList = {
         "Builderman Guppy",
         "Shedletsky Guppy",
-        "Brighteyes Guppy",
+        "BFulleyes Guppy",
         "Guest Guppy"
     },
 
@@ -637,7 +646,7 @@ local Window = MacLib:Window({
 })
 
 Window:SetSize(UDim2.fromOffset(800, 500))
-Window:SetScale(0.70)
+Window:SetScale(0.85)
 
 Window:SetUserInfoState(true)
 GameData.userInfoState = Window:GetUserInfoState()
@@ -683,6 +692,19 @@ GameData.GS_Blur = Window:GlobalSetting({
     end,
 })
 
+local GameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+
+Window:Dialog({
+    Title = "Support Game " .. GameName .. " | Welcome to " .. GameName,
+    Description = "Thank you for using NexaHub! Join our Discord for support and updates.",
+    Buttons = {
+        {
+            Name = "Ok",
+            Callback = function()
+            end,
+        }
+    }
+})
 
 local tabGroups = {
 	TabGroup1 = Window:TabGroup()
@@ -701,23 +723,32 @@ local tabs = {
 	Config = tabGroups.TabGroup1:Tab({ Name = "Config", Image = "rbxassetid://111411260968321" }),
 }
 local sections = {
-    Home = tabs.Home:Section({ Side = "Left" }),
-    Home1 = tabs.Home:Section({ Side = "Right" }),
-	Fishing = tabs.Fishing:Section({ Side = "Left" }),
-    Fishing1 = tabs.Fishing:Section({ Side = "Right" }),
-    Event = tabs.Event:Section({ Side = "Left" }),
-    Quest = tabs.Quest:Section({ Side = "Left" }),
-    Quest1 = tabs.Quest:Section({ Side = "Right" }),
-    Auto = tabs.Auto:Section({ Side = "Left" }),
-    Auto1 = tabs.Auto:Section({ Side = "Right" }),
-    Shop = tabs.Shop:Section({ Side = "Left" }),
-    Shop1 = tabs.Shop:Section({ Side = "Right" }),
-    Boat = tabs.Boat:Section({ Side = "Left" }),
-    Boat1 = tabs.Boat:Section({ Side = "Right" }),
-    Tp = tabs.Tp:Section({ Side = "Left" }),
-    Tp1 = tabs.Tp:Section({ Side = "Right" }),
-    Player = tabs.Player:Section({ Side = "Left" }),
-    Player1 = tabs.Player:Section({ Side = "Right" }),
+    Home = tabs.Home:Section({ Side = "Full" }),
+    Home1 = tabs.Home:Section({ Side = "Full" }),
+
+	Fishing = tabs.Fishing:Section({ Side = "Full" }),
+    Fishing1 = tabs.Fishing:Section({ Side = "Full" }),
+
+    Event = tabs.Event:Section({ Side = "Full" }),
+    Event1 = tabs.Event:Section({ Side = "Full" }),
+
+    Quest = tabs.Quest:Section({ Side = "Full" }),
+    Quest1 = tabs.Quest:Section({ Side = "Full" }),
+
+    Auto = tabs.Auto:Section({ Side = "Full" }),
+    Auto1 = tabs.Auto:Section({ Side = "Full" }),
+
+    Shop = tabs.Shop:Section({ Side = "Full" }),
+    Shop1 = tabs.Shop:Section({ Side = "Full" }),
+
+    Boat = tabs.Boat:Section({ Side = "Full" }),
+    Boat1 = tabs.Boat:Section({ Side = "Full" }),
+
+    Tp = tabs.Tp:Section({ Side = "Full" }),
+    Tp1 = tabs.Tp:Section({ Side = "Full" }),
+
+    Player = tabs.Player:Section({ Side = "Full" }),
+    Player1 = tabs.Player:Section({ Side = "Full" }),
 }
 
 sections.Home:Header({
@@ -792,6 +823,88 @@ sections.Home:Button({
         end
     end,
 })
+
+GameData.DiscordAPI = "https://discord.com/api/v10/invites/" ..
+    GameData.InviteCode ..
+    "?with_counts=true&with_expiration=true"
+
+GameData.HttpService = game:GetService("HttpService")
+
+
+-- BUAT PARAGRAPH UI
+GameData.ServerInfoParagraph = sections.Home:Paragraph({
+    Header = "Discord Server Info",
+    Body = "Click refresh to load."
+}, "Info")
+
+
+-- FUNGSI FETCH DISCORD API
+GameData.FetchDiscordInfo = function()
+    GameData.success, GameData.Response = pcall(function()
+        return GameData.HttpService:JSONDecode(
+            (syn and syn.request or http_request or request or fluxus and fluxus.request)({
+                Url = GameData.DiscordAPI,
+                Method = "GET",
+                Headers = {
+                    ["User-Agent"] = "RobloxBot/1.0",
+                    ["Accept"] = "application/json"
+                }
+            }).Body
+        )
+    end)
+
+    if GameData.success
+        and GameData.Response
+        and GameData.Response.guild
+    then
+        GameData.ServerInfoParagraph:UpdateHeader(
+            "Discord Server: " .. GameData.Response.guild.name
+        )
+
+        GameData.ServerInfoParagraph:UpdateBody(
+            "Members: " .. tostring(GameData.Response.approximate_member_count) .. "\n" ..
+            "Online: " .. tostring(GameData.Response.approximate_presence_count)
+        )
+
+    else
+        GameData.ServerInfoParagraph:UpdateHeader("Discord Server Info (Error)")
+        GameData.ServerInfoParagraph:UpdateBody("Failed to fetch info.\nTry again.")
+    end
+end
+
+
+-- BUTTON REFRESH MANUAL
+sections.Home:Button({
+    Name = "Refresh Server Info",
+    Callback = function()
+        GameData.ServerInfoParagraph:UpdateBody("Loading...")
+        GameData.FetchDiscordInfo()
+    end,
+})
+
+
+-- TOGGLE AUTO REFRESH (3 DETIK)
+sections.Home:Toggle({
+    Name = "Auto Refresh Server Info",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoRefresh = value
+
+        Window:Notify({
+            Title = "",
+            Description = value and "Auto Refresh Enabled" or "Auto Refresh Disabled"
+        })
+
+        -- LOOP AUTO REFRESH
+        task.spawn(function()
+            while GameData.AutoRefresh do
+                GameData.ServerInfoParagraph:UpdateBody("Loading...")
+                GameData.FetchDiscordInfo()
+                task.wait(3)
+            end
+        end)
+    end,
+}, "AutoRefreshServerInfoToggle")
 
 sections.Home1:Paragraph({
     Header = "Update List",
@@ -5010,7 +5123,7 @@ sections.Player:Button({
         -- Lighting Optimization
         Lighting.GlobalShadows = false
         Lighting.FogEnd = 1e10
-        Lighting.Brightness = 1
+        Lighting.BFullness = 1
         Lighting.ExposureCompensation = 0
         Lighting.EnvironmentDiffuseScale = 0
         Lighting.EnvironmentSpecularScale = 0
@@ -5073,7 +5186,7 @@ sections.Player:Button({
 
         Lighting.GlobalShadows = false
         Lighting.FogEnd = 9e9
-        Lighting.Brightness = 1
+        Lighting.BFullness = 1
         Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
         Lighting.ExposureCompensation = 0
         Lighting.ShadowSoftness = 0
@@ -5343,7 +5456,7 @@ sections.Player1:Input({
 -- Config
 
 MacLib:SetFolder("Maclib")
-tabs.Config:InsertConfigSection("Left") -- karena yang ada adalah 'Config'
+tabs.Config:InsertConfigSection("Full") -- karena yang ada adalah 'Config'
 
 Window.onUnloaded(function()
 	print("Unloaded! Enjoyy my script :)")
