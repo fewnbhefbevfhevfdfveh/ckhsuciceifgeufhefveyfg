@@ -112,7 +112,12 @@ local function LoadSavedKey()
 		return false
 	end
 
-	if os.time() - tonumber(timestamp) > SaveDuration then
+	local savedTime = tonumber(timestamp)
+	local now = os.time()
+
+	-- Auto delete walaupun user OFFLINE
+	if now - savedTime > SaveDuration then
+		print("SaveKey expired — deleting file...")
 		pcall(function() delfile(SaveFile) end)
 		return false
 	end
@@ -128,19 +133,15 @@ local function SaveKeyNow()
 end
 
 ----------------------------------------------------------------
--- CLOSE UI (FIXED)
+-- CLOSE UI
 ----------------------------------------------------------------
 local function CloseUI()
 	task.delay(0.3, function()
-
-		-- Jika UI Library punya event onUnloaded, kita pasang callback
 		if Window.onUnloaded then
 			Window.onUnloaded(function()
 				print("Window sudah dihapus!")
 			end)
 		end
-
-		-- Perintah yang BENAR untuk menutup UI
 		Window:Unload()
 	end)
 end
@@ -165,10 +166,10 @@ local function VerifyPremium()
 		return
 	end
 
-	-- Save key setelah benar
+	-- Save key
 	SaveKeyNow()
 
-	-- Permanent users
+	-- Permanent
 	if userData.issuedDate == "Permanen" then
 		Notify("Premium Verified", "💎 Lifetime access granted!", 5)
 		CloseUI()
@@ -178,12 +179,18 @@ local function VerifyPremium()
 		return
 	end
 
-	-- check expired date
+	-- Expired check
 	local expiredTimestamp = getExpiration(userData)
 	local remaining = expiredTimestamp - os.time()
 
 	if remaining <= 0 then
 		Notify("Expired", "⏰ Your premium has expired!", 5)
+
+		-- Hapus saveKey juga
+		pcall(function()
+			if isfile(SaveFile) then delfile(SaveFile) end
+		end)
+
 		task.wait(1.5)
 		player:Kick("⏰ Premium expired.")
 		return
@@ -201,7 +208,7 @@ end
 ----------------------------------------------------------------
 sections.Key:Input({
 	Name = "Input Your Key",
-	Placeholder = "Enter Yorr key",
+	Placeholder = "Enter Your Key",
 	AcceptedCharacters = "All",
 	Callback = function(input)
 		typedKey = input
