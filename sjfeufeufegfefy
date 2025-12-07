@@ -741,7 +741,7 @@ local sections = {
     Home = tabs.Home:Section({ Side = "Full" }),
     Home1 = tabs.Home:Section({ Side = "Full" }),
     Home2 = tabs.Home:Section({ Side = "Full" }),
-    Home2 = tabs.Home:Section({ Side = "Full" }),
+    Home3 = tabs.Home:Section({ Side = "Full" }),
 
 	Fishing = tabs.Fishing:Section({ Side = "Full" }),
     Fishing1 = tabs.Fishing:Section({ Side = "Full" }),
@@ -781,6 +781,7 @@ local sections = {
     Player2 = tabs.Player:Section({ Side = "Full" }),
 
     Config = tabs.Config:Section({ Side = "Full" }),
+    Config1 = tabs.Config:Section({ Side = "Full" }),
 }
 
 sections.Home:Header({
