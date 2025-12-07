@@ -904,7 +904,7 @@ GameData.HttpService = game:GetService("HttpService")
 
 
 -- BUAT PARAGRAPH UI
-GameData.ServerInfoParagraph = sections.Home1:Paragraph({
+GameData.ServerInfoParagraph = sections.Home2:Paragraph({
     Header = "Discord Server Info",
     Body = "Click refresh to load."
 }, "Info")
