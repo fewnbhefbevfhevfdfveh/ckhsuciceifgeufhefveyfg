@@ -704,7 +704,7 @@ local Window = MacLib:Window({
     DragStyle = 2,
     DisabledWindowControls = {},
     ShowUserInfo = true,
-    Auto2bind = Enum.Auto2Code.G,
+    Keybind = Enum.KeyCode.G,
     AcrylicBlur = true,
 })
 
