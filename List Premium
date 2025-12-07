@@ -201,7 +201,7 @@ end
 ----------------------------------------------------------------
 sections.Key:Input({
 	Name = "Input Your Key",
-	Placeholder = "",
+	Placeholder = "Enter Yorr key",
 	AcceptedCharacters = "All",
 	Callback = function(input)
 		typedKey = input
