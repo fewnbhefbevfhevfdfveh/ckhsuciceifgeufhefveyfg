@@ -1,7 +1,7 @@
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
-local MacLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Enow-Development/maclib-extended/refs/heads/main/maclib.lua"))() --
+local MacLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Enow-Development/maclib-extended/refs/heads/main/maclib.lua"))()
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
 local workspace = workspace
@@ -65,6 +65,53 @@ local GameData = {
     DiscordAPI = "",
     ServerInfoParagraph = nil,
     AutoRefresh = false,
+
+   -- ================== [Auto Trade] ==================
+
+    	TierMap001 = {
+		[1] = "Common",
+		[2] = "Uncommon",
+		[3] = "Rare",
+		[4] = "Epic",
+		[5] = "Legendary",
+		[6] = "Mythic",
+		[7] = "SECRET"
+	},
+
+	TierList001 = { "Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET" },
+
+	RS = ReplicatedStorage,
+	Players = Players,
+	player = Players.LocalPlayer,
+
+	Net = require(ReplicatedStorage.Packages.Net),
+	ReplionClient = require(ReplicatedStorage.Packages.Replion).Client,
+	DataReplion = nil,
+	ItemUtility = require(ReplicatedStorage.Shared.ItemUtility),
+
+	TradeRemote = ReplicatedStorage
+		:WaitForChild("Packages")
+		:WaitForChild("_Index")
+		:WaitForChild("sleitnick_net@0.2.0")
+		:WaitForChild("net")
+		:WaitForChild("RF/InitiateTrade"),
+
+	ItemsFolder = ReplicatedStorage:WaitForChild("Items"),
+
+	state = {
+		selectedTiers = {},
+		Auto2Trade = false,
+		stopTrade = false,
+		targetPlayer = "",
+		fishTarget = 0,
+		fishCount = 0
+	},
+
+	TierList = nil,
+	nameToTier = {},
+
+	notifGui = nil,
+	notifFrame = nil,
 
     -- ==================[Jenis Ikan v1]==================
 
@@ -657,7 +704,7 @@ local Window = MacLib:Window({
     DragStyle = 2,
     DisabledWindowControls = {},
     ShowUserInfo = true,
-    Keybind = Enum.KeyCode.G,
+    Auto2bind = Enum.Auto2Code.G,
     AcrylicBlur = true,
 })
 
@@ -762,6 +809,7 @@ local sections = {
 
     Auto = tabs.Auto:Section({ Side = "Full" }),
     Auto1 = tabs.Auto:Section({ Side = "Full" }),
+    Auto2 = tabs.Auto:Section({ Side = "Full" }),
 
     Shop = tabs.Shop:Section({ Side = "Full" }),
     Shop1 = tabs.Shop:Section({ Side = "Full" }),
@@ -1671,8 +1719,8 @@ end
 function GameData.extractColorFromTextData(colorValue)
 	if typeof(colorValue) == "Color3" then return colorValue end
 	if typeof(colorValue) == "ColorSequence" then
-		if #colorValue.Keypoints > 0 then
-			return colorValue.Keypoints[1].Value
+		if #colorValue.Auto2points > 0 then
+			return colorValue.Auto2points[1].Value
 		end
 	end
 	return nil
@@ -3916,6 +3964,254 @@ function doEnchantCycle()
     return false
 end
 
+sections.Auto2:Header({
+	Name = "Auto Trade"
+})
+
+--// SERVICES
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+
+
+--// INIT
+GameData.DataReplion = GameData.ReplionClient:WaitReplion("Data")
+GameData.TierList = GameData.TierList001
+
+for num, name in pairs(GameData.TierMap001) do
+	GameData.nameToTier[name] = num
+end
+
+--// FUNCTIONS
+function GameData.normalize(value)
+	if not value then return {} end
+	if type(value) == "string" then return { value } end
+
+	local out = {}
+	for k, v in pairs(value) do
+		if type(k) == "string" and v == true then
+			table.insert(out, k)
+		elseif type(v) == "string" then
+			table.insert(out, v)
+		end
+	end
+	return out
+end
+
+function GameData.isTierMatch(itemTier, selected)
+	for _, tName in ipairs(selected) do
+		if GameData.nameToTier[tName] == tonumber(itemTier) then
+			return true
+		end
+	end
+	return false
+end
+
+function GameData.safeTrade(userid, uuid)
+	pcall(function()
+		GameData.TradeRemote:InvokeServer(userid, uuid)
+	end)
+end
+
+function GameData.workerTrade()
+	GameData.RATE = 0.15
+	GameData.LOOP_DELAY = 1
+
+	while GameData.state.Auto2Trade do
+		if GameData.state.stopTrade then return end
+
+		local target = Players:FindFirstChild(GameData.state.targetPlayer)
+		if not target then
+			GameData.state.Auto2Trade = false
+			return
+		end
+
+		local inventory = GameData.DataReplion:GetExpect({ "Inventory", "Items" }) or {}
+		local list = {}
+
+		for _, item in ipairs(inventory) do
+			local ok, data = pcall(function()
+				return GameData.ItemUtility.GetItemDataFromItemType("Items", item.Id)
+			end)
+
+			if ok and data and data.Data then
+				if data.Data.Type == "Fish" and GameData.isTierMatch(data.Data.Tier, GameData.state.selectedTiers) then
+					table.insert(list, item.UUID)
+				end
+			end
+		end
+
+		if #list == 0 then
+			Window:Notify({
+				Title = "Trade",
+				Description = "No more fish for selected tier"
+			})
+			GameData.state.Auto2Trade = false
+			break
+		end
+
+		for _, uuid in ipairs(list) do
+			if not GameData.state.Auto2Trade then break end
+			GameData.safeTrade(target.UserId, uuid)
+			task.wait(GameData.RATE)
+		end
+
+		task.wait(GameData.LOOP_DELAY)
+	end
+end
+
+--// NOTIF
+GameData.notifGui = GameData.player.PlayerGui:WaitForChild("Text Notifications")
+GameData.notifFrame = GameData.notifGui:WaitForChild("Frame")
+
+function GameData.checkTradeTile(tile)
+	local header = tile:FindFirstChild("Header")
+	if header and header:IsA("TextLabel") then
+		if header.Text == "Trade completed!" then
+			GameData.state.fishCount += 1
+
+			Window:Notify({
+				Title = "Trade",
+				Description = "Trade completed! (" .. GameData.state.fishCount .. "/" .. GameData.state.fishTarget .. ")"
+			})
+
+			if GameData.state.fishTarget > 0 and GameData.state.fishCount >= GameData.state.fishTarget then
+				GameData.state.Auto2Trade = false
+				GameData.state.stopTrade = true
+
+				Window:Notify({
+					Title = "Trade",
+					Description = "Trade target reached!"
+				})
+			end
+		end
+	end
+end
+
+for _, tile in ipairs(GameData.notifFrame:GetChildren()) do
+	if tile.Name == "TextTile" then
+		GameData.checkTradeTile(tile)
+	end
+end
+
+GameData.notifFrame.ChildAdded:Connect(function(child)
+	if child.Name == "TextTile" then
+		local headerObj = child:WaitForChild("Header", 5)
+		if headerObj then
+			GameData.checkTradeTile(child)
+		end
+	end
+end)
+
+---------------------------------------------------------
+--// UI
+---------------------------------------------------------
+
+-- DROPDOWN TARGET PLAYER (DisplayName @Username)
+local PlayerMap = {}
+
+local PlayerDropdown = sections.Auto2:Dropdown({
+	Name = "Select Target Player",
+	Search = true,
+	Multi = false,
+	Required = false,
+	Options = {},
+	Default = {},
+	Callback = function(label)
+		if PlayerMap[label] then
+			GameData.state.targetPlayer = PlayerMap[label]
+			Window:Notify({
+				Title = "Target",
+				Description = "Selected: "..label
+			})
+		end
+	end,
+}, "PlayerDropdown")
+
+-- REFRESH FUNCTION
+local function RefreshPlayers()
+	local Options = {}
+	table.clear(PlayerMap)
+
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= Players.LocalPlayer then
+			local label = plr.DisplayName .. " @" .. plr.Name
+			PlayerMap[label] = plr.Name
+			table.insert(Options, label)
+		end
+	end
+
+	PlayerDropdown:ClearOptions()
+	PlayerDropdown:InsertOptions(Options)
+
+	if #Options > 0 then
+		PlayerDropdown:UpdateSelection(Options[1])
+		GameData.state.targetPlayer = PlayerMap[Options[1]]
+	end
+end
+
+-- Auto2 LOAD
+RefreshPlayers()
+
+-- REFRESH BUTTON
+sections.Auto2:Button({
+	Name = "Refresh Player List",
+	Callback = function()
+		RefreshPlayers()
+	end,
+})
+
+-- FISH AMOUNT INPUT
+sections.Auto2:Input({
+	Name = "Fish Amount Trade",
+	Placeholder = "Example: 10",
+	AcceptedCharacters = "0123456789",
+	Callback = function(input)
+		local amount = tonumber(input)
+		if amount then
+			GameData.state.fishTarget = amount
+			GameData.state.fishCount = 0
+			Window:Notify({
+				Title = "Trade",
+				Description = "Trade target set: " .. amount
+			})
+		else
+			Window:Notify({
+				Title = "Error",
+				Description = "Input must be a number!"
+			})
+		end
+	end,
+}, "TargetAmountInput")
+
+-- TIER DROPDOWN
+sections.Auto2:Dropdown({
+	Name = "Select Tier(s)",
+	Search = true,
+	Multi = true,
+	Options = GameData.TierList001,
+	Default = {"Rare"},
+	Callback = function(val)
+		GameData.state.selectedTiers = GameData.normalize(val)
+		Window:Notify({
+			Title = "Tier Selected",
+			Description = table.concat(GameData.state.selectedTiers, ", ")
+		})
+	end
+}, "TierDropdown")
+
+-- Auto Trade TOGGLE
+sections.Auto2:Toggle({
+	Name = "Auto Trade",
+	Default = false,
+	Callback = function(b)
+		GameData.state.Auto2Trade = b
+		GameData.state.stopTrade = not b
+		if b then
+			task.spawn(GameData.workerTrade)
+		end
+	end
+}, "AutoTradeToggle")
+
 sections.Shop:Header({
 	Name = "Rod Shop"
 })
@@ -4100,24 +4396,46 @@ sections.Shop2:Header({
 	Name = "Skin"
 })
 
+-- Require GiftingController
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local GiftingController = require(
     ReplicatedStorage
         :WaitForChild("Controllers")
         :WaitForChild("GiftingController")
 )
 
+-- Penyimpan item gift yang dipilih
+local SelectedGiftSkin = "Princess Parasol"
+
+-- Dropdown (menggunakan string)
+sections.Shop2:Dropdown({
+    Name = "Gift Skin Rod",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = {"Princess Parasol", "Eclipse Katana", "Soul Scythe"},
+    Default = {"Princess Parasol"},
+    Callback = function(Value)
+        -- Karena Multi = false → Value sudah berupa STRING
+        SelectedGiftSkin = tostring(Value)
+    end,
+}, "GiftSkinRodDropdown")
+
+
+-- Button Gift
 sections.Shop2:Button({
-    Name = "Gift Skin (Princess Parasol)",
+    Name = "Gift Selected Skin",
     Callback = function()
-        GiftingController:Open("Princess Parasol")
+        GiftingController:Open(SelectedGiftSkin)
 
         Window:Notify({
             Title = "Gift Menu",
-            Description = "Gift Princess Parasol unlocked!",
+            Description = "Gift " .. SelectedGiftSkin .. " unlocked!",
             Lifetime = 3
         })
     end,
 })
+
 
 sections.Shop3:Header({
 	Name = "Weather Shop"
@@ -5277,10 +5595,10 @@ sections.Player1:Toggle({
             task.spawn(function()
                 while AntiAfkRunning do
                     -- Tekan ESC
-                    VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
+                    VIM:SendAuto2Event(true, Enum.Auto2Code.Escape, false, game)
                     task.wait(0.1)
                     -- Lepas ESC
-                    VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
+                    VIM:SendAuto2Event(false, Enum.Auto2Code.Escape, false, game)
 
                     task.wait(600) -- 10 menit
                 end
@@ -5345,7 +5663,7 @@ end)
 --------------------------
 -- Walkspeed Controller --
 --------------------------
-sections.Player1:Slider({
+sections.Player2:Slider({
     Name = "Set Walkspeed",
     Default = GameData.WalkspeedValue,
     Minimum = 0,
@@ -5357,7 +5675,7 @@ sections.Player1:Slider({
     end,
 }, "WalkspeedSlider")
 
-sections.Player1:Toggle({
+sections.Player2:Toggle({
     Name = "Walkspeed",
     Default = GameData.WalkspeedEnabled,
     Callback = function(state)
@@ -5604,8 +5922,8 @@ GameData.Corner.Parent = GameData.ToggleFrame
 
 GameData.Gradient = Instance.new("UIGradient")
 GameData.Gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(36, 112, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 42, 130)),
+    ColorSequenceAuto2point.new(0, Color3.fromRGB(36, 112, 255)),
+    ColorSequenceAuto2point.new(1, Color3.fromRGB(0, 42, 130)),
 })
 GameData.Gradient.Rotation = 45
 GameData.Gradient.Parent = GameData.ToggleFrame
