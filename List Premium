@@ -22,7 +22,7 @@ local validUsers = {
 	[9312857030] = {key = "NexaPremium_M48NWY9W", issuedDate = "12-10-2025"},
 	[9576768452] = {key = "NexaPremium_CGBC6AH7", issuedDate = "Permanen"},
 	[5464154339] = {key = "Owner", issuedDate = "Permanen"},
-	[7507528154] = {key = "One1", issuedDate = "11-10-2025"},
+	[10033403189] = {key = "One1", issuedDate = "11-10-2025"},
 	[8309815866] = {key = "Owner", issuedDate = "Permanen"},
 	[8238519054] = {key = "Owner", issuedDate = "Permanen"},
 	[8309797161] = {key = "Owner", issuedDate = "Permanen"},
