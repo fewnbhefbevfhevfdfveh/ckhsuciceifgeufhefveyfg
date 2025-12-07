@@ -1784,7 +1784,7 @@ local function StartFishingCycle()
     GameData.lastCatchTime = os.clock()
 
     GameData.ChargeFishingRod:InvokeServer()
-    if not SafeWait(0.01) then return end
+    if not SafeWait(1) then return end
 
     GameData.RequestFishingMinigameStarted:InvokeServer(unpack(GameData.miniggameArgs))
 end
@@ -1806,7 +1806,7 @@ task.spawn(function()
                 end)
 
                 GameData.isFishing = false
-                task.wait(0.01)
+                task.wait(1)
 
                 StartFishingCycle()
             end
