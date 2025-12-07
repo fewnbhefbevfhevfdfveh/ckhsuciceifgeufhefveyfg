@@ -1,5 +1,30 @@
+local MacLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Enow-Development/maclib-extended/refs/heads/main/maclib.lua"))()
+
+local Window = MacLib:Window({
+    Title = "NexaHub | Key System",
+    Subtitle = "Enter Your Premium Key",
+    Size = UDim2.fromOffset(650, 400),
+    DragStyle = 2,
+    DisabledWindowControls = {},
+    ShowUserInfo = true,
+    Keybind = Enum.KeyCode.G,
+    AcrylicBlur = true,
+})
+
+Window:SetSize(UDim2.fromOffset(650, 400))
+
+local tabGroups = {
+	TabGroup1 = Window:TabGroup()
+}
+
+local tabs = {
+    Key = tabGroups.TabGroup1:Tab({ Name = "Key System", Image = "rbxassetid://103124389616816" }),
+}
+local sections = {
+    Key = tabs.Key:Section({ Side = "Full" }),
+}
+
 --// SERVICES
-local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
@@ -30,13 +55,17 @@ local validUsers = {
 }
 
 local expireAfter = 30 * 24 * 60 * 60 -- 30 hari
+local SaveFile = "NexaSavedKey_" .. player.UserId .. ".txt"
+local SaveDuration = 10 * 60 * 60 -- 10 JAM (auto-delete)
 
---// UTILITIES
+----------------------------------------------------------------
+-- UTILITIES
+----------------------------------------------------------------
 local function parseDate(str)
 	if str == "Permanen" then return nil end
 	local d, m, y = str:match("(%d+)%-(%d+)%-(%d+)")
 	if d and m and y then
-		return os.time({year = tonumber(y), month = tonumber(m), day = tonumber(d), hour = 0})
+		return os.time({year = tonumber(y), month = tonumber(m), day = tonumber(d)})
 	end
 	return os.time()
 end
@@ -56,80 +85,147 @@ local function getExpiration(userData)
 	return parseDate(userData.issuedDate) + expireAfter
 end
 
---// NOTIFICATION
-local function ShowNotification(text)
-	local playerGui = player:WaitForChild("PlayerGui")
-	if playerGui:FindFirstChild("NexaNotify") then playerGui.NexaNotify:Destroy() end
+----------------------------------------------------------------
+-- NOTIFICATION
+----------------------------------------------------------------
+local function Notify(title, desc, time)
+	Window:Notify({
+		Title = title,
+		Description = desc,
+		Lifetime = time or 5
+	})
+end
 
-	local gui = Instance.new("ScreenGui", playerGui)
-	gui.Name = "NexaNotify"
+----------------------------------------------------------------
+-- SAVE & LOAD KEY SYSTEM
+----------------------------------------------------------------
+local typedKey = ""
 
-	local frame = Instance.new("Frame", gui)
-	frame.Size = UDim2.new(0, 280, 0, 60)
-	frame.Position = UDim2.new(0.5, 0, 0, -80)
-	frame.AnchorPoint = Vector2.new(0.5, 0)
-	frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-	frame.BorderColor3 = Color3.fromRGB(60, 60, 60)
-	Instance.new("UICorner", frame)
+local function LoadSavedKey()
+	if not isfile or not isfile(SaveFile) then return false end
 
-	local label = Instance.new("TextLabel", frame)
-	label.Size = UDim2.new(1, -20, 1, 0)
-	label.Position = UDim2.new(0, 10, 0, 0)
-	label.BackgroundTransparency = 1
-	label.TextWrapped = true
-	label.Font = Enum.Font.Code
-	label.TextSize = 14
-	label.TextColor3 = Color3.fromRGB(255, 130, 0)
-	label.Text = text
+	local data = readfile(SaveFile)
+	local key, timestamp = data:match("(.+)|(%d+)")
 
-	TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
-		Position = UDim2.new(0.5, 0, 0, 40)
-	}):Play()
+	if not key or not timestamp then
+		pcall(function() delfile(SaveFile) end)
+		return false
+	end
 
-	task.delay(2, function()
-		TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
-			Position = UDim2.new(0.5, 0, 0, -80)
-		}):Play()
-		task.wait(0.3)
-		gui:Destroy()
+	if os.time() - tonumber(timestamp) > SaveDuration then
+		pcall(function() delfile(SaveFile) end)
+		return false
+	end
+
+	typedKey = key
+	return true
+end
+
+local function SaveKeyNow()
+	if writefile then
+		writefile(SaveFile, typedKey .. "|" .. os.time())
+	end
+end
+
+----------------------------------------------------------------
+-- CLOSE UI (FIXED)
+----------------------------------------------------------------
+local function CloseUI()
+	task.delay(0.3, function()
+
+		-- Jika UI Library punya event onUnloaded, kita pasang callback
+		if Window.onUnloaded then
+			Window.onUnloaded(function()
+				print("Window sudah dihapus!")
+			end)
+		end
+
+		-- Perintah yang BENAR untuk menutup UI
+		Window:Unload()
 	end)
 end
 
---// MAIN LOGIC
-local userData = validUsers[player.UserId]
+----------------------------------------------------------------
+-- VERIFY PREMIUM
+----------------------------------------------------------------
+local function VerifyPremium()
+	local userData = validUsers[player.UserId]
 
--- NOT IN LIST → NOTIF → KICK
-if not userData then
-	ShowNotification("❌ You are not a Premium user.")
-	task.wait(2)
-	player:Kick("❌ You are not a whitelisted Premium user.")
-	return
-end
+	if not userData then
+		Notify("Access Denied", "❌ You are not a Premium user.", 5)
+		task.wait(1.5)
+		player:Kick("❌ Not whitelisted.")
+		return
+	end
 
-local expiredTimestamp = getExpiration(userData)
-local remaining = expiredTimestamp - os.time()
+	if typedKey ~= userData.key then
+		Notify("Invalid Key", "❌ Wrong key!", 5)
+		task.wait(1.2)
+		player:Kick("❌ Wrong key.")
+		return
+	end
 
--- PERMANENT USER
-if userData.issuedDate == "Permanen" then
-	ShowNotification("💎 Lifetime Access Granted!")
-	task.wait(1)
-	pcall(function()
+	-- Save key setelah benar
+	SaveKeyNow()
+
+	-- Permanent users
+	if userData.issuedDate == "Permanen" then
+		Notify("Premium Verified", "💎 Lifetime access granted!", 5)
+		CloseUI()
+		task.wait(1)
+
 		loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/jduwgfPREMIUM"))()
-	end)
-	return
-end
+		return
+	end
 
--- EXPIRED → NOTIF → KICK
-if remaining <= 0 then
-	ShowNotification("⏰ Your Premium Access Has Expired.")
-	task.wait(2)
-	player:Kick("⏰ Your Premium Access Has Expired. Renew to continue using the script.")
-	return
-end
+	-- check expired date
+	local expiredTimestamp = getExpiration(userData)
+	local remaining = expiredTimestamp - os.time()
 
--- VALID PREMIUM → LOAD PREMIUM
-ShowNotification("✅ Premium Access: " .. formatRemaining(remaining))
-task.wait(1)
-pcall(function()
+	if remaining <= 0 then
+		Notify("Expired", "⏰ Your premium has expired!", 5)
+		task.wait(1.5)
+		player:Kick("⏰ Premium expired.")
+		return
+	end
+
+	Notify("Premium Verified", "✅ Access Granted (" .. formatRemaining(remaining) .. ")", 5)
+	CloseUI()
+	task.wait(1)
+
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/jduwgfPREMIUM"))()
+end
+
+----------------------------------------------------------------
+-- UI INPUT + BUTTON
+----------------------------------------------------------------
+sections.Key:Input({
+	Name = "Input Your Key",
+	Placeholder = "",
+	AcceptedCharacters = "All",
+	Callback = function(input)
+		typedKey = input
+	end,
+})
+
+sections.Key:Button({
+	Name = "Verifikasi key",
+	Callback = function()
+		if typedKey == "" then
+			Notify("Key Needed", "⚠️ Please enter your key first!", 5)
+			return
+		end
+		VerifyPremium()
+	end,
+})
+
+----------------------------------------------------------------
+-- AUTO LOGIN (Jika ada savekey)
+----------------------------------------------------------------
+task.delay(1, function()
+	if LoadSavedKey() then
+		Notify("Auto Login", "🔐 Key loaded — verifying…", 4)
+		task.wait(1)
+		VerifyPremium()
+	end
 end)
