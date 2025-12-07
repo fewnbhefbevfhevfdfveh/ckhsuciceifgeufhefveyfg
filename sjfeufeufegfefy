@@ -1,7 +1,7 @@
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
-local MacLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Enow-Development/maclib-extended/refs/heads/main/maclib.lua"))()
+local MacLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Enow-Development/maclib-extended/refs/heads/main/maclib.lua"))() --
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
 local workspace = workspace
@@ -1784,7 +1784,7 @@ local function StartFishingCycle()
     GameData.lastCatchTime = os.clock()
 
     GameData.ChargeFishingRod:InvokeServer()
-    if not SafeWait(1) then return end
+    if not SafeWait(0.1) then return end
 
     GameData.RequestFishingMinigameStarted:InvokeServer(unpack(GameData.miniggameArgs))
 end
@@ -1794,7 +1794,7 @@ end
 -- ==========================================================
 task.spawn(function()
     while true do
-        task.wait(1)
+        task.wait(0.1)
 
         if GameData.autoFishingEnabled and GameData.isFishing then
             if os.clock() - GameData.lastCatchTime >= GameData.antiStuckTime then
@@ -1806,7 +1806,7 @@ task.spawn(function()
                 end)
 
                 GameData.isFishing = false
-                task.wait(1)
+                task.wait(0.1)
 
                 StartFishingCycle()
             end
