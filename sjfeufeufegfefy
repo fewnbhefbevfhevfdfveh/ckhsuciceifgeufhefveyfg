@@ -5595,10 +5595,10 @@ sections.Player1:Toggle({
             task.spawn(function()
                 while AntiAfkRunning do
                     -- Tekan ESC
-                    VIM:SendAuto2Event(true, Enum.Auto2Code.Escape, false, game)
+                    VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
                     task.wait(0.1)
                     -- Lepas ESC
-                    VIM:SendAuto2Event(false, Enum.Auto2Code.Escape, false, game)
+                    VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
 
                     task.wait(600) -- 10 menit
                 end
@@ -5611,6 +5611,7 @@ sections.Player1:Toggle({
         })
     end,
 }, "AntiAfk!!!Toggle")
+
 
 
 sections.Player2:Header({
