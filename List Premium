@@ -2,3 +2,7 @@
 print("Loaded Script Premium Nexa")
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/jduwgfPREMIUM"))()
+
+print("Berhasil Load")
+print("Welcome!!!")
+print("9620395")
