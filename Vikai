@@ -117,45 +117,10 @@ getgenv().AutoFarmTP = false
 getgenv().SelectedWeathers = {}
 getgenv().AutoBuyWeather = false
 
-local cutsceneController
-local originalPlay, originalStop
-
-do
-    local ok, controller = pcall(function()
-        return require(game:GetService("ReplicatedStorage").Controllers.CutsceneController)
-    end)
-    if ok and controller then
-        cutsceneController = controller
-        originalPlay = cutsceneController.Play
-        originalStop = cutsceneController.Stop
-    end
-end
-
-local function EnableSkip()
-    if cutsceneController then
-        if cutsceneController.ReplicateCutscene then
-            cutsceneController.ReplicateCutscene.OnClientEvent:Connect(function() end)
-        end
-        if cutsceneController.StopCutscene then
-            cutsceneController.StopCutscene.OnClientEvent:Connect(function() end)
-        end
-        cutsceneController.Play = function() end
-        cutsceneController.Stop = function() end
-    end
-end
-
-local function DisableSkip()
-    if cutsceneController and originalPlay and originalStop then
-        cutsceneController.Play = originalPlay
-        cutsceneController.Stop = originalStop
-    end
-end
-
-EnableSkip()
-
--- ========================== [GAMEDATA] ==========================
 local GameData = {
-    -- ========================== [Legit Fishing] ==========================
+
+--// Legit
+
         AutoFishState = {
         IsActive = false,
         MinigameActive = false
@@ -164,7 +129,7 @@ local GameData = {
     LegitFishingDelay = 0.1,
     ClickThread = nil,
 
-    -- ========================== [Instant Fishing] ==========================
+--// Instant
 
     InstantFishingRunning = false,
     castThreadRunning = false,
@@ -175,19 +140,19 @@ local GameData = {
     CaughtMonitorRunning = false,
     fishCount = 0,
 
-    -- ========================== [Treasure Hunt] ==========================
+--// Treasure
 
     AutoTreasure = false,
     TreasureReturnPos = nil,
 
-    -- ========================== [Auto Equip ROd] ==========================
+--// Equip Rod
 
     autoEquipRod = false,
     equippedId = nil,
     item = nil,
     data = nil,
 
-    -- ========================== [Skip Rarity] ==========================
+--// Skip Rarity
 
     RarityFilterEnabled = false,
     BlacklistedRarity = { "Common" },
@@ -202,14 +167,13 @@ local GameData = {
     },
 
     LastProcessed = {},
-
-    -- VARIABLE LOCAL DIGANTI JADI PROPERTY YANG BISA DIPAKAI SEMUA
     TextEffectRemote = nil,
     Head = nil,
     LastEffectId = nil,
     CurrentTime = 0,
 
-    -- ========================== [Teleport Spot] ==========================
+--// Teleport Spot
+
     TeleportSpots = {},
     teleportOptions = {},
     selectedLocation = nil,
@@ -221,7 +185,8 @@ local GameData = {
     StopBlockedAnimations = nil,
     SafeTeleport = nil,
     DisableAnimListener = nil,
-    -- ========================== [Enchant] ==========================
+
+--// Enchant
 
     SVC = {
         Players = game:GetService("Players"),
@@ -268,13 +233,14 @@ local GameData = {
 
     EnchantList = {},
 
-    -- ========================== [Placed Totems] ==========================
+--// Totem
 
     placedTotems = {},
 
     TotemMap = {
         Luck = 1,
-        Mutation = 2
+        Mutation = 2,
+        Shiny = 3
     },
 
     TotemCooldown = 3600,
@@ -287,7 +253,7 @@ local GameData = {
     totemId = nil,
     hotbarSlot = 6,
 
-    -- ========================== [Auto Sell] ==========================
+--// Sell
 
     sellMode = "By Caught",
     sellThreshold = 5,
@@ -298,10 +264,7 @@ local GameData = {
     gained = nil,
     caughtNow = nil,
 
-    -- ========================== [Auto FAvorite] ==========================
-
-
-    -- ========================== [Rod Shop] ==========================
+--// Rod
 
         rodData = {
         ["Angler Rod (8,000,000)"] = 168,
@@ -323,7 +286,7 @@ local GameData = {
     rodOptions = {},
     chosenRod = nil,
 
-    -- ========================== [Bait Shop] ==========================
+--// Bait
 
         baitData = {
         ["Topwater Bait (100)"] = 10,
@@ -340,16 +303,13 @@ local GameData = {
     baitOptions = {},
     chosenBait = nil,
 
-    -- ========================== [Weather Shop] ==========================
-
+--// Weather
 
     weatherList = {"Wind","Cloudy","Snow","Storm","Radiant","Shark Hunt"},
     SelectedWeathers = {},
     AutoBuyWeather = false,
 
-    -- ========================== [Teleport 2 & Save Position] ==========================
-
-    -- ========================== [Player Names Teleport] ==========================
+--// Player Name TP
 
     playerNames = {},
     chosenPlayer = nil,
@@ -358,7 +318,7 @@ local GameData = {
     targetPlayer = nil,
     hrp = nil,
 
-    -- ========================== [Event Tracker Auto Lochness] ==========================
+--// Lochness
 
     label = workspace["!!! MENU RINGS"]["Event Tracker"].Main.Gui.Content.Items.Countdown.Label,
     targetCFrame = CFrame.new(
@@ -371,9 +331,8 @@ local GameData = {
     autoLoch = false,
     lastLabel = "",
 
--- ========================== [Unlock Iron Cafe] ==========================
+--// Iron Cafe
 
-    -- Special fish list
     specialFish = {
         ["Brighteyes Guppy"] = true,
         ["Shedletsky Guppy"] = true,
@@ -381,30 +340,24 @@ local GameData = {
         ["Guest Guppy"] = true
     },
 
-    -- Sent fish records
     sentFish = {},
 
-    -- Cafe state
     stCafe = {
         autoUnlock = false,
         teleported = false
     },
 
-    -- Counters
     sentCount = 0,
     left = 4,
     totalSpecial = 4,
 
-    -- ========================== [Event Disco] ==========================
+--// Disco
 
-    -- UI
     DiscoStatus = nil,
     DiscoToggle = nil,
 
-    -- Objects
     Root = workspace.ClassicEvent.DiscoEvent.DiscoBall:WaitForChild("Root"),
 
-    -- CFrames
     DefaultCFrame = CFrame.new(
         -8625, -426.221008, 161.125,
         1, 0, 0,
@@ -419,25 +372,18 @@ local GameData = {
          0.99024415, -3.88525692e-08, 0.139343381
     ),
 
-    -- Character
     char = nil,
     hrp = nil,
-
-    -- Auto Settings
     AutoDisco = false,
-
-    -- Functions
     RefreshCharacter = nil,
     getStartPosition = nil,
     loadSavedPosition = nil,
-
-    -- Temp Values
     savedCFrame = nil,
     startPos = nil,
 
 }
 
--- Listener Players
+--// Listener Players
 player.CharacterAdded:Connect(function(newChar)
     char = newChar
     hrp = newChar:WaitForChild("HumanoidRootPart")
@@ -449,7 +395,7 @@ _G.StopFishing = function()
     end)
 end
 
--- Anti-AFK
+--// Anti-AFK
 task.spawn(function()
     while task.wait(10 * 60) do
         SVC.VU:CaptureController()
@@ -861,12 +807,7 @@ MainLeft:AddInput("DelayComplete", {
     end
 })
 
-
 MainLeft:AddDivider()
-
---====================================================
---== FUNGSI DALAM GAMEDATA ===========================
---====================================================
 
 GameData.Approx = function(a, b, tolerance)
     return math.abs(a - b) <= (tolerance or 0.02)
@@ -897,10 +838,6 @@ GameData.DetectRarity = function(color3)
     end
     return "UNKNOWN"
 end
-
---====================================================
---== UI ==============================================
---====================================================
 
 MainLeft:AddToggle("SkipRarityToggle", {
     Text = "Skip Rarity",
@@ -939,10 +876,6 @@ MainLeft:AddDropdown("BlacklistRarity", {
         GameData.BlacklistedRarity = newList
     end
 })
-
---====================================================
---== EVENT HANDLER ===================================
---====================================================
 
 pcall(function()
 
@@ -1105,24 +1038,20 @@ MainLeft:AddToggle("AutoTeleportFarm", {
 local MainLeft = Tabs.Main:AddLeftGroupbox("Enchant Features", "zap")
 MainLeft:AddLabel("Auto Enchant")
 
---// MODULES
 GameData.mods = {
     Net = GameData.SVC.RS.Packages._Index["sleitnick_net@0.2.0"].net,
     Replion = require(GameData.SVC.RS.Packages.Replion),
     ItemUtility = require(GameData.SVC.RS.Shared.ItemUtility),
 }
 
---// PLAYER
 GameData.player = GameData.SVC.Players.LocalPlayer
 GameData.char = GameData.player.Character or GameData.player.CharacterAdded:Wait()
 GameData.hrp = GameData.char:WaitForChild("HumanoidRootPart")
 
---// REPLION
 GameData.repl = {
     Data = GameData.mods.Replion.Client:WaitReplion("Data"),
 }
 
---// REMOTES
 GameData.net = GameData.SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
 GameData.OnRoll = GameData.mods.Net["RE/RollEnchant"]
 
@@ -1132,17 +1061,14 @@ GameData.RE = {
     ActivateEnchanting = GameData.net:WaitForChild("RE/ActivateEnchantingAltar")
 }
 
---// BUILD ENCHANT LIST
 for name,_ in pairs(GameData.EnchantIDs) do
     table.insert(GameData.EnchantList, name)
 end
 
---// EVENT LISTENER
 GameData.OnRoll.OnClientEvent:Connect(function(_, enchantID)
     GameData.Result = enchantID
 end)
 
---// GET NEXT STONE
 function GameData.getNextStone()
     local items = GameData.repl.Data:Get({ "Inventory", "Items" })
     if not items then return nil end
@@ -1155,7 +1081,6 @@ function GameData.getNextStone()
     return nil
 end
 
---// AUTO ENCHANT LOOP
 function GameData.AutoEnchantLoop()
     local originalPos = GameData.hrp.Position
 
@@ -1179,7 +1104,7 @@ function GameData.AutoEnchantLoop()
         local timeout = 0
         while GameData.Result == nil and timeout < 2 and GameData.AutoEnchant do
             task.wait(0.1)
-            timeout = timeout + 0.1  -- <-- FIXED
+            timeout = timeout + 0.1
         end
 
         GameData.usedUUID[uuid] = true
@@ -1198,7 +1123,6 @@ function GameData.StartEnchant()
     task.spawn(GameData.AutoEnchantLoop)
 end
 
---// UI
 MainLeft:AddDropdown("EnchantSelector", {
     Text = "Target Enchant",
     Values = GameData.EnchantList,
@@ -1278,7 +1202,7 @@ end
 
 MainLeft:AddDropdown("TotemSelector", {
     Text = "Select Totem Type",
-    Values = {"Luck", "Mutation"},
+    Values = {"Luck", "Mutation", "Shiny"},
     Default = "Luck",
     Callback = function(v)
         getgenv().SelectedTotem = v
@@ -1526,7 +1450,7 @@ local function startCosmeticPartListener()
 
             if part then  
                 partTimerAppear = 0  
-                partTimerDisappear = partTimerDisappear + 0.1  -- <-- FIXED
+                partTimerDisappear = partTimerDisappear + 0.1
                 if partTimerDisappear >= 3 then  
                     partTimerDisappear = 0  
                     print("ViKai Auto Recovery Stuck Too Long")  
@@ -1539,7 +1463,7 @@ local function startCosmeticPartListener()
                 end  
             else  
                 partTimerDisappear = 0  
-                partTimerAppear = partTimerAppear + 0.1   -- <-- FIXED
+                partTimerAppear = partTimerAppear + 0.1
                 if partTimerAppear >= 3 then  
                     partTimerAppear = 0  
                     print("ViKai Auto Recovery Missing Too Long")  
@@ -1727,19 +1651,20 @@ MainRight:AddDropdown("SellType", {
 
 MainRight:AddInput("SellThreshold", {
     Text = "Sell Threshold / Delay",
-    Default = tostring(GameData.sellThreshold),
+    Default = tostring(GameData.sellMode == "By Caught" and GameData.sellThreshold or GameData.sellDelay),
     Placeholder = "5",
     Callback = function(Value)
         local num = tonumber(Value)
-        if num then
-            if GameData.sellMode == "By Caught" then
-                GameData.sellThreshold = num
-            else
-                GameData.sellDelay = num
-            end
+        if not num then return end
+
+        if GameData.sellMode == "By Caught" then
+            GameData.sellThreshold = num
+        elseif GameData.sellMode == "By Delay" then
+            GameData.sellDelay = num
         end
     end
 })
+
 
 MainRight:AddButton("ManualSell", {
     Text = "Manual Sell",
@@ -1760,23 +1685,29 @@ task.spawn(function()
     GameData.lastCaught = caughtStat.Value
     GameData.lastSell = tick()
 
-    while task.wait(0.5) do
-        if getgenv().AutoSell then
+    while task.wait(0.3) do
+        if not getgenv().AutoSell then continue end
 
-            -- Mode caught
-            if GameData.sellMode == "By Caught" then
-                GameData.caughtNow = caughtStat.Value
-                GameData.gained = GameData.caughtNow - GameData.lastCaught
+        if GameData.sellMode == "By Caught" then
+            local now = caughtStat.Value
 
-                if GameData.gained >= GameData.sellThreshold then
-                    pcall(function()
-                        RF.SellAllItems:InvokeServer()
-                    end)
-                    GameData.lastCaught = GameData.caughtNow
-                end
+-- kalau threshold diubah/dinyalakan ulang, reset biar tidak auto sell 5
+if GameData.lastCaught == nil or GameData.lastCaught > now then
+    GameData.lastCaught = now
+end
 
-            -- Mode delay
-            elseif GameData.sellMode == "By Delay" and tick() - GameData.lastSell >= GameData.sellDelay then
+local gained = now - GameData.lastCaught
+
+if gained >= GameData.sellThreshold then
+    pcall(function()
+        RF.SellAllItems:InvokeServer()
+    end)
+    GameData.lastCaught = now
+end
+
+
+        elseif GameData.sellMode == "By Delay" then
+            if tick() - GameData.lastSell >= GameData.sellDelay then
                 pcall(function()
                     RF.SellAllItems:InvokeServer()
                 end)
@@ -1785,6 +1716,7 @@ task.spawn(function()
         end
     end
 end)
+
 
 local AutoFavBox = Tabs.Main:AddRightGroupbox("Favorite Features", "star")
 
@@ -1951,22 +1883,17 @@ local MiscTab = Tabs.Misc
 local EventTab = Tabs.Event
 local WebhookTab = Tabs.Web
 local QuestTab = Tabs.Quest
+local TradeTab = Tabs.Trade
 
 
 local ShopLeft = ShopTab:AddLeftGroupbox("Rod Features", "shopping-cart")
 
------------------------------------------------------
--- Generate Rod Options (tidak pakai local)
------------------------------------------------------
 for k,_ in pairs(GameData.rodData) do
     table.insert(GameData.rodOptions, k)
 end
 
 GameData.chosenRod = GameData.rodOptions[1]
 
------------------------------------------------------
--- UI: Dropdown Select Rod
------------------------------------------------------
 ShopLeft:AddDropdown("SelectRod", {
     Values = GameData.rodOptions,
     Default = GameData.chosenRod,
@@ -1976,9 +1903,6 @@ ShopLeft:AddDropdown("SelectRod", {
     end
 })
 
------------------------------------------------------
--- UI: Buy Button
------------------------------------------------------
 ShopLeft:AddButton("BuyRodBtn", {
     Text = "Buy Selected Rod",
     Func = function()
@@ -2019,18 +1943,12 @@ ShopLeft:AddButton("ToggleMerchantGUI", {
 
 local ShopRight = ShopTab:AddRightGroupbox("Bait Features", "fish")
 
------------------------------------------------------
--- Generate baitOptions dari baitData (tanpa local)
------------------------------------------------------
 for name,_ in pairs(GameData.baitData) do
     table.insert(GameData.baitOptions, name)
 end
 
 GameData.chosenBait = GameData.baitOptions[1]
 
------------------------------------------------------
--- Dropdown Pilihan Bait
------------------------------------------------------
 ShopRight:AddDropdown("SelectBait", {
     Values = GameData.baitOptions,
     Default = GameData.chosenBait,
@@ -2040,9 +1958,6 @@ ShopRight:AddDropdown("SelectBait", {
     end
 })
 
------------------------------------------------------
--- Tombol Pembelian Bait
------------------------------------------------------
 ShopRight:AddButton("BuyBaitBtn", {
     Text = "Buy Selected Bait",
     Func = function()
@@ -2069,12 +1984,8 @@ ShopRight:AddButton("BuyBaitBtn", {
 
 local ShopLeft = ShopTab:AddLeftGroupbox("Weather Features", "cloud")
 
--- default selection
 GameData.SelectedWeathers = { GameData.weatherList[1] }
 
------------------------------------------------------
--- WEATHER DROPDOWN
------------------------------------------------------
 ShopLeft:AddDropdown("SelectedWeather", {
     Values = GameData.weatherList,
     Multi = true,
@@ -2101,9 +2012,6 @@ ShopLeft:AddDropdown("SelectedWeather", {
     end
 })
 
------------------------------------------------------
--- AUTO BUY WEATHER TOGGLE
------------------------------------------------------
 ShopLeft:AddToggle("AutoBuyWeather", {
     Text = "Auto Buy",
     Default = false,
@@ -2112,9 +2020,6 @@ ShopLeft:AddToggle("AutoBuyWeather", {
     end
 })
 
------------------------------------------------------
--- AUTO BUY LOOP
------------------------------------------------------
 task.spawn(function()
     while task.wait(1) do
         if GameData.AutoBuyWeather and #GameData.SelectedWeathers > 0 then
@@ -2127,9 +2032,6 @@ task.spawn(function()
     end
 end)
 
------------------------------------------------------
--- MANUAL BUY BUTTON
------------------------------------------------------
 ShopLeft:AddButton("BuyyWeatherBtn", {
     Text = "Buy Selected",
     Func = function()
@@ -2156,542 +2058,277 @@ ShopLeft:AddButton("BuyyWeatherBtn", {
     end
 })
 
-
 local ItemTradingController = mods.TradingController
+local PlayerData = repl.Data
+local ItemUtility = mods.ItemUtility
+local VendorUtility = mods.VendorUtility
 
--- GLOBAL VARIABLES
+local cachedInventory = nil
+local cachedItemData = {}
+
 _G.autoAcceptTrade = false
 _G.autoAcceptDelay = 2
 _G.isTrading = false
-_G.tradeComplete = false
-_G.tradeDelay = 2
-_G.playerList = {}
-_G.selectedPlayerId = nil
-_G.selectedPlayerName = nil
+_G.tradeDelay = 1.5
 _G.filteredFish = {}
-_G.selectedFishForTrade = nil
+_G.selectedPlayerId = nil
 
-local filterName = ""
-local filterTier = 0
-local filterCoins = nil
-
-local TradeTab = Tabs.Trade
-local FilteredFishDropdown = nil
-local FilterCountLabel = nil
-
-local NetModule = require(mods.Net)
-local AwaitTradeResponse = NetModule:RemoteFunction("AwaitTradeResponse") 
-
-local PlayerData = repl.Data
-local ItemUtility = mods.ItemUtility
-
-local originalCreateTradePrompt = ItemTradingController.CreateTradePrompt
-ItemTradingController.CreateTradePrompt = function(self, itemData, itemDataInfo, tradeInfo)
-    if itemDataInfo then
-        local itemName = itemDataInfo.Name or "Unknown"
-        local tier = itemDataInfo.Data and itemDataInfo.Data.Tier or 0
+local function getInventory()
+    if cachedInventory then return cachedInventory end
+    for _ = 1, 4 do
+        local inv = PlayerData:Get("Inventory")
+        if inv and inv.Items then
+            cachedInventory = inv.Items
+            return cachedInventory
+        end
+        task.wait(0.1)
     end
-    
-    if not _G.autoAcceptTrade then
-        return originalCreateTradePrompt(self, itemData, itemDataInfo, tradeInfo)
-    end
-    
-    task.wait(_G.autoAcceptDelay)
-    local Promise = require(SVC.RS.Packages.Promise)
-    return Promise.resolve(true)
+    return {}
 end
 
-local originalCompletedTrade = ItemTradingController.CompletedTrade
-ItemTradingController.CompletedTrade = function(self, ...)
-    _G.tradeComplete = true
-    return originalCompletedTrade(self, ...)
-end
-
-local function updateFilteredFishDropdown()
-    if not FilteredFishDropdown then return end
-    
-    local fishNames = {}
-    if #_G.filteredFish == 0 then
-        fishNames = {"No fish filtered yet"}
-    else
-        for i, fish in ipairs(_G.filteredFish) do
-            local priceInfo = fish.SellPrice and string.format(" %d", fish.SellPrice) or ""
-            table.insert(fishNames, string.format("%d. %s (T%d) %.1fkg%s", i, fish.Name, fish.Tier, fish.Weight, priceInfo))
-        end
-    end
-    
-    FilteredFishDropdown:SetValues(fishNames)
-    
-    if FilterCountLabel then
-        local totalValue = 0
-        for _, fish in ipairs(_G.filteredFish) do
-            totalValue = totalValue + (fish.SellPrice or 0)
-        end
-        FilterCountLabel:SetText(string.format("Total: %d fish | Value: %s coins", #_G.filteredFish, totalValue))
-    end
+local function getItemInfo(id)
+    if cachedItemData[id] then return cachedItemData[id] end
+    local data = ItemUtility:GetItemData(id)
+    cachedItemData[id] = data
+    return data
 end
 
 local function getPlayerNames()
-    local names = {}
-    _G.playerList = {}
-    
+    local list = {}
     for _, p in ipairs(SVC.Players:GetPlayers()) do
         if p ~= LocalPlayer then
-            table.insert(names, p.DisplayName .. " (@" .. p.Name .. ")")
-            _G.playerList[p.DisplayName .. " (@" .. p.Name .. ")"] = {
-                Name = p.Name,
-                DisplayName = p.DisplayName,
-                UserId = p.UserId
-            }
+            local display = p.DisplayName .. " (@" .. p.Name .. ")"
+            list[#list+1] = display
+            _G.playerList = _G.playerList or {}
+            _G.playerList[display] = { UserId = p.UserId }
         end
     end
-    
-    return names
+    return list
 end
 
-local function getItemsFromInventory(filterType, filterValue)
-    local results = {}
+local function filterFish(opts)
+    local list = getInventory()
+    local result = {}
+
+    local wantName  = opts.name ~= "" and opts.name or nil
+    local wantTier  = opts.tier or 0
+    local wantCoins = opts.coins or nil
     
-    if not PlayerData then
-        return results
+    local totalCoins = 0
+
+    if wantCoins then
+        table.sort(list, function(a,b)
+            return (getItemInfo(a.Id).Data.Tier or 0) < (getItemInfo(b.Id).Data.Tier or 0)
+        end)
     end
-    
-    local inventory = nil
-    local attempts = 0
-    while not inventory and attempts < 10 do
-        inventory = PlayerData:Get("Inventory")
-        if not inventory then
-            task.wait(0.5)
-            attempts = attempts + 1
-        end
-    end
-    
-    if not inventory then
-        return results
-    end
-    
-    local itemsList = inventory.Items or inventory.Backpack or inventory
-    
-    if not itemsList or type(itemsList) ~= "table" then
-        return results
-    end
-    
-    for _, item in ipairs(itemsList) do
-        if type(item) == "table" and item.Id and item.UUID then
-            local success, itemData = pcall(function()
-                return ItemUtility:GetItemData(item.Id)
-            end)
-            
-            if success and itemData and itemData.Data and itemData.Data.Type == "Fish" then
-                local shouldAdd = false
-                
-                if filterType == "name" then
-                    local itemName = itemData.Data.Name or ""
-                    if type(itemName) == "table" then
-                        itemName = itemName["en-us"] or itemName.en or ""
-                    end
-                    
-                    if string.find(string.lower(itemName), string.lower(filterValue)) then
-                        shouldAdd = true
-                    end
-                
-                elseif filterType == "tier" then
-                    local tier = itemData.Data.Tier or 0
-                    if tier == filterValue then
-                        shouldAdd = true
-                    end
-                
-                elseif filterType == "minTier" then
-                    local tier = itemData.Data.Tier or 0
-                    if tier >= filterValue then
-                        shouldAdd = true
-                    end
-                
-                elseif filterType == "mutation" then
-                    local hasMutation = (item.Metadata and item.Metadata.VariantId) ~= nil
-                    if hasMutation == filterValue then
-                        shouldAdd = true
-                    end
-                
-                elseif filterType == "all" then
-                    shouldAdd = true
+
+for _, item in ipairs(list) do
+    if item.Id then
+        local info = getItemInfo(item.Id)
+
+        if info and info.Data and info.Data.Type == "Fish" then
+
+            local pass = true
+
+            if wantName then
+                local nm = info.Data.Name
+                if type(nm) == "table" then
+                    nm = nm["en-us"] or nm.en
                 end
-                
-                if shouldAdd then
-                    local fishName = itemData.Name or itemData.Data.Name or "Unknown"
-                    if type(fishName) == "table" then
-                        fishName = fishName["en-us"] or fishName.en or "Unknown"
-                    end
-                    
-                    local mutationName = "None"
-                    if item.Metadata and item.Metadata.VariantId then
-                        local variantData = ItemUtility:GetVariantData(item.Metadata.VariantId)
-                        if variantData and variantData.Data then
-                            mutationName = variantData.Data.Name
-                            if type(mutationName) == "table" then
-                                mutationName = mutationName["en-us"] or mutationName.en or "Unknown"
-                            end
-                        end
-                    end
-                    
-                    table.insert(results, {
-                        UUID = item.UUID,
-                        Id = item.Id,
-                        Name = fishName,
-                        Tier = itemData.Data.Tier or 0,
-                        Weight = (item.Metadata and item.Metadata.Weight) or 0,
-                        Mutation = mutationName,
-                        Favorited = item.Favorited or false
-                    })
+                if not string.find(string.lower(nm), string.lower(wantName)) then
+                    pass = false
+                end
+            end
+
+            if wantTier > 0 and info.Data.Tier ~= wantTier then
+                pass = false
+            end
+
+            if pass then
+                local entry = {
+                    UUID   = item.UUID,
+                    Name   = info.Data.Name,
+                    Tier   = info.Data.Tier or 0,
+                    Weight = (item.Metadata and item.Metadata.Weight) or 0,
+                }
+
+                if wantCoins then
+                    entry.Price = VendorUtility:GetSellPrice(item) or 0
+                    totalCoins += entry.Price
+                end
+
+                result[#result+1] = entry
+
+                if wantCoins and totalCoins >= wantCoins then
+                    break
                 end
             end
         end
     end
-    
-    return results
 end
 
-_G.findFishByName = function(name)
-    return getItemsFromInventory("name", name)
+    return result
 end
 
-_G.findFishByTier = function(tier)
-    return getItemsFromInventory("tier", tier)
-end
+_G.filterFishOptimized = filterFish
 
-_G.findFishByMinTier = function(minTier)
-    return getItemsFromInventory("minTier", minTier)
-end
-
-_G.findMutatedFish = function()
-    return getItemsFromInventory("mutation", true)
-end
-
-_G.findAllFish = function()
-    return getItemsFromInventory("all", nil)
-end
-
-_G.quickTrade = function(playerIdOrName, fishUUID)
-    local InitiateTradeRemote = mods.Net:FindFirstChild("RF/InitiateTrade") 
-    
-    local targetPlayerId = playerIdOrName
-    if type(playerIdOrName) == "string" then
-        for _, p in ipairs(SVC.Players:GetPlayers()) do
-            if string.lower(p.Name) == string.lower(playerIdOrName) or 
-              string.lower(p.DisplayName) == string.lower(playerIdOrName) then
-                targetPlayerId = p.UserId
-                break
-            end
-        end
-    end
-    
-    local success, result = pcall(function()
-        return InitiateTradeRemote:InvokeServer(targetPlayerId, fishUUID)
+local InitiateTrade = mods.Net:FindFirstChild("RF/InitiateTrade")
+_G.quickTrade = function(target, uuid)
+    return pcall(function()
+        return InitiateTrade:InvokeServer(target, uuid)
     end)
-    
-    return success
 end
 
-do
-    local PlayerGroup = TradeTab:AddLeftGroupbox("Select Player")
+local origPrompt = ItemTradingController.CreateTradePrompt
+local origComplete = ItemTradingController.CompletedTrade
 
-    local PlayerDropdown = PlayerGroup:AddDropdown("PlayerDropdown", {
-        Values = getPlayerNames(),
-        Default = 1,
-        Multi = false,
-        Text = "Select Player",
-        Callback = function(Value)
-            local playerData = _G.playerList[Value]
-            if playerData then
-                _G.selectedPlayerId = playerData.UserId
-                _G.selectedPlayerName = playerData.Name
-            end
+local tradeHooked = false
+local function hookTrade()
+    if tradeHooked then return end
+    tradeHooked = true
+
+    ItemTradingController.CreateTradePrompt = function(self, itemData, itemInfo, tInfo)
+        if not _G.autoAcceptTrade then
+            return origPrompt(self, itemData, itemInfo, tInfo)
         end
-    })
+        task.wait(_G.autoAcceptDelay)
+        return true
+    end
 
-    PlayerGroup:AddButton({
-        Text = "Refresh Player List",
-        Func = function()
-            PlayerDropdown:SetValues(getPlayerNames())
-        end,
-        DoubleClick = false
-    })
-
-    local PreviewGroup = TradeTab:AddLeftGroupbox("Filtered Preview")
-
-    FilteredFishDropdown = PreviewGroup:AddDropdown("FilteredFish", {
-        Values = {"No fish filtered yet"},
-        Default = 1,
-        Multi = false,
-        Text = "Filtered Fish",
-        Callback = function(Value)
-            local index = tonumber(string.match(Value, "^(%d+)%."))
-            
-            if index and _G.filteredFish[index] then
-                table.remove(_G.filteredFish, index)
-                updateFilteredFishDropdown()
-            end
-        end
-    })
-
-    FilterCountLabel = PreviewGroup:AddLabel("Total Filtered: 0 fish")
-
-    PreviewGroup:AddLabel("Click a fish to\nremove it from trade list", true)
-    
-    local AutoAcceptGroup = TradeTab:AddLeftGroupbox("Auto-Accept")
-
-    AutoAcceptGroup:AddToggle("AutoAccept", {
-        Text = "Auto-Accept",
-        Default = false,
-        Callback = function(Value)
-            _G.autoAcceptTrade = Value
-        end
-    })
-
-    AutoAcceptGroup:AddSlider("AcceptDelay", {
-        Text = "Accept Delay",
-        Default = 2,
-        Min = 0.5,
-        Max = 5,
-        Rounding = 1,
-        Compact = false,
-        Suffix = " seconds",
-        Callback = function(Value)
-            _G.autoAcceptDelay = Value
-        end
-    })
-
-    local FilterGroup = TradeTab:AddRightGroupbox("Filter Fish")
-
-    FilterGroup:AddInput("FilterName", {
-        Default = "",
-        Numeric = false,
-        Finished = false,
-        Text = "Filter by Name",
-        Placeholder = "crocodile, bass, etc.",
-        Callback = function(Value)
-            filterName = Value
-        end
-    })
-
-    local tierNameToValue = {
-        ["OFF"] = 0,
-        ["Common"] = 1,
-        ["Uncommon"] = 2,
-        ["Rare"] = 3,
-        ["Epic"] = 4,
-        ["Legendary"] = 5,
-        ["Mythic"] = 6,
-        ["Secret"] = 7
-    }
-    
-    local TierFilterDropdown = FilterGroup:AddDropdown("TierFilter", {
-        Values = {"OFF", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "Secret"},
-        Default = 1,
-        Multi = false,
-        Text = "Filter by Tier",
-        Callback = function(Value)
-            filterTier = tierNameToValue[Value] or 0
-        end
-    })
-
-    FilterGroup:AddInput("FilterCoins", {
-        Default = "",
-        Numeric = true,
-        Finished = false,
-        Text = "Filter by Coin Target",
-        Placeholder = "1000000",
-        Callback = function(Value)
-            if Value == "" then
-                filterCoins = nil
-            else
-                local val = tonumber(Value)
-                if val and val > 0 then
-                    filterCoins = val
-                end
-            end
-        end
-    })
-
-    FilterGroup:AddButton({
-        Text = "Apply Filters",
-        Func = function()
-            
-            local VendorUtility = mods.VendorUtility
-            
-            local allFish = _G.findAllFish()
-            
-            if #allFish == 0 then
-                return
-            end
-            
-            local tempFish = {}
-            if filterName ~= "" then
-                for _, fish in ipairs(allFish) do
-                    if string.find(string.lower(fish.Name), string.lower(filterName)) then
-                        table.insert(tempFish, fish)
-                    end
-                end
-            else
-                tempFish = allFish
-            end
-            
-            if filterTier and filterTier > 0 then
-                local tierFiltered = {}
-                for _, fish in ipairs(tempFish) do
-                    if fish.Tier == filterTier then
-                        table.insert(tierFiltered, fish)
-                    end
-                end
-                tempFish = tierFiltered
-            end
-            
-            if #tempFish == 0 then
-                _G.filteredFish = {}
-                updateFilteredFishDropdown()
-                return
-            end
-            
-            if filterCoins then
-                table.sort(tempFish, function(a, b)
-                    return a.Tier < b.Tier
-                end)
-                
-                _G.filteredFish = {}
-                local runningTotal = 0
-                local inventory = PlayerData:Get("Inventory")
-                
-                for i, fish in ipairs(tempFish) do
-                    if not fish.Favorited then
-                        local playerItem = nil
-                        
-                        if inventory and inventory.Items then
-                            for _, item in ipairs(inventory.Items) do
-                                if item.UUID == fish.UUID then
-                                    playerItem = item
-                                    break
-                                end
-                            end
-                        end
-                        
-                        if playerItem then
-                            local sellPrice = VendorUtility:GetSellPrice(playerItem)
-                            
-                            if sellPrice and sellPrice > 0 then
-                                fish.SellPrice = sellPrice
-                                table.insert(_G.filteredFish, fish)
-                                runningTotal = runningTotal + sellPrice
-                                
-                                if runningTotal >= filterCoins then
-                                    break
-                                end
-                            end
-                        end
-                    end
-                end
-            else
-                _G.filteredFish = tempFish
-                
-                local VendorUtility = mods.VendorUtility
-                local inventory = PlayerData:Get("Inventory")
-                
-                for _, fish in ipairs(_G.filteredFish) do
-                    if inventory and inventory.Items then
-                        for _, item in ipairs(inventory.Items) do
-                            if item.UUID == fish.UUID then
-                                local sellPrice = VendorUtility:GetSellPrice(item)
-                                if sellPrice and sellPrice > 0 then
-                                    fish.SellPrice = sellPrice
-                                end
-                                break
-                            end
-                        end
-                    end
-                end
-            end
-            
-            updateFilteredFishDropdown()
-        end,
-        DoubleClick = false
-    })
-
-    local TradeSettingsGroup = TradeTab:AddRightGroupbox("Trade Settings")
-
-    TradeSettingsGroup:AddSlider("TradeDelay", {
-        Text = "Delay Between Trades",
-        Default = 2,
-        Min = 0.5,
-        Max = 10,
-        Rounding = 1,
-        Compact = false,
-        Suffix = " seconds",
-        Callback = function(Value)
-            _G.tradeDelay = Value
-        end
-    })
-
-    TradeSettingsGroup:AddButton({
-        Text = "Start Trading",
-        Func = function()
-          if _G.isTrading then
-              return
-          end
-           
-          if not _G.selectedPlayerId then
-              return
-          end
-           
-          if #_G.filteredFish == 0 then
-              return
-          end
-           
-          _G.isTrading = true
-           
-          task.spawn(function()
-               
-              local successCount = 0
-              local failCount = 0
-               
-              for i, fish in ipairs(_G.filteredFish) do
-                  if not _G.isTrading then 
-                      break 
-                  end
-                   
-                  _G.tradeComplete = false
-                   
-                  local success = _G.quickTrade(_G.selectedPlayerId, fish.UUID)
-                   
-                  if not success then
-                      failCount = failCount + 1
-                  else
-                      local startTime = tick()
-                      local timeout = 10
-                       
-                      if _G.tradeComplete then
-                          successCount = successCount + 1
-                      end
-                  end
-                   
-                  if i < #_G.filteredFish then
-                      task.wait(_G.tradeDelay)
-                  end
-              end
-               
-              _G.isTrading = false
-               
-          end)
-        end,
-        DoubleClick = false
-    })
-
-    TradeSettingsGroup:AddButton({
-        Text = "Stop Trading",
-        Func = function()
-            _G.isTrading = false
-        end,
-        DoubleClick = false
-    })
+    ItemTradingController.CompletedTrade = function(self, ...)
+        _G.tradeComplete = true
+        return origComplete(self, ...)
+    end
 end
+
+
+_G.startTrade = function()
+    if _G.isTrading then return end
+    if not _G.selectedPlayerId then return end
+    if #_G.filteredFish == 0 then return end
+
+    hookTrade()
+
+    _G.isTrading = true
+
+    task.spawn(function()
+        for _, fish in ipairs(_G.filteredFish) do
+            if not _G.isTrading then break end
+            _G.tradeComplete = false
+            _G.quickTrade(_G.selectedPlayerId, fish.UUID)
+            task.wait(_G.tradeDelay)
+        end
+        _G.isTrading = false
+    end)
+end
+
+_G.stopTrade = function()
+    _G.isTrading = false
+end
+
+
+local TradeLeft = TradeTab:AddLeftGroupbox("Player Features", "users")
+
+TradeLeft:AddDropdown("PlayerDropdown", {
+    Values = getPlayerNames(),
+    Text = "Select Player",
+    Callback = function(v)
+        local pl = _G.playerList[v]
+        if pl then _G.selectedPlayerId = pl.UserId end
+    end
+})
+
+TradeLeft:AddButton({
+    Text = "Refresh",
+    Func = function()
+        PlayerDropdown:SetValues(getPlayerNames())
+    end
+})
+
+TradeLeft:AddDivider()
+
+TradeLeft:AddToggle("AutoAccept", {
+    Text = "Auto Accept",
+    Callback = function(v)
+        _G.autoAcceptTrade = v
+    end
+})
+
+TradeLeft:AddSlider("AcceptDelaySlider", {
+    Text = "Accept Delay",
+    Min = 0.3, Max = 5,
+    Default = 2,
+    Callback = function(v)
+        _G.autoAcceptDelay = v
+    end
+})
+
+TradeLeft:AddDivider()
+TradeLeft:AddLabel("Auto Trade")
+
+TradeLeft:AddSlider("TradeSpeed", {
+    Text = "Trade Delay",
+    Min = 0.3, Max = 10,
+    Default = 1.5,
+    Callback = function(v)
+        _G.tradeDelay = v
+    end
+})
+
+TradeLeft:AddButton({
+    Text = "Start",
+    Func = function()
+        _G.startTrade()
+    end
+})
+
+TradeLeft:AddButton({
+    Text = "Stop",
+    Func = function()
+        _G.stopTrade()
+    end
+})
+
+local TradeRight = TradeTab:AddRightGroupbox("Filter Features", "list-filter")
+
+TradeRight:AddInput("NameFilter", {
+    Text = "Name Fish",
+    Callback = function(v)
+        _G.tempFilterName = v
+    end
+})
+
+TradeRight:AddDropdown("TierFilter", {
+    Values = {"OFF","Common","Uncommon","Rare","Epic","Legendary","Mythic","Secret"},
+    Default = 1,
+    Text = "Tier Fish",
+    Callback = function(v)
+        local convert = {
+            OFF=0, Common=1, Uncommon=2, Rare=3,
+            Epic=4, Legendary=5, Mythic=6, Secret=7
+        }
+        _G.tempFilterTier = convert[v]
+    end
+})
+
+TradeRight:AddInput("CoinsFilter", {
+    Text = "Coins Target",
+    Numeric = true,
+    Callback = function(v)
+        _G.tempFilterCoins = tonumber(v)
+    end
+})
+
+TradeRight:AddButton({
+    Text = "Apply Filter",
+    Func = function()
+        _G.filteredFish = filterFish({
+            name  = _G.tempFilterName or "",
+            tier  = _G.tempFilterTier or 0,
+            coins = _G.tempFilterCoins
+        })
+    end
+})
 
 local TeleportLeft = TeleportTab:AddLeftGroupbox("Teleport Features", "map-pinned")
 
@@ -2839,7 +2476,6 @@ end)
 
 local TeleportLeft = TeleportTab:AddLeftGroupbox("Player Teleport Features", "user-round-search")
 
--- FUNCTION GET PLAYER LIST (TIDAK ADA LOCAL)
 GameData.getPlayerNames = function()
     GameData.playerNames = {}
 
@@ -2852,11 +2488,8 @@ GameData.getPlayerNames = function()
     return GameData.playerNames
 end
 
--- SET DEFAULT PLAYER
 GameData.chosenPlayer = GameData.getPlayerNames()[1]
 
-
--- DROPDOWN PILIH PLAYER
 GameData.playerDropdown = TeleportLeft:AddDropdown("SelectPlayer", {
     Values = GameData.getPlayerNames(),
     Default = GameData.chosenPlayer,
@@ -2866,8 +2499,6 @@ GameData.playerDropdown = TeleportLeft:AddDropdown("SelectPlayer", {
     end
 })
 
-
--- REFRESH BUTTON
 TeleportLeft:AddButton("RefreshPlayerList", {
     Text = "Refresh Player List",
     Func = function()
@@ -2877,8 +2508,6 @@ TeleportLeft:AddButton("RefreshPlayerList", {
     end
 })
 
-
--- TELEPORT TO PLAYER BUTTON
 TeleportLeft:AddButton("TeleportToPlayer", {
     Text = "Teleport to Player",
     Func = function()
@@ -3085,14 +2714,11 @@ player.CharacterAdded:Connect(function()
     hrp = RefreshHRP()
 end)
 
--- UI ELEMENTS --------------------------------------
-
 local EventBox = Tabs.Teleport:AddRightGroupbox("Auto Limited Event", "bug-play")
 
 local StatusLabel = EventBox:AddLabel("Status: Idle")
 local TimeLabel = EventBox:AddLabel("Timer: -")
 
--- Simpan label ke GameData
 GameData.StatusLabel = StatusLabel
 GameData.TimeLabel = TimeLabel
 
@@ -3186,10 +2812,8 @@ end)
 
 EventBox:AddDivider()
 
--- UI STATUS
 GameData.DiscoStatus = EventBox:AddLabel("Status: Loading...", true)
 
--- FUNCTION: Refresh Character -- Fixed
 GameData.RefreshCharacter = function()
     GameData.char = player.Character or player.CharacterAdded:Wait()
     GameData.hrp  = GameData.char:WaitForChild("HumanoidRootPart")
@@ -3202,8 +2826,6 @@ player.CharacterAdded:Connect(function()
     GameData.RefreshCharacter()
 end)
 
-
--- UI Toggle
 GameData.DiscoToggle = EventBox:AddToggle("AutoDiscoEvent", {
     Text = "Auto Disco Event",
     Default = false,
@@ -3219,8 +2841,6 @@ GameData.DiscoToggle:OnChanged(function(state)
     })
 end)
 
-
--- FUNCTION: Load Saved Position (dibuat agar tidak nil)
 GameData.loadSavedPosition = function()
     if GameData.hrp then
         return GameData.hrp.CFrame
@@ -3228,8 +2848,6 @@ GameData.loadSavedPosition = function()
     return nil
 end
 
-
--- FUNCTION: Get Start Position (fixed)
 GameData.getStartPosition = function()
     if GameData.savedCFrame then
         return GameData.savedCFrame
@@ -3239,8 +2857,6 @@ GameData.getStartPosition = function()
     return nil
 end
 
-
--- MAIN LOOP
 task.spawn(function()
     while task.wait(1) do
         
@@ -3271,7 +2887,7 @@ task.spawn(function()
 end)
 
 _G.WebhookRarities = { "Mythic", "Secret" } 
-_G.WebhookNames = {} -- Nilai default filter nama
+_G.WebhookNames = {}
 _G.WebhookCustomName = ""
 
 _G.httpRequest = _G.httpRequest or request or http_request or syn and syn.request or nil
@@ -4194,6 +3810,57 @@ MiscLeft:AddToggle("AntiDrown", {
     end
 })
 
+_G.skipCutscene = false
+
+local cutsceneController
+local originalPlay, originalStop
+
+do
+    local ok, controller = pcall(function()
+        return require(game:GetService("ReplicatedStorage").Controllers.CutsceneController)
+    end)
+    if ok and controller then
+        cutsceneController = controller
+        originalPlay = controller.Play
+        originalStop = controller.Stop
+    end
+end
+
+function EnableSkip()
+    if cutsceneController then
+        if cutsceneController.ReplicateCutscene then
+            cutsceneController.ReplicateCutscene.OnClientEvent:Connect(function() end)
+        end
+        if cutsceneController.StopCutscene then
+            cutsceneController.StopCutscene.OnClientEvent:Connect(function() end)
+        end
+        cutsceneController.Play = function() end
+        cutsceneController.Stop = function() end
+    end
+end
+
+function DisableSkip()
+    if cutsceneController then
+        cutsceneController.Play = originalPlay
+        cutsceneController.Stop = originalStop
+    end
+end
+
+MiscLeft:AddToggle("SkipCutscene", {
+    Text = "Skip Cutscene",
+    Default = false,
+    Callback = function(v)
+        _G.skipCutscene = v
+
+        if v then
+            EnableSkip()
+        else
+            DisableSkip()
+        end
+    end
+})
+
+
 local WaterWalkEnabled = false
 local waterPlatform = nil
 local waterUpdateConnection = nil
@@ -4378,7 +4045,6 @@ GameData.CafeStatusLabel = QuestLeft:AddLabel("Status: Waiting...")
 GameData.CafeSentLabel   = QuestLeft:AddLabel("Sent: None")
 GameData.CafeLeftLabel   = QuestLeft:AddLabel("Remaining: 4")
 
--- ❇️ Function DIMASUKKAN ke GameData
 GameData.onFishCaught = function(name, data)
     if not GameData.stCafe.autoUnlock then return end
 
@@ -4398,10 +4064,8 @@ GameData.onFishCaught = function(name, data)
     GameData.CafeStatusLabel:SetText("Status: Sent → " .. name)
 end
 
--- Event connect
 RE.FishCaughtEvent.OnClientEvent:Connect(GameData.onFishCaught)
 
--- Auto updater
 task.spawn(function()
     while task.wait(2) do
         if not GameData.stCafe.autoUnlock then
@@ -4430,7 +4094,6 @@ task.spawn(function()
     end
 end)
 
--- Toggle UI
 QuestLeft:AddToggle("AutoUnlockCafeToggle", {
     Text = "Auto Unlock Iron Cafe",
     Default = false,
@@ -4452,17 +4115,17 @@ local rootPlr = hrp
 local Jungle = workspace:FindFirstChild("JUNGLE INTERACTIONS")
 
 local StageTP = {
-    CFrame.new(1490.81421, 2.86463475, -842.592163, -0.991618156, 3.0407854e-09, -0.129203171, 2.10214846e-09, 1, 7.40118855e-09, 0.129203171, 7.06754877e-09, -0.991618156), -- Stage 1
-    CFrame.new(1842.94128, 3.15022254, -290.12735, 0.303114563, 9.22644432e-08, -0.952954113, -8.85028655e-08, 1, 6.86685055e-08, 0.952954113, 6.35247446e-08, 0.303114563), -- Stage 2
-    CFrame.new(875.505676, 3.23971534, -357.766693, -0.152344614, -6.1977338e-08, 0.988327444, -3.3319314e-09, 1, 6.21957241e-08, -0.988327444, 6.18214413e-09, -0.152344614), -- Stage 3
-    CFrame.new(1404.37671, 4.17689037, 121.881737, -0.958127379, -5.75146117e-08, 0.286342412, -4.29739515e-08, 1, 5.70648808e-08, -0.286342412, 4.23701572e-08, -0.958127379), -- Stage 4
+    CFrame.new(1490.81421, 2.86463475, -842.592163, -0.991618156, 3.0407854e-09, -0.129203171, 2.10214846e-09, 1, 7.40118855e-09, 0.129203171, 7.06754877e-09, -0.991618156),
+    CFrame.new(1842.94128, 3.15022254, -290.12735, 0.303114563, 9.22644432e-08, -0.952954113, -8.85028655e-08, 1, 6.86685055e-08, 0.952954113, 6.35247446e-08, 0.303114563),
+    CFrame.new(875.505676, 3.23971534, -357.766693, -0.152344614, -6.1977338e-08, 0.988327444, -3.3319314e-09, 1, 6.21957241e-08, -0.988327444, 6.18214413e-09, -0.152344614),
+    CFrame.new(1404.37671, 4.17689037, 121.881737, -0.958127379, -5.75146117e-08, 0.286342412, -4.29739515e-08, 1, 5.70648808e-08, -0.286342412, 4.23701572e-08, -0.958127379),
 }
 
 local MeshOrder = {
-    "rbxassetid://112089909495700", -- Stage 1 (Arrow Artifact)
-    "rbxassetid://108196402536011", -- Stage 2 (Crescent Artifact)
-    "rbxassetid://140438616753774", -- Stage 3 (Diamond Artifact)
-    "rbxassetid://122936451238995"  -- Stage 4 (Hourglass Diamond Artifact)
+    "rbxassetid://112089909495700",
+    "rbxassetid://108196402536011",
+    "rbxassetid://140438616753774",
+    "rbxassetid://122936451238995"
 }
 
 local ARTIFACT_SPOTS = {
@@ -4736,11 +4399,6 @@ local keywords = {
 	"Element Rod Progress",
 	"Configuration",
 	"Iron Cafe Progress",
-	"Select Player",
-	"Filtered Preview",
-	"Auto-Accept",
-	"Filter Fish",
-	"Trade Settings",
 	"Artifact Progress",
 	"Auto Limited Event",
 	"Important",
