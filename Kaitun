@@ -32,13 +32,6 @@ local GameData = {
 
     -- ================== [Auto Purchase Rod & Bait] ==================
 
-    ReplicatedStorage = game:GetService("ReplicatedStorage"),
-    Client = nil,
-    Data = nil,
-
-    AstralRodID = 5,
-    MidnightRodID = 80,
-    MidnightBaitID = 3,
 }
 
     -- ================== [Target Teleport Ke Esotoric] ==================
@@ -76,6 +69,71 @@ task.spawn(function()
     end
 end)
 
+    -- ================== [Equip Item Rod & Bait] ==================
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Client = require(ReplicatedStorage.Packages.Replion).Client
+
+local Data = Client:WaitReplion("Data")
+
+local PRIMARY_ID = 5
+local SECONDARY_ID = 80
+
+local function FindRodById(id)
+    local inventory = Data:GetExpect("Inventory")
+    local rods = inventory["Fishing Rods"]
+    if not rods then return nil end
+
+    for _, rod in ipairs(rods) do
+        if rod.Id == id then
+            return rod
+        end
+    end
+    return nil
+end
+
+task.spawn(function()
+    while true do
+        local targetRod = FindRodById(PRIMARY_ID)
+
+        if not targetRod then
+            targetRod = FindRodById(SECONDARY_ID)
+        end
+
+        if targetRod then
+            ReplicatedStorage
+                :WaitForChild("Packages")
+                :WaitForChild("_Index")
+                :WaitForChild("sleitnick_net@0.2.0")
+                :WaitForChild("net")
+                :WaitForChild("RE/EquipItem")
+                :FireServer(targetRod.UUID, "Fishing Rods")
+        end
+
+        task.wait(1.5)
+    end
+end)
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Client = require(ReplicatedStorage.Packages.Replion).Client
+
+local Data = Client:WaitReplion("Data")
+
+local TARGET_ID001 = 3
+
+local inventory = Data:GetExpect("Inventory")
+local baits = inventory["Baits"]
+
+if baits then
+    for _, bait in ipairs(baits) do
+        if bait.Id == TARGET_ID001 then
+            ReplicatedStorage
+                .Packages._Index["sleitnick_net@0.2.0"]
+                .net["RE/EquipBait"]
+                :FireServer(TARGET_ID001)
+        end
+    end
+end
 
     -- ================== [Auto Fishing legit] ==================
 
@@ -238,89 +296,124 @@ end)
 
     -- ================== [Auto Purchase Rod & Bait] ==================
 
--- Init Replion
-GameData.Client = require(GameData.ReplicatedStorage.Packages.Replion).Client
-GameData.Data = GameData.Client:WaitReplion("Data")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Client = require(ReplicatedStorage.Packages.Replion).Client
 
--- Load Remotes
-local function LoadRemote(path)
-    return GameData.ReplicatedStorage
+local Data = Client:WaitReplion("Data")
+
+local TARGET_ID = 80  -- ID target
+
+-- fungsi pengecekan item
+local function HasRodWithID()
+    local inventory = Data:GetExpect("Inventory")
+    local rods = inventory["Fishing Rods"]
+
+    if rods then
+        for _, rod in ipairs(rods) do
+            if rod.Id == TARGET_ID then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
+-- AUTO LOOP
+while task.wait(2) do
+    if HasRodWithID() then
+        break
+    end
+
+    local args = {TARGET_ID}
+    game:GetService("ReplicatedStorage")
         :WaitForChild("Packages")
         :WaitForChild("_Index")
         :WaitForChild("sleitnick_net@0.2.0")
         :WaitForChild("net")
-        :WaitForChild(path)
+        :WaitForChild("RF/PurchaseFishingRod")
+        :InvokeServer(unpack(args))
 end
 
-GameData.PurchaseRodRemote = LoadRemote("RF/PurchaseFishingRod")
-GameData.EquipBaitRemote   = LoadRemote("RE/EquipBait")
 
---------------------------------------------------------------------
--- CHECK FUNCTIONS
---------------------------------------------------------------------
 
-local function HasRod(id)
-    local inv = GameData.Data:GetExpect("Inventory")
-    local rods = inv["Fishing Rods"]
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Client = require(ReplicatedStorage.Packages.Replion).Client
+
+local Data = Client:WaitReplion("Data")
+
+local TARGET_ID = 5  -- ID target
+
+-- fungsi pengecekan item
+local function HasRodWithID()
+    local inventory = Data:GetExpect("Inventory")
+    local rods = inventory["Fishing Rods"]
+
     if rods then
         for _, rod in ipairs(rods) do
-            if rod.Id == id then
+            if rod.Id == TARGET_ID then
                 return true
             end
         end
     end
+
     return false
 end
 
-local function HasBait(id)
-    local inv = GameData.Data:GetExpect("Inventory")
-    local baits = inv["Baits"]
-    if baits then
-        for _, bait in ipairs(baits) do
-            if bait.Id == id then
-                return true
-            end
+-- AUTO LOOP
+while task.wait(2) do
+    if HasRodWithID() then
+        break
+    end
+
+    local args = {TARGET_ID}
+    game:GetService("ReplicatedStorage")
+        :WaitForChild("Packages")
+        :WaitForChild("_Index")
+        :WaitForChild("sleitnick_net@0.2.0")
+        :WaitForChild("net")
+        :WaitForChild("RF/PurchaseFishingRod")
+        :InvokeServer(unpack(args))
+end
+
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Client = require(ReplicatedStorage.Packages.Replion).Client
+
+local Data = Client:WaitReplion("Data")
+
+local TARGET_ID900 = 3
+
+local function HasTargetBait()
+    local inventory = Data:Get("Inventory")
+    if not inventory or not inventory["Baits"] then
+        return false
+    end
+
+    for _, bait in ipairs(inventory["Baits"]) do
+        if bait.Id == TARGET_ID900 then
+            return true
         end
     end
+
     return false
 end
 
---------------------------------------------------------------------
--- BUY FUNCTIONS (1 per loop → 1 item saja)
---------------------------------------------------------------------
-
--- Buy using InvokeServer
-local function BuyRod(id)
-    task.spawn(function()
-        while task.wait(2) do
-            if HasRod(id) then break end
-            pcall(function()
-                GameData.PurchaseRodRemote:InvokeServer(id)
-            end)
+task.spawn(function()
+    while task.wait(2) do
+        if HasTargetBait() then
+            break
         end
-    end)
-end
 
--- Buy using FireServer
-local function BuyBait(id)
-    task.spawn(function()
-        while task.wait(2) do
-            if HasBait(id) then break end
-            pcall(function()
-                GameData.EquipBaitRemote:FireServer(id)
-            end)
-        end
-    end)
-end
-
---------------------------------------------------------------------
--- RUN ALL PURCHASES (Satu-satu)
---------------------------------------------------------------------
-
-BuyRod(GameData.AstralRodID)      -- Astral Rod (ID 5)
-BuyRod(GameData.MidnightRodID)    -- Midnight Rod (ID 80)
-BuyBait(GameData.MidnightBaitID)  -- Midnight Bait (ID 3)
-
+        ReplicatedStorage
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/PurchaseBait")
+            :InvokeServer(TARGET_ID900)
+    end
+end)
 
     -- ================== [Auto Quest Deep Sea] ==================
 
