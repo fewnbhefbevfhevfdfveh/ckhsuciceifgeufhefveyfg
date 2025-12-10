@@ -310,6 +310,7 @@ task.spawn(function()
     end
 end)
 
+print ("[AutoFavorite] ON")
     -- ================== [Auto Sell] ==================
 
 local Players = game:GetService("Players")
@@ -335,6 +336,7 @@ task.spawn(function()
     end
 end)
 
+print ("[AutoSell] ON")
     -- ================== [Auto Purchase Rod & Bait] ==================
 
 GameData.Client = require(GameData.RS.Packages.Replion).Client
@@ -425,33 +427,16 @@ task.spawn(function()
     end
 end)
 
+print ("[Auto Purchase Rod & Bait] ON")
 
     -- ================== [Auto Quest Deep Sea] ==================
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local Client = require(ReplicatedStorage.Packages.Replion).Client
-
 local Data = Client:WaitReplion("Data")
 local TARGET_ID876 = 5
 
-local inventory = Data:GetExpect("Inventory")
-local rods = inventory["Fishing Rods"]
-local punyaRod = false
-
-if rods then
-    for _, rod in ipairs(rods) do
-        if rod.Id == TARGET_ID876 then
-            punyaRod = true
-            break
-        end
-    end
-end
-
-if not punyaRod then
-    return
-end
-
-local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
@@ -476,18 +461,35 @@ local pos_100 = CFrame.new(
     0.175524577, 0, -0.984475076
 )
 
-task.spawn(function()
-    while task.wait(1) do
+local function checkRod()
+    local inv = Data:GetExpect("Inventory")
+    local rods = inv["Fishing Rods"]
+    if rods then
+        for _, rod in ipairs(rods) do
+            if rod.Id == TARGET_ID876 then
+                return true
+            end
+        end
+    end
+    return false
+end
 
-        if not HumanoidRootPart then
-            -- skip iteration, tapi tanpa continue
-        else
+task.spawn(function()
+    while not checkRod() do
+        task.wait(2)
+    end
+
+    local lastStatus100 = false
+
+    while true do
+        task.wait(1)
+
+        if HumanoidRootPart and HumanoidRootPart.Parent then
             local t1 = Label1.Text
             local t2 = Label2.Text
             local t3 = Label3.Text
             local t4 = Label4.Text
 
-            -- Semua 100%
             if string.find(t1, "100%%")
             and string.find(t2, "100%%")
             and string.find(t3, "100%%")
@@ -495,16 +497,17 @@ task.spawn(function()
                 break
             end
 
-            if string.find(t1, "100%%") then
-                HumanoidRootPart.CFrame = pos_100
-            else
-                HumanoidRootPart.CFrame = pos_not100
+            local current100 = string.find(t1, "100%%") ~= nil
+            if current100 ~= lastStatus100 then
+                HumanoidRootPart.CFrame = current100 and pos_100 or pos_not100
+                lastStatus100 = current100
             end
         end
     end
 end)
 
 
+print ("[Auto Deep Sea Quest] ON")
     -- ================== [Auto Quest Artifack & Element] ==================
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -637,6 +640,8 @@ task.spawn(function()
     end
 end)
 
+print ("[Auto Artifack Quest] ON")
+
 -- ================== [Auto Element] ==================
 
 local label2 = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content:WaitForChild("Label2")
@@ -679,7 +684,7 @@ task.spawn(function()
     end
 end)
 
-
+print ("[Auto Element Quest] ON")
 
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
