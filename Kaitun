@@ -1,11 +1,30 @@
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Client = require(ReplicatedStorage.Packages.Replion).Client
 local Data = Client:WaitReplion("Data")
 
+----------------------------------------------------
+-- DELETE GUI LAMA
+----------------------------------------------------
+if playerGui:FindFirstChild("UnifiedGui") then
+    playerGui.UnifiedGui:Destroy()
+end
+
+----------------------------------------------------
+-- SCREEN GUI UTAMA
+----------------------------------------------------
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "UnifiedGui"
+screenGui.Parent = playerGui
+screenGui.IgnoreGuiInset = true
+screenGui.ResetOnSpawn = false
+
+----------------------------------------------------
+-- TEXT STYLE CONFIG
+----------------------------------------------------
 local TEXT_SIZE = 15
 local TEXT_STROKE = 0.1
 local FONT = Enum.Font.Gotham
@@ -27,57 +46,9 @@ local function CreateCleanLabel(parent, pos)
     return lbl
 end
 
-local mainGui = Instance.new("ScreenGui")
-mainGui.Name = "UnifiedTrackerGui"
-mainGui.Parent = playerGui
-mainGui.ResetOnSpawn = false
-mainGui.IgnoreGuiInset = true
-
-local startY = 0.55
-local spacing = 0.045
-
-local content = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content
-local deepLabels = {}
-
-for i = 1, 4 do
-    deepLabels[i] = CreateCleanLabel(mainGui, UDim2.new(0, 12, startY + (i-1)*spacing, 0))
-end
-
-local content2 = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content
-local elementLabels = {}
-
-for i = 1, 4 do
-    elementLabels[i] = CreateCleanLabel(mainGui, UDim2.new(1, -280, startY + (i-1)*spacing, 0))
-end
-
-RunService.RenderStepped:Connect(function()
-    for i = 1, 4 do
-        local obj = content:FindFirstChild("Label"..i)
-        if obj and obj:IsA("TextLabel") then
-            deepLabels[i].Text = obj.Text
-        end
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    for i = 1, 4 do
-        local obj = content2:FindFirstChild("Label"..i)
-        if obj and obj:IsA("TextLabel") then
-            elementLabels[i].Text = obj.Text
-        end
-    end
-end)
-
-if playerGui:FindFirstChild("UnifiedGui") then
-    playerGui.UnifiedGui:Destroy()
-end
-
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "UnifiedGui"
-screenGui.Parent = playerGui
-screenGui.IgnoreGuiInset = true
-screenGui.ResetOnSpawn = false
-
+----------------------------------------------------
+-- BLACK OVERLAY + BLUR
+----------------------------------------------------
 local blackBG = Instance.new("Frame")
 blackBG.Size = UDim2.new(1, 0, 1, 0)
 blackBG.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -89,17 +60,16 @@ local blur = Instance.new("BlurEffect")
 blur.Size = 10
 blur.Parent = lighting
 
+----------------------------------------------------
+-- MAIN FRAME (STATS UI)
+----------------------------------------------------
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 400, 0, 250)
 mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+mainFrame.Position = UDim2.new(0.5, 0, 0.43, 0)
 mainFrame.BackgroundTransparency = 1
 mainFrame.ZIndex = 2
 mainFrame.Parent = screenGui
-
-local uiAspect = Instance.new("UISizeConstraint")
-uiAspect.MaxSize = Vector2.new(380, 350)
-uiAspect.Parent = mainFrame
 
 local layout = Instance.new("UIListLayout")
 layout.FillDirection = Enum.FillDirection.Vertical
@@ -128,11 +98,17 @@ local function createText(text, size, bold)
     return label
 end
 
+----------------------------------------------------
+-- LABEL STATS
+----------------------------------------------------
 local title = createText("NexaHub Kaitun Stats", 45, true)
 local usernameLabel = createText("Username: " .. player.Name, 25, false)
 local coinLabel = createText("Coins: ...", 25, false)
 local rodLabel = createText("Best Rod: ... | Best Bait: ...", 20, false)
 
+----------------------------------------------------
+-- COIN UPDATE
+----------------------------------------------------
 local counter = playerGui:WaitForChild("Events")
     :WaitForChild("Frame")
     :WaitForChild("CurrencyCounter")
@@ -142,37 +118,86 @@ RunService.RenderStepped:Connect(function()
     coinLabel.Text = "Coins: " .. counter.Text
 end)
 
-local function updateStats()
-    local inv = Data:GetExpect("Inventory")
-    local rods = inv["Fishing Rods"] or {}
-    local baits = inv["Baits"] or {}
-
-    local function has(list, id)
-        for _, item in ipairs(list) do
-            if item.Id == id then return true end
-        end
-        return false
+----------------------------------------------------
+-- BEST ROD + BAIT AUTO UPDATE (LOOP MODE)
+----------------------------------------------------
+local function has(list, id)
+    for _, item in ipairs(list) do
+        if item.Id == id then return true end
     end
-
-    local bestRod =
-        has(rods, 257) and "Element Rod" or
-        has(rods, 169) and "Ghostfinn Rod" or
-        has(rods, 5) and "Astral Rod" or
-        has(rods, 80) and "Midnight Rod" or
-        "Starter Rod"
-
-    local bestBait =
-        has(baits, 3) and "Midnight Bait" or
-        has(baits, 8) and "Dark Matter Bait" or
-        "None"
-
-    rodLabel.Text = "Best Rod: " .. bestRod .. "  |  Best Bait: " .. bestBait
+    return false
 end
 
-updateStats()
-Data:GetExpect("Inventory").Changed:Connect(updateStats)
+local lastRod = ""
+local lastBait = ""
 
+task.spawn(function()
+    while true do
+        local inv = Data:Get("Inventory") or {}
+        local rods = inv["Fishing Rods"] or {}
+        local baits = inv["Baits"] or {}
 
+        local bestRod =
+            has(rods, 257) and "Element Rod" or
+            has(rods, 169) and "Ghostfinn Rod" or
+            has(rods, 5)   and "Astral Rod" or
+            has(rods, 80)  and "Midnight Rod" or
+            "Starter Rod"
+
+        local bestBait =
+            has(baits, 3) and "Midnight Bait" or
+            has(baits, 8) and "Dark Matter Bait" or
+            "None"
+
+        if bestRod ~= lastRod or bestBait ~= lastBait then
+            rodLabel.Text = "Best Rod: " .. bestRod .. "  |  Best Bait: " .. bestBait
+            lastRod = bestRod
+            lastBait = bestBait
+        end
+
+        task.wait(0.2) -- ringan 5x/detik
+    end
+end)
+
+----------------------------------------------------
+-- TRACKER (DEEP SEA + ELEMENT)
+----------------------------------------------------
+local startY = 0.65
+local spacing = 0.045
+
+local deepContent = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content
+local deepLabels = {}
+
+for i = 1, 4 do
+    deepLabels[i] = CreateCleanLabel(
+        screenGui,
+        UDim2.new(0, 12, startY + (i-1)*spacing, 0)
+    )
+end
+
+local elementContent = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content
+local elementLabels = {}
+
+for i = 1, 4 do
+    elementLabels[i] = CreateCleanLabel(
+        screenGui,
+        UDim2.new(1, -280, startY + (i-1)*spacing, 0)
+    )
+end
+
+RunService.RenderStepped:Connect(function()
+    for i = 1, 4 do
+        local obj = deepContent:FindFirstChild("Label"..i)
+        if obj then deepLabels[i].Text = obj.Text end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    for i = 1, 4 do
+        local obj = elementContent:FindFirstChild("Label"..i)
+        if obj then elementLabels[i].Text = obj.Text end
+    end
+end)
 
 local GameData = {
 
