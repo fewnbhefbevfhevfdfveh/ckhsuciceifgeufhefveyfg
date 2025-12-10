@@ -1,0 +1,679 @@
+local GameData = {
+
+    -- ================== [Target Teleport Ke Kohana Volcano] ==================
+
+    ReplicatedStorage = game:GetService("ReplicatedStorage"),
+    Client = nil,
+    Data = nil,
+
+    TARGET_ID = 5,
+    TP_Active = true,
+    targetCF = CFrame.new(-591.790894, 40.2794762, 152.680756, -0.61798209, 2.97407858e-08, -0.786192179, -1.4309208e-08, 1, 4.90765757e-08, 0.786192179, 4.15782324e-08, -0.61798209),
+
+    player = nil,
+    char = nil,
+    hrp = nil,
+
+    CheckRod = function() end,
+
+    -- ================== [Auto Fishing legit] ==================
+
+    Players = game:GetService("Players"),
+    RS = game:GetService("ReplicatedStorage"),
+
+    FishingController = nil,
+    UpdateAutoFishingState = nil,
+
+    AutoClickEnabled = true,
+    clickThread = nil,
+
+    originalRodStarted = nil,
+    originalFishingStopped = nil,
+
+    -- ================== [Auto Favorite] ==================
+
+        TierMap = {
+        [1] = "Common",
+        [2] = "Uncommon",
+        [3] = "Rare",
+        [4] = "Epic",
+        [5] = "Legendary",
+        [6] = "Mythic",
+        [7] = "SECRET"
+    },
+
+    -- ================== [Auto Purchase Rod & Bait] ==================
+
+    RS = game:GetService("ReplicatedStorage"),
+    Players = game:GetService("Players"),
+
+    Client = nil,
+    Data = nil,
+
+    RodID_1 = 80,
+    RodID_2 = 5,
+    BaitID_1 = 3,
+    BaitID_2 = 8,
+
+    PurchaseRodRemote = nil,
+    PurchaseBaitRemote = nil,
+
+    HasRodID = function() end,
+    HasRodID2 = function() end,
+    HasBait1 = function() end,
+    HasBait2 = function() end,
+}
+
+    -- ================== [Target Teleport Ke Kohana Volcano] ==================
+
+GameData.Client = require(GameData.ReplicatedStorage.Packages.Replion).Client
+GameData.Data = GameData.Client:WaitReplion("Data")
+
+GameData.CheckRod = function()
+    local inventory = GameData.Data:GetExpect("Inventory")
+    local rods = inventory["Fishing Rods"]
+    if rods then
+        for _, rod in ipairs(rods) do
+            if rod.Id == GameData.TARGET_ID then
+                GameData.TP_Active = false
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        GameData.CheckRod()
+    end
+end)
+
+GameData.player = game.Players.LocalPlayer
+
+local function UpdateCharacter(char)
+    GameData.char = char
+    GameData.hrp = char:WaitForChild("HumanoidRootPart")
+end
+
+UpdateCharacter(GameData.player.Character or GameData.player.CharacterAdded:Wait())
+
+GameData.player.CharacterAdded:Connect(UpdateCharacter)
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if GameData.TP_Active and GameData.hrp then
+            GameData.hrp.CFrame = GameData.targetCF
+        end
+    end
+end)
+
+    -- ================== [Equip Rod] ==================
+
+while task.wait(1) do
+    local args = {1}
+
+    game:GetService("ReplicatedStorage")
+        :WaitForChild("Packages")
+        :WaitForChild("_Index")
+        :WaitForChild("sleitnick_net@0.2.0")
+        :WaitForChild("net")
+        :WaitForChild("RE/EquipToolFromHotbar")
+        :FireServer(unpack(args))
+end
+
+
+    -- ================== [Equip Item Rod & Bait] ==================
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Client = require(ReplicatedStorage.Packages.Replion).Client
+
+local Data = Client:WaitReplion("Data")
+
+local PRIMARY_ID = 5
+local SECONDARY_ID = 80
+
+local function FindRodById(id)
+    local inventory = Data:GetExpect("Inventory")
+    local rods = inventory["Fishing Rods"]
+    if not rods then return nil end
+
+    for _, rod in ipairs(rods) do
+        if rod.Id == id then
+            return rod
+        end
+    end
+    return nil
+end
+
+task.spawn(function()
+    while true do
+        local targetRod = FindRodById(PRIMARY_ID)
+
+        if not targetRod then
+            targetRod = FindRodById(SECONDARY_ID)
+        end
+
+        if targetRod then
+            ReplicatedStorage
+                :WaitForChild("Packages")
+                :WaitForChild("_Index")
+                :WaitForChild("sleitnick_net@0.2.0")
+                :WaitForChild("net")
+                :WaitForChild("RE/EquipItem")
+                :FireServer(targetRod.UUID, "Fishing Rods")
+        end
+
+        task.wait(1.5)
+    end
+end)
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Client = require(ReplicatedStorage.Packages.Replion).Client
+
+local Data = Client:WaitReplion("Data")
+
+local TARGET_ID001 = 3
+
+local inventory = Data:GetExpect("Inventory")
+local baits = inventory["Baits"]
+
+if baits then
+    for _, bait in ipairs(baits) do
+        if bait.Id == TARGET_ID001 then
+            ReplicatedStorage
+                .Packages._Index["sleitnick_net@0.2.0"]
+                .net["RE/EquipBait"]
+                :FireServer(TARGET_ID001)
+        end
+    end
+end
+
+    -- ================== [Auto Fishing legit] ==================
+
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+GameData.FishingController = require(GameData.RS.Controllers.FishingController)
+
+GameData.UpdateAutoFishingState = GameData.RS
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/UpdateAutoFishingState")
+
+GameData.performClick = function()
+    local speed = tonumber(getgenv().CLICK_SPEED) or 0.05
+    GameData.FishingController:RequestFishingMinigameClick()
+    task.wait(speed + math.random() * speed)
+end
+
+GameData.updateRemoteState = function(bool)
+    task.spawn(function()
+        pcall(function()
+            GameData.UpdateAutoFishingState:InvokeServer(bool)
+        end)
+    end)
+end
+
+GameData.originalRodStarted = GameData.FishingController.FishingRodStarted
+GameData.originalFishingStopped = GameData.FishingController.FishingStopped
+
+GameData.FishingController.FishingRodStarted = function(self, ...)
+    GameData.originalRodStarted(self, ...)
+    if not GameData.AutoClickEnabled then return end
+
+    if GameData.clickThread then
+        task.cancel(GameData.clickThread)
+    end
+
+    GameData.clickThread = task.spawn(function()
+        while GameData.AutoClickEnabled do
+            GameData.performClick()
+        end
+    end)
+end
+
+GameData.FishingController.FishingStopped = function(self, ...)
+    GameData.originalFishingStopped(self, ...)
+    if GameData.clickThread then
+        task.cancel(GameData.clickThread)
+        GameData.clickThread = nil
+    end
+end
+
+GameData.updateRemoteState(true)
+print("[AutoFishing] ON, CLICK_SPEED =", getgenv().CLICK_SPEED)
+
+    -- ================== [Auto Favorite] ==================
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Net = require(ReplicatedStorage.Packages.Net)
+local ReplionClient = require(ReplicatedStorage.Packages.Replion).Client
+local DataReplion = ReplionClient:WaitReplion("Data")
+local ItemUtility = require(ReplicatedStorage.Shared.ItemUtility)
+
+local FavoriteRemote = Net:RemoteEvent("FavoriteItem")
+
+local selectedTiers = getgenv().Favorited or {}
+local autoUnfavorite = getgenv().AutoUnfavorite or false
+
+local nameToTier = {}
+for id, name in pairs(GameData.TierMap) do
+    nameToTier[name] = id
+end
+
+local function IsTierSelected(itemTier)
+    for _, tierName in ipairs(selectedTiers) do
+        if nameToTier[tierName] == tonumber(itemTier) then
+            return true
+        end
+    end
+    return false
+end
+
+local function safeFavorite(uuid)
+    pcall(function()
+        FavoriteRemote:FireServer(uuid)
+    end)
+end
+
+task.spawn(function()
+    local RATE = getgenv().Rate or 0.06
+    local LOOP_DELAY = getgenv().Loop or 1
+
+    while true do
+        local inventory = DataReplion:GetExpect("Inventory")
+
+        if inventory and inventory.Items then
+            for _, item in ipairs(inventory.Items) do
+                local ok, data = pcall(function()
+                    return ItemUtility.GetItemDataFromItemType("Items", item.Id)
+                end)
+
+                if ok and data and data.Data then
+                    local tier = data.Data.Tier
+
+                    if IsTierSelected(tier) and not item.Favorited then
+                        safeFavorite(item.UUID)
+                        task.wait(RATE)
+                    end
+
+                    if autoUnfavorite and not IsTierSelected(tier) and item.Favorited then
+                        safeFavorite(item.UUID)
+                        task.wait(RATE)
+                    end
+                end
+            end
+        end
+
+        task.wait(LOOP_DELAY)
+    end
+end)
+
+    -- ================== [Auto Sell] ==================
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+local sellRemote = ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/SellAllItems")
+
+local autoSell = true
+local sellDelay = 2
+
+task.spawn(function()
+    while autoSell do
+        pcall(function()
+            sellRemote:InvokeServer()
+        end)
+        task.wait(sellDelay)
+    end
+end)
+
+    -- ================== [Auto Purchase Rod & Bait] ==================
+
+GameData.Client = require(GameData.RS.Packages.Replion).Client
+GameData.Data = GameData.Client:WaitReplion("Data")
+
+local NetFolder = GameData.RS
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+
+GameData.PurchaseRodRemote  = NetFolder:WaitForChild("RF/PurchaseFishingRod")
+GameData.PurchaseBaitRemote = NetFolder:WaitForChild("RF/PurchaseBait")
+
+GameData.HasRodID = function()
+    local inv = GameData.Data:GetExpect("Inventory")
+    local rods = inv["Fishing Rods"]
+    if rods then
+        for _, rod in ipairs(rods) do
+            if rod.Id == GameData.RodID_1 then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+GameData.HasRodID2 = function()
+    local inv = GameData.Data:GetExpect("Inventory")
+    local rods = inv["Fishing Rods"]
+    if rods then
+        for _, rod in ipairs(rods) do
+            if rod.Id == GameData.RodID_2 then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+GameData.HasBait1 = function()
+    local inv = GameData.Data:Get("Inventory")
+    if not inv or not inv["Baits"] then return false end
+    for _, bait in ipairs(inv["Baits"]) do
+        if bait.Id == GameData.BaitID_1 then
+            return true
+        end
+    end
+    return false
+end
+
+GameData.HasBait2 = function()
+    local inv = GameData.Data:Get("Inventory")
+    if not inv or not inv["Baits"] then return false end
+    for _, bait in ipairs(inv["Baits"]) do
+        if bait.Id == GameData.BaitID_2 then
+            return true
+        end
+    end
+    return false
+end
+
+task.spawn(function()
+    while task.wait(2) do
+        if GameData.HasRodID() then break end
+        GameData.PurchaseRodRemote:InvokeServer(GameData.RodID_1)
+    end
+end)
+
+task.spawn(function()
+    while task.wait(2) do
+        if GameData.HasRodID2() then break end
+        GameData.PurchaseRodRemote:InvokeServer(GameData.RodID_2)
+    end
+end)
+
+task.spawn(function()
+    while task.wait(2) do
+        if GameData.HasBait1() then break end
+        GameData.PurchaseBaitRemote:InvokeServer(GameData.BaitID_1)
+    end
+end)
+
+task.spawn(function()
+    while task.wait(2) do
+        if GameData.HasBait2() then break end
+        GameData.PurchaseBaitRemote:InvokeServer(GameData.BaitID_2)
+    end
+end)
+
+
+    -- ================== [Auto Quest Deep Sea] ==================
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Client = require(ReplicatedStorage.Packages.Replion).Client
+
+local Data = Client:WaitReplion("Data")
+local TARGET_ID876 = 5
+
+local inventory = Data:GetExpect("Inventory")
+local rods = inventory["Fishing Rods"]
+local punyaRod = false
+
+if rods then
+    for _, rod in ipairs(rods) do
+        if rod.Id == TARGET_ID876 then
+            punyaRod = true
+            break
+        end
+    end
+end
+
+if not punyaRod then
+    return
+end
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+local content = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content
+local Label1 = content:WaitForChild("Label1")
+local Label2 = content:WaitForChild("Label2")
+local Label3 = content:WaitForChild("Label3")
+local Label4 = content:WaitForChild("Label4")
+
+local pos_not100 = CFrame.new(
+    -3598.26392, -275.770294, -1641.81677,
+    0.980732918, 0, -0.195353389,
+    0, 1, 0,
+    0.195353389, 0, 0.980732918
+)
+
+local pos_100 = CFrame.new(
+    -3723.38403, -135.074432, -1012.90057,
+    -0.984475076, 0, -0.175524577,
+    0, 1, 0,
+    0.175524577, 0, -0.984475076
+)
+
+task.spawn(function()
+    while task.wait(1) do
+
+        if not HumanoidRootPart then
+            -- skip iteration, tapi tanpa continue
+        else
+            local t1 = Label1.Text
+            local t2 = Label2.Text
+            local t3 = Label3.Text
+            local t4 = Label4.Text
+
+            -- Semua 100%
+            if string.find(t1, "100%%")
+            and string.find(t2, "100%%")
+            and string.find(t3, "100%%")
+            and string.find(t4, "100%%") then
+                break
+            end
+
+            if string.find(t1, "100%%") then
+                HumanoidRootPart.CFrame = pos_100
+            else
+                HumanoidRootPart.CFrame = pos_not100
+            end
+        end
+    end
+end)
+
+
+    -- ================== [Auto Quest Artifack & Element] ==================
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Client = require(ReplicatedStorage.Packages.Replion).Client
+local Data = Client:WaitReplion("Data")
+
+local TARGET_ID = 169
+
+local function WaitForRod()
+    while true do
+        task.wait(1)
+
+        local inventory = Data:GetExpect("Inventory")
+        local rods = inventory["Fishing Rods"]
+
+        if rods then
+            for _, rod in ipairs(rods) do
+                if rod.Id == TARGET_ID then
+                    return true
+                end
+            end
+        end
+    end
+end
+
+WaitForRod()
+task.wait(1)
+
+_G.Jungle = workspace:FindFirstChild("JUNGLE INTERACTIONS")
+
+_G.StageTP = {
+    CFrame.new(1490.81421, 2.86463475, -842.592163, -0.991618156, 3.0407854e-09, -0.129203171, 2.10214846e-09, 1, 7.40118855e-09, 0.129203171, 7.06754877e-09, -0.991618156),
+    CFrame.new(1842.94128, 3.15022254, -290.12735, 0.303114563, 9.22644432e-08, -0.952954113, -8.85028655e-08, 1, 6.86685055e-08, 0.952954113, 6.35247446e-08, 0.303114563),
+    CFrame.new(875.505676, 3.23971534, -357.766693, -0.152344614, -6.19773388e-08, 0.988327444, -3.3319314e-09, 1, 6.21957241e-08, -0.988327444, 6.18214413e-09, -0.152344614),
+    CFrame.new(1404.37671, 4.17689037, 121.881737, -0.958127379, -5.75146117e-08, 0.286342412, -4.29739515e-08, 1, 5.70648808e-08, -0.286342412, 4.23701572e-08, -0.958127379),
+}
+
+_G.MeshOrder = {
+    "rbxassetid://112089909495700",
+    "rbxassetid://108196402536011",
+    "rbxassetid://140438616753774",
+    "rbxassetid://122936451238995"
+}
+
+_G.autoArtifactEnabled = true
+_G.isRunning = false
+
+local plr = game:GetService("Players").LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+_G.hrp = char:WaitForChild("HumanoidRootPart")
+
+plr.CharacterAdded:Connect(function(newChar)
+    task.wait(1)
+    char = newChar
+    _G.hrp = newChar:WaitForChild("HumanoidRootPart")
+end)
+
+function _G.IsQuestNotFinished(meshId)
+    if not _G.Jungle then return false end
+
+    for _, lever in ipairs(_G.Jungle:GetChildren()) do
+        if lever.Name == "TempleLever" then
+            local crystal = lever:FindFirstChild("Crystal")
+            if crystal and crystal:IsA("MeshPart") and tostring(crystal.MeshId) == meshId then
+                local root = lever:FindFirstChild("RootPart")
+                local prompt = root and root:FindFirstChildOfClass("ProximityPrompt")
+                if prompt then
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+function _G.FireAllForMesh(meshId)
+    if not _G.Jungle then return end
+
+    for _, lever in ipairs(_G.Jungle:GetChildren()) do
+        if lever.Name == "TempleLever" then
+            local crystal = lever:FindFirstChild("Crystal")
+            if crystal and crystal:IsA("MeshPart") and tostring(crystal.MeshId) == meshId then
+                local root = lever:FindFirstChild("RootPart")
+                local prompt = root and root:FindFirstChildOfClass("ProximityPrompt")
+                if prompt then
+                    pcall(fireproximityprompt, prompt)
+                end
+            end
+        end
+    end
+end
+
+function _G.TeleportToStage(stage)
+    if _G.StageTP[stage] then
+        _G.hrp.CFrame = _G.StageTP[stage]
+    end
+end
+
+
+task.spawn(function()
+    while task.wait(1) do
+
+        if _G.autoArtifactEnabled and not _G.isRunning then
+            _G.isRunning = true
+
+            local currentStage = 1
+
+            while _G.autoArtifactEnabled and currentStage <= #_G.MeshOrder do
+                _G.TeleportToStage(currentStage)
+                task.wait(1)
+
+                local meshId = _G.MeshOrder[currentStage]
+
+                if _G.IsQuestNotFinished(meshId) then
+                    _G.FireAllForMesh(meshId)
+                else
+                    currentStage = currentStage + 1
+                    task.wait(1)
+                end
+
+                task.wait(2)
+            end
+
+            -- SETELAH ARTIFACT SELESAI → JALANKAN ELEMENT
+            task.wait(1)
+            _G.autoArtifactEnabled = false
+            _G.isRunning = false
+            _G.StartElement = true
+        end
+    end
+end)
+
+-- ================== [Auto Element] ==================
+
+local label2 = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content:WaitForChild("Label2")
+local player = game.Players.LocalPlayer
+
+local posBelum = CFrame.new(2117.75146, -91.1985855, -700.854065,
+    0.931628525,0,-0.363411963,
+    0,1,0,
+    0.363411963,0,0.931628525
+)
+
+local posSudah = CFrame.new(1556.35583, 4.37400525, -605.774841,
+    -0.154411227,0,0.988006651,
+    0,1,0,
+    -0.988006651,0,-0.154411227
+)
+
+local hrp
+
+local function refreshCharacter()
+    local char = player.Character or player.CharacterAdded:Wait()
+    hrp = char:WaitForChild("HumanoidRootPart")
+end
+
+refreshCharacter()
+player.CharacterAdded:Connect(refreshCharacter)
+
+task.spawn(function()
+    while task.wait(0.2) do
+        if _G.StartElement and hrp then
+            local text = label2.Text
+            local percent = string.match(text, "(%d+%%)")
+
+            if percent == "100%" then
+                hrp.CFrame = posSudah
+            elseif percent ~= nil then
+                hrp.CFrame = posBelum
+            end
+        end
+    end
+end)
