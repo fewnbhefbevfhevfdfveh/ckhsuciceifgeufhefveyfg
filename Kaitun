@@ -108,18 +108,19 @@ end)
 
     -- ================== [Equip Rod] ==================
 
-while task.wait(1) do
-    local args = {1}
+task.spawn(function()
+    while task.wait(1) do
+        local args = {1}
 
-    game:GetService("ReplicatedStorage")
-        :WaitForChild("Packages")
-        :WaitForChild("_Index")
-        :WaitForChild("sleitnick_net@0.2.0")
-        :WaitForChild("net")
-        :WaitForChild("RE/EquipToolFromHotbar")
-        :FireServer(unpack(args))
-end
-
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RE/EquipToolFromHotbar")
+            :FireServer(unpack(args))
+    end
+end)
 
     -- ================== [Equip Item Rod & Bait] ==================
 
@@ -309,6 +310,7 @@ task.spawn(function()
     end
 end)
 
+print ("[AutoFavorite] ON")
     -- ================== [Auto Sell] ==================
 
 local Players = game:GetService("Players")
@@ -334,6 +336,7 @@ task.spawn(function()
     end
 end)
 
+print ("[AutoSell] ON")
     -- ================== [Auto Purchase Rod & Bait] ==================
 
 GameData.Client = require(GameData.RS.Packages.Replion).Client
@@ -424,6 +427,7 @@ task.spawn(function()
     end
 end)
 
+print ("[Auto Purchase Rod & Bait] ON")
 
     -- ================== [Auto Quest Deep Sea] ==================
 
@@ -503,7 +507,7 @@ task.spawn(function()
     end
 end)
 
-
+print ("[Auto Deep Sea Quest] ON")
     -- ================== [Auto Quest Artifack & Element] ==================
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -636,6 +640,8 @@ task.spawn(function()
     end
 end)
 
+print ("[Auto Artifack Quest] ON")
+
 -- ================== [Auto Element] ==================
 
 local label2 = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content:WaitForChild("Label2")
@@ -678,7 +684,7 @@ task.spawn(function()
     end
 end)
 
-
+print ("[Auto Element Quest] ON")
 
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
