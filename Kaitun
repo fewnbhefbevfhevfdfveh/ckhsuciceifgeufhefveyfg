@@ -36,11 +36,9 @@ local GameData = {
     Client = nil,
     Data = nil,
 
+    AstralRodID = 5,
     MidnightRodID = 80,
     MidnightBaitID = 3,
-    AstralRodID = 5,
-
-    Remotes = {}
 }
 
     -- ================== [Target Teleport Ke Esotoric] ==================
@@ -240,20 +238,26 @@ end)
 
     -- ================== [Auto Purchase Rod & Bait] ==================
 
+-- Init Replion
 GameData.Client = require(GameData.ReplicatedStorage.Packages.Replion).Client
 GameData.Data = GameData.Client:WaitReplion("Data")
 
-local function LoadRemote(name)
+-- Load Remotes
+local function LoadRemote(path)
     return GameData.ReplicatedStorage
         :WaitForChild("Packages")
         :WaitForChild("_Index")
         :WaitForChild("sleitnick_net@0.2.0")
         :WaitForChild("net")
-        :WaitForChild(name)
+        :WaitForChild(path)
 end
 
-GameData.Remotes.PurchaseFishingRod = LoadRemote("RF/PurchaseFishingRod")
-GameData.Remotes.PurchaseBait = LoadRemote("RF/PurchaseBait")
+GameData.PurchaseRodRemote = LoadRemote("RF/PurchaseFishingRod")
+GameData.EquipBaitRemote   = LoadRemote("RE/EquipBait")
+
+--------------------------------------------------------------------
+-- CHECK FUNCTIONS
+--------------------------------------------------------------------
 
 local function HasRod(id)
     local inv = GameData.Data:GetExpect("Inventory")
@@ -281,24 +285,42 @@ local function HasBait(id)
     return false
 end
 
-local function AutoBuy(checkFn, remote, id)
+--------------------------------------------------------------------
+-- BUY FUNCTIONS (1 per loop → 1 item saja)
+--------------------------------------------------------------------
+
+-- Buy using InvokeServer
+local function BuyRod(id)
     task.spawn(function()
         while task.wait(2) do
-            if checkFn(id) then break end
+            if HasRod(id) then break end
             pcall(function()
-                remote:InvokeServer(id)
+                GameData.PurchaseRodRemote:InvokeServer(id)
             end)
         end
     end)
 end
--- // MidnightRodID
-AutoBuy(HasRod, GameData.Remotes.PurchaseFishingRod, GameData.MidnightRodID)
 
--- // MidnightBaitID
-AutoBuy(HasBait, GameData.Remotes.PurchaseBait, GameData.MidnightBaitID)
+-- Buy using FireServer
+local function BuyBait(id)
+    task.spawn(function()
+        while task.wait(2) do
+            if HasBait(id) then break end
+            pcall(function()
+                GameData.EquipBaitRemote:FireServer(id)
+            end)
+        end
+    end)
+end
 
--- // AstralRodID
-AutoBuy(HasRod, GameData.Remotes.PurchaseFishingRod, GameData.AstralRodID)
+--------------------------------------------------------------------
+-- RUN ALL PURCHASES (Satu-satu)
+--------------------------------------------------------------------
+
+BuyRod(GameData.AstralRodID)      -- Astral Rod (ID 5)
+BuyRod(GameData.MidnightRodID)    -- Midnight Rod (ID 80)
+BuyBait(GameData.MidnightBaitID)  -- Midnight Bait (ID 3)
+
 
     -- ================== [Auto Quest Deep Sea] ==================
 
