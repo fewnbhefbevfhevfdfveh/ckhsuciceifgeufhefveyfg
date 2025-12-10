@@ -1,6 +1,182 @@
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local lighting = game:GetService("Lighting")
+local Client = require(ReplicatedStorage.Packages.Replion).Client
+local Data = Client:WaitReplion("Data")
+
+local TEXT_SIZE = 15
+local TEXT_STROKE = 0.1
+local FONT = Enum.Font.Gotham
+
+local function CreateCleanLabel(parent, pos)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0, 260, 0, 28)
+    lbl.Position = pos
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.Font = FONT
+    lbl.TextSize = TEXT_SIZE
+    lbl.TextScaled = false
+    lbl.TextStrokeTransparency = TEXT_STROKE
+    lbl.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.RichText = true
+    lbl.Parent = parent
+    return lbl
+end
+
+local mainGui = Instance.new("ScreenGui")
+mainGui.Name = "UnifiedTrackerGui"
+mainGui.Parent = playerGui
+mainGui.ResetOnSpawn = false
+mainGui.IgnoreGuiInset = true
+
+local startY = 0.55
+local spacing = 0.045
+
+local content = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content
+local deepLabels = {}
+
+for i = 1, 4 do
+    deepLabels[i] = CreateCleanLabel(mainGui, UDim2.new(0, 12, startY + (i-1)*spacing, 0))
+end
+
+local content2 = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content
+local elementLabels = {}
+
+for i = 1, 4 do
+    elementLabels[i] = CreateCleanLabel(mainGui, UDim2.new(1, -280, startY + (i-1)*spacing, 0))
+end
+
+RunService.RenderStepped:Connect(function()
+    for i = 1, 4 do
+        local obj = content:FindFirstChild("Label"..i)
+        if obj and obj:IsA("TextLabel") then
+            deepLabels[i].Text = obj.Text
+        end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    for i = 1, 4 do
+        local obj = content2:FindFirstChild("Label"..i)
+        if obj and obj:IsA("TextLabel") then
+            elementLabels[i].Text = obj.Text
+        end
+    end
+end)
+
+if playerGui:FindFirstChild("UnifiedGui") then
+    playerGui.UnifiedGui:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "UnifiedGui"
+screenGui.Parent = playerGui
+screenGui.IgnoreGuiInset = true
+screenGui.ResetOnSpawn = false
+
+local blackBG = Instance.new("Frame")
+blackBG.Size = UDim2.new(1, 0, 1, 0)
+blackBG.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+blackBG.BackgroundTransparency = 0.35
+blackBG.ZIndex = 0
+blackBG.Parent = screenGui
+
+local blur = Instance.new("BlurEffect")
+blur.Size = 10
+blur.Parent = lighting
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 400, 0, 250)
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+mainFrame.BackgroundTransparency = 1
+mainFrame.ZIndex = 2
+mainFrame.Parent = screenGui
+
+local uiAspect = Instance.new("UISizeConstraint")
+uiAspect.MaxSize = Vector2.new(380, 350)
+uiAspect.Parent = mainFrame
+
+local layout = Instance.new("UIListLayout")
+layout.FillDirection = Enum.FillDirection.Vertical
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.VerticalAlignment = Enum.VerticalAlignment.Center
+layout.Padding = UDim.new(0, 4)
+layout.Parent = mainFrame
+
+local function createText(text, size, bold)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 0, size)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham
+    label.TextScaled = true
+    label.TextWrapped = true
+    label.Text = text
+    label.ZIndex = 3
+
+    local constraint = Instance.new("UITextSizeConstraint")
+    constraint.MaxTextSize = 42
+    constraint.MinTextSize = 14
+    constraint.Parent = label
+
+    label.Parent = mainFrame
+    return label
+end
+
+local title = createText("NexaHub Kaitun Stats", 45, true)
+local usernameLabel = createText("Username: " .. player.Name, 25, false)
+local coinLabel = createText("Coins: ...", 25, false)
+local rodLabel = createText("Best Rod: ... | Best Bait: ...", 20, false)
+
+local counter = playerGui:WaitForChild("Events")
+    :WaitForChild("Frame")
+    :WaitForChild("CurrencyCounter")
+    :WaitForChild("Counter")
+
+RunService.RenderStepped:Connect(function()
+    coinLabel.Text = "Coins: " .. counter.Text
+end)
+
+local function updateStats()
+    local inv = Data:GetExpect("Inventory")
+    local rods = inv["Fishing Rods"] or {}
+    local baits = inv["Baits"] or {}
+
+    local function has(list, id)
+        for _, item in ipairs(list) do
+            if item.Id == id then return true end
+        end
+        return false
+    end
+
+    local bestRod =
+        has(rods, 257) and "Element Rod" or
+        has(rods, 169) and "Ghostfinn Rod" or
+        has(rods, 5) and "Astral Rod" or
+        has(rods, 80) and "Midnight Rod" or
+        "Starter Rod"
+
+    local bestBait =
+        has(baits, 3) and "Midnight Bait" or
+        has(baits, 8) and "Dark Matter Bait" or
+        "None"
+
+    rodLabel.Text = "Best Rod: " .. bestRod .. "  |  Best Bait: " .. bestBait
+end
+
+updateStats()
+Data:GetExpect("Inventory").Changed:Connect(updateStats)
+
+
+
 local GameData = {
 
-    -- ================== [Target Teleport Ke Esotoric] ==================
+    -- ================== [Target Teleport Ke Kohana Volcano] ==================
 
     ReplicatedStorage = game:GetService("ReplicatedStorage"),
     Client = nil,
@@ -8,7 +184,7 @@ local GameData = {
 
     TARGET_ID = 5,
     TP_Active = true,
-    targetCF = CFrame.new(3250.70752, -1293.22607, 1434.1604, 0.40147689, -4.88301177e-09, -0.915869176, 8.8367706e-08, 1, 3.34049695e-08, 0.915869176, -9.43445855e-08, 0.40147689),
+    targetCF = CFrame.new(-591.790894, 40.2794762, 152.680756, -0.61798209, 2.97407858e-08, -0.786192179, -1.4309208e-08, 1, 4.90765757e-08, 0.786192179, 4.15782324e-08, -0.61798209),
 
     player = nil,
     char = nil,
@@ -30,11 +206,41 @@ local GameData = {
     originalRodStarted = nil,
     originalFishingStopped = nil,
 
+    -- ================== [Auto Favorite] ==================
+
+        TierMap = {
+        [1] = "Common",
+        [2] = "Uncommon",
+        [3] = "Rare",
+        [4] = "Epic",
+        [5] = "Legendary",
+        [6] = "Mythic",
+        [7] = "SECRET"
+    },
+
     -- ================== [Auto Purchase Rod & Bait] ==================
 
+    RS = game:GetService("ReplicatedStorage"),
+    Players = game:GetService("Players"),
+
+    Client = nil,
+    Data = nil,
+
+    RodID_1 = 80,
+    RodID_2 = 5,
+    BaitID_1 = 3,
+    BaitID_2 = 8,
+
+    PurchaseRodRemote = nil,
+    PurchaseBaitRemote = nil,
+
+    HasRodID = function() end,
+    HasRodID2 = function() end,
+    HasBait1 = function() end,
+    HasBait2 = function() end,
 }
 
-    -- ================== [Target Teleport Ke Esotoric] ==================
+    -- ================== [Target Teleport Ke Kohana Volcano] ==================
 
 GameData.Client = require(GameData.ReplicatedStorage.Packages.Replion).Client
 GameData.Data = GameData.Client:WaitReplion("Data")
@@ -57,17 +263,39 @@ task.spawn(function()
     end
 end)
 
-task.spawn(function()
-    GameData.player = game.Players.LocalPlayer
-    GameData.char = GameData.player.Character or GameData.player.CharacterAdded:Wait()
-    GameData.hrp = GameData.char:WaitForChild("HumanoidRootPart")
+GameData.player = game.Players.LocalPlayer
 
+local function UpdateCharacter(char)
+    GameData.char = char
+    GameData.hrp = char:WaitForChild("HumanoidRootPart")
+end
+
+UpdateCharacter(GameData.player.Character or GameData.player.CharacterAdded:Wait())
+
+GameData.player.CharacterAdded:Connect(UpdateCharacter)
+
+task.spawn(function()
     while task.wait(0.1) do
-        if GameData.TP_Active then
+        if GameData.TP_Active and GameData.hrp then
             GameData.hrp.CFrame = GameData.targetCF
         end
     end
 end)
+
+    -- ================== [Equip Rod] ==================
+
+while task.wait(1) do
+    local args = {1}
+
+    game:GetService("ReplicatedStorage")
+        :WaitForChild("Packages")
+        :WaitForChild("_Index")
+        :WaitForChild("sleitnick_net@0.2.0")
+        :WaitForChild("net")
+        :WaitForChild("RE/EquipToolFromHotbar")
+        :FireServer(unpack(args))
+end
+
 
     -- ================== [Equip Item Rod & Bait] ==================
 
@@ -194,18 +422,6 @@ print("[AutoFishing] ON, CLICK_SPEED =", getgenv().CLICK_SPEED)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local GameData = {
-    TierMap = {
-        [1] = "Common",
-        [2] = "Uncommon",
-        [3] = "Rare",
-        [4] = "Epic",
-        [5] = "Legendary",
-        [6] = "Mythic",
-        [7] = "SECRET"
-    }
-}
-
 local Net = require(ReplicatedStorage.Packages.Net)
 local ReplionClient = require(ReplicatedStorage.Packages.Replion).Client
 local DataReplion = ReplionClient:WaitReplion("Data")
@@ -296,151 +512,124 @@ end)
 
     -- ================== [Auto Purchase Rod & Bait] ==================
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Client = require(ReplicatedStorage.Packages.Replion).Client
+GameData.Client = require(GameData.RS.Packages.Replion).Client
+GameData.Data = GameData.Client:WaitReplion("Data")
 
-local Data = Client:WaitReplion("Data")
+local NetFolder = GameData.RS
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
 
-local TARGET_ID = 80  -- ID target
+GameData.PurchaseRodRemote  = NetFolder:WaitForChild("RF/PurchaseFishingRod")
+GameData.PurchaseBaitRemote = NetFolder:WaitForChild("RF/PurchaseBait")
 
--- fungsi pengecekan item
-local function HasRodWithID()
-    local inventory = Data:GetExpect("Inventory")
-    local rods = inventory["Fishing Rods"]
-
+GameData.HasRodID = function()
+    local inv = GameData.Data:GetExpect("Inventory")
+    local rods = inv["Fishing Rods"]
     if rods then
         for _, rod in ipairs(rods) do
-            if rod.Id == TARGET_ID then
+            if rod.Id == GameData.RodID_1 then
                 return true
             end
         end
     end
-
     return false
 end
 
--- AUTO LOOP
-while task.wait(2) do
-    if HasRodWithID() then
-        break
-    end
-
-    local args = {TARGET_ID}
-    game:GetService("ReplicatedStorage")
-        :WaitForChild("Packages")
-        :WaitForChild("_Index")
-        :WaitForChild("sleitnick_net@0.2.0")
-        :WaitForChild("net")
-        :WaitForChild("RF/PurchaseFishingRod")
-        :InvokeServer(unpack(args))
-end
-
-
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Client = require(ReplicatedStorage.Packages.Replion).Client
-
-local Data = Client:WaitReplion("Data")
-
-local TARGET_ID = 5  -- ID target
-
--- fungsi pengecekan item
-local function HasRodWithID()
-    local inventory = Data:GetExpect("Inventory")
-    local rods = inventory["Fishing Rods"]
-
+GameData.HasRodID2 = function()
+    local inv = GameData.Data:GetExpect("Inventory")
+    local rods = inv["Fishing Rods"]
     if rods then
         for _, rod in ipairs(rods) do
-            if rod.Id == TARGET_ID then
+            if rod.Id == GameData.RodID_2 then
                 return true
             end
         end
     end
-
     return false
 end
 
--- AUTO LOOP
-while task.wait(2) do
-    if HasRodWithID() then
-        break
-    end
-
-    local args = {TARGET_ID}
-    game:GetService("ReplicatedStorage")
-        :WaitForChild("Packages")
-        :WaitForChild("_Index")
-        :WaitForChild("sleitnick_net@0.2.0")
-        :WaitForChild("net")
-        :WaitForChild("RF/PurchaseFishingRod")
-        :InvokeServer(unpack(args))
-end
-
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Client = require(ReplicatedStorage.Packages.Replion).Client
-
-local Data = Client:WaitReplion("Data")
-
-local TARGET_ID900 = 3
-
-local function HasTargetBait()
-    local inventory = Data:Get("Inventory")
-    if not inventory or not inventory["Baits"] then
-        return false
-    end
-
-    for _, bait in ipairs(inventory["Baits"]) do
-        if bait.Id == TARGET_ID900 then
+GameData.HasBait1 = function()
+    local inv = GameData.Data:Get("Inventory")
+    if not inv or not inv["Baits"] then return false end
+    for _, bait in ipairs(inv["Baits"]) do
+        if bait.Id == GameData.BaitID_1 then
             return true
         end
     end
+    return false
+end
 
+GameData.HasBait2 = function()
+    local inv = GameData.Data:Get("Inventory")
+    if not inv or not inv["Baits"] then return false end
+    for _, bait in ipairs(inv["Baits"]) do
+        if bait.Id == GameData.BaitID_2 then
+            return true
+        end
+    end
     return false
 end
 
 task.spawn(function()
     while task.wait(2) do
-        if HasTargetBait() then
-            break
-        end
-
-        ReplicatedStorage
-            :WaitForChild("Packages")
-            :WaitForChild("_Index")
-            :WaitForChild("sleitnick_net@0.2.0")
-            :WaitForChild("net")
-            :WaitForChild("RF/PurchaseBait")
-            :InvokeServer(TARGET_ID900)
+        if GameData.HasRodID() then break end
+        GameData.PurchaseRodRemote:InvokeServer(GameData.RodID_1)
     end
 end)
+
+task.spawn(function()
+    while task.wait(2) do
+        if GameData.HasRodID2() then break end
+        GameData.PurchaseRodRemote:InvokeServer(GameData.RodID_2)
+    end
+end)
+
+task.spawn(function()
+    while task.wait(2) do
+        if GameData.HasBait1() then break end
+        GameData.PurchaseBaitRemote:InvokeServer(GameData.BaitID_1)
+    end
+end)
+
+task.spawn(function()
+    while task.wait(2) do
+        if GameData.HasBait2() then break end
+        GameData.PurchaseBaitRemote:InvokeServer(GameData.BaitID_2)
+    end
+end)
+
 
     -- ================== [Auto Quest Deep Sea] ==================
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
-
 local Client = require(ReplicatedStorage.Packages.Replion).Client
-local Data = Client:WaitReplion("Data")
 
+local Data = Client:WaitReplion("Data")
+local TARGET_ID876 = 5
+
+local inventory = Data:GetExpect("Inventory")
+local rods = inventory["Fishing Rods"]
+local punyaRod = false
+
+if rods then
+    for _, rod in ipairs(rods) do
+        if rod.Id == TARGET_ID876 then
+            punyaRod = true
+            break
+        end
+    end
+end
+
+if not punyaRod then
+    return
+end
+
+local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-
-local function HasRod()
-    local inventory = Data:GetExpect("Inventory")
-    local rods = inventory["Fishing Rods"]
-    if rods then
-        for _, rod in ipairs(rods) do
-            if rod.Id == GameData.AstralRodID then
-                return true
-            end
-        end
-    end
-    return false
-end
-
-repeat task.wait(1) until HasRod()
 
 local content = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content
 local Label1 = content:WaitForChild("Label1")
@@ -462,21 +651,205 @@ local pos_100 = CFrame.new(
     0.175524577, 0, -0.984475076
 )
 
-spawn(function()
-    while task.wait(0.5) do
-        if not HasRod() then break end
+task.spawn(function()
+    while task.wait(1) do
 
-        local t1, t2, t3, t4 =
-            Label1.Text, Label2.Text, Label3.Text, Label4.Text
-
-        if t1:find("100%%") and t2:find("100%%") and t3:find("100%%") and t4:find("100%%") then
-            break
-        end
-
-        if t1:find("100%%") then
-            HumanoidRootPart.CFrame = pos_100
+        if not HumanoidRootPart then
+            -- skip iteration, tapi tanpa continue
         else
-            HumanoidRootPart.CFrame = pos_not100
+            local t1 = Label1.Text
+            local t2 = Label2.Text
+            local t3 = Label3.Text
+            local t4 = Label4.Text
+
+            -- Semua 100%
+            if string.find(t1, "100%%")
+            and string.find(t2, "100%%")
+            and string.find(t3, "100%%")
+            and string.find(t4, "100%%") then
+                break
+            end
+
+            if string.find(t1, "100%%") then
+                HumanoidRootPart.CFrame = pos_100
+            else
+                HumanoidRootPart.CFrame = pos_not100
+            end
+        end
+    end
+end)
+
+
+    -- ================== [Auto Quest Artifack & Element] ==================
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Client = require(ReplicatedStorage.Packages.Replion).Client
+local Data = Client:WaitReplion("Data")
+
+local TARGET_ID = 169
+
+local function WaitForRod()
+    while true do
+        task.wait(1)
+
+        local inventory = Data:GetExpect("Inventory")
+        local rods = inventory["Fishing Rods"]
+
+        if rods then
+            for _, rod in ipairs(rods) do
+                if rod.Id == TARGET_ID then
+                    return true
+                end
+            end
+        end
+    end
+end
+
+WaitForRod()
+task.wait(1)
+
+_G.Jungle = workspace:FindFirstChild("JUNGLE INTERACTIONS")
+
+_G.StageTP = {
+    CFrame.new(1490.81421, 2.86463475, -842.592163, -0.991618156, 3.0407854e-09, -0.129203171, 2.10214846e-09, 1, 7.40118855e-09, 0.129203171, 7.06754877e-09, -0.991618156),
+    CFrame.new(1842.94128, 3.15022254, -290.12735, 0.303114563, 9.22644432e-08, -0.952954113, -8.85028655e-08, 1, 6.86685055e-08, 0.952954113, 6.35247446e-08, 0.303114563),
+    CFrame.new(875.505676, 3.23971534, -357.766693, -0.152344614, -6.19773388e-08, 0.988327444, -3.3319314e-09, 1, 6.21957241e-08, -0.988327444, 6.18214413e-09, -0.152344614),
+    CFrame.new(1404.37671, 4.17689037, 121.881737, -0.958127379, -5.75146117e-08, 0.286342412, -4.29739515e-08, 1, 5.70648808e-08, -0.286342412, 4.23701572e-08, -0.958127379),
+}
+
+_G.MeshOrder = {
+    "rbxassetid://112089909495700",
+    "rbxassetid://108196402536011",
+    "rbxassetid://140438616753774",
+    "rbxassetid://122936451238995"
+}
+
+_G.autoArtifactEnabled = true
+_G.isRunning = false
+
+local plr = game:GetService("Players").LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+_G.hrp = char:WaitForChild("HumanoidRootPart")
+
+plr.CharacterAdded:Connect(function(newChar)
+    task.wait(1)
+    char = newChar
+    _G.hrp = newChar:WaitForChild("HumanoidRootPart")
+end)
+
+function _G.IsQuestNotFinished(meshId)
+    if not _G.Jungle then return false end
+
+    for _, lever in ipairs(_G.Jungle:GetChildren()) do
+        if lever.Name == "TempleLever" then
+            local crystal = lever:FindFirstChild("Crystal")
+            if crystal and crystal:IsA("MeshPart") and tostring(crystal.MeshId) == meshId then
+                local root = lever:FindFirstChild("RootPart")
+                local prompt = root and root:FindFirstChildOfClass("ProximityPrompt")
+                if prompt then
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+function _G.FireAllForMesh(meshId)
+    if not _G.Jungle then return end
+
+    for _, lever in ipairs(_G.Jungle:GetChildren()) do
+        if lever.Name == "TempleLever" then
+            local crystal = lever:FindFirstChild("Crystal")
+            if crystal and crystal:IsA("MeshPart") and tostring(crystal.MeshId) == meshId then
+                local root = lever:FindFirstChild("RootPart")
+                local prompt = root and root:FindFirstChildOfClass("ProximityPrompt")
+                if prompt then
+                    pcall(fireproximityprompt, prompt)
+                end
+            end
+        end
+    end
+end
+
+function _G.TeleportToStage(stage)
+    if _G.StageTP[stage] then
+        _G.hrp.CFrame = _G.StageTP[stage]
+    end
+end
+
+
+task.spawn(function()
+    while task.wait(1) do
+
+        if _G.autoArtifactEnabled and not _G.isRunning then
+            _G.isRunning = true
+
+            local currentStage = 1
+
+            while _G.autoArtifactEnabled and currentStage <= #_G.MeshOrder do
+                _G.TeleportToStage(currentStage)
+                task.wait(1)
+
+                local meshId = _G.MeshOrder[currentStage]
+
+                if _G.IsQuestNotFinished(meshId) then
+                    _G.FireAllForMesh(meshId)
+                else
+                    currentStage = currentStage + 1
+                    task.wait(1)
+                end
+
+                task.wait(2)
+            end
+
+            -- SETELAH ARTIFACT SELESAI → JALANKAN ELEMENT
+            task.wait(1)
+            _G.autoArtifactEnabled = false
+            _G.isRunning = false
+            _G.StartElement = true
+        end
+    end
+end)
+
+-- ================== [Auto Element] ==================
+
+local label2 = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content:WaitForChild("Label2")
+local player = game.Players.LocalPlayer
+
+local posBelum = CFrame.new(2117.75146, -91.1985855, -700.854065,
+    0.931628525,0,-0.363411963,
+    0,1,0,
+    0.363411963,0,0.931628525
+)
+
+local posSudah = CFrame.new(1556.35583, 4.37400525, -605.774841,
+    -0.154411227,0,0.988006651,
+    0,1,0,
+    -0.988006651,0,-0.154411227
+)
+
+local hrp
+
+local function refreshCharacter()
+    local char = player.Character or player.CharacterAdded:Wait()
+    hrp = char:WaitForChild("HumanoidRootPart")
+end
+
+refreshCharacter()
+player.CharacterAdded:Connect(refreshCharacter)
+
+task.spawn(function()
+    while task.wait(0.2) do
+        if _G.StartElement and hrp then
+            local text = label2.Text
+            local percent = string.match(text, "(%d+%%)")
+
+            if percent == "100%" then
+                hrp.CFrame = posSudah
+            elseif percent ~= nil then
+                hrp.CFrame = posBelum
+            end
         end
     end
 end)
