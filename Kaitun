@@ -190,6 +190,24 @@ end
 
     -- ================== [Auto Fishing legit] ==================
 
+    task.spawn(function()
+    while true do
+        local args = { true }
+
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RF/UpdateAutoFishingState")
+            :InvokeServer(unpack(args))
+
+        task.wait(5) -- jeda 5 detik
+    end
+end)
+
+print ("Auto Fishing Legit Remote ON")
+
 GameData.LocalPlayer = GameData.Players.LocalPlayer
 GameData.FishingController = require(GameData.RS.Controllers.FishingController)
 
@@ -512,59 +530,49 @@ print ("[Auto Deep Sea Quest] ON")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Client = require(ReplicatedStorage.Packages.Replion).Client
+local Players = game:GetService("Players")
+
 local Data = Client:WaitReplion("Data")
+local TARGET_ROD_ID = 5
 
-local TARGET_ID = 169
+_G.autoArtifactEnabled = false
+_G.foundRod = false
+_G.artifactDone = false
+_G.elementStarted = false
 
-_G.HasRod = false
-_G.StartArtifact = false
-_G.autoArtifactEnabled = true
-_G.isRunning = false
+local function CheckRod()
+    local inventory = Data:GetExpect("Inventory")
+    local rods = inventory["Fishing Rods"]
 
--- ======================
---  CHECK ROD (NON-BLOCK)
--- ======================
-task.spawn(function()
-    while task.wait(1) do
-        local inventory = Data:GetExpect("Inventory")
-        local rods = inventory["Fishing Rods"]
-
-        if rods then
-            for _, rod in ipairs(rods) do
-                if rod.Id == TARGET_ID then
-                    _G.HasRod = true
-                    print("Rod ditemukan, siap jalankan Artifact...")
-                    return
+    if rods then
+        for _, rod in ipairs(rods) do
+            if rod.Id == TARGET_ROD_ID then
+                if not _G.foundRod then
+                    _G.foundRod = true
+                    _G.autoArtifactEnabled = true
                 end
+                return
             end
+        end
+    end
+end
+
+task.spawn(function()
+    while true do
+        task.wait(1)
+        if not _G.foundRod then
+            CheckRod()
         end
     end
 end)
 
--- ==========================
---  NUNGGU ROD LALU AKTIFKAN
--- ==========================
-task.spawn(function()
-    while not _G.HasRod do
-        task.wait(1)
-    end
-    task.wait(1)
-    _G.StartArtifact = true
-end)
-
-
-
--- ======================
---  ARTIFACT SYSTEM
--- ======================
-
 _G.Jungle = workspace:FindFirstChild("JUNGLE INTERACTIONS")
 
 _G.StageTP = {
-    CFrame.new(1490.81421, 2.86463475, -842.592163, -0.991618156, 3.0407854e-09, -0.129203171, 2.10214846e-09, 1, 7.40118855e-09, 0.129203171, 7.06754877e-09, -0.991618156),
-    CFrame.new(1842.94128, 3.15022254, -290.12735, 0.303114563, 9.22644432e-08, -0.952954113, -8.85028655e-08, 1, 6.86685055e-08, 0.952954113, 6.35247446e-08, 0.303114563),
-    CFrame.new(875.505676, 3.23971534, -357.766693, -0.152344614, -6.19773388e-08, 0.988327444, -3.3319314e-09, 1, 6.21957241e-08, -0.988327444, 6.18214413e-09, -0.152344614),
-    CFrame.new(1404.37671, 4.17689037, 121.881737, -0.958127379, -5.75146117e-08, 0.286342412, -4.29739515e-08, 1, 5.70648808e-08, -0.286342412, 4.23701572e-08, -0.958127379),
+    CFrame.new(1490.81421, 2.86463475, -842.592163),
+    CFrame.new(1842.94128, 3.15022254, -290.12735),
+    CFrame.new(875.505676, 3.23971534, -357.766693),
+    CFrame.new(1404.37671, 4.17689037, 121.881737),
 }
 
 _G.MeshOrder = {
@@ -574,28 +582,20 @@ _G.MeshOrder = {
     "rbxassetid://122936451238995"
 }
 
-local plr = game:GetService("Players").LocalPlayer
-local char = plr.Character or plr.CharacterAdded:Wait()
-_G.hrp = char:WaitForChild("HumanoidRootPart")
+_G.isRunning = false
 
-plr.CharacterAdded:Connect(function(newChar)
-    task.wait(1)
-    char = newChar
-    _G.hrp = newChar:WaitForChild("HumanoidRootPart")
-end)
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+_G.hrp = char:WaitForChild("HumanoidRootPart")
 
 function _G.IsQuestNotFinished(meshId)
     if not _G.Jungle then return false end
-
     for _, lever in ipairs(_G.Jungle:GetChildren()) do
         if lever.Name == "TempleLever" then
             local crystal = lever:FindFirstChild("Crystal")
             if crystal and crystal:IsA("MeshPart") and tostring(crystal.MeshId) == meshId then
-                local root = lever:FindFirstChild("RootPart")
-                local prompt = root and root:FindFirstChildOfClass("ProximityPrompt")
-                if prompt then
-                    return true
-                end
+                local prompt = lever.RootPart:FindFirstChildOfClass("ProximityPrompt")
+                if prompt then return true end
             end
         end
     end
@@ -603,17 +603,12 @@ function _G.IsQuestNotFinished(meshId)
 end
 
 function _G.FireAllForMesh(meshId)
-    if not _G.Jungle then return end
-
     for _, lever in ipairs(_G.Jungle:GetChildren()) do
         if lever.Name == "TempleLever" then
             local crystal = lever:FindFirstChild("Crystal")
             if crystal and crystal:IsA("MeshPart") and tostring(crystal.MeshId) == meshId then
-                local root = lever:FindFirstChild("RootPart")
-                local prompt = root and root:FindFirstChildOfClass("ProximityPrompt")
-                if prompt then
-                    pcall(fireproximityprompt, prompt)
-                end
+                local prompt = lever.RootPart:FindFirstChildOfClass("ProximityPrompt")
+                if prompt then pcall(fireproximityprompt, prompt) end
             end
         end
     end
@@ -625,89 +620,81 @@ function _G.TeleportToStage(stage)
     end
 end
 
-
--- LOOP ARTIFACT
 task.spawn(function()
-    while task.wait(1) do
-        if _G.StartArtifact and _G.autoArtifactEnabled and not _G.isRunning then
+    while true do
+        task.wait(1)
+
+        if _G.autoArtifactEnabled and not _G.isRunning and not _G.artifactDone then
             _G.isRunning = true
+            local stage = 1
 
-            local currentStage = 1
-
-            while _G.autoArtifactEnabled and currentStage <= #_G.MeshOrder do
-                _G.TeleportToStage(currentStage)
+            while _G.autoArtifactEnabled and stage <= #_G.MeshOrder do
+                _G.TeleportToStage(stage)
                 task.wait(1)
 
-                local meshId = _G.MeshOrder[currentStage]
+                local meshId = _G.MeshOrder[stage]
 
                 if _G.IsQuestNotFinished(meshId) then
                     _G.FireAllForMesh(meshId)
                 else
-                    currentStage += 1
-                    task.wait(1)
+                    stage = stage + 1
                 end
 
                 task.wait(2)
             end
 
-            -- Artifact selesai → lanjut Element
-            task.wait(1)
-            _G.autoArtifactEnabled = false
+            _G.artifactDone = true
             _G.isRunning = false
-            _G.StartElement = true
         end
     end
 end)
-
-print ("[Auto Artifack Quest] ON")
-
-
--- ==================
--- AUTO ELEMENT SYSTEM
--- ==================
-
-local label2 = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content:WaitForChild("Label2")
-local player = game.Players.LocalPlayer
-
-local posBelum = CFrame.new(2117.75146, -91.1985855, -700.854065,
-    0.931628525,0,-0.363411963,
-    0,1,0,
-    0.363411963,0,0.931628525
-)
-
-local posSudah = CFrame.new(1556.35583, 4.37400525, -605.774841,
-    -0.154411227,0,0.988006651,
-    0,1,0,
-    -0.988006651,0,-0.154411227
-)
-
-local hrp
-
-local function refreshCharacter()
-    local char = player.Character or player.CharacterAdded:Wait()
-    hrp = char:WaitForChild("HumanoidRootPart")
-end
-
-refreshCharacter()
-player.CharacterAdded:Connect(refreshCharacter)
 
 task.spawn(function()
     while task.wait(1) do
-        if _G.StartElement and hrp then
-            local text = label2.Text
-            local percent = string.match(text, "(%d+%%)")
+        if _G.artifactDone and not _G.elementStarted then
+            _G.elementStarted = true
 
-            if percent == "100%" then
-                hrp.CFrame = posSudah
-            elseif percent ~= nil then
-                hrp.CFrame = posBelum
-            end
+            local Character = player.Character or player.CharacterAdded:Wait()
+            local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+            local menu = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content
+            local Label1 = menu:WaitForChild("Label1")
+            local Label2 = menu:WaitForChild("Label2")
+            local Label3 = menu:WaitForChild("Label3")
+            local Label4 = menu:WaitForChild("Label4")
+
+            local pos_not100 = CFrame.new(-3598.26392, -275.770294, -1641.81677)
+            local pos_100 = CFrame.new(-3723.38403, -135.074432, -1012.90057)
+
+            task.spawn(function()
+                while task.wait(1) do
+                    local t1 = Label1.Text
+                    local t2 = Label2.Text
+                    local t3 = Label3.Text
+                    local t4 = Label4.Text
+
+                    if string.find(t1, "100%%")
+                    and string.find(t2, "100%%")
+                    and string.find(t3, "100%%")
+                    and string.find(t4, "100%%") then
+                        break
+                    end
+
+                    if string.find(t1, "100%%") then
+                        HumanoidRootPart.CFrame = pos_100
+                    else
+                        HumanoidRootPart.CFrame = pos_not100
+                    end
+                end
+            end)
         end
     end
 end)
 
-print ("[Auto Element Quest] ON")
-
+print ("[Auto Artifact & Element Quest] ON")
+----------------------------------------------------
+-- SETUP
+----------------------------------------------------
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local RunService = game:GetService("RunService")
@@ -733,18 +720,21 @@ screenGui.IgnoreGuiInset = true
 screenGui.ResetOnSpawn = false
 
 ----------------------------------------------------
--- TEXT GENERATOR
+-- TEXT STYLE
 ----------------------------------------------------
+local TEXT_SIZE = 15
+local TEXT_STROKE = 0.1
+local FONT = Enum.Font.Gotham
+
 local function CreateCleanLabel(parent, pos)
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(0, 260, 0, 28)
     lbl.Position = pos
     lbl.BackgroundTransparency = 1
     lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    lbl.Font = Enum.Font.Gotham
-    lbl.TextSize = 15
-    lbl.TextScaled = false
-    lbl.TextStrokeTransparency = 0.1
+    lbl.Font = FONT
+    lbl.TextSize = TEXT_SIZE
+    lbl.TextStrokeTransparency = TEXT_STROKE
     lbl.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.RichText = true
@@ -753,7 +743,7 @@ local function CreateCleanLabel(parent, pos)
 end
 
 ----------------------------------------------------
--- OVERLAY
+-- BLUR + BLACK OVERLAY
 ----------------------------------------------------
 local blackBG = Instance.new("Frame")
 blackBG.Size = UDim2.new(1, 0, 1, 0)
@@ -784,23 +774,24 @@ layout.VerticalAlignment = Enum.VerticalAlignment.Center
 layout.Padding = UDim.new(0, 4)
 layout.Parent = mainFrame
 
-local function createText(text, height, bold)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -20, 0, height)
-    lbl.BackgroundTransparency = 1
-    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    lbl.Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham
-    lbl.TextScaled = true
-    lbl.TextWrapped = true
-    lbl.Text = text
+local function createText(text, size, bold)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 0, size)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham
+    label.TextScaled = true
+    label.TextWrapped = true
+    label.Text = text
+    label.ZIndex = 3
 
     local constraint = Instance.new("UITextSizeConstraint")
     constraint.MaxTextSize = 42
     constraint.MinTextSize = 14
-    constraint.Parent = lbl
+    constraint.Parent = label
 
-    lbl.Parent = mainFrame
-    return lbl
+    label.Parent = mainFrame
+    return label
 end
 
 ----------------------------------------------------
@@ -809,117 +800,116 @@ end
 local title = createText("NexaHub Kaitun Stats", 45, true)
 local usernameLabel = createText("Username: " .. player.Name, 25, false)
 local coinLabel = createText("Coins: ...", 25, false)
-local rodLabel = createText("Best Rod: ... | Best Bait: ...", 22, false)
+local rodLabel = createText("Best Rod: ...", 20, false)
+local baitLabel = createText("Best Bait: ...", 20, false) -- NEW
 
 ----------------------------------------------------
--- TRACKER LABELS (DEEP SEA & ELEMENT)
+-- LIVE COIN UPDATE
 ----------------------------------------------------
-local startY = 0.65
-local spacing = 0.045
+local counter = playerGui:WaitForChild("Events")
+    :WaitForChild("Frame")
+    :WaitForChild("CurrencyCounter")
+    :WaitForChild("Counter")
 
-local deepLabels, elementLabels = {}, {}
-
-for i = 1, 4 do
-    deepLabels[i] = CreateCleanLabel(screenGui, UDim2.new(0, 12, startY + (i - 1) * spacing, 0))
-end
-
-for i = 1, 4 do
-    elementLabels[i] = CreateCleanLabel(screenGui, UDim2.new(1, -280, startY + (i - 1) * spacing, 0))
-end
+RunService.RenderStepped:Connect(function()
+    coinLabel.Text = "Coins: " .. counter.Text
+end)
 
 ----------------------------------------------------
--- HELPERS
+-- FUNGSI CEK ROD
 ----------------------------------------------------
-local function has(list, id)
-    for _, item in ipairs(list) do
-        if item.Id == id then return true end
+local function hasRod(rods, id)
+    for _, rod in ipairs(rods) do
+        if rod.Id == id then
+            return true
+        end
     end
     return false
 end
 
-local deepContent = workspace:WaitForChild("!!! MENU RINGS", 5)
-if deepContent then
-    deepContent = deepContent:WaitForChild("Deep Sea Tracker", 5)
-        and deepContent["Deep Sea Tracker"].Board.Gui.Content
+----------------------------------------------------
+-- FUNGSI CEK BAIT
+----------------------------------------------------
+local function hasBait(baits, id)
+    for _, bait in ipairs(baits) do
+        if bait.Id == id then
+            return true
+        end
+    end
+    return false
 end
 
-local elementContent = workspace:WaitForChild("!!! MENU RINGS", 5)
-if elementContent then
-    elementContent = elementContent:WaitForChild("Element Tracker", 5)
-        and elementContent["Element Tracker"].Board.Gui.Content
-end
+----------------------------------------------------
+-- LOOP CEK ROD & BAIT SETIAP 1 DETIK
+----------------------------------------------------
+task.spawn(function()
+    while true do
+        task.wait(1)
 
-local coinCounter
-pcall(function()
-    coinCounter = playerGui.Events.Frame.CurrencyCounter.Counter
+        local inventory = Data:GetExpect("Inventory")
+        local rods = inventory["Fishing Rods"] or {}
+        local baits = inventory["Baits"] or {}
+
+        -- ROD SYSTEM
+        if not hasRod(rods, 80) then
+            rodLabel.Text = "Best Rod: Midnight Rod"
+        elseif not hasRod(rods, 5) then
+            rodLabel.Text = "Best Rod: Astral Rod"
+        elseif not hasRod(rods, 169) then
+            rodLabel.Text = "Best Rod: Ghostfinn Rod"
+        elseif not hasRod(rods, 257) then
+            rodLabel.Text = "Best Rod: Element Rod"
+        else
+            rodLabel.Text = "Best Rod: Maxed Rods!"
+        end
+
+        -- BAIT SYSTEM
+        if not hasBait(baits, 3) then
+            baitLabel.Text = "Best Bait: Midnight Bait"
+        elseif not hasBait(baits, 8) then
+            baitLabel.Text = "Best Bait: Dark Matter Bait"
+        else
+            baitLabel.Text = "Best Bait: Maxed Baits!"
+        end
+    end
 end)
 
 ----------------------------------------------------
--- ONE SAFE LOOP (HANYA 1 RENDERSTEPPED)
+-- TRACKER (DEEP SEA + ELEMENT)
 ----------------------------------------------------
-local lastRod, lastBait = "", ""
+local startY = 0.65
+local spacing = 0.045
+
+local deepContent = workspace["!!! MENU RINGS"]["Deep Sea Tracker"].Board.Gui.Content
+local deepLabels = {}
+
+for i = 1, 4 do
+    deepLabels[i] = CreateCleanLabel(
+        screenGui,
+        UDim2.new(0, 12, startY + (i-1)*spacing, 0)
+    )
+end
+
+local elementContent = workspace["!!! MENU RINGS"]["Element Tracker"].Board.Gui.Content
+local elementLabels = {}
+
+for i = 1, 4 do
+    elementLabels[i] = CreateCleanLabel(
+        screenGui,
+        UDim2.new(1, -280, startY + (i-1)*spacing, 0)
+    )
+end
 
 RunService.RenderStepped:Connect(function()
+    for i = 1, 4 do
+        local obj = deepContent:FindFirstChild("Label"..i)
+        if obj then deepLabels[i].Text = obj.Text end
+    end
+end)
 
-    if not screenGui.Parent then return end
-
-    ------------------------------------------------
-    -- SAFE COIN UPDATE
-    ------------------------------------------------
-    pcall(function()
-        if coinCounter then
-            coinLabel.Text = "Coins: " .. coinCounter.Text
-        end
-    end)
-
-    ------------------------------------------------
-    -- SAFE ROD/BAIT UPDATE
-    ------------------------------------------------
-    pcall(function()
-        local inv = Data:Get("Inventory") or {}
-        local rods = inv["Fishing Rods"] or {}
-        local baits = inv["Baits"] or {}
-
-        local bestRod =
-            has(rods, 257) and "Element Rod" or
-            has(rods, 169) and "Ghostfinn Rod" or
-            has(rods, 5)   and "Astral Rod" or
-            has(rods, 80)  and "Midnight Rod" or
-            "Starter Rod"
-
-        local bestBait =
-            has(baits, 3) and "Midnight Bait" or
-            has(baits, 8) and "Dark Matter Bait" or
-            "None"
-
-        if bestRod ~= lastRod or bestBait ~= lastBait then
-            rodLabel.Text = "Best Rod: " .. bestRod .. "  |  Best Bait: " .. bestBait
-            lastRod, lastBait = bestRod, bestBait
-        end
-    end)
-
-    ------------------------------------------------
-    -- SAFE DEEP SEA TRACKER UPDATE
-    ------------------------------------------------
-    pcall(function()
-        if deepContent then
-            for i = 1, 4 do
-                local obj = deepContent:FindFirstChild("Label"..i)
-                if obj then deepLabels[i].Text = obj.Text end
-            end
-        end
-    end)
-
-    ------------------------------------------------
-    -- SAFE ELEMENT TRACKER UPDATE
-    ------------------------------------------------
-    pcall(function()
-        if elementContent then
-            for i = 1, 4 do
-                local obj = elementContent:FindFirstChild("Label"..i)
-                if obj then elementLabels[i].Text = obj.Text end
-            end
-        end
-    end)
-
+RunService.RenderStepped:Connect(function()
+    for i = 1, 4 do
+        local obj = elementContent:FindFirstChild("Label"..i)
+        if obj then elementLabels[i].Text = obj.Text end
+    end
 end)
