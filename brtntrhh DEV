@@ -108,7 +108,7 @@ local GameData = {
     RS = game:GetService("ReplicatedStorage"),
     Client = nil,
     Data = nil,
-    EnchantParagraph = nil,
+    Enchant0001Paragraph = nil,
 
     -- ==================[Status Info Enchant]==================
 
@@ -472,24 +472,15 @@ local GameData = {
     -- ================== [Range Totem] ==================
 
     Players = game:GetService("Players"),
-    RunService = game:GetService("RunService"),
 
     LocalPlayer = nil,
     Totems = workspace:WaitForChild("Totems"),
 
     ShowTotemRange = false,
-    ShowPlacementPreview = false,
 
     RangeColor = Color3.fromRGB(255, 0, 0),
     RangeAlpha = 0.5,
 
-    TotemRangeRadius = 50,
-
-    PreviewRange = nil,
-    PreviewConn = nil,
-    RangeScanConn = nil,
-
-    RangeParagraph = nil,
     -- ================== [Blatant ] ==================
 
     SVC = {
@@ -2073,103 +2064,6 @@ GameData.Totems.ChildAdded:Connect(function(model)
     end
 end)
 
-function GameData:StartPlacementPreview()
-    if self.PreviewRange then return end
-
-    self.PreviewRange = Instance.new("Part")
-    self.PreviewRange.Name = "PlayerTotemPreview"
-    self.PreviewRange.Size = Vector3.new(100, 1, 100)
-    self.PreviewRange.Anchored = true
-    self.PreviewRange.CanCollide = false
-    self.PreviewRange.Material = Enum.Material.SmoothPlastic
-    self.PreviewRange.Color = self.RangeColor
-    self.PreviewRange.Transparency = self.RangeAlpha
-    self.PreviewRange.Parent = workspace
-
-    self.PreviewConn = self.RunService.RenderStepped:Connect(function()
-        if not self.ShowPlacementPreview then return end
-        if not self.LocalPlayer.Character then return end
-
-        local hrp = self.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        self.PreviewRange.Color = self.RangeColor
-        self.PreviewRange.Transparency = self.RangeAlpha
-        self.PreviewRange.CFrame = hrp.CFrame * CFrame.new(0, -3, 0)
-    end)
-end
-
-function GameData:StopPlacementPreview()
-    if self.PreviewConn then
-        self.PreviewConn:Disconnect()
-        self.PreviewConn = nil
-    end
-    if self.PreviewRange then
-        self.PreviewRange:Destroy()
-        self.PreviewRange = nil
-    end
-end
-
-GameData.RangeParagraph = sections.Fishing3:Paragraph({
-    Header = "Placement Range",
-    Body = "No player in range",
-}, "PlacementRangeInfo")
-
-GameData.RangeParagraph:SetVisibility(false)
-
-function GameData:UpdatePlayersInRange()
-    if not self.ShowPlacementPreview then return end
-
-    local playersInRange = {}
-
-    if self.PreviewRange then
-        local center = Vector3.new(
-            self.PreviewRange.Position.X,
-            0,
-            self.PreviewRange.Position.Z
-        )
-
-        for _, plr in ipairs(self.Players:GetPlayers()) do
-            if plr ~= self.LocalPlayer and plr.Character then
-                local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    local pos = Vector3.new(hrp.Position.X, 0, hrp.Position.Z)
-                    if (pos - center).Magnitude <= self.TotemRangeRadius then
-                        playersInRange[plr.Name] = true
-                    end
-                end
-            end
-        end
-    end
-
-    local list = {}
-    for name in pairs(playersInRange) do
-        table.insert(list, name)
-    end
-
-    if #list == 0 then
-        self.RangeParagraph:UpdateHeader("Placement Range")
-        self.RangeParagraph:UpdateBody("No player in range")
-    else
-        self.RangeParagraph:UpdateHeader("Players In Placement Range (" .. #list .. ")")
-        self.RangeParagraph:UpdateBody(table.concat(list, "\n"))
-    end
-end
-
-function GameData:StartRangeScanner()
-    if self.RangeScanConn then return end
-    self.RangeScanConn = self.RunService.Heartbeat:Connect(function()
-        GameData:UpdatePlayersInRange()
-    end)
-end
-
-function GameData:StopRangeScanner()
-    if self.RangeScanConn then
-        self.RangeScanConn:Disconnect()
-        self.RangeScanConn = nil
-    end
-end
-
 sections.Fishing3:Toggle({
     Name = "Show Totem Range",
     Default = false,
@@ -2179,24 +2073,6 @@ sections.Fishing3:Toggle({
     end,
 }, "ToggleTotemRange")
 
-sections.Fishing3:Toggle({
-    Name = "Show Placement Preview",
-    Default = false,
-    Callback = function(value)
-        GameData.ShowPlacementPreview = value
-        GameData.RangeParagraph:SetVisibility(value)
-
-        if value then
-            GameData:StartPlacementPreview()
-            GameData:StartRangeScanner()
-        else
-            GameData:StopPlacementPreview()
-            GameData:StopRangeScanner()
-            GameData.RangeParagraph:UpdateBody("No player in range")
-        end
-    end,
-}, "TogglePlacementPreview")
-
 sections.Fishing3:Colorpicker({
     Name = "Range Color",
     Default = GameData.RangeColor,
@@ -2205,13 +2081,7 @@ sections.Fishing3:Colorpicker({
     Callback = function(color, alpha)
         GameData.RangeColor = color
         GameData.RangeAlpha = alpha
-
         GameData:UpdateTotemRanges()
-
-        if GameData.PreviewRange then
-            GameData.PreviewRange.Color = color
-            GameData.PreviewRange.Transparency = alpha
-        end
     end,
 }, "RangeColorToggle")
 
@@ -3558,24 +3428,26 @@ GameData.GetEnchantStoneTotal = function()
 
     for _, item in ipairs(inventory.Items) do
         if item.Id == 10 then
-            total = total + (item.Amount or item.Count or 1)
+            total += (item.Amount or item.Count or 1)
         end
     end
 
     return total
 end
 
-GameData.EnchantParagraph = sections.Auto1:Paragraph({
+-- paragraph
+GameData.Enchant0001Paragraph = sections.Auto1:Paragraph({
     Header = "Enchant Stone",
-    Body = "Total : 0"
-}, "EnchantStoneParagraph")
+    Body = "total : 0"
+}, "Enchant0001Paragraph")
 
+-- button
 sections.Auto1:Button({
-    Name = "Refresh Total Enchant Stone",
+    Name = "Refresh total enchant stone",
     Callback = function()
         local total = GameData.GetEnchantStoneTotal()
-        GameData.EnchantParagraph:UpdateBody(
-            "Total : " .. total
+        GameData.Enchant0001Paragraph:UpdateBody(
+            "total : " .. total
         )
     end,
 })
