@@ -687,17 +687,17 @@ local GameData2 = {
 local Window = MacLib:Window({
     Title = "NexaHub",
     Subtitle = "Fish It - Premium | V0.0.3",
-    Size = UDim2.fromOffset(650, 400),
+    Size = UDim2.fromOffset(550, 380),
     DragStyle = 2,
     DisabledWindowControls = {},
-    ShowUserInfo = true,
+    ShowUserInfo = false,
     Keybind = Enum.KeyCode.G,
     AcrylicBlur = true,
 })
 
-Window:SetSize(UDim2.fromOffset(650, 400))
+Window:SetSize(UDim2.fromOffset(550, 380))
 
-Window:SetUserInfoState(true)
+Window:SetUserInfoState(false)
 GameData.userInfoState = Window:GetUserInfoState()
 
 GameData.GS_UserInfo = Window:GlobalSetting({
@@ -5575,7 +5575,7 @@ sections.Config:Input({
 -- WINDOW HEIGHT INPUT
 -----------------------------
 sections.Config:Input({
-    Name = "Window Height (Not Working)",
+    Name = "Window Height",
     Placeholder = "400",
     AcceptedCharacters = "Numbers",
     Callback = function(val)
@@ -5585,24 +5585,6 @@ sections.Config:Input({
         if GameData.windowHeight then
             GameData.currentSize = Window:GetSize()
             Window:SetSize(UDim2.fromOffset(GameData.currentSize.X.Offset, GameData.windowHeight))
-        end
-    end
-})
-
-
------------------------------
--- WINDOW SCALE INPUT
------------------------------
-sections.Config:Input({
-    Name = "Window Scale",
-    Placeholder = "0.70",
-    AcceptedCharacters = "Numbers",
-    Callback = function(val)
-        GameData.inputValue = val
-        GameData.windowScale = tonumber(GameData.inputValue)
-
-        if GameData.windowScale then
-            Window:SetScale(GameData.windowScale)
         end
     end
 })
