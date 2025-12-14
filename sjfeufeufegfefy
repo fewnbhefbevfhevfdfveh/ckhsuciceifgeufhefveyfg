@@ -371,23 +371,35 @@ local GameData = {
 
     Jungle = workspace:WaitForChild("JUNGLE INTERACTIONS"),
 
-    ParagraphStatus = nil, -- nanti diisi setelah dibuat UI-nya
+    -- ================== [Lochness Paragraph] ==================
 
-    -- Data tambahan
-    targetCFrame = CFrame.new(
+    Workspace = workspace,
+
+    CountdownLabel = nil,
+    CountdownParagraph = nil,
+
+    UpdateDelay = 1,
+
+    -- ================== [Lochness Teleport] ==================
+
+    Players = game:GetService("Players"),
+    Workspace = workspace,
+
+    LocalPlayer = nil,
+    TimerLabel = nil,
+
+    TargetCFrame = CFrame.new(
         6089.81396, -585.924194, 4637.24023,
         -0.800617278, 5.49377476e-08, 0.599176049,
         6.29061105e-08, 1, -7.63340946e-09,
         -0.599176049, 3.15803952e-08, -0.800617278
     ),
 
-    enabled = false,
-    
-    -- Placeholder variabel lain
-    label = nil,
-    hrp = nil,
-    paragraph = nil,
-    freeze = nil,
+    AutoLochEnabled = false,
+    SavedCFrame = nil,
+    Teleporting = false,
+
+    LoopDelay = 1,
 
     -- ================== [Disco Paragraph] ==================
     DiscoParagraph = nil,
@@ -460,31 +472,25 @@ local GameData = {
 
 
     -- ================== [SKip Rraity] ==================
-        SVC = {
-        Players = game:GetService("Players"),
-        RS = game:GetService("ReplicatedStorage")
+
+    Players = game:GetService("Players"),
+    RS = game:GetService("ReplicatedStorage"),
+
+    player = nil,
+
+    net = nil,
+    RF_CancelFishing = nil,
+    RE_TextEffect = nil,
+
+    RARITY_COLORS = {
+        Common   = {1, 0.980392, 0.964706},
+        Uncommon = {0.764706, 1, 0.333333},
+        Rare     = {0.333333, 0.635294, 1},
+        Epic     = {0.678431, 0.309804, 1},
     },
 
-    Player = nil,
-    Net = nil,
-
-    RF = {},
-    RE = {},
-
-    SkipState = {
-        Enabled = false,
-        Blacklist = { "Common" }
-    },
-
-    BAD_COLORS = {
-        Common    = {1, 0.980392, 0.964706},
-        Uncommon  = {0.764706, 1, 0.333333},
-        Rare      = {0.333333, 0.635294, 1},
-        Epic      = {0.678431, 0.309804, 1},
-    },
-
-    LastProcessed = {},
-    PROCESS_COOLDOWN = 1.0,
+    lastProcessed = {},
+    COOLDOWN = 1,
 
     -- ================== [Fishing Counter] ==================
 
@@ -1025,98 +1031,91 @@ sections.Fishing:Header({
 	Name = "Status Info Event"
 })
 
--- ============================================================
--- Update HRP ketika respawn
--- ============================================================
-local function UpdateHRP(char)
-    local newhrp = char:WaitForChild("HumanoidRootPart", 5)
-    if newhrp then
-        GameData.hrp = newhrp
-    end
-end
+GameData.CountdownLabel =
+    GameData.Workspace["!!! MENU RINGS"]["Event Tracker"]
+        .Main.Gui.Content.Items.Countdown.Label
 
-if player.Character then
-    UpdateHRP(player.Character)
-end
 
-player.CharacterAdded:Connect(function(char)
-    task.wait(1)
-    UpdateHRP(char)
-
-    if GameData.freeze then
-        GameData.freeze:Destroy()
-        GameData.freeze = nil
-    end
-end)
-
--- ============================================================
--- Label Countdown dari MenuRings
--- ============================================================
-GameData.label = MenuRings["Event Tracker"].Main.Gui.Content.Items.Countdown.Label
-
--- ============================================================
--- Paragraph WindUI (update setiap detik)
--- ============================================================
-GameData.paragraph = sections.Fishing:Paragraph({
+GameData.CountdownParagraph = sections.Fishing:Paragraph({
     Header = "Lochness Monster Countdown",
-    Body = GameData.label.Text
-}, nil)
+    Body = "Waiting..."
+}, "Lochness Monster Countdown")
+
 
 task.spawn(function()
     while true do
-        if GameData.paragraph and GameData.label then
-            GameData.paragraph:UpdateBody(GameData.label.Text)
+        if GameData.CountdownLabel and GameData.CountdownLabel:IsA("TextLabel") then
+            GameData.CountdownParagraph:UpdateBody(
+                GameData.CountdownLabel.Text
+            )
+        else
+            GameData.CountdownParagraph:UpdateBody("Countdown not found")
         end
-        task.wait(1)
+
+        task.wait(GameData.UpdateDelay)
     end
 end)
 
--- ============================================================
--- Toggle Auto Lochness
--- ============================================================
+
+
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+
+GameData.TimerLabel =
+    GameData.Workspace["!!! MENU RINGS"]["Event Tracker"]
+        .Main.Gui.Content.Items.Stats.Timer.Label
+
 sections.Fishing:Toggle({
     Name = "Auto Lochness Monster",
     Default = false,
     Callback = function(value)
-        GameData.enabled = value
+        GameData.AutoLochEnabled = value
+
         Window:Notify({
-            Title = "Auto Lochness Monster",
-            Description = (value and "Enabled " or "Disabled ") .. "Lochness Monster"
+            Title = "Lochness Monster",
+            Description = (value and "Enabled" or "Disabled")
         })
-    end,
-}, "AutoLochnessMonsterToggle")
 
--- ============================================================
--- Loop utama (teleport & freeze)
--- ============================================================
-task.spawn(function()
-    while true do
-        if GameData.enabled
-        and GameData.label
-        and GameData.label.Text == "0H 1M 10S"
-        and GameData.hrp
-        then
-            -- TELEPORT
-            GameData.hrp.CFrame = GameData.targetCFrame
+        if not value then
+            local char = GameData.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
-            -- FREEZE
-            GameData.freeze = Instance.new("BodyVelocity")
-            GameData.freeze.Velocity = Vector3.zero
-            GameData.freeze.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-            GameData.freeze.Parent = GameData.hrp
-
-            task.wait(2)
-
-            -- UNFREEZE
-            if GameData.freeze then
-                GameData.freeze:Destroy()
-                GameData.freeze = nil
+            if hrp and GameData.SavedCFrame then
+                hrp.CFrame = GameData.SavedCFrame
             end
 
-            task.wait(1)
+            GameData.SavedCFrame = nil
+            GameData.Teleporting = false
         end
+    end
+}, "LochnessMonsterToggle")
 
-        task.wait(0.1)
+task.spawn(function()
+    while true do
+        if GameData.AutoLochEnabled
+        and GameData.TimerLabel
+        and GameData.TimerLabel:IsA("TextLabel") then
+
+            local text = GameData.TimerLabel.Text
+            local char = GameData.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+            if hrp then
+                if text ~= "0M 0S LEFT" then
+                    if not GameData.Teleporting then
+                        GameData.SavedCFrame = hrp.CFrame
+                        GameData.Teleporting = true
+                    end
+                    hrp.CFrame = GameData.TargetCFrame
+                else
+                    if GameData.Teleporting and GameData.SavedCFrame then
+                        hrp.CFrame = GameData.SavedCFrame
+                    end
+                    GameData.Teleporting = false
+                    GameData.SavedCFrame = nil
+                end
+            end
+        end
+        task.wait(GameData.LoopDelay)
     end
 end)
 
@@ -1593,9 +1592,7 @@ local function setGameAnimationsEnabled(state)
     })
 end
 
--- =====================================================================
--- Toggle WindUI (Format Baru)
--- =====================================================================
+
 
 sections.Fishing1:Toggle({
     Name = "No Animation",
@@ -1611,134 +1608,102 @@ sections.Fishing1:Toggle({
     end,
 })
 
+-- ========= [Skip Rarity] =========
 
-GameData.Player = GameData.SVC.Players.LocalPlayer
-GameData.Net = GameData.SVC.RS.Packages._Index["sleitnick_net@0.2.0"]:WaitForChild("net")
+_G.RarityFilterEnabled = false
+_G.BlacklistedRarity = { "Common" }
 
-GameData.RF.CancelFishing = GameData.Net:WaitForChild("RF/CancelFishingInputs")
-GameData.RE.ReplicateTextEffect = GameData.Net:WaitForChild("RE/ReplicateTextEffect")
+GameData.player = GameData.Players.LocalPlayer
 
+GameData.net = GameData.RS.Packages._Index["sleitnick_net@0.2.0"].net
+GameData.RF_CancelFishing = GameData.net:WaitForChild("RF/CancelFishingInputs")
+GameData.RE_TextEffect = GameData.net:WaitForChild("RE/ReplicateTextEffect")
 
---========================================================--
--- UI HANDLERS
---========================================================--
-sections.Fishing1:Toggle({
-	Name = "Skip Rarity",
-	Default = false,
-	Callback = function(state)
-
-		-- Sistem status toggle
-		GameData.toggleStatus["Skip Rarity"] = state
-		GameData.UpdateStatusLabel()
-
-		-- Logic asli kamu
-		GameData.SkipState.Enabled = state
-
-		Window:Notify({
-			Title = "Skip Rarity",
-			Description = (state and "Enabled" or "Disabled")
-		})
-	end,
+sections.Home:Toggle({
+    Name = "Skip Rarity",
+    Default = false,
+    Callback = function(value)
+        _G.RarityFilterEnabled = value
+        Window:Notify({
+            Title = "Skip Rarity",
+            Description = (value and "Enabled" or "Disabled")
+        })
+    end,
 }, "SkipRarityToggle")
 
+sections.Home:Dropdown({
+    Name = "Skip Rarity List",
+    Search = true,
+    Multi = true,
+    Required = false,
+    Options = {
+        "Common",
+        "Uncommon",
+        "Rare",
+        "Epic"
+    },
+    Default = {
+        "Common"
+    },
+    Callback = function(Value)
+        local Selected = {}
+        for rarity, state in next, Value do
+            if state then
+                table.insert(Selected, rarity)
+            end
+        end
+        _G.BlacklistedRarity = Selected
+    end,
+}, "SkipRarityDropdown")
 
-sections.Fishing1:Dropdown({
-	Name = "Rarity Filters",
-	Search = true,
-	Multi = true,
-	Required = false,
-	Options = { "Common", "Uncommon", "Rare", "Epic" },
-	Default = { "Common" },
-
-	Callback = function(Value)
-		local selections = {}
-
-		for rarity, isEnabled in next, Value do
-			if isEnabled then
-				table.insert(selections, rarity)
-			end
-		end
-
-		GameData.SkipState.Blacklist = selections
-	end,
-}, "BlacklistRarity")
-
-
---========================================================--
--- UTILITIES (masuk GameData)
---========================================================--
-function GameData.approx(a, b, tolerance)
-	return math.abs(a - b) <= (tolerance or 0.02)
+function GameData.approx(a, b, tol)
+    return math.abs(a - b) <= (tol or 0.02)
 end
 
-function GameData.isColor(r, g, b, R, G, B)
-	return GameData.approx(r, R) and GameData.approx(g, G) and GameData.approx(b, B)
-end
-
-function GameData.extractColorFromTextData(colorValue)
-	if typeof(colorValue) == "Color3" then return colorValue end
-	if typeof(colorValue) == "ColorSequence" then
-		if #colorValue.Auto2points > 0 then
-			return colorValue.Auto2points[1].Value
-		end
-	end
-	return nil
+function GameData.isColor(r,g,b,R,G,B)
+    return GameData.approx(r,R) and GameData.approx(g,G) and GameData.approx(b,B)
 end
 
 function GameData.detectRarity(color3)
-	if not color3 then return "UNKNOWN" end
-
-	local r,g,b = color3.R, color3.G, color3.B
-
-	for rarity, col in pairs(GameData.BAD_COLORS) do
-		if GameData.isColor(r, g, b, col[1], col[2], col[3]) then
-			return rarity
-		end
-	end
-
-	return "UNKNOWN"
+    if not color3 then return "UNKNOWN" end
+    for rarity, c in pairs(GameData.RARITY_COLORS) do
+        if GameData.isColor(color3.R, color3.G, color3.B, c[1], c[2], c[3]) then
+            return rarity
+        end
+    end
+    return "UNKNOWN"
 end
 
+GameData.RE_TextEffect.OnClientEvent:Connect(function(data)
+    if not _G.RarityFilterEnabled then return end
+    if not data or not data.TextData then return end
+    if data.TextData.EffectType ~= "Exclaim" then return end
 
---========================================================--
--- MAIN FILTER LOGIC
---========================================================--
-pcall(function()
-	local event = GameData.RE.ReplicateTextEffect
-	if event and event.OnClientEvent then
+    local head = GameData.player.Character and GameData.player.Character:FindFirstChild("Head")
+    if data.Container ~= head then return end
 
-		event.OnClientEvent:Connect(function(data)
-			if not GameData.SkipState.Enabled then return end
-			if not (data and data.TextData and data.TextData.TextColor and data.TextData.EffectType == "Exclaim") then
-				return
-			end
+    local id = tostring(data)
+    if GameData.lastProcessed[id] and tick() - GameData.lastProcessed[id] < GameData.COOLDOWN then
+        return
+    end
+    GameData.lastProcessed[id] = tick()
 
-			local head = GameData.Player.Character and GameData.Player.Character:FindFirstChild("Head")
-			if not head then return end
-			if data.Container ~= head then return end
+    local color = data.TextData.TextColor
+    if typeof(color) == "ColorSequence" then
+        color = color.Keypoints[1].Value
+    end
+    if typeof(color) ~= "Color3" then return end
 
-			local id = tostring(data.InstanceId or data.Id or data)
-			local now = tick()
+    local rarity = GameData.detectRarity(color):upper()
 
-			if GameData.LastProcessed[id] and now - GameData.LastProcessed[id] < GameData.PROCESS_COOLDOWN then
-				return
-			end
-			GameData.LastProcessed[id] = now
-
-			local color3 = GameData.extractColorFromTextData(data.TextData.TextColor)
-			local rarity = GameData.detectRarity(color3)
-
-			for _, blk in ipairs(GameData.SkipState.Blacklist) do
-				if string.upper(blk) == string.upper(rarity) then
-					pcall(function()
-						GameData.RF.CancelFishing:InvokeServer()
-					end)
-					break
-				end
-			end
-		end)
-	end
+    for _, blocked in ipairs(_G.BlacklistedRarity) do
+        if blocked:upper() == rarity then
+            GameData.RF_CancelFishing:InvokeServer()
+            return
+        end
+    end
 end)
+
 
 -- ========= [Cancel Fishing] =========
 -- Ambil RemoteFunction CancelFishing
@@ -5636,7 +5601,7 @@ sections.Config:Input({
 })
 
 sections.Config1:Header({
-	Name = "UI Settings"
+	Name = "Server"
 })
 
 GameData.LocalPlayer = GameData.Players.LocalPlayer
