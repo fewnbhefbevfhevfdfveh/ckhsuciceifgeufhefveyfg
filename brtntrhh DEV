@@ -103,6 +103,28 @@ local GameData = {
 	notifGui = nil,
 	notifFrame = nil,
 
+    -- ==================[Check Enchant Stone]==================
+
+    RS = game:GetService("ReplicatedStorage"),
+    Client = nil,
+    Data = nil,
+    EnchantParagraph = nil,
+
+    -- ==================[Status Info Enchant]==================
+
+    PlayerGui = PlayerGui,
+
+    EnchantParagraph = nil,
+
+    RollEnchantGui = nil,
+    RollEnchantMain = nil,
+    InsideFrame = nil,
+    TopFrame = nil,
+    EnchantLabel = nil,
+
+    LastText = "None",
+    CurrentText = "",
+    
     -- ==================[Jenis Ikan v1]==================
 
         TierMap = {
@@ -447,6 +469,27 @@ local GameData = {
     SelectedTotemId = nil,
     SpawnToggle = false,
 
+    -- ================== [Range Totem] ==================
+
+    Players = game:GetService("Players"),
+    RunService = game:GetService("RunService"),
+
+    LocalPlayer = nil,
+    Totems = workspace:WaitForChild("Totems"),
+
+    ShowTotemRange = false,
+    ShowPlacementPreview = false,
+
+    RangeColor = Color3.fromRGB(255, 0, 0),
+    RangeAlpha = 0.5,
+
+    TotemRangeRadius = 50,
+
+    PreviewRange = nil,
+    PreviewConn = nil,
+    RangeScanConn = nil,
+
+    RangeParagraph = nil,
     -- ================== [Blatant ] ==================
 
     SVC = {
@@ -665,17 +708,17 @@ local GameData2 = {
 local Window = MacLib:Window({
     Title = "NexaHub",
     Subtitle = "Fish It - Premium | V0.0.3",
-    Size = UDim2.fromOffset(650, 400),
+    Size = UDim2.fromOffset(550, 380),
     DragStyle = 2,
     DisabledWindowControls = {},
-    ShowUserInfo = true,
+    ShowUserInfo = false,
     Keybind = Enum.KeyCode.G,
     AcrylicBlur = true,
 })
 
-Window:SetSize(UDim2.fromOffset(650, 400))
+Window:SetSize(UDim2.fromOffset(550, 380))
 
-Window:SetUserInfoState(true)
+Window:SetUserInfoState(false)
 GameData.userInfoState = Window:GetUserInfoState()
 
 GameData.GS_UserInfo = Window:GlobalSetting({
@@ -1974,8 +2017,206 @@ sections.Fishing3:Toggle({
     end,
 }, "AutoSpawnTotemToggle")
 
+sections.Fishing3:Divider()
+
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+
+function GameData:CreateRange(model)
+    local handle = model:FindFirstChild("Handle")
+    if not handle or not handle:IsA("BasePart") then return end
+    if handle:FindFirstChild("BottomPart") then return end
+
+    local range = Instance.new("Part")
+    range.Name = "BottomPart"
+    range.Size = Vector3.new(100, 1, 100)
+    range.Anchored = true
+    range.CanCollide = false
+    range.Material = Enum.Material.SmoothPlastic
+    range.Color = self.RangeColor
+    range.Transparency = self.ShowTotemRange and self.RangeAlpha or 1
+
+    range.CFrame = handle.CFrame * CFrame.new(
+        0,
+        -(handle.Size.Y / 2 + range.Size.Y / 2),
+        0
+    )
+
+    range.Parent = handle
+end
+
+function GameData:UpdateTotemRanges()
+    for _, model in ipairs(self.Totems:GetChildren()) do
+        if model:IsA("Model") and model.Name == "PlacedModel" then
+            local handle = model:FindFirstChild("Handle")
+            if handle then
+                local range = handle:FindFirstChild("BottomPart")
+                if range then
+                    range.Color = self.RangeColor
+                    range.Transparency = self.ShowTotemRange and self.RangeAlpha or 1
+                end
+            end
+        end
+    end
+end
+
+for _, model in ipairs(GameData.Totems:GetChildren()) do
+    if model:IsA("Model") and model.Name == "PlacedModel" then
+        GameData:CreateRange(model)
+    end
+end
+
+GameData.Totems.ChildAdded:Connect(function(model)
+    if model:IsA("Model") and model.Name == "PlacedModel" then
+        task.wait(0.1)
+        GameData:CreateRange(model)
+        GameData:UpdateTotemRanges()
+    end
+end)
+
+function GameData:StartPlacementPreview()
+    if self.PreviewRange then return end
+
+    self.PreviewRange = Instance.new("Part")
+    self.PreviewRange.Name = "PlayerTotemPreview"
+    self.PreviewRange.Size = Vector3.new(100, 1, 100)
+    self.PreviewRange.Anchored = true
+    self.PreviewRange.CanCollide = false
+    self.PreviewRange.Material = Enum.Material.SmoothPlastic
+    self.PreviewRange.Color = self.RangeColor
+    self.PreviewRange.Transparency = self.RangeAlpha
+    self.PreviewRange.Parent = workspace
+
+    self.PreviewConn = self.RunService.RenderStepped:Connect(function()
+        if not self.ShowPlacementPreview then return end
+        if not self.LocalPlayer.Character then return end
+
+        local hrp = self.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        self.PreviewRange.Color = self.RangeColor
+        self.PreviewRange.Transparency = self.RangeAlpha
+        self.PreviewRange.CFrame = hrp.CFrame * CFrame.new(0, -3, 0)
+    end)
+end
+
+function GameData:StopPlacementPreview()
+    if self.PreviewConn then
+        self.PreviewConn:Disconnect()
+        self.PreviewConn = nil
+    end
+    if self.PreviewRange then
+        self.PreviewRange:Destroy()
+        self.PreviewRange = nil
+    end
+end
+
+GameData.RangeParagraph = sections.Fishing3:Paragraph({
+    Header = "Placement Range",
+    Body = "No player in range",
+}, "PlacementRangeInfo")
+
+GameData.RangeParagraph:SetVisibility(false)
+
+function GameData:UpdatePlayersInRange()
+    if not self.ShowPlacementPreview then return end
+
+    local playersInRange = {}
+
+    if self.PreviewRange then
+        local center = Vector3.new(
+            self.PreviewRange.Position.X,
+            0,
+            self.PreviewRange.Position.Z
+        )
+
+        for _, plr in ipairs(self.Players:GetPlayers()) do
+            if plr ~= self.LocalPlayer and plr.Character then
+                local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local pos = Vector3.new(hrp.Position.X, 0, hrp.Position.Z)
+                    if (pos - center).Magnitude <= self.TotemRangeRadius then
+                        playersInRange[plr.Name] = true
+                    end
+                end
+            end
+        end
+    end
+
+    local list = {}
+    for name in pairs(playersInRange) do
+        table.insert(list, name)
+    end
+
+    if #list == 0 then
+        self.RangeParagraph:UpdateHeader("Placement Range")
+        self.RangeParagraph:UpdateBody("No player in range")
+    else
+        self.RangeParagraph:UpdateHeader("Players In Placement Range (" .. #list .. ")")
+        self.RangeParagraph:UpdateBody(table.concat(list, "\n"))
+    end
+end
+
+function GameData:StartRangeScanner()
+    if self.RangeScanConn then return end
+    self.RangeScanConn = self.RunService.Heartbeat:Connect(function()
+        GameData:UpdatePlayersInRange()
+    end)
+end
+
+function GameData:StopRangeScanner()
+    if self.RangeScanConn then
+        self.RangeScanConn:Disconnect()
+        self.RangeScanConn = nil
+    end
+end
+
+sections.Fishing3:Toggle({
+    Name = "Show Totem Range",
+    Default = false,
+    Callback = function(value)
+        GameData.ShowTotemRange = value
+        GameData:UpdateTotemRanges()
+    end,
+}, "ToggleTotemRange")
+
+sections.Fishing3:Toggle({
+    Name = "Show Placement Preview",
+    Default = false,
+    Callback = function(value)
+        GameData.ShowPlacementPreview = value
+        GameData.RangeParagraph:SetVisibility(value)
+
+        if value then
+            GameData:StartPlacementPreview()
+            GameData:StartRangeScanner()
+        else
+            GameData:StopPlacementPreview()
+            GameData:StopRangeScanner()
+            GameData.RangeParagraph:UpdateBody("No player in range")
+        end
+    end,
+}, "TogglePlacementPreview")
+
+sections.Fishing3:Colorpicker({
+    Name = "Range Color",
+    Default = GameData.RangeColor,
+    Alpha = GameData.RangeAlpha,
+    IgnoreConfig = false,
+    Callback = function(color, alpha)
+        GameData.RangeColor = color
+        GameData.RangeAlpha = alpha
+
+        GameData:UpdateTotemRanges()
+
+        if GameData.PreviewRange then
+            GameData.PreviewRange.Color = color
+            GameData.PreviewRange.Transparency = alpha
+        end
+    end,
+}, "RangeColorToggle")
+
 sections.Fishing5:Header({
-	Name = "Blatant V2"
+	Name = "Blatant"
 })
 
 -- SETUP NET
@@ -3304,44 +3545,72 @@ sections.Auto1:Header({
 	Name = "Auto Enchant"
 })
 
--- Anggap PlayerGui sudah ada dan AutoEnchant juga sudah terdefinisi
-local playerGui = PlayerGui
+GameData.Client = require(GameData.RS.Packages.Replion).Client
+GameData.Data = GameData.Client:WaitReplion("Data")
 
--- Buat Paragraph status ENCHANT hanya sekali
-local EnchantParagraph = sections.Auto1:Paragraph({
+GameData.GetEnchantStoneTotal = function()
+    local inventory = GameData.Data:GetExpect({"Inventory"})
+    if not inventory or not inventory.Items then
+        return 0
+    end
+
+    local total = 0
+
+    for _, item in ipairs(inventory.Items) do
+        if item.Id == 10 then
+            total = total + (item.Amount or item.Count or 1)
+        end
+    end
+
+    return total
+end
+
+GameData.EnchantParagraph = sections.Auto1:Paragraph({
+    Header = "Enchant Stone",
+    Body = "Total : 0"
+}, "EnchantStoneParagraph")
+
+sections.Auto1:Button({
+    Name = "Refresh Total Enchant Stone",
+    Callback = function()
+        local total = GameData.GetEnchantStoneTotal()
+        GameData.EnchantParagraph:UpdateBody(
+            "Total : " .. total
+        )
+    end,
+})
+
+sections.Auto1:Divider()
+
+GameData.EnchantParagraph = sections.Auto1:Paragraph({
     Header = "Enchant Status",
     Body = "Loading..."
 }, nil)
 
 task.spawn(function()
-    -- Tunggu GUI "Roll Enchant"
-    local rollEnchant = playerGui:WaitForChild("Roll Enchant")
-    local main = rollEnchant:WaitForChild("Main")
 
-    -- Tunggu folder "Inside" muncul
-    local inside
+    GameData.RollEnchantGui = GameData.PlayerGui:WaitForChild("Roll Enchant")
+    GameData.RollEnchantMain = GameData.RollEnchantGui:WaitForChild("Main")
+
     repeat
-        inside = main:FindFirstChild("Inside")
+        GameData.InsideFrame = GameData.RollEnchantMain:FindFirstChild("Inside")
         task.wait(1)
-    until inside
+    until GameData.InsideFrame
 
-    -- Update status awal
-    EnchantParagraph:UpdateBody("Inside Loaded...")
+    GameData.TopFrame = GameData.InsideFrame:WaitForChild("Top")
+    GameData.EnchantLabel = GameData.TopFrame:WaitForChild("EnchantLabel")
 
-    -- Akses label enchant
-    local top = inside:WaitForChild("Top")
-    local enchantLabel = top:WaitForChild("EnchantLabel")
-
-    -- GUI siap
-    EnchantParagraph:UpdateBody("Ready...")
-
-    -- Loop monitoring text enchant dan update body saja
-    local lastText = ""
     while task.wait(1) do
-        local currentText = enchantLabel.Text or "Unknown"
-        if currentText ~= lastText then
-            lastText = currentText
-            EnchantParagraph:UpdateBody(currentText)
+        local newText = GameData.EnchantLabel.Text or "Unknown"
+
+        if newText ~= GameData.CurrentText then
+            GameData.LastText = GameData.CurrentText ~= "" and GameData.CurrentText or "None"
+            GameData.CurrentText = newText
+
+            GameData.EnchantParagraph:UpdateBody(
+                "Current : " .. GameData.CurrentText .. "\n" ..
+                "Last    : " .. GameData.LastText
+            )
         end
     end
 end)
@@ -5525,7 +5794,7 @@ sections.Config:Input({
 -- WINDOW HEIGHT INPUT
 -----------------------------
 sections.Config:Input({
-    Name = "Window Height (Not Working)",
+    Name = "Window Height",
     Placeholder = "400",
     AcceptedCharacters = "Numbers",
     Callback = function(val)
@@ -5535,24 +5804,6 @@ sections.Config:Input({
         if GameData.windowHeight then
             GameData.currentSize = Window:GetSize()
             Window:SetSize(UDim2.fromOffset(GameData.currentSize.X.Offset, GameData.windowHeight))
-        end
-    end
-})
-
-
------------------------------
--- WINDOW SCALE INPUT
------------------------------
-sections.Config:Input({
-    Name = "Window Scale",
-    Placeholder = "0.70",
-    AcceptedCharacters = "Numbers",
-    Callback = function(val)
-        GameData.inputValue = val
-        GameData.windowScale = tonumber(GameData.inputValue)
-
-        if GameData.windowScale then
-            Window:SetScale(GameData.windowScale)
         end
     end
 })
