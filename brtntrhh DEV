@@ -274,18 +274,49 @@ local GameData = {
     MerchantParagraph = nil,
     MerchantDropdown = nil,
 
-    -- ================== [Quest Ghostfinn Rod] ==================
+    -- ================== [Quest Ghostfinn Rod & Element Rod] ==================
 
     Players = game:GetService("Players"),
 
     LocalPlayer = nil,
     QuestList = nil,
 
-    AutoDeepSeaQuest = false,
+    AutoQuest = false,
     AutoThread = nil,
 
-    CFrame_Objective_Done = CFrame.new(-3621.14893, -279.07373, -1591.07593, 0.938483, 5.50977823e-08, -0.345325381, -1.5321401e-08, 1, 1.1791461e-07, 0.345325381, -1.05369992e-07, 0.938483),
-    CFrame_Objective_NotDone = CFrame.new(-3699.24292, -135.073914, -1008.78424, -0.972918034, 4.06628686e-08, 0.231150433, 2.29877806e-08, 1, -7.91590224e-08, -0.231150433, -7.17015993e-08, -0.972918034),
+    SelectedQuest = nil,
+
+    QuestCFrame = {
+        ["Element Quest"] = {
+            Done = CFrame.new(
+                1465.59375, -21.8705444, -640.086975,
+                0.654575646, -1.02007647e-07, 0.755996525,
+                1.08732081e-07, 1, 4.07862615e-08,
+                -0.755996525, 5.55033779e-08, 0.654575646
+            ),
+            NotDone = CFrame.new(
+                1514.1947, 15.4692411, -325.169708,
+                -0.458554745, -6.99838267e-08, 0.888666153,
+                -2.75111027e-08, 1, 6.45557208e-08,
+                -0.888666153, 5.15414555e-09, -0.458554745
+            )
+        },
+
+        ["Deep Sea Quest"] = {
+            Done = CFrame.new(
+                -3699.24292, -135.073914, -1008.78424,
+                -0.972918034, 4.06628686e-08, 0.231150433,
+                2.29877806e-08, 1, -7.91590224e-08,
+                -0.231150433, -7.17015993e-08, -0.972918034
+            ),
+            NotDone = CFrame.new(
+                -3621.14893, -279.07373, -1591.07593,
+                0.938483, 5.50977823e-08, -0.345325381,
+                -1.5321401e-08, 1, 1.1791461e-07,
+                0.345325381, -1.05369992e-07, 0.938483
+            )
+        }
+    },
 
     -- ================== [Status Quest Ghostfinn Rod] ==================
 
@@ -295,30 +326,6 @@ local GameData = {
     QuestList = nil,
 
     DeepSeaParagraph = nil,
-
-    -- ================== [Quest Element Rod] ==================
-
-    Players = game:GetService("Players"),
-
-    LocalPlayer = nil,
-    QuestList = nil,
-
-    AutoElementRod = false,
-    AutoThread = nil,
-
-    CFrame_Objective_Done = CFrame.new(
-        1465.59375, -21.8705444, -640.086975,
-        0.654575646, -1.02007647e-07, 0.755996525,
-        1.08732081e-07, 1, 4.07862615e-08,
-        -0.755996525, 5.55033779e-08, 0.654575646
-    ),
-
-    CFrame_Objective_NotDone = CFrame.new(
-        1514.1947, 15.4692411, -325.169708,
-        -0.458554745, -6.99838267e-08, 0.888666153,
-        -2.75111027e-08, 1, 6.45557208e-08,
-        -0.888666153, 5.15414555e-09, -0.458554745
-    ),
 
     -- ================== [Status Quest Element Rod] ==================
 
@@ -2743,7 +2750,8 @@ function GameData:CheckDeepSeaQuest()
             and quest.Top:FindFirstChild("TopFrame")
             and quest.Top.TopFrame:FindFirstChild("Header")
 
-        if header and header:IsA("TextLabel")
+        if header
+        and header:IsA("TextLabel")
         and header.Text == "Deep Sea Quest" then
 
             local completed = 0
@@ -2752,7 +2760,7 @@ function GameData:CheckDeepSeaQuest()
             for i = 1, 4 do
                 local obj =
                     quest:FindFirstChild("Content")
-                    and quest.Content:FindFirstChild("Objective"..i)
+                    and quest.Content:FindFirstChild("Objective" .. i)
 
                 local vector =
                     obj
@@ -2761,7 +2769,7 @@ function GameData:CheckDeepSeaQuest()
                     and obj.Content.Check:FindFirstChild("Vector")
 
                 if vector and vector:IsA("ImageLabel") and vector.Visible then
-                    completed += 1
+                    completed = completed + 1
                     table.insert(lines, "(100/100): ✅")
                 else
                     table.insert(lines, "(0/100): ❌")
@@ -2775,8 +2783,9 @@ function GameData:CheckDeepSeaQuest()
             )
 
             self.DeepSeaParagraph:UpdateBody(
-                table.concat(lines, "\n") ..
-                "\n\nProgress: " .. completed .. "/4"
+                table.concat(lines, "\n")
+                .. "\n\nProgress: "
+                .. completed .. "/4"
             )
 
             self.DeepSeaParagraph:SetVisiblity(true)
@@ -2790,6 +2799,8 @@ task.spawn(function()
         GameData:CheckDeepSeaQuest()
     end
 end)
+
+
 
 GameData.LocalPlayer = GameData.Players.LocalPlayer
 GameData.QuestList = GameData.LocalPlayer.PlayerGui.Quest.List.Inside
@@ -2806,7 +2817,8 @@ function GameData:CheckElementQuest()
             and quest.Top:FindFirstChild("TopFrame")
             and quest.Top.TopFrame:FindFirstChild("Header")
 
-        if header and header:IsA("TextLabel")
+        if header
+        and header:IsA("TextLabel")
         and header.Text == "Element Quest" then
 
             local completed = 0
@@ -2815,7 +2827,7 @@ function GameData:CheckElementQuest()
             for i = 1, 4 do
                 local obj =
                     quest:FindFirstChild("Content")
-                    and quest.Content:FindFirstChild("Objective"..i)
+                    and quest.Content:FindFirstChild("Objective" .. i)
 
                 local vector =
                     obj
@@ -2824,7 +2836,7 @@ function GameData:CheckElementQuest()
                     and obj.Content.Check:FindFirstChild("Vector")
 
                 if vector and vector:IsA("ImageLabel") and vector.Visible then
-                    completed += 1
+                    completed = completed + 1
                     table.insert(lines, "(100/100): ✅")
                 else
                     table.insert(lines, "(0/100): ❌")
@@ -2838,8 +2850,9 @@ function GameData:CheckElementQuest()
             )
 
             self.QuestParagraph:UpdateBody(
-                table.concat(lines, "\n") ..
-                "\n\nProgress: " .. completed .. "/4"
+                table.concat(lines, "\n")
+                .. "\n\nProgress: "
+                .. completed .. "/4"
             )
 
             self.QuestParagraph:SetVisiblity(true)
@@ -2853,7 +2866,6 @@ task.spawn(function()
         GameData:CheckElementQuest()
     end
 end)
-
 
 GameData.ParagraphStatus = sections.Quest:Paragraph({
     Header = "TempleLever Status",
@@ -2905,12 +2917,17 @@ function GameData:GetHRP()
     return char:WaitForChild("HumanoidRootPart")
 end
 
+-- AUTO QUEST
 function GameData:StartAutoQuest()
     if self.AutoThread then return end
 
     self.AutoThread = task.spawn(function()
-        while GameData.AutoDeepSeaQuest do
+        while GameData.AutoQuest do
             task.wait(2)
+
+            if not GameData.SelectedQuest then
+                continue
+            end
 
             for _, quest in ipairs(GameData.QuestList:GetChildren()) do
                 local header =
@@ -2919,94 +2936,20 @@ function GameData:StartAutoQuest()
                     and quest.Top.TopFrame:FindFirstChild("Header")
 
                 if header and header:IsA("TextLabel")
-                and header.Text == "Deep Sea Quest" then
+                and header.Text == GameData.SelectedQuest then
 
                     local HRP = GameData:GetHRP()
+                    local cfData = GameData.QuestCFrame[GameData.SelectedQuest]
 
-                    local obj1 =
-                        quest.Content.Objective1.Content.Check.Vector
-
-                    if obj1.Visible then
-                        HRP.CFrame = GameData.CFrame_Objective_Done
-                    else
-                        HRP.CFrame = GameData.CFrame_Objective_NotDone
-                    end
-
-                    local questFinished = true
-                    for i = 2, 4 do
-                        local vector =
-                            quest.Content["Objective"..i]
-                            .Content.Check.Vector
-
-                        if not vector.Visible then
-                            questFinished = false
-                            break
-                        end
-                    end
-
-                    if questFinished then
-                        GameData.AutoDeepSeaQuest = false
-                        print("DEEP SEA QUEST SELESAI - AUTO STOP")
-                    end
-
-                    break
-                end
-            end
-        end
-
-        GameData.AutoThread = nil
-    end)
-end
-
-sections.Quest1:Toggle({
-    Name = "Auto Quest Deep Sea",
-    Default = false,
-    Callback = function(value)
-        GameData.AutoDeepSeaQuest = value
-
-        Window:Notify({
-            Title = "Deep Sea Quest",
-            Description = (value and "Enabled " or "Disabled ") .. "Auto Deep Sea Quest"
-        })
-
-        if value then
-            GameData:StartAutoQuest()
-        end
-    end,
-}, "DeepSeaQuestToggle")
-
-
-GameData.LocalPlayer = GameData.Players.LocalPlayer
-GameData.QuestList = GameData.LocalPlayer.PlayerGui.Quest.List.Inside
-
-function GameData:GetHRP()
-    local char = self.LocalPlayer.Character or self.LocalPlayer.CharacterAdded:Wait()
-    return char:WaitForChild("HumanoidRootPart")
-end
-
-function GameData:StartAutoQuest()
-    if self.AutoThread then return end
-
-    self.AutoThread = task.spawn(function()
-        while GameData.AutoElementRod do
-            task.wait(2)
-
-            for _, quest in ipairs(GameData.QuestList:GetChildren()) do
-                local header =
-                    quest:FindFirstChild("Top")
-                    and quest.Top:FindFirstChild("TopFrame")
-                    and quest.Top.TopFrame:FindFirstChild("Header")
-
-                if header and header:IsA("TextLabel") and header.Text == "Element Quest" then
-                    local HRP = GameData:GetHRP()
-
+                    -- OBJECTIVE 1
                     local obj1 = quest.Content.Objective1.Content.Check.Vector
                     if obj1.Visible then
-                        HRP.CFrame = GameData.CFrame_Objective_Done
+                        HRP.CFrame = cfData.Done
                     else
-                        HRP.CFrame = GameData.CFrame_Objective_NotDone
+                        HRP.CFrame = cfData.NotDone
                     end
 
+                    -- OBJECTIVE 2 - 4 (FINISH CHECK)
                     local questFinished = true
                     for i = 2, 4 do
                         local vector =
@@ -3020,8 +2963,8 @@ function GameData:StartAutoQuest()
                     end
 
                     if questFinished then
-                        GameData.AutoElementRod = false
-                        print("QUEST SELESAI - AUTO QUEST STOP")
+                        GameData.AutoQuest = false
+                        print(GameData.SelectedQuest .. " SELESAI - AUTO STOP")
                     end
 
                     break
@@ -3033,23 +2976,40 @@ function GameData:StartAutoQuest()
     end)
 end
 
+-- DROPDOWN QUEST (FIX)
+sections.Quest1:Dropdown({
+    Name = "Select Quest",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = {
+        "Element Quest",
+        "Deep Sea Quest"
+    },
+    Default = "Element Quest",
+    Callback = function(Value)
+        GameData.SelectedQuest = Value
+        print("Selected Quest:", Value)
+    end,
+}, "SelectQuestDropdown")
+
+-- TOGGLE AUTO QUEST
 sections.Quest1:Toggle({
-    Name = "Auto Quest Element Rod",
+    Name = "Auto Quest",
     Default = false,
     Callback = function(value)
-        GameData.AutoElementRod = value
+        GameData.AutoQuest = value
 
         Window:Notify({
-            Title = "Element Rod",
-            Description = (value and "Enabled " or "Disabled ") .. "Auto Element Rod"
+            Title = "Auto Quest",
+            Description = (value and "Enabled " or "Disabled ") .. "Auto Quest"
         })
 
         if value then
             GameData:StartAutoQuest()
         end
     end,
-}, "ElementRodToggle")
-
+}, "AutoQuestToggle")
 
 
 _G.Jungle = workspace:FindFirstChild("JUNGLE INTERACTIONS")
