@@ -1,4 +1,4 @@
-local MacLib = loadstring(game:HttpGet("https://github.com/biggaboy212/Maclib/releases/latest/download/maclib.txt"))()
+local MacLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Enow-Development/maclib-extended/refs/heads/main/maclib.lua"))()
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
 local workspace = workspace
@@ -108,7 +108,7 @@ local GameData = {
     RS = game:GetService("ReplicatedStorage"),
     Client = nil,
     Data = nil,
-    EnchantParagraph = nil,
+    Enchant0001Paragraph = nil,
 
     -- ==================[Status Info Enchant]==================
 
@@ -124,7 +124,7 @@ local GameData = {
 
     LastText = "None",
     CurrentText = "",
-
+    
     -- ==================[Jenis Ikan v1]==================
 
         TierMap = {
@@ -274,23 +274,67 @@ local GameData = {
     MerchantParagraph = nil,
     MerchantDropdown = nil,
 
-    -- ================== [Quest] ==================
-    Quests = {
-        ["Deep Sea"] = {
-            Label = MenuRings["Deep Sea Tracker"].Board.Gui.Content:WaitForChild("Label1"),
-            PosBelum100 = CFrame.new(-3598.26392, -275.770294, -1641.81677, 0.980732918, 0, -0.195353389, 0, 1, 0, 0.195353389, 0, 0.980732918),
-            PosSudah100 = CFrame.new(-3711.07275, -133.551468, -946.792786, 0.496201038, 0, 0.868207633, 0, 1, 0, -0.868207633, 0, 0.496201038)
+    -- ================== [Quest Ghostfinn Rod & Element Rod] ==================
+
+    Players = game:GetService("Players"),
+
+    LocalPlayer = nil,
+    QuestList = nil,
+
+    AutoQuest = false,
+    AutoThread = nil,
+
+    SelectedQuest = nil,
+
+    QuestCFrame = {
+        ["Element Quest"] = {
+            Done = CFrame.new(
+                1465.59375, -21.8705444, -640.086975,
+                0.654575646, -1.02007647e-07, 0.755996525,
+                1.08732081e-07, 1, 4.07862615e-08,
+                -0.755996525, 5.55033779e-08, 0.654575646
+            ),
+            NotDone = CFrame.new(
+                1514.1947, 15.4692411, -325.169708,
+                -0.458554745, -6.99838267e-08, 0.888666153,
+                -2.75111027e-08, 1, 6.45557208e-08,
+                -0.888666153, 5.15414555e-09, -0.458554745
+            )
         },
-        ["Element"] = {
-            Label = MenuRings["Element Tracker"].Board.Gui.Content:WaitForChild("Label2"),
-            PosBelum100 = CFrame.new(2117.75146, -91.1985855, -700.854065, 0.931628525, 0, -0.363411963, 0, 1, 0, 0.363411963, 0, 0.931628525),
-            PosSudah100 = CFrame.new(1556.35583, 4.37400525, -605.774841, -0.154411227, 0, 0.988006651, 0, 1, 0, -0.988006651, 0, -0.154411227)
-        },
-        ["Aura Boat"] = {
-            PosTarget = CFrame.new(88.2434769, 9.53157043, 2685.2605),
-            MinLevel = 200
+
+        ["Deep Sea Quest"] = {
+            Done = CFrame.new(
+                -3699.24292, -135.073914, -1008.78424,
+                -0.972918034, 4.06628686e-08, 0.231150433,
+                2.29877806e-08, 1, -7.91590224e-08,
+                -0.231150433, -7.17015993e-08, -0.972918034
+            ),
+            NotDone = CFrame.new(
+                -3621.14893, -279.07373, -1591.07593,
+                0.938483, 5.50977823e-08, -0.345325381,
+                -1.5321401e-08, 1, 1.1791461e-07,
+                0.345325381, -1.05369992e-07, 0.938483
+            )
         }
     },
+
+    -- ================== [Status Quest Ghostfinn Rod] ==================
+
+    Players = game:GetService("Players"),
+
+    LocalPlayer = nil,
+    QuestList = nil,
+
+    DeepSeaParagraph = nil,
+
+    -- ================== [Status Quest Element Rod] ==================
+
+    Players = game:GetService("Players"),
+
+    LocalPlayer = nil,
+    QuestList = nil,
+
+    QuestParagraph = nil,
 
     -- ================== [Island] ==================
     Islands = {
@@ -322,6 +366,7 @@ local GameData = {
     ["Classic Island"] = CFrame.new(1258.37341, 9.999999905, 2811.14819, -0.996284008, -1.96166035e-08, 0.086129114, -2.56321329e-08, 1, -6.87372363e-08, -0.086129114, -7.068394809e-08, -0.996284008),
     ["Iron Cavern"] = CFrame.new(-8802.55762, -583.800049, 94.9271545, 0.539917707, 4.95349006e-08, -0.84171778, 2.88506321e-08, 1, 7.7355935e-08, 0.84171778, -6.60499282e-08, 0.539917707),
     ["Iron Cafe"] = CFrame.new(-8641.91016, -547.400183, 161.963455, -0.0101819877, -4.55452422e-08, -0.999948144, 1.64972356e-08, 1, -4.57155878e-08, 0.999948144, -1.69618559e-08, -0.0101819877),
+    ["Christmas Island"] = CFrame.new(843.041687, 26.0803814, 1566.52734, 0.00453743944, -9.89134179e-08, -0.999989688, -5.82183262e-08, 1, -9.91785996e-08, 0.999989688, 5.86677444e-08, 0.00453743944),
     },
 
     -- ==================[Save Posisi] ==================
@@ -468,6 +513,18 @@ local GameData = {
 
     SelectedTotemId = nil,
     SpawnToggle = false,
+
+    -- ================== [Range Totem] ==================
+
+    Players = game:GetService("Players"),
+
+    LocalPlayer = nil,
+    Totems = workspace:WaitForChild("Totems"),
+
+    ShowTotemRange = false,
+
+    RangeColor = Color3.fromRGB(255, 0, 0),
+    RangeAlpha = 0.5,
 
     -- ================== [Blatant ] ==================
 
@@ -667,38 +724,23 @@ local GameData = {
 --====================================================--
 
 local GameData2 = {
-    -- Deep Sea Tracker
-    board = MenuRings["Deep Sea Tracker"].Board,
-    surfaceGui = nil,
-    content = nil,
-    labelNames = {"Label1", "Label2", "Label3", "Label4"},
-    deepSeaParagraph = nil,
 
-    -- Aura Boat Tracker
-    auraParagraph = nil,
-
-    -- Element Tracker
-    boardElement = MenuRings["Element Tracker"].Board,
-    contentElement = nil,
-    elementLabelNames = {"Label1", "Label2", "Label3", "Label4"},
-    elementParagraph = nil
 }
 
 local Window = MacLib:Window({
     Title = "NexaHub",
     Subtitle = "Fish It - Premium | V0.0.3",
-    Size = UDim2.fromOffset(650, 400),
+    Size = UDim2.fromOffset(550, 380),
     DragStyle = 2,
     DisabledWindowControls = {},
-    ShowUserInfo = true,
+    ShowUserInfo = false,
     Keybind = Enum.KeyCode.G,
     AcrylicBlur = true,
 })
 
-Window:SetSize(UDim2.fromOffset(650, 400))
-Window:SetScale(0.70)
+Window:SetSize(UDim2.fromOffset(550, 380))
 
-Window:SetUserInfoState(true)
+Window:SetUserInfoState(false)
 GameData.userInfoState = Window:GetUserInfoState()
 
 GameData.GS_UserInfo = Window:GlobalSetting({
@@ -773,51 +815,51 @@ local tabs = {
 	Config = tabGroups.TabGroup1:Tab({ Name = "Config", Image = "rbxassetid://111411260968321" }),
 }
 local sections = {
-    Home = tabs.Home:Section({ Side = "Right" }),
-    Home1 = tabs.Home:Section({ Side = "Right" }),
-    Home2 = tabs.Home:Section({ Side = "Left" }),
-    Home3 = tabs.Home:Section({ Side = "Left" }),
+    Home = tabs.Home:Section({ Side = "Full" }),
+    Home1 = tabs.Home:Section({ Side = "Full" }),
+    Home2 = tabs.Home:Section({ Side = "Full" }),
+    Home3 = tabs.Home:Section({ Side = "Full" }),
 
-	Fishing = tabs.Fishing:Section({ Side = "Right" }),
-    Fishing1 = tabs.Fishing:Section({ Side = "Right" }),
-	Fishing2 = tabs.Fishing:Section({ Side = "Right" }),
-    Fishing3 = tabs.Fishing:Section({ Side = "Right" }),
-    Fishing5 = tabs.Fishing:Section({ Side = "Left" }),
-    Fishing6 = tabs.Fishing:Section({ Side = "Left" }),
-    Fishing7 = tabs.Fishing:Section({ Side = "Left" }),
-    Fishing8 = tabs.Fishing:Section({ Side = "Left" }),
+	Fishing = tabs.Fishing:Section({ Side = "Full" }),
+    Fishing1 = tabs.Fishing:Section({ Side = "Full" }),
+	Fishing2 = tabs.Fishing:Section({ Side = "Full" }),
+    Fishing3 = tabs.Fishing:Section({ Side = "Full" }),
+    Fishing5 = tabs.Fishing:Section({ Side = "Full" }),
+    Fishing6 = tabs.Fishing:Section({ Side = "Full" }),
+    Fishing7 = tabs.Fishing:Section({ Side = "Full" }),
+    Fishing8 = tabs.Fishing:Section({ Side = "Full" }),
 
-    Event = tabs.Event:Section({ Side = "Right" }),
-    Event1 = tabs.Event:Section({ Side = "Left" }),
+    Event = tabs.Event:Section({ Side = "Full" }),
+    Event1 = tabs.Event:Section({ Side = "Full" }),
 
-    Quest = tabs.Quest:Section({ Side = "Right" }),
-    Quest1 = tabs.Quest:Section({ Side = "Right" }),
-    Quest2 = tabs.Quest:Section({ Side = "Left" }),
+    Quest = tabs.Quest:Section({ Side = "Full" }),
+    Quest1 = tabs.Quest:Section({ Side = "Full" }),
+    Quest2 = tabs.Quest:Section({ Side = "Full" }),
 
-    Auto = tabs.Auto:Section({ Side = "Right" }),
-    Auto1 = tabs.Auto:Section({ Side = "Right" }),
-    Auto2 = tabs.Auto:Section({ Side = "Left" }),
+    Auto = tabs.Auto:Section({ Side = "Full" }),
+    Auto1 = tabs.Auto:Section({ Side = "Full" }),
+    Auto2 = tabs.Auto:Section({ Side = "Full" }),
 
-    Shop = tabs.Shop:Section({ Side = "Right" }),
-    Shop1 = tabs.Shop:Section({ Side = "Right" }),
-    Shop2 = tabs.Shop:Section({ Side = "Right" }),
-    Shop3 = tabs.Shop:Section({ Side = "Left" }),
-    Shop4 = tabs.Shop:Section({ Side = "Left" }),
-    Shop5 = tabs.Shop:Section({ Side = "Left" }),
+    Shop = tabs.Shop:Section({ Side = "Full" }),
+    Shop1 = tabs.Shop:Section({ Side = "Full" }),
+    Shop2 = tabs.Shop:Section({ Side = "Full" }),
+    Shop3 = tabs.Shop:Section({ Side = "Full" }),
+    Shop4 = tabs.Shop:Section({ Side = "Full" }),
+    Shop5 = tabs.Shop:Section({ Side = "Full" }),
 
-    Boat = tabs.Boat:Section({ Side = "Right" }),
-    Boat1 = tabs.Boat:Section({ Side = "Left" }),
+    Boat = tabs.Boat:Section({ Side = "Full" }),
+    Boat1 = tabs.Boat:Section({ Side = "Full" }),
 
-    Tp = tabs.Tp:Section({ Side = "Right" }),
-    Tp1 = tabs.Tp:Section({ Side = "Right" }),
-    Tp2 = tabs.Tp:Section({ Side = "Left" }),
+    Tp = tabs.Tp:Section({ Side = "Full" }),
+    Tp1 = tabs.Tp:Section({ Side = "Full" }),
+    Tp2 = tabs.Tp:Section({ Side = "Full" }),
 
-    Player = tabs.Player:Section({ Side = "Right" }),
-    Player1 = tabs.Player:Section({ Side = "Right" }),
-    Player2 = tabs.Player:Section({ Side = "Left" }),
+    Player = tabs.Player:Section({ Side = "Full" }),
+    Player1 = tabs.Player:Section({ Side = "Full" }),
+    Player2 = tabs.Player:Section({ Side = "Full" }),
 
-    Config = tabs.Config:Section({ Side = "Right" }),
-    Config1 = tabs.Config:Section({ Side = "Left" }),
+    Config = tabs.Config:Section({ Side = "Full" }),
+    Config1 = tabs.Config:Section({ Side = "Full" }),
 }
 
 
@@ -1997,6 +2039,83 @@ sections.Fishing3:Toggle({
     end,
 }, "AutoSpawnTotemToggle")
 
+sections.Fishing3:Divider()
+
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+
+function GameData:CreateRange(model)
+    local handle = model:FindFirstChild("Handle")
+    if not handle or not handle:IsA("BasePart") then return end
+    if handle:FindFirstChild("BottomPart") then return end
+
+    local range = Instance.new("Part")
+    range.Name = "BottomPart"
+    range.Size = Vector3.new(100, 1, 100)
+    range.Anchored = true
+    range.CanCollide = false
+    range.Material = Enum.Material.SmoothPlastic
+    range.Color = self.RangeColor
+    range.Transparency = self.ShowTotemRange and self.RangeAlpha or 1
+
+    range.CFrame = handle.CFrame * CFrame.new(
+        0,
+        -(handle.Size.Y / 2 + range.Size.Y / 2),
+        0
+    )
+
+    range.Parent = handle
+end
+
+function GameData:UpdateTotemRanges()
+    for _, model in ipairs(self.Totems:GetChildren()) do
+        if model:IsA("Model") and model.Name == "PlacedModel" then
+            local handle = model:FindFirstChild("Handle")
+            if handle then
+                local range = handle:FindFirstChild("BottomPart")
+                if range then
+                    range.Color = self.RangeColor
+                    range.Transparency = self.ShowTotemRange and self.RangeAlpha or 1
+                end
+            end
+        end
+    end
+end
+
+for _, model in ipairs(GameData.Totems:GetChildren()) do
+    if model:IsA("Model") and model.Name == "PlacedModel" then
+        GameData:CreateRange(model)
+    end
+end
+
+GameData.Totems.ChildAdded:Connect(function(model)
+    if model:IsA("Model") and model.Name == "PlacedModel" then
+        task.wait(0.1)
+        GameData:CreateRange(model)
+        GameData:UpdateTotemRanges()
+    end
+end)
+
+sections.Fishing3:Toggle({
+    Name = "Show Totem Range",
+    Default = false,
+    Callback = function(value)
+        GameData.ShowTotemRange = value
+        GameData:UpdateTotemRanges()
+    end,
+}, "ToggleTotemRange")
+
+sections.Fishing3:Colorpicker({
+    Name = "Range Color",
+    Default = GameData.RangeColor,
+    Alpha = GameData.RangeAlpha,
+    IgnoreConfig = false,
+    Callback = function(color, alpha)
+        GameData.RangeColor = color
+        GameData.RangeAlpha = alpha
+        GameData:UpdateTotemRanges()
+    end,
+}, "RangeColorToggle")
+
 sections.Fishing5:Header({
 	Name = "Blatant"
 })
@@ -2616,120 +2735,144 @@ sections.Quest:Header({
 	Name = "View Quest Status"
 })
 
--- Init Deep Sea UI components
-GameData2.surfaceGui = GameData2.board:WaitForChild("Gui")
-GameData2.content = GameData2.surfaceGui:WaitForChild("Content")
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+GameData.QuestList = GameData.LocalPlayer.PlayerGui.Quest.List.Inside
 
-GameData2.deepSeaParagraph = sections.Quest:Paragraph({
-    Header = "Deep Sea Status",
-    Body = "Loading..."
+GameData.DeepSeaParagraph = Section:Paragraph({
+    Header = "Deep Sea Quest",
+    Body = "Checking..."
 })
 
--- Init Aura UI
-GameData2.auraParagraph = sections.Quest:Paragraph({
-    Header = "Aura Boat Status",
-    Body = "Loading..."
-})
+function GameData:CheckDeepSeaQuest()
+    for _, quest in ipairs(self.QuestList:GetChildren()) do
+        local header =
+            quest:FindFirstChild("Top")
+            and quest.Top:FindFirstChild("TopFrame")
+            and quest.Top.TopFrame:FindFirstChild("Header")
 
--- Init Element Tracker UI
-GameData2.contentElement = GameData2.boardElement:WaitForChild("Gui"):WaitForChild("Content")
+        if header
+        and header:IsA("TextLabel")
+        and header.Text == "Deep Sea Quest" then
 
-GameData2.elementParagraph = sections.Quest:Paragraph({
-    Header = "Element Status",
-    Body = "Loading..."
-})
+            local completed = 0
+            local lines = {}
 
-local function updateDeepSea()
-    local lines = {}
-    for _, name in ipairs(GameData2.labelNames) do
-        local label = GameData2.content:FindFirstChild(name)
-        if label then
-            table.insert(lines, label.Text)
+            for i = 1, 4 do
+                local obj =
+                    quest:FindFirstChild("Content")
+                    and quest.Content:FindFirstChild("Objective" .. i)
+
+                local vector =
+                    obj
+                    and obj:FindFirstChild("Content")
+                    and obj.Content:FindFirstChild("Check")
+                    and obj.Content.Check:FindFirstChild("Vector")
+
+                if vector and vector:IsA("ImageLabel") and vector.Visible then
+                    completed = completed + 1
+                    table.insert(lines, "(100/100): ✅")
+                else
+                    table.insert(lines, "(0/100): ❌")
+                end
+            end
+
+            self.DeepSeaParagraph:UpdateHeader(
+                completed == 4
+                and "Deep Sea Quest (Completed)"
+                or "Deep Sea Quest (In Progress)"
+            )
+
+            self.DeepSeaParagraph:UpdateBody(
+                table.concat(lines, "\n")
+                .. "\n\nProgress: "
+                .. completed .. "/4"
+            )
+
+            self.DeepSeaParagraph:SetVisiblity(true)
+            return
         end
     end
-
-    if GameData2.deepSeaParagraph and GameData2.deepSeaParagraph.UpdateBody then
-        GameData2.deepSeaParagraph:UpdateBody(table.concat(lines, "\n"))
-    end
 end
 
--- Update pertama
-updateDeepSea()
-
--- Listener untuk perubahan
-for _, name in ipairs(GameData2.labelNames) do
-    local label = GameData2.content:FindFirstChild(name)
-    if label then
-        label:GetPropertyChangedSignal("Text"):Connect(updateDeepSea)
-    end
-end
-
-
---====================================================--
--- AURA BOAT TRACKER
---====================================================--
-
-local function updateAura()
-    local contentAura = MenuRings["Aura Tracker"].Board.Gui.Content
-
-    local combinedText = table.concat({
-        contentAura.Label1.Text,
-        contentAura.Label2.Text,
-        contentAura.Label3.Text
-    }, "\n")
-
-    if GameData2.auraParagraph and GameData2.auraParagraph.UpdateBody then
-        GameData2.auraParagraph:UpdateBody(combinedText)
-    end
-end
-
--- Update berkala tiap 1 detik
 task.spawn(function()
     while task.wait(1) do
-        pcall(updateAura)
+        GameData:CheckDeepSeaQuest()
     end
 end)
 
 
---====================================================--
--- ELEMENT TRACKER
---====================================================--
 
-local function updateElement()
-    local lines = {}
-    for _, name in ipairs(GameData2.elementLabelNames) do
-        local label = GameData2.contentElement:FindFirstChild(name)
-        if label then
-            table.insert(lines, label.Text)
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+GameData.QuestList = GameData.LocalPlayer.PlayerGui.Quest.List.Inside
+
+GameData.QuestParagraph = Section:Paragraph({
+    Header = "Element Quest",
+    Body = "Checking..."
+})
+
+function GameData:CheckElementQuest()
+    for _, quest in ipairs(self.QuestList:GetChildren()) do
+        local header =
+            quest:FindFirstChild("Top")
+            and quest.Top:FindFirstChild("TopFrame")
+            and quest.Top.TopFrame:FindFirstChild("Header")
+
+        if header
+        and header:IsA("TextLabel")
+        and header.Text == "Element Quest" then
+
+            local completed = 0
+            local lines = {}
+
+            for i = 1, 4 do
+                local obj =
+                    quest:FindFirstChild("Content")
+                    and quest.Content:FindFirstChild("Objective" .. i)
+
+                local vector =
+                    obj
+                    and obj:FindFirstChild("Content")
+                    and obj.Content:FindFirstChild("Check")
+                    and obj.Content.Check:FindFirstChild("Vector")
+
+                if vector and vector:IsA("ImageLabel") and vector.Visible then
+                    completed = completed + 1
+                    table.insert(lines, "(100/100): ✅")
+                else
+                    table.insert(lines, "(0/100): ❌")
+                end
+            end
+
+            self.QuestParagraph:UpdateHeader(
+                completed == 4
+                and "Element Quest (Completed)"
+                or "Element Quest (In Progress)"
+            )
+
+            self.QuestParagraph:UpdateBody(
+                table.concat(lines, "\n")
+                .. "\n\nProgress: "
+                .. completed .. "/4"
+            )
+
+            self.QuestParagraph:SetVisiblity(true)
+            return
         end
     end
-
-    if GameData2.elementParagraph and GameData2.elementParagraph.UpdateBody then
-        GameData2.elementParagraph:UpdateBody(table.concat(lines, "\n"))
-    end
 end
 
--- Update pertama
-updateElement()
-
--- Listener perubahan text
-for _, name in ipairs(GameData2.elementLabelNames) do
-    local label = GameData2.contentElement:FindFirstChild(name)
-    if label then
-        label:GetPropertyChangedSignal("Text"):Connect(updateElement)
+task.spawn(function()
+    while task.wait(1) do
+        GameData:CheckElementQuest()
     end
-end
--- ============================================
--- BUAT PARAGRAPH UI
--- ============================================
+end)
+
 GameData.ParagraphStatus = sections.Quest:Paragraph({
     Header = "TempleLever Status",
     Body = "Checking...",
 })
 
--- ============================================
--- FUNGSI CEK STATUS QUEST
--- ============================================
+
 local function CheckQuest()
     local resultText = ""
 
@@ -2744,7 +2887,6 @@ local function CheckQuest()
             local root = lever:FindFirstChild("RootPart")
             local prompt = root and root:FindFirstChildOfClass("ProximityPrompt")
 
-            -- cek selesai / belum
             if not root or (root and not prompt) then
                 resultText = resultText .. artifactName .. " → 100%\n"
             else
@@ -2756,9 +2898,6 @@ local function CheckQuest()
     GameData.ParagraphStatus:UpdateBody(resultText)
 end
 
--- ============================================
--- UPDATE STATUS TIAP 2 DETIK
--- ============================================
 task.spawn(function()
     while true do
         CheckQuest()
@@ -2770,153 +2909,104 @@ sections.Quest1:Header({
 	Name = "Auto Quest"
 })
 
----------------------------------------------------------------------
--- REQUIRED VARIABLES
----------------------------------------------------------------------
-local LocalPlayer = game.Players.LocalPlayer
-local RunService = game:GetService("RunService")
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+GameData.QuestList = GameData.LocalPlayer.PlayerGui.Quest.List.Inside
 
-local selectedQuest = "Deep Sea"
-local autoQuestEnabled = false
-local freezeBV, freezeBG
-local savedCFrame = nil
-
----------------------------------------------------------------------
--- FREEZE FUNCTIONS
----------------------------------------------------------------------
-local function Freeze(char, cf)
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    if freezeBV then freezeBV:Destroy() freezeBV = nil end
-    if freezeBG then freezeBG:Destroy() freezeBG = nil end
-
-    freezeBV = Instance.new("BodyVelocity")
-    freezeBV.Velocity = Vector3.zero
-    freezeBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-    freezeBV.Parent = hrp
-
-    freezeBG = Instance.new("BodyGyro")
-    freezeBG.CFrame = cf or hrp.CFrame
-    freezeBG.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-    freezeBG.Parent = hrp
+function GameData:GetHRP()
+    local char = self.LocalPlayer.Character or self.LocalPlayer.CharacterAdded:Wait()
+    return char:WaitForChild("HumanoidRootPart")
 end
 
-local function Unfreeze()
-    if freezeBV then freezeBV:Destroy() freezeBV = nil end
-    if freezeBG then freezeBG:Destroy() freezeBG = nil end
-end
+-- AUTO QUEST
+function GameData:StartAutoQuest()
+    if self.AutoThread then return end
 
-local function TeleportOnce(cf)
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        char:SetPrimaryPartCFrame(cf)
-        savedCFrame = cf
-        Freeze(char, cf)
-    end
-end
+    self.AutoThread = task.spawn(function()
+        while GameData.AutoQuest do
+            task.wait(2)
 
----------------------------------------------------------------------
--- CHECK QUEST
----------------------------------------------------------------------
-local function CheckQuest()
-    if not autoQuestEnabled or not selectedQuest then return end
-    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-
-    local quest = GameData.Quests[selectedQuest]
-    if not quest then return end
-
-    -------------------------------------------------------------
-    -- SPECIAL QUEST: Aura Boat
-    -------------------------------------------------------------
-    if selectedQuest == "Aura Boat" then
-        local overhead = hrp:WaitForChild("Overhead")
-        local lvl = overhead
-            :WaitForChild("LevelContainer")
-            :WaitForChild("Label")
-            .Text
-
-        local level = tonumber(lvl:match("%d+")) or 0
-        if level >= quest.MinLevel then
-            TeleportOnce(quest.PosTarget)
-        end
-        return
-    end
-
-    -------------------------------------------------------------
-    -- NORMAL QUEST (Deep Sea / Element)
-    -------------------------------------------------------------
-    if quest.Label then
-        local text = quest.Label.Text
-        local persen = tonumber(text:match("(%d+)%%")) or 0
-
-        if persen < 100 then
-            TeleportOnce(quest.PosBelum100)
-        else
-            TeleportOnce(quest.PosSudah100)
-        end
-    end
-end
-
----------------------------------------------------------------------
--- AUTO UPDATE WHEN LABEL CHANGES
----------------------------------------------------------------------
-for name, quest in pairs(GameData.Quests) do
-    if quest.Label then
-        quest.Label:GetPropertyChangedSignal("Text"):Connect(function()
-            if autoQuestEnabled and selectedQuest == name then
-                CheckQuest()
+            if not GameData.SelectedQuest then
+                continue
             end
-        end)
-    end
-end
 
----------------------------------------------------------------------
--- HEARTBEAT LOCK TO POSITION
----------------------------------------------------------------------
-RunService.Heartbeat:Connect(function()
-    if autoQuestEnabled and savedCFrame then
-        local char = LocalPlayer.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            local hrp = char.HumanoidRootPart
-            if (hrp.Position - savedCFrame.Position).Magnitude > 2 then
-                hrp.CFrame = savedCFrame
+            for _, quest in ipairs(GameData.QuestList:GetChildren()) do
+                local header =
+                    quest:FindFirstChild("Top")
+                    and quest.Top:FindFirstChild("TopFrame")
+                    and quest.Top.TopFrame:FindFirstChild("Header")
+
+                if header and header:IsA("TextLabel")
+                and header.Text == GameData.SelectedQuest then
+
+                    local HRP = GameData:GetHRP()
+                    local cfData = GameData.QuestCFrame[GameData.SelectedQuest]
+
+                    -- OBJECTIVE 1
+                    local obj1 = quest.Content.Objective1.Content.Check.Vector
+                    if obj1.Visible then
+                        HRP.CFrame = cfData.Done
+                    else
+                        HRP.CFrame = cfData.NotDone
+                    end
+
+                    -- OBJECTIVE 2 - 4 (FINISH CHECK)
+                    local questFinished = true
+                    for i = 2, 4 do
+                        local vector =
+                            quest.Content["Objective"..i]
+                            .Content.Check.Vector
+
+                        if not vector.Visible then
+                            questFinished = false
+                            break
+                        end
+                    end
+
+                    if questFinished then
+                        GameData.AutoQuest = false
+                        print(GameData.SelectedQuest .. " SELESAI - AUTO STOP")
+                    end
+
+                    break
+                end
             end
         end
-    end
-end)
 
----------------------------------------------------------------------
--- WINDUI: QUEST DROPDOWN
----------------------------------------------------------------------
+        GameData.AutoThread = nil
+    end)
+end
+
+-- DROPDOWN QUEST (FIX)
 sections.Quest1:Dropdown({
     Name = "Select Quest",
-    Options = { "Deep Sea", "Element", "Aura Boat" },
-    Default = "Deep Sea",
+    Search = true,
     Multi = false,
-    Search = false,
-    Callback = function(option)
-        selectedQuest = option
-        if autoQuestEnabled then
-            CheckQuest()
-        end
+    Required = false,
+    Options = {
+        "Element Quest",
+        "Deep Sea Quest"
+    },
+    Default = "Element Quest",
+    Callback = function(Value)
+        GameData.SelectedQuest = Value
+        print("Selected Quest:", Value)
     end,
-}, "QuestDropdown")
+}, "SelectQuestDropdown")
 
----------------------------------------------------------------------
--- WINDUI: AUTO QUEST TOGGLE
----------------------------------------------------------------------
+-- TOGGLE AUTO QUEST
 sections.Quest1:Toggle({
     Name = "Auto Quest",
     Default = false,
-    Callback = function(state)
-        autoQuestEnabled = state
-        if state then
-            CheckQuest()
-        else
-            Unfreeze()
-            savedCFrame = nil
+    Callback = function(value)
+        GameData.AutoQuest = value
+
+        Window:Notify({
+            Title = "Auto Quest",
+            Description = (value and "Enabled " or "Disabled ") .. "Auto Quest"
+        })
+
+        if value then
+            GameData:StartAutoQuest()
         end
     end,
 }, "AutoQuestToggle")
@@ -3340,24 +3430,26 @@ GameData.GetEnchantStoneTotal = function()
 
     for _, item in ipairs(inventory.Items) do
         if item.Id == 10 then
-            total = total + (item.Amount or item.Count or 1)
+            total += (item.Amount or item.Count or 1)
         end
     end
 
     return total
 end
 
-GameData.EnchantParagraph = sections.Auto1:Paragraph({
+-- paragraph
+GameData.Enchant0001Paragraph = sections.Auto1:Paragraph({
     Header = "Enchant Stone",
-    Body = "Total : 0"
-}, "EnchantStoneParagraph")
+    Body = "total : 0"
+}, "Enchant0001Paragraph")
 
+-- button
 sections.Auto1:Button({
-    Name = "Refresh Total Enchant Stone",
+    Name = "Refresh total enchant stone",
     Callback = function()
         local total = GameData.GetEnchantStoneTotal()
-        GameData.EnchantParagraph:UpdateBody(
-            "Total : " .. total
+        GameData.Enchant0001Paragraph:UpdateBody(
+            "total : " .. total
         )
     end,
 })
@@ -5586,24 +5678,6 @@ sections.Config:Input({
         if GameData.windowHeight then
             GameData.currentSize = Window:GetSize()
             Window:SetSize(UDim2.fromOffset(GameData.currentSize.X.Offset, GameData.windowHeight))
-        end
-    end
-})
-
-
------------------------------
--- WINDOW SCALE INPUT
------------------------------
-sections.Config:Input({
-    Name = "Window Scale (Not Working)",
-    Placeholder = "0.70",
-    AcceptedCharacters = "Numbers",
-    Callback = function(val)
-        GameData.inputValue = val
-        GameData.windowScale = tonumber(GameData.inputValue)
-
-        if GameData.windowScale then
-            Window:SetScale(GameData.windowScale)
         end
     end
 })
