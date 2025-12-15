@@ -871,6 +871,8 @@ sections.Home:Paragraph({
  - Status Info Stock Merchant
  - Dropdwon Select MarketId
 [-] Delete Reduce Lag
+[/] Fixed Status Info Quest
+[/] Fixed Auto Quest
 ]]
 }, "Info")
 
