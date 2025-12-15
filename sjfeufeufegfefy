@@ -108,7 +108,7 @@ local GameData = {
     RS = game:GetService("ReplicatedStorage"),
     Client = nil,
     Data = nil,
-    EnchantParagraph = nil,
+    Enchant0001Paragraph = nil,
 
     -- ==================[Status Info Enchant]==================
 
@@ -274,8 +274,59 @@ local GameData = {
     MerchantParagraph = nil,
     MerchantDropdown = nil,
 
-    -- ================== [Quest] ==================
-    
+    -- ================== [Quest Ghostfinn Rod & Element Rod] ==================
+
+    Players = game:GetService("Players"),
+
+    LocalPlayer = nil,
+    QuestList = nil,
+
+    AutoQuest = false,
+    AutoThread = nil,
+
+    SelectedQuest = nil,
+
+    QuestCFrame = {
+        ["Element Quest"] = {
+            Done = CFrame.new(
+                1465.59375, -21.8705444, -640.086975,
+                0.654575646, -1.02007647e-07, 0.755996525,
+                1.08732081e-07, 1, 4.07862615e-08,
+                -0.755996525, 5.55033779e-08, 0.654575646
+            ),
+            NotDone = CFrame.new(
+                1514.1947, 15.4692411, -325.169708,
+                -0.458554745, -6.99838267e-08, 0.888666153,
+                -2.75111027e-08, 1, 6.45557208e-08,
+                -0.888666153, 5.15414555e-09, -0.458554745
+            )
+        },
+
+        ["Deep Sea Quest"] = {
+            Done = CFrame.new(
+                -3699.24292, -135.073914, -1008.78424,
+                -0.972918034, 4.06628686e-08, 0.231150433,
+                2.29877806e-08, 1, -7.91590224e-08,
+                -0.231150433, -7.17015993e-08, -0.972918034
+            ),
+            NotDone = CFrame.new(
+                -3621.14893, -279.07373, -1591.07593,
+                0.938483, 5.50977823e-08, -0.345325381,
+                -1.5321401e-08, 1, 1.1791461e-07,
+                0.345325381, -1.05369992e-07, 0.938483
+            )
+        }
+    },
+
+    -- ================== [Status Quest Ghostfinn Rod & Element Rod] ==================
+
+    Players = game:GetService("Players"),
+
+    LocalPlayer = nil,
+    QuestList = nil,
+
+    ElementParagraph = nil,
+    DeepSeaParagraph = nil,
 
     -- ================== [Island] ==================
     Islands = {
@@ -307,6 +358,7 @@ local GameData = {
     ["Classic Island"] = CFrame.new(1258.37341, 9.999999905, 2811.14819, -0.996284008, -1.96166035e-08, 0.086129114, -2.56321329e-08, 1, -6.87372363e-08, -0.086129114, -7.068394809e-08, -0.996284008),
     ["Iron Cavern"] = CFrame.new(-8802.55762, -583.800049, 94.9271545, 0.539917707, 4.95349006e-08, -0.84171778, 2.88506321e-08, 1, 7.7355935e-08, 0.84171778, -6.60499282e-08, 0.539917707),
     ["Iron Cafe"] = CFrame.new(-8641.91016, -547.400183, 161.963455, -0.0101819877, -4.55452422e-08, -0.999948144, 1.64972356e-08, 1, -4.57155878e-08, 0.999948144, -1.69618559e-08, -0.0101819877),
+    ["Christmas Island"] = CFrame.new(843.041687, 26.0803814, 1566.52734, 0.00453743944, -9.89134179e-08, -0.999989688, -5.82183262e-08, 1, -9.91785996e-08, 0.999989688, 5.86677444e-08, 0.00453743944),
     },
 
     -- ==================[Save Posisi] ==================
@@ -453,6 +505,18 @@ local GameData = {
 
     SelectedTotemId = nil,
     SpawnToggle = false,
+
+    -- ================== [Range Totem] ==================
+
+    Players = game:GetService("Players"),
+
+    LocalPlayer = nil,
+    Totems = workspace:WaitForChild("Totems"),
+
+    ShowTotemRange = false,
+
+    RangeColor = Color3.fromRGB(255, 0, 0),
+    RangeAlpha = 0.5,
 
     -- ================== [Blatant ] ==================
 
@@ -1967,6 +2031,83 @@ sections.Fishing3:Toggle({
     end,
 }, "AutoSpawnTotemToggle")
 
+sections.Fishing3:Divider()
+
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+
+function GameData:CreateRange(model)
+    local handle = model:FindFirstChild("Handle")
+    if not handle or not handle:IsA("BasePart") then return end
+    if handle:FindFirstChild("BottomPart") then return end
+
+    local range = Instance.new("Part")
+    range.Name = "BottomPart"
+    range.Size = Vector3.new(100, 1, 100)
+    range.Anchored = true
+    range.CanCollide = false
+    range.Material = Enum.Material.SmoothPlastic
+    range.Color = self.RangeColor
+    range.Transparency = self.ShowTotemRange and self.RangeAlpha or 1
+
+    range.CFrame = handle.CFrame * CFrame.new(
+        0,
+        -(handle.Size.Y / 2 + range.Size.Y / 2),
+        0
+    )
+
+    range.Parent = handle
+end
+
+function GameData:UpdateTotemRanges()
+    for _, model in ipairs(self.Totems:GetChildren()) do
+        if model:IsA("Model") and model.Name == "PlacedModel" then
+            local handle = model:FindFirstChild("Handle")
+            if handle then
+                local range = handle:FindFirstChild("BottomPart")
+                if range then
+                    range.Color = self.RangeColor
+                    range.Transparency = self.ShowTotemRange and self.RangeAlpha or 1
+                end
+            end
+        end
+    end
+end
+
+for _, model in ipairs(GameData.Totems:GetChildren()) do
+    if model:IsA("Model") and model.Name == "PlacedModel" then
+        GameData:CreateRange(model)
+    end
+end
+
+GameData.Totems.ChildAdded:Connect(function(model)
+    if model:IsA("Model") and model.Name == "PlacedModel" then
+        task.wait(0.1)
+        GameData:CreateRange(model)
+        GameData:UpdateTotemRanges()
+    end
+end)
+
+sections.Fishing3:Toggle({
+    Name = "Show Totem Range",
+    Default = false,
+    Callback = function(value)
+        GameData.ShowTotemRange = value
+        GameData:UpdateTotemRanges()
+    end,
+}, "ToggleTotemRange")
+
+sections.Fishing3:Colorpicker({
+    Name = "Range Color",
+    Default = GameData.RangeColor,
+    Alpha = GameData.RangeAlpha,
+    IgnoreConfig = false,
+    Callback = function(color, alpha)
+        GameData.RangeColor = color
+        GameData.RangeAlpha = alpha
+        GameData:UpdateTotemRanges()
+    end,
+}, "RangeColorToggle")
+
 sections.Fishing5:Header({
 	Name = "Blatant"
 })
@@ -2586,9 +2727,276 @@ sections.Quest:Header({
 	Name = "View Quest Status"
 })
 
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+GameData.QuestList = GameData.LocalPlayer.PlayerGui.Quest.List.Inside
+
+-- UI Paragraphs
+GameData.ElementParagraph = sections.Quest:Paragraph({
+    Header = "Element Quest",
+    Body = "Checking..."
+})
+
+GameData.DeepSeaParagraph = sections.Quest:Paragraph({
+    Header = "Deep Sea Quest",
+    Body = "Checking..."
+})
+
+-- ===== ELEMENT QUEST =====
+function GameData:CheckElementQuest()
+    for _, quest in ipairs(self.QuestList:GetChildren()) do
+        local header =
+            quest:FindFirstChild("Top")
+            and quest.Top:FindFirstChild("TopFrame")
+            and quest.Top.TopFrame:FindFirstChild("Header")
+
+        if header
+        and header:IsA("TextLabel")
+        and header.Text == "Element Quest" then
+
+            local completed = 0
+            local lines = {}
+
+            for i = 1, 4 do
+                local obj =
+                    quest:FindFirstChild("Content")
+                    and quest.Content:FindFirstChild("Objective" .. i)
+
+                local vector =
+                    obj
+                    and obj:FindFirstChild("Content")
+                    and obj.Content:FindFirstChild("Check")
+                    and obj.Content.Check:FindFirstChild("Vector")
+
+                if vector and vector:IsA("ImageLabel") and vector.Visible then
+                    completed = completed + 1
+                    table.insert(lines, "(100/100): ✅")
+                else
+                    table.insert(lines, "(0/100): ❌")
+                end
+            end
+
+            self.ElementParagraph:UpdateHeader(
+                completed == 4
+                and "Element Quest (Completed)"
+                or "Element Quest (In Progress)"
+            )
+
+            self.ElementParagraph:UpdateBody(
+                table.concat(lines, "\n")
+                .. "\n\nProgress: "
+                .. completed .. "/4"
+            )
+
+            self.ElementParagraph:SetVisibility(true)
+            return
+        end
+    end
+end
+
+-- ===== DEEP SEA QUEST =====
+function GameData:CheckDeepSeaQuest()
+    for _, quest in ipairs(self.QuestList:GetChildren()) do
+        local header =
+            quest:FindFirstChild("Top")
+            and quest.Top:FindFirstChild("TopFrame")
+            and quest.Top.TopFrame:FindFirstChild("Header")
+
+        if header
+        and header:IsA("TextLabel")
+        and header.Text == "Deep Sea Quest" then
+
+            local completed = 0
+            local lines = {}
+
+            for i = 1, 4 do
+                local obj =
+                    quest:FindFirstChild("Content")
+                    and quest.Content:FindFirstChild("Objective" .. i)
+
+                local vector =
+                    obj
+                    and obj:FindFirstChild("Content")
+                    and obj.Content:FindFirstChild("Check")
+                    and obj.Content.Check:FindFirstChild("Vector")
+
+                if vector and vector:IsA("ImageLabel") and vector.Visible then
+                    completed = completed + 1
+                    table.insert(lines, "(100/100): ✅")
+                else
+                    table.insert(lines, "(0/100): ❌")
+                end
+            end
+
+            self.DeepSeaParagraph:UpdateHeader(
+                completed == 4
+                and "Deep Sea Quest (Completed)"
+                or "Deep Sea Quest (In Progress)"
+            )
+
+            self.DeepSeaParagraph:UpdateBody(
+                table.concat(lines, "\n")
+                .. "\n\nProgress: "
+                .. completed .. "/4"
+            )
+
+            self.DeepSeaParagraph:SetVisibility(true)
+            return
+        end
+    end
+end
+
+-- ===== LOOP UPDATE =====
+task.spawn(function()
+    while task.wait(1) do
+        GameData:CheckElementQuest()
+        GameData:CheckDeepSeaQuest()
+    end
+end)
+
+GameData.ParagraphStatus = sections.Quest:Paragraph({
+    Header = "TempleLever Status",
+    Body = "Checking...",
+})
+
+
+local function CheckQuest()
+    local resultText = ""
+
+    for _, lever in ipairs(GameData.Jungle:GetChildren()) do
+        if lever:IsA("Model") and lever:FindFirstChild("Crystal") then
+
+            local crystal = lever.Crystal
+            local meshId = tostring(crystal.MeshId)
+
+            local artifactName = GameData.StageList[meshId] or "Unknown Artifact"
+
+            local root = lever:FindFirstChild("RootPart")
+            local prompt = root and root:FindFirstChildOfClass("ProximityPrompt")
+
+            if not root or (root and not prompt) then
+                resultText = resultText .. artifactName .. " → 100%\n"
+            else
+                resultText = resultText .. artifactName .. " → 0%\n"
+            end
+        end
+    end
+
+    GameData.ParagraphStatus:UpdateBody(resultText)
+end
+
+task.spawn(function()
+    while true do
+        CheckQuest()
+        task.wait(2)
+    end
+end)
+
 sections.Quest1:Header({
 	Name = "Auto Quest"
 })
+
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+GameData.QuestList = GameData.LocalPlayer.PlayerGui.Quest.List.Inside
+
+function GameData:GetHRP()
+    local char = self.LocalPlayer.Character or self.LocalPlayer.CharacterAdded:Wait()
+    return char:WaitForChild("HumanoidRootPart")
+end
+
+-- AUTO QUEST
+function GameData:StartAutoQuest()
+    if self.AutoThread then return end
+
+    self.AutoThread = task.spawn(function()
+        while GameData.AutoQuest do
+            task.wait(2)
+
+            if not GameData.SelectedQuest then
+                continue
+            end
+
+            for _, quest in ipairs(GameData.QuestList:GetChildren()) do
+                local header =
+                    quest:FindFirstChild("Top")
+                    and quest.Top:FindFirstChild("TopFrame")
+                    and quest.Top.TopFrame:FindFirstChild("Header")
+
+                if header and header:IsA("TextLabel")
+                and header.Text == GameData.SelectedQuest then
+
+                    local HRP = GameData:GetHRP()
+                    local cfData = GameData.QuestCFrame[GameData.SelectedQuest]
+
+                    -- OBJECTIVE 1
+                    local obj1 = quest.Content.Objective1.Content.Check.Vector
+                    if obj1.Visible then
+                        HRP.CFrame = cfData.Done
+                    else
+                        HRP.CFrame = cfData.NotDone
+                    end
+
+                    -- OBJECTIVE 2 - 4 (FINISH CHECK)
+                    local questFinished = true
+                    for i = 2, 4 do
+                        local vector =
+                            quest.Content["Objective"..i]
+                            .Content.Check.Vector
+
+                        if not vector.Visible then
+                            questFinished = false
+                            break
+                        end
+                    end
+
+                    if questFinished then
+                        GameData.AutoQuest = false
+                        print(GameData.SelectedQuest .. " SELESAI - AUTO STOP")
+                    end
+
+                    break
+                end
+            end
+        end
+
+        GameData.AutoThread = nil
+    end)
+end
+
+-- DROPDOWN QUEST (FIX)
+sections.Quest1:Dropdown({
+    Name = "Select Quest",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = {
+        "Element Quest",
+        "Deep Sea Quest"
+    },
+    Default = "Element Quest",
+    Callback = function(Value)
+        GameData.SelectedQuest = Value
+        print("Selected Quest:", Value)
+    end,
+}, "SelectQuestDropdown")
+
+-- TOGGLE AUTO QUEST
+sections.Quest1:Toggle({
+    Name = "Auto Quest",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoQuest = value
+
+        Window:Notify({
+            Title = "Auto Quest",
+            Description = (value and "Enabled " or "Disabled ") .. "Auto Quest"
+        })
+
+        if value then
+            GameData:StartAutoQuest()
+        end
+    end,
+}, "AutoQuestToggle")
+
 
 _G.Jungle = workspace:FindFirstChild("JUNGLE INTERACTIONS")
 
@@ -3008,24 +3416,26 @@ GameData.GetEnchantStoneTotal = function()
 
     for _, item in ipairs(inventory.Items) do
         if item.Id == 10 then
-            total = total + (item.Amount or item.Count or 1)
+            total += (item.Amount or item.Count or 1)
         end
     end
 
     return total
 end
 
-GameData.EnchantParagraph = sections.Auto1:Paragraph({
+-- paragraph
+GameData.Enchant0001Paragraph = sections.Auto1:Paragraph({
     Header = "Enchant Stone",
-    Body = "Total : 0"
-}, "EnchantStoneParagraph")
+    Body = "total : 0"
+}, "Enchant0001Paragraph")
 
+-- button
 sections.Auto1:Button({
-    Name = "Refresh Total Enchant Stone",
+    Name = "Refresh total enchant stone",
     Callback = function()
         local total = GameData.GetEnchantStoneTotal()
-        GameData.EnchantParagraph:UpdateBody(
-            "Total : " .. total
+        GameData.Enchant0001Paragraph:UpdateBody(
+            "total : " .. total
         )
     end,
 })
