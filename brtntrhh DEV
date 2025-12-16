@@ -1,3 +1,24 @@
+-- ANTI ERROR GLOBAL (NO FOLDER = NO CRASH)
+
+local mt = getrawmetatable(game)
+local oldIndex = mt.__index
+setreadonly(mt, false)
+
+mt.__index = function(self, key)
+    local success, result = pcall(function()
+        return oldIndex(self, key)
+    end)
+
+    if success then
+        return result
+    end
+
+    return nil
+end
+
+setreadonly(mt, true)
+
+
 local MacLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Enow-Development/maclib-extended/refs/heads/main/maclib.lua"))()
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
@@ -318,23 +339,15 @@ local GameData = {
         }
     },
 
-    -- ================== [Status Quest Ghostfinn Rod] ==================
+    -- ================== [Status Quest Ghostfinn Rod & Element Rod] ==================
 
     Players = game:GetService("Players"),
 
     LocalPlayer = nil,
     QuestList = nil,
 
+    ElementParagraph = nil,
     DeepSeaParagraph = nil,
-
-    -- ================== [Status Quest Element Rod] ==================
-
-    Players = game:GetService("Players"),
-
-    LocalPlayer = nil,
-    QuestList = nil,
-
-    QuestParagraph = nil,
 
     -- ================== [Island] ==================
     Islands = {
@@ -709,6 +722,15 @@ local GameData = {
     targetJobId = "",
     JobIdLabel = nil,
 
+    -- ================== [Hide Quest] ==================
+    
+    Players = game:GetService("Players"),
+    Player = nil,
+
+    PlayerGui = nil,
+    QuestGui = nil,
+    QuestList = nil,
+
     -- ================== [Boost FPS] ==================
 
     Lighting = game:GetService("Lighting"),
@@ -719,13 +741,6 @@ local GameData = {
     FPSLoop = nil,
 }
 
---====================================================--
--- GAMEDATA 2 (SEMUA LOCAL DIPINDAHKAN KE SINI)
---====================================================--
-
-local GameData2 = {
-
-}
 
 local Window = MacLib:Window({
     Title = "NexaHub",
@@ -879,6 +894,8 @@ sections.Home:Paragraph({
  - Status Info Stock Merchant
  - Dropdwon Select MarketId
 [-] Delete Reduce Lag
+[/] Fixed Status Info Quest
+[/] Fixed Auto Quest
 ]]
 }, "Info")
 
@@ -919,7 +936,7 @@ end)
 
 
 sections.Home2:Header({
-	Name = "Redem Code & Reward"
+	Name = "Reward"
 })
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -2735,15 +2752,39 @@ sections.Quest:Header({
 	Name = "View Quest Status"
 })
 
+-- Init Player
 GameData.LocalPlayer = GameData.Players.LocalPlayer
-GameData.QuestList = GameData.LocalPlayer.PlayerGui.Quest.List.Inside
+
+-- Safe get QuestList
+local function GetQuestList()
+    local gui = GameData.LocalPlayer:FindFirstChild("PlayerGui")
+    local quest = gui and gui:FindFirstChild("Quest")
+    local list = quest and quest:FindFirstChild("List")
+    return list and list:FindFirstChild("Inside")
+end
+
+GameData.QuestList = GetQuestList()
+
+-- UI
+GameData.ElementParagraph = sections.Quest:Paragraph({
+    Header = "Element Quest",
+    Body = "Waiting quest..."
+})
 
 GameData.DeepSeaParagraph = sections.Quest:Paragraph({
     Header = "Deep Sea Quest",
-    Body = "Checking..."
+    Body = "Waiting quest..."
 })
 
-function GameData:CheckDeepSeaQuest()
+-- ===== GENERIC CHECK FUNCTION =====
+function GameData:CheckQuest(questName, paragraph)
+    -- update QuestList kalau belum ada
+    self.QuestList = self.QuestList or GetQuestList()
+    if not self.QuestList then
+        paragraph:SetVisibility(false)
+        return
+    end
+
     for _, quest in ipairs(self.QuestList:GetChildren()) do
         local header =
             quest:FindFirstChild("Top")
@@ -2752,7 +2793,7 @@ function GameData:CheckDeepSeaQuest()
 
         if header
         and header:IsA("TextLabel")
-        and header.Text == "Deep Sea Quest" then
+        and header.Text == questName then
 
             local completed = 0
             local lines = {}
@@ -2776,94 +2817,32 @@ function GameData:CheckDeepSeaQuest()
                 end
             end
 
-            self.DeepSeaParagraph:UpdateHeader(
+            paragraph:UpdateHeader(
                 completed == 4
-                and "Deep Sea Quest (Completed)"
-                or "Deep Sea Quest (In Progress)"
+                and questName .. " (Completed)"
+                or questName .. " (In Progress)"
             )
 
-            self.DeepSeaParagraph:UpdateBody(
+            paragraph:UpdateBody(
                 table.concat(lines, "\n")
                 .. "\n\nProgress: "
                 .. completed .. "/4"
             )
 
-            self.DeepSeaParagraph:SetVisiblity(true)
+            paragraph:SetVisibility(true)
             return
         end
     end
+
+    -- QUEST TIDAK ADA → HIDE (NO ERROR)
+    paragraph:SetVisibility(false)
 end
 
+-- ===== LOOP =====
 task.spawn(function()
     while task.wait(1) do
-        GameData:CheckDeepSeaQuest()
-    end
-end)
-
-
-
-GameData.LocalPlayer = GameData.Players.LocalPlayer
-GameData.QuestList = GameData.LocalPlayer.PlayerGui.Quest.List.Inside
-
-GameData.QuestParagraph = sections.Quest:Paragraph({
-    Header = "Element Quest",
-    Body = "Checking..."
-})
-
-function GameData:CheckElementQuest()
-    for _, quest in ipairs(self.QuestList:GetChildren()) do
-        local header =
-            quest:FindFirstChild("Top")
-            and quest.Top:FindFirstChild("TopFrame")
-            and quest.Top.TopFrame:FindFirstChild("Header")
-
-        if header
-        and header:IsA("TextLabel")
-        and header.Text == "Element Quest" then
-
-            local completed = 0
-            local lines = {}
-
-            for i = 1, 4 do
-                local obj =
-                    quest:FindFirstChild("Content")
-                    and quest.Content:FindFirstChild("Objective" .. i)
-
-                local vector =
-                    obj
-                    and obj:FindFirstChild("Content")
-                    and obj.Content:FindFirstChild("Check")
-                    and obj.Content.Check:FindFirstChild("Vector")
-
-                if vector and vector:IsA("ImageLabel") and vector.Visible then
-                    completed = completed + 1
-                    table.insert(lines, "(100/100): ✅")
-                else
-                    table.insert(lines, "(0/100): ❌")
-                end
-            end
-
-            self.QuestParagraph:UpdateHeader(
-                completed == 4
-                and "Element Quest (Completed)"
-                or "Element Quest (In Progress)"
-            )
-
-            self.QuestParagraph:UpdateBody(
-                table.concat(lines, "\n")
-                .. "\n\nProgress: "
-                .. completed .. "/4"
-            )
-
-            self.QuestParagraph:SetVisiblity(true)
-            return
-        end
-    end
-end
-
-task.spawn(function()
-    while task.wait(1) do
-        GameData:CheckElementQuest()
+        GameData:CheckQuest("Element Quest", GameData.ElementParagraph)
+        GameData:CheckQuest("Deep Sea Quest", GameData.DeepSeaParagraph)
     end
 end)
 
@@ -5378,6 +5357,44 @@ function GameData.ApplyMinecraftFPS()
         collectgarbage("collect")
     end)
 end
+
+GameData.Player = GameData.Players.LocalPlayer
+
+function GameData:CacheQuestGui()
+    self.PlayerGui = self.Player:FindFirstChild("PlayerGui")
+    if not self.PlayerGui then return false end
+
+    self.QuestGui = self.PlayerGui:FindFirstChild("Quest")
+    if not self.QuestGui then return false end
+
+    self.QuestList = self.QuestGui:FindFirstChild("List")
+    if not self.QuestList then return false end
+
+    return true
+end
+
+function GameData:SetQuestVisible(state)
+    if not self.QuestList then
+        if not self:CacheQuestGui() then
+            return
+        end
+    end
+
+    self.QuestList.Visible = state
+end
+
+sections.Player:Toggle({
+    Name = "Hide Quest",
+    Default = false,
+    Callback = function(value)
+        GameData:SetQuestVisible(not value)
+
+        Window:Notify({
+            Title = "Hide Quest",
+            Description = value and "Enabled" or "Disabled"
+        })
+    end,
+}, "HideQuestToggle")
 
 sections.Player:Toggle({
     Name = "Boost FPS",
