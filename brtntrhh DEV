@@ -1,25 +1,6 @@
--- ANTI ERROR GLOBAL (NO FOLDER = NO CRASH)
-
-local mt = getrawmetatable(game)
-local oldIndex = mt.__index
-setreadonly(mt, false)
-
-mt.__index = function(self, key)
-    local success, result = pcall(function()
-        return oldIndex(self, key)
-    end)
-
-    if success then
-        return result
-    end
-
-    return nil
-end
-
-setreadonly(mt, true)
-
-
 local MacLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Enow-Development/maclib-extended/refs/heads/main/maclib.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/ggegrhrhhr%20Info%20Fish%20Mythic"))()
+
 
 -- Deklarasi service dan variabel utama (tidak diubah) jangan di ubah ubah sama sekali
 local workspace = workspace
@@ -434,13 +415,15 @@ local GameData = {
         CoreGui = game:GetService("CoreGui")
     },
 
-        Services = {
-        Players = game:GetService("Players")
-    },
+    -- ================== [Accses All Boat] ==================
 
     WorkspaceData = {
         Vehicles = workspace:WaitForChild("Vehicles")
     },
+    Services = {
+        Players = game:GetService("Players")
+    },
+
 
     StageList = {
         ["rbxassetid://112089909495700"] = "Hourglass Diamond Artifact", -- Stage 1
@@ -739,12 +722,25 @@ local GameData = {
 
     MinecraftFPS = false,
     FPSLoop = nil,
+
+    -- ================== [Center Header] ==================
+
+    -- STATE
+    CenterHeaderEnabled = true,
+
+    -- SERVICES
+    CoreGui = game:GetService("CoreGui"),
+
+    -- TEMP / RUNTIME HOLDER
+    GuiItem = nil,
+    FullItem = nil,
+    DescItem = nil,
 }
 
 
 local Window = MacLib:Window({
     Title = "NexaHub",
-    Subtitle = "Fish It - Premium | V0.0.3",
+    Subtitle = "Fish It - Dev | V0.0.3",
     Size = UDim2.fromOffset(550, 380),
     DragStyle = 2,
     DisabledWindowControls = {},
@@ -799,10 +795,50 @@ GameData.GS_Blur = Window:GlobalSetting({
     end,
 })
 
+function GameData:ApplyCenter()
+    for _, self.GuiItem in ipairs(self.CoreGui:GetChildren()) do
+        if self.GuiItem:IsA("Folder") or self.GuiItem:IsA("ScreenGui") then
+
+            self.FullItem = self.GuiItem:FindFirstChild("Full", true)
+            if self.FullItem then
+                for _, self.DescItem in ipairs(self.FullItem:GetDescendants()) do
+                    if self.DescItem.Name == "HeaderText"
+                        and self.DescItem:IsA("TextLabel") then
+
+                        self.DescItem.TextXAlignment = Enum.TextXAlignment.Center
+                    end
+                end
+            end
+        end
+    end
+end
+
+
+GameData:ApplyCenter()
+
+Window:GlobalSetting({
+    Name = "Center Header",
+    Default = true,
+    Callback = function(State)
+        GameData.CenterHeaderEnabled = State
+        if State then
+            GameData:ApplyCenter()
+        end
+    end,
+})
+
+task.spawn(function()
+    while task.wait(1) do
+        if GameData.CenterHeaderEnabled then
+            GameData:ApplyCenter()
+        end
+    end
+end)
+
 local GameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
 
 Window:Dialog({
-    Title = "Support Game " .. GameName .. " | Welcome to " .. GameName,
+    Title = "Support Game " .. GameName .. " | Welcome",
     Description = "Thank you for using NexaHub! Join our Discord for support and updates.",
     Buttons = {
         {
@@ -2045,12 +2081,12 @@ sections.Fishing3:Toggle({
                         if not GameData.SpawnToggle then break end
                         if totem.Id == GameData.SelectedTotemId and totem.UUID then
                             GameData.SpawnTotemRE:FireServer(totem.UUID)
-                            task.wait(1)
+                            task.wait(5)
                         end
                     end
                 end
 
-                task.wait(5)
+                task.wait(10)
             end
         end)
     end,
@@ -2182,8 +2218,8 @@ GameData.EnableSkip()
 
 -- GLOBAL CONFIG
 _G.BlatantV2 = false
-_G.DelayLoopStartV2 = 1.9
-_G.DelayCompleteV2 = 0.8
+_G.DelayLoopStartV2 = 1.78
+_G.DelayCompleteV2 = 0.7
 
 -- FASTEST FUNCTION
 GameData.Fastest = function()
@@ -2227,7 +2263,7 @@ sections.Fishing5:Toggle({
 
 sections.Fishing5:Input({
     Name = "Delay Cast",
-    Placeholder = "1.9",
+    Placeholder = "1.78 Or 1.9",
     AcceptedCharacters = "Numbers",
     Callback = function(input)
         local num = tonumber(input)
@@ -2239,7 +2275,7 @@ sections.Fishing5:Input({
 
 sections.Fishing5:Input({
     Name = "Delay Complete",
-    Placeholder = "0.8",
+    Placeholder = "0.7 Or 0.8",
     AcceptedCharacters = "Numbers",
     Callback = function(input)
         local num = tonumber(input)
@@ -4445,32 +4481,84 @@ sections.Boat:Header({
 	Name = "Boat Spawn"
 })
 
-
 GameData.Player = GameData.Services.Players.LocalPlayer
 
-sections.Boat:Button({
+-- State
+local AccessAllBoats = false
+local VehicleConnection = nil
+local OriginalOwners = {} -- simpan OwnerId asli
+
+-- Set owner ke player
+GameData.SetOwnerId = function(boat)
+    if not boat then return end
+
+    local ownerId = boat:GetAttribute("OwnerId")
+    if ownerId ~= nil then
+        -- simpan owner asli kalau belum disimpan
+        if OriginalOwners[boat] == nil then
+            OriginalOwners[boat] = ownerId
+        end
+
+        boat:SetAttribute("OwnerId", GameData.Player.UserId)
+    end
+end
+
+-- Restore owner asli
+GameData.RestoreOwnerId = function(boat)
+    if not boat then return end
+
+    local originalId = OriginalOwners[boat]
+    if originalId ~= nil then
+        boat:SetAttribute("OwnerId", originalId)
+        OriginalOwners[boat] = nil
+    end
+end
+
+sections.Boat:Toggle({
     Name = "Access All Boats",
-    Callback = function()
+    Default = false,
+    Callback = function(value)
+        AccessAllBoats = value
 
-        -- Simpan function ke GameData
-        GameData.SetOwnerId = function(boat)
-            if boat:GetAttribute("OwnerId") ~= nil then
-                boat:SetAttribute("OwnerId", GameData.Player.UserId)
+        if value then
+            -- Apply ke boat yang sudah ada
+            for _, boat in ipairs(GameData.WorkspaceData.Vehicles:GetChildren()) do
+                GameData.SetOwnerId(boat)
             end
-        end
 
-        -- Semua boat yang sudah ada
-        for _, v in ipairs(GameData.WorkspaceData.Vehicles:GetChildren()) do
-            GameData.SetOwnerId(v)
-        end
+            -- Boat baru spawn
+            VehicleConnection = GameData.WorkspaceData.Vehicles.ChildAdded:Connect(function(child)
+                task.wait()
+                if AccessAllBoats then
+                    GameData.SetOwnerId(child)
+                end
+            end)
 
-        -- Boat baru yang spawn
-        GameData.WorkspaceData.Vehicles.ChildAdded:Connect(function(child)
-            task.wait()
-            GameData.SetOwnerId(child)
-        end)
+            Window:Notify({
+                Title = "Boat",
+                Description = "Access All Boats Enabled"
+            })
+        else
+            -- Disconnect event
+            if VehicleConnection then
+                VehicleConnection:Disconnect()
+                VehicleConnection = nil
+            end
+
+            -- Restore semua OwnerId ke awal
+            for boat, _ in pairs(OriginalOwners) do
+                if boat and boat.Parent then
+                    GameData.RestoreOwnerId(boat)
+                end
+            end
+
+            Window:Notify({
+                Title = "Boat",
+                Description = "Access All Boats Disabled (Owner Restored)"
+            })
+        end
     end,
-})
+}, "AccessAllBoatsToggle")
 
 local SpawnBoat = ReplicatedStorage
     :WaitForChild("Packages")
