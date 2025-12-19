@@ -415,13 +415,32 @@ local GameData = {
         CoreGui = game:GetService("CoreGui")
     },
 
-        Services = {
+    -- ================== [Accses All Boat] ==================
+
+    Services = {
         Players = game:GetService("Players")
     },
 
     WorkspaceData = {
         Vehicles = workspace:WaitForChild("Vehicles")
     },
+
+    Player = nil,
+
+    AccessAllBoats = false,
+    VehicleConnection = nil,
+
+    OriginalOwners = {},
+
+    -- ================== [Spawn Boat] ==================
+
+    RS = game:GetService("ReplicatedStorage"),
+
+    SpawnBoat = nil,
+
+    SpawnBoatOptions = {},
+    SelectedSpawnBoatID = nil,
+
 
     StageList = {
         ["rbxassetid://112089909495700"] = "Hourglass Diamond Artifact", -- Stage 1
@@ -720,6 +739,41 @@ local GameData = {
 
     MinecraftFPS = false,
     FPSLoop = nil,
+
+    -- ================== [Center Header] ==================
+
+    CenterHeaderEnabled = true,
+
+    CoreGui = game:GetService("CoreGui"),
+
+    GuiItem = nil,
+    FullItem = nil,
+    DescItem = nil,
+
+    -- ================== [Anti Afk Toggle] ==================
+
+    VIM = game:GetService("VirtualInputManager"),
+
+    AntiAfkRunning = false,
+    AntiAfkThread = nil,
+
+    -- ================== [Inf Candy] ==================
+
+    Services = {
+        HttpService = game:GetService("HttpService"),
+        TeleportService = game:GetService("TeleportService"),
+        Players = game:GetService("Players"),
+    },
+
+    Player = nil,
+    PlaceId = game.PlaceId,
+    JobId = game.JobId,
+
+    RejoinDelay = 5,
+    SaveFile = "InfCandyConfig.json",
+
+    InfCandy = false,
+    InfCandyThread = nil,
 }
 
 
@@ -780,10 +834,47 @@ GameData.GS_Blur = Window:GlobalSetting({
     end,
 })
 
+function GameData:ApplyCenter()
+    for _, guiItem in ipairs(self.CoreGui:GetChildren()) do
+        if guiItem:IsA("Folder") or guiItem:IsA("ScreenGui") then
+            local fullItem = guiItem:FindFirstChild("Full", true)
+            if fullItem then
+                for _, descItem in ipairs(fullItem:GetDescendants()) do
+                    if descItem:IsA("TextLabel")
+                    and descItem.Name == "HeaderText" then
+                        descItem.TextXAlignment = Enum.TextXAlignment.Center
+                    end
+                end
+            end
+        end
+    end
+end
+
+GameData:ApplyCenter()
+
+Window:GlobalSetting({
+    Name = "Center Header",
+    Default = true,
+    Callback = function(State)
+        GameData.CenterHeaderEnabled = State
+        if State then
+            GameData:ApplyCenter()
+        end
+    end,
+})
+
+task.spawn(function()
+    while task.wait(1) do
+        if GameData.CenterHeaderEnabled then
+            GameData:ApplyCenter()
+        end
+    end
+end)
+
 local GameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
 
 Window:Dialog({
-    Title = "Support Game " .. GameName .. " | Welcome to " .. GameName,
+    Title = "Support Game " .. GameName .. " | Welcome",
     Description = "Thank you for using NexaHub! Join our Discord for support and updates.",
     Buttons = {
         {
@@ -801,6 +892,7 @@ local tabGroups = {
 local tabs = {
     Home = tabGroups.TabGroup1:Tab({ Name = "Home", Image = "rbxassetid://103124389616816" }),
 	Fishing = tabGroups.TabGroup1:Tab({ Name = "Fishing", Image = "rbxassetid://97899956724998" }),
+    Exploit = tabGroups.TabGroup1:Tab({ Name = "Exploit", Image = "rbxassetid://97624371540285" }),
     Event = tabGroups.TabGroup1:Tab({ Name = "Event", Image = "rbxassetid://139605405636145" }),
 	Quest = tabGroups.TabGroup1:Tab({ Name = "Quest", Image = "rbxassetid://70719631016787" }),
     Auto = tabGroups.TabGroup1:Tab({ Name = "Automatic", Image = "rbxassetid://100691400534443" }),
@@ -824,6 +916,8 @@ local sections = {
     Fishing6 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing7 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing8 = tabs.Fishing:Section({ Side = "Full" }),
+
+    Exploit = tabs.Exploit:Section({ Side = "Full" }),
 
     Event = tabs.Event:Section({ Side = "Full" }),
     Event1 = tabs.Event:Section({ Side = "Full" }),
@@ -867,16 +961,7 @@ sections.Home:Header({
 sections.Home:Paragraph({
     Header = "Update List",
     Body = [[
-[/] Rework Fishing Counter to Fish Caught
-[-] Delete Blatant v1
-[!] Fixed Skip Rarity not working
-[/] Improve Auto Totems
-[+] Addded Traveling Merchant 
- - Status Info Stock Merchant
- - Dropdwon Select MarketId
-[-] Delete Reduce Lag
-[/] Fixed Status Info Quest
-[/] Fixed Auto Quest
+[+] Added Inf Candy
 ]]
 }, "Info")
 
@@ -2026,12 +2111,12 @@ sections.Fishing3:Toggle({
                         if not GameData.SpawnToggle then break end
                         if totem.Id == GameData.SelectedTotemId and totem.UUID then
                             GameData.SpawnTotemRE:FireServer(totem.UUID)
-                            task.wait(1)
+                            task.wait(5)
                         end
                     end
                 end
 
-                task.wait(5)
+                task.wait(10)
             end
         end)
     end,
@@ -2163,8 +2248,8 @@ GameData.EnableSkip()
 
 -- GLOBAL CONFIG
 _G.BlatantV2 = false
-_G.DelayLoopStartV2 = 1.9
-_G.DelayCompleteV2 = 0.8
+_G.DelayLoopStartV2 = 1.78
+_G.DelayCompleteV2 = 0.7
 
 -- FASTEST FUNCTION
 GameData.Fastest = function()
@@ -2208,7 +2293,7 @@ sections.Fishing5:Toggle({
 
 sections.Fishing5:Input({
     Name = "Delay Cast",
-    Placeholder = "1.9",
+    Placeholder = "1.78 Or 1.9",
     AcceptedCharacters = "Numbers",
     Callback = function(input)
         local num = tonumber(input)
@@ -2220,7 +2305,7 @@ sections.Fishing5:Input({
 
 sections.Fishing5:Input({
     Name = "Delay Complete",
-    Placeholder = "0.8",
+    Placeholder = "0.7 Or 0.8",
     AcceptedCharacters = "Numbers",
     Callback = function(input)
         local num = tonumber(input)
@@ -2723,6 +2808,91 @@ sections.Fishing8:Toggle({
 		end
 	end,
 }, "AutoSellToggle")
+
+sections.Exploit:Header({
+	Name = "Candy"
+})
+
+GameData.Player = GameData.Services.Players.LocalPlayer
+
+function GameData:SaveConfig()
+    if not writefile then return end
+
+    writefile(
+        self.SaveFile,
+        self.Services.HttpService:JSONEncode({
+            InfCandy = self.InfCandy
+        })
+    )
+end
+
+function GameData:LoadConfig()
+    if not readfile or not isfile or not isfile(self.SaveFile) then
+        return
+    end
+
+    local ok, data = pcall(function()
+        return self.Services.HttpService:JSONDecode(readfile(self.SaveFile))
+    end)
+
+    if ok and data then
+        self.InfCandy = data.InfCandy == true
+    end
+end
+
+GameData:LoadConfig()
+
+function GameData:StartInfCandy()
+    if self.InfCandyThread then return end
+
+    self.InfCandyThread = task.spawn(function()
+        while self.InfCandy do
+            task.wait(self.RejoinDelay)
+
+            if not self.InfCandy then break end
+
+            pcall(function()
+                self.Services.TeleportService:TeleportToPlaceInstance(
+                    self.PlaceId,
+                    self.JobId,
+                    self.Player
+                )
+            end)
+        end
+
+        self.InfCandyThread = nil
+    end)
+end
+
+function GameData:StopInfCandy()
+    self.InfCandy = false
+end
+
+sections.Exploit:Toggle({
+    Name = "Inf Candy",
+    Default = GameData.InfCandy,
+    Callback = function(value)
+        GameData.InfCandy = value
+        GameData:SaveConfig()
+
+        Window:Notify({
+            Title = "Inf Candy",
+            Description = value
+                and ("Enabled - Delay " .. GameData.RejoinDelay .. " detik")
+                or "Disabled"
+        })
+
+        if value then
+            GameData:StartInfCandy()
+        else
+            GameData:StopInfCandy()
+        end
+    end,
+}, "InfCandyToggle")
+
+if GameData.InfCandy then
+    GameData:StartInfCandy()
+end
 
 sections.Event:Header({
 	Name = "Event Hunt (Fix Bug)"
@@ -4426,73 +4596,119 @@ sections.Boat:Header({
 	Name = "Boat Spawn"
 })
 
-
 GameData.Player = GameData.Services.Players.LocalPlayer
 
-sections.Boat:Button({
+function GameData:SetOwnerId(boat)
+    if not boat then return end
+
+    local ownerId = boat:GetAttribute("OwnerId")
+    if ownerId ~= nil then
+        if GameData.OriginalOwners[boat] == nil then
+            GameData.OriginalOwners[boat] = ownerId
+        end
+        boat:SetAttribute("OwnerId", GameData.Player.UserId)
+    end
+end
+
+function GameData:RestoreOwnerId(boat)
+    if not boat then return end
+
+    local originalId = GameData.OriginalOwners[boat]
+    if originalId ~= nil then
+        boat:SetAttribute("OwnerId", originalId)
+        GameData.OriginalOwners[boat] = nil
+    end
+end
+
+function GameData:ApplyToExistingBoats()
+    for _, boat in ipairs(GameData.WorkspaceData.Vehicles:GetChildren()) do
+        GameData:SetOwnerId(boat)
+    end
+end
+
+function GameData:RestoreAllBoats()
+    for boat in pairs(GameData.OriginalOwners) do
+        if boat and boat.Parent then
+            GameData:RestoreOwnerId(boat)
+        end
+    end
+end
+
+sections.Boat:Toggle({
     Name = "Access All Boats",
-    Callback = function()
+    Default = false,
+    Callback = function(value)
 
-        -- Simpan function ke GameData
-        GameData.SetOwnerId = function(boat)
-            if boat:GetAttribute("OwnerId") ~= nil then
-                boat:SetAttribute("OwnerId", GameData.Player.UserId)
+        GameData.AccessAllBoats = value
+
+        if value then
+            GameData:ApplyToExistingBoats()
+
+            GameData.VehicleConnection =
+                GameData.WorkspaceData.Vehicles.ChildAdded:Connect(function(child)
+                    task.wait()
+                    if GameData.AccessAllBoats then
+                        GameData:SetOwnerId(child)
+                    end
+                end)
+
+            Window:Notify({
+                Title = "Boat",
+                Description = "Access All Boats Enabled"
+            })
+        else
+            if GameData.VehicleConnection then
+                GameData.VehicleConnection:Disconnect()
+                GameData.VehicleConnection = nil
             end
-        end
 
-        -- Semua boat yang sudah ada
-        for _, v in ipairs(GameData.WorkspaceData.Vehicles:GetChildren()) do
-            GameData.SetOwnerId(v)
-        end
+            GameData:RestoreAllBoats()
 
-        -- Boat baru yang spawn
-        GameData.WorkspaceData.Vehicles.ChildAdded:Connect(function(child)
-            task.wait()
-            GameData.SetOwnerId(child)
-        end)
+            Window:Notify({
+                Title = "Boat",
+                Description = "Access All Boats Disabled (Owner Restored)"
+            })
+        end
     end,
-})
+}, "AccessAllBoatsToggle")
 
-local SpawnBoat = ReplicatedStorage
+GameData.SpawnBoat = GameData.RS
     :WaitForChild("Packages")
     :WaitForChild("_Index")
     :WaitForChild("sleitnick_net@0.2.0")
     :WaitForChild("net")
     :WaitForChild("RF/SpawnBoat")
 
--- Auto list boat untuk Spawn
-local SpawnBoatOptions = {}
 for boatName in pairs(GameData.BoatList) do
-    table.insert(SpawnBoatOptions, boatName)
+    table.insert(GameData.SpawnBoatOptions, boatName)
 end
-table.sort(SpawnBoatOptions)
+table.sort(GameData.SpawnBoatOptions)
 
--- Default boat pertama
-local selectedSpawnBoatID = GameData.BoatList[SpawnBoatOptions[1]]
+GameData.SelectedSpawnBoatID =
+    GameData.BoatList[GameData.SpawnBoatOptions[1]]
 
--- Dropdown Spawn Boat
 sections.Boat:Dropdown({
     Name = "Select Boat to Spawn",
     Search = true,
     Multi = false,
     Required = false,
-    Options = SpawnBoatOptions,
-    Default = SpawnBoatOptions[1],
+    Options = GameData.SpawnBoatOptions,
+    Default = GameData.SpawnBoatOptions[1],
     Callback = function(option)
-        selectedSpawnBoatID = GameData.BoatList[option]
+        GameData.SelectedSpawnBoatID = GameData.BoatList[option]
     end,
 }, "SpawnBoatDropdown")
 
--- Tombol Spawn
 sections.Boat:Button({
     Name = "Spawn Boat",
     Callback = function()
         pcall(function()
-            SpawnBoat:InvokeServer(selectedSpawnBoatID)
+            GameData.SpawnBoat:InvokeServer(
+                GameData.SelectedSpawnBoatID
+            )
         end)
     end,
 }, "SpawnBoatButton")
-
 
 sections.Boat1:Header({
 	Name = "Boat Speed"
@@ -5470,29 +5686,37 @@ task.spawn(function()
 end)
 
 
-local VIM = game:GetService("VirtualInputManager")
-local AntiAfkRunning = false
+function GameData:StartAntiAfk()
+    if self.AntiAfkThread then return end
 
-sections.Player1:Toggle({ 
+    self.AntiAfkThread = task.spawn(function()
+        while GameData.AntiAfkRunning do
+
+            GameData.VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
+            task.wait(0.05)
+            GameData.VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
+
+            task.wait(0.15)
+
+            GameData.VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
+            task.wait(0.05)
+            GameData.VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
+
+            task.wait(600)
+        end
+
+        GameData.AntiAfkThread = nil
+    end)
+end
+
+sections.Player1:Toggle({
     Name = "Anti AFK",
     Default = false,
     Callback = function(value)
-
-        AntiAfkRunning = value
+        GameData.AntiAfkRunning = value
 
         if value then
-            -- Start Anti AFK loop
-            task.spawn(function()
-                while AntiAfkRunning do
-                    -- Tekan ESC
-                    VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
-                    task.wait(0.1)
-                    -- Lepas ESC
-                    VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
-
-                    task.wait(600) -- 10 menit
-                end
-            end)
+            GameData:StartAntiAfk()
         end
 
         Window:Notify({
@@ -5500,7 +5724,8 @@ sections.Player1:Toggle({
             Description = (value and "Enabled" or "Disabled")
         })
     end,
-}, "AntiAfk!!!Toggle")
+}, "AntiAfkToggle")
+
 
 
 
@@ -5508,9 +5733,7 @@ sections.Player2:Header({
 	Name = "User Settings"
 })
 
-----------------------------------------------------
--- =============== FUNCTIONS =======================
-----------------------------------------------------
+
 function GameData:GetHumanoid()
     return self.char:WaitForChild("Humanoid")
 end
@@ -5531,16 +5754,12 @@ end
 function GameData:ApplyGravity()
     workspace.Gravity = self.GravityEnabled and self.GravityValue or 196.2
 end
-----------------------------------------------------
--- =============== INITIALIZE ======================
-----------------------------------------------------
+
 GameData.Player = game.Players.LocalPlayer
 GameData.char = GameData.Player.Character or GameData.Player.CharacterAdded:Wait()
 
 GameData.hum = GameData:GetHumanoid()
-----------------------------------------------------
--- =============== RESPAWN HANDLER =================
-----------------------------------------------------
+
 GameData.Player.CharacterAdded:Connect(function(char)
     GameData.char = char
     task.wait(0.3)
@@ -5548,12 +5767,7 @@ GameData.Player.CharacterAdded:Connect(function(char)
     GameData:ApplyWalkspeed()
     GameData:ApplyJumpPower()
 end)
-----------------------------------------------------
--- ================== WINDUI UI ====================
-----------------------------------------------------
---------------------------
--- Walkspeed Controller --
---------------------------
+
 sections.Player2:Slider({
     Name = "Set Walkspeed",
     Default = GameData.WalkspeedValue,
