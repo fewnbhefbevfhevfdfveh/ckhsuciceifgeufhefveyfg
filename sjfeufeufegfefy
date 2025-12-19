@@ -779,7 +779,7 @@ local GameData = {
 
 local Window = MacLib:Window({
     Title = "NexaHub",
-    Subtitle = "Fish It - Premium | V0.0.4",
+    Subtitle = "Fish It - Premium | V0.0.5",
     Size = UDim2.fromOffset(550, 380),
     DragStyle = 2,
     DisabledWindowControls = {},
