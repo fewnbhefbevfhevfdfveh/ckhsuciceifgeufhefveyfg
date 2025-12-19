@@ -774,12 +774,40 @@ local GameData = {
 
     InfCandy = false,
     InfCandyThread = nil,
+
+    -- ================== [FishCaught Animation] ==================
+
+    Services = {
+        ReplicatedStorage = game:GetService("ReplicatedStorage"),
+        Players = game:GetService("Players"),
+    },
+
+    Player = nil,
+
+    REFishCaught = nil,
+
+    AnimationController = nil,
+    OldPlayAnimation = nil,
+
+    AnimationsFolder = nil,
+    AnimationList = {},
+    AnimationMap = {},
+    SelectedAnimationId = nil,
+
+    AnimationEnabled = false,
+    AnimDisabled = false,
+    CurrentTrack = nil,
+
+    Character = nil,
+    Humanoid = nil,
+    Animator = nil,
+    AnimationInstance = nil,
 }
 
 
 local Window = MacLib:Window({
     Title = "NexaHub",
-    Subtitle = "Fish It - Premium | V0.0.4",
+    Subtitle = "Fish It - Premium | V0.0.5",
     Size = UDim2.fromOffset(550, 380),
     DragStyle = 2,
     DisabledWindowControls = {},
@@ -911,6 +939,7 @@ local sections = {
 
     Fishing1 = tabs.Fishing:Section({ Side = "Full" }),
 	Fishing2 = tabs.Fishing:Section({ Side = "Full" }),
+    Fishing3 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing5 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing6 = tabs.Fishing:Section({ Side = "Full" }),
 
@@ -1798,6 +1827,113 @@ sections.Fishing2:Input({
     end,
 }, "AntiStuckTimeInput")
 
+sections.Fishing3:Header({
+	Name = "Animation Fishing"
+})
+
+GameData.Player = GameData.Services.Players.LocalPlayer
+
+GameData.REFishCaught =
+    GameData.Services.ReplicatedStorage
+        .Packages._Index["sleitnick_net@0.2.0"]
+        .net["RE/FishCaught"]
+
+GameData.AnimationsFolder = GameData.Services.ReplicatedStorage
+    :WaitForChild("Modules")
+    :WaitForChild("Animations")
+
+GameData.AnimationController =
+    require(GameData.Services.ReplicatedStorage.Controllers.AnimationController)
+
+GameData.OldPlayAnimation = GameData.AnimationController.PlayAnimation
+
+GameData.AnimationController.PlayAnimation = function(self, animName, ...)
+    if GameData.AnimDisabled then
+        return
+    end
+    return GameData.OldPlayAnimation(self, animName, ...)
+end
+
+for _, anim in ipairs(GameData.AnimationsFolder:GetChildren()) do
+    if anim:IsA("Animation") and anim.Name:find("FishCaught") then
+        table.insert(GameData.AnimationList, anim.Name)
+        GameData.AnimationMap[anim.Name] = anim.AnimationId
+    end
+end
+
+function GameData:PlayFishCaught()
+    if not self.AnimationEnabled then return end
+    if not self.SelectedAnimationId then return end
+
+    self.Character = self.Player.Character or self.Player.CharacterAdded:Wait()
+    if not self.Character then return end
+
+    self.Humanoid = self.Character:FindFirstChildOfClass("Humanoid")
+    if not self.Humanoid then return end
+
+    self.Animator = self.Humanoid:FindFirstChildOfClass("Animator")
+    if not self.Animator then
+        self.Animator = Instance.new("Animator")
+        self.Animator.Parent = self.Humanoid
+    end
+
+    if self.CurrentTrack then
+        self.CurrentTrack:Stop()
+        self.CurrentTrack:Destroy()
+        self.CurrentTrack = nil
+    end
+
+    self.AnimationInstance = Instance.new("Animation")
+    self.AnimationInstance.AnimationId = self.SelectedAnimationId
+
+    self.CurrentTrack = self.Animator:LoadAnimation(self.AnimationInstance)
+    self.CurrentTrack:Play()
+end
+
+GameData.REFishCaught.OnClientEvent:Connect(function()
+    GameData:PlayFishCaught()
+end)
+
+sections.Fishing3:Dropdown({
+    Name = "Select Animation FishCaught",
+    Search = true,
+    Multi = false,
+    Required = false,
+    Options = GameData.AnimationList,
+    Default = "",
+    Callback = function(value)
+        GameData.SelectedAnimationId = GameData.AnimationMap[value]
+    end,
+}, "SelectAnimationDropdown")
+
+sections.Fishing3:Toggle({
+    Name = "Load Animation",
+    Default = false,
+    Callback = function(value)
+
+        GameData.AnimationEnabled = value
+        GameData.AnimDisabled = value
+
+        if not value and GameData.CurrentTrack then
+            GameData.CurrentTrack:Stop()
+            GameData.CurrentTrack:Destroy()
+            GameData.CurrentTrack = nil
+        end
+
+        if value then
+            pcall(function()
+                GameData.AnimationController:DestroyActiveAnimationTracks()
+            end)
+        end
+
+        Window:Notify({
+            Title = "Animation",
+            Description = value
+                and "Animation DISABLED"
+                or "Animation NORMAL"
+        })
+    end,
+}, "LoadAnimationToggle")
 sections.Fishing5:Header({
 	Name = "Blatant"
 })
@@ -5094,6 +5230,10 @@ sections.Tp2:Toggle({
 
 print("Teleport system loaded.")
 
+sections.Player:Header({
+	Name = "Hide User Identity"
+})
+
 
 sections.Player:Header({
 	Name = "Utility"
@@ -5423,6 +5563,43 @@ sections.Player:Toggle({
     end,
 }, "WalkOnWaterToggle")
 
+GameData.Player = GameData.Players.LocalPlayer
+
+function GameData:CacheQuestGui()
+    self.PlayerGui = self.Player:FindFirstChild("PlayerGui")
+    if not self.PlayerGui then return false end
+
+    self.QuestGui = self.PlayerGui:FindFirstChild("Quest")
+    if not self.QuestGui then return false end
+
+    self.QuestList = self.QuestGui:FindFirstChild("List")
+    if not self.QuestList then return false end
+
+    return true
+end
+
+function GameData:SetQuestVisible(state)
+    if not self.QuestList then
+        if not self:CacheQuestGui() then
+            return
+        end
+    end
+
+    self.QuestList.Visible = state
+end
+
+sections.Player:Toggle({
+    Name = "Hide Quest",
+    Default = false,
+    Callback = function(value)
+        GameData:SetQuestVisible(not value)
+
+        Window:Notify({
+            Title = "Hide Quest",
+            Description = value and "Enabled" or "Disabled"
+        })
+    end,
+}, "HideQuestToggle")
 
 GameData.Terrain = GameData.Workspace:FindFirstChildOfClass("Terrain")
 
@@ -5495,44 +5672,6 @@ function GameData.ApplyMinecraftFPS()
         collectgarbage("collect")
     end)
 end
-
-GameData.Player = GameData.Players.LocalPlayer
-
-function GameData:CacheQuestGui()
-    self.PlayerGui = self.Player:FindFirstChild("PlayerGui")
-    if not self.PlayerGui then return false end
-
-    self.QuestGui = self.PlayerGui:FindFirstChild("Quest")
-    if not self.QuestGui then return false end
-
-    self.QuestList = self.QuestGui:FindFirstChild("List")
-    if not self.QuestList then return false end
-
-    return true
-end
-
-function GameData:SetQuestVisible(state)
-    if not self.QuestList then
-        if not self:CacheQuestGui() then
-            return
-        end
-    end
-
-    self.QuestList.Visible = state
-end
-
-sections.Player:Toggle({
-    Name = "Hide Quest",
-    Default = false,
-    Callback = function(value)
-        GameData:SetQuestVisible(not value)
-
-        Window:Notify({
-            Title = "Hide Quest",
-            Description = value and "Enabled" or "Disabled"
-        })
-    end,
-}, "HideQuestToggle")
 
 sections.Player:Toggle({
     Name = "Boost FPS",
