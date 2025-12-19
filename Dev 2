@@ -759,9 +759,10 @@ local GameData = {
 
     -- ================== [Inf Candy] ==================
 
-        Services = {
+    Services = {
+        HttpService = game:GetService("HttpService"),
         TeleportService = game:GetService("TeleportService"),
-        Players = game:GetService("Players")
+        Players = game:GetService("Players"),
     },
 
     Player = nil,
@@ -769,6 +770,7 @@ local GameData = {
     JobId = game.JobId,
 
     RejoinDelay = 5,
+    SaveFile = "InfCandyConfig.json",
 
     InfCandy = false,
     InfCandyThread = nil,
@@ -890,6 +892,7 @@ local tabGroups = {
 local tabs = {
     Home = tabGroups.TabGroup1:Tab({ Name = "Home", Image = "rbxassetid://103124389616816" }),
 	Fishing = tabGroups.TabGroup1:Tab({ Name = "Fishing", Image = "rbxassetid://97899956724998" }),
+    Backpack = tabGroups.TabGroup1:Tab({ Name = "Backpack", Image = "rbxassetid://107912851707883" }),
     Exploit = tabGroups.TabGroup1:Tab({ Name = "Exploit", Image = "rbxassetid://97624371540285" }),
     Event = tabGroups.TabGroup1:Tab({ Name = "Event", Image = "rbxassetid://139605405636145" }),
 	Quest = tabGroups.TabGroup1:Tab({ Name = "Quest", Image = "rbxassetid://70719631016787" }),
@@ -906,10 +909,8 @@ local sections = {
     Home2 = tabs.Home:Section({ Side = "Full" }),
     Home3 = tabs.Home:Section({ Side = "Full" }),
 
-	Fishing = tabs.Fishing:Section({ Side = "Full" }),
     Fishing1 = tabs.Fishing:Section({ Side = "Full" }),
 	Fishing2 = tabs.Fishing:Section({ Side = "Full" }),
-    Fishing3 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing5 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing6 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing7 = tabs.Fishing:Section({ Side = "Full" }),
@@ -917,8 +918,10 @@ local sections = {
 
     Exploit = tabs.Exploit:Section({ Side = "Full" }),
 
+    Backpack = tabs.Backpack:Section({ Side = "Full" }),
+    Backpack1 = tabs.Backpack:Section({ Side = "Full" }),
+
     Event = tabs.Event:Section({ Side = "Full" }),
-    Event1 = tabs.Event:Section({ Side = "Full" }),
 
     Quest = tabs.Quest:Section({ Side = "Full" }),
     Quest1 = tabs.Quest:Section({ Side = "Full" }),
@@ -964,7 +967,7 @@ sections.Home:Paragraph({
 }, "Info")
 
 sections.Home1:Header({
-	Name = "User Info"
+	Name = "Exploit Exe"
 })
 
 GameData.detect_executor = function()
@@ -1170,205 +1173,6 @@ sections.Home3:Button({
         end
     end,
 })
-
-
-sections.Fishing:Header({
-	Name = "Status Info Event"
-})
-
-GameData.CountdownLabel =
-    GameData.Workspace["!!! MENU RINGS"]["Event Tracker"]
-        .Main.Gui.Content.Items.Countdown.Label
-
-
-GameData.CountdownParagraph = sections.Fishing:Paragraph({
-    Header = "Lochness Monster Countdown",
-    Body = "Waiting..."
-}, "Lochness Monster Countdown")
-
-
-task.spawn(function()
-    while true do
-        if GameData.CountdownLabel and GameData.CountdownLabel:IsA("TextLabel") then
-            GameData.CountdownParagraph:UpdateBody(
-                GameData.CountdownLabel.Text
-            )
-        else
-            GameData.CountdownParagraph:UpdateBody("Countdown not found")
-        end
-
-        task.wait(GameData.UpdateDelay)
-    end
-end)
-
-
-
-GameData.LocalPlayer = GameData.Players.LocalPlayer
-
-GameData.TimerLabel =
-    GameData.Workspace["!!! MENU RINGS"]["Event Tracker"]
-        .Main.Gui.Content.Items.Stats.Timer.Label
-
-sections.Fishing:Toggle({
-    Name = "Auto Lochness Monster",
-    Default = false,
-    Callback = function(value)
-        GameData.AutoLochEnabled = value
-
-        Window:Notify({
-            Title = "Lochness Monster",
-            Description = (value and "Enabled" or "Disabled")
-        })
-
-        if not value then
-            local char = GameData.LocalPlayer.Character
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-
-            if hrp and GameData.SavedCFrame then
-                hrp.CFrame = GameData.SavedCFrame
-            end
-
-            GameData.SavedCFrame = nil
-            GameData.Teleporting = false
-        end
-    end
-}, "LochnessMonsterToggle")
-
-task.spawn(function()
-    while true do
-        if GameData.AutoLochEnabled
-        and GameData.TimerLabel
-        and GameData.TimerLabel:IsA("TextLabel") then
-
-            local text = GameData.TimerLabel.Text
-            local char = GameData.LocalPlayer.Character
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-
-            if hrp then
-                if text ~= "0M 0S LEFT" then
-                    if not GameData.Teleporting then
-                        GameData.SavedCFrame = hrp.CFrame
-                        GameData.Teleporting = true
-                    end
-                    hrp.CFrame = GameData.TargetCFrame
-                else
-                    if GameData.Teleporting and GameData.SavedCFrame then
-                        hrp.CFrame = GameData.SavedCFrame
-                    end
-                    GameData.Teleporting = false
-                    GameData.SavedCFrame = nil
-                end
-            end
-        end
-        task.wait(GameData.LoopDelay)
-    end
-end)
-
-sections.Fishing:Divider()
-
---------------------------
--- UI (Paragraph Only)
---------------------------
-GameData.DiscoParagraph = sections.Fishing:Paragraph({
-    Header = "Status Event Disco",
-    Body = "Loading..."
-})
-
---------------------------
--- MAIN LOOP (NO TELEPORT)
---------------------------
-task.spawn(function()
-    while true do
-        task.wait(1)
-
-        pcall(function()
-            local dist = (GameData.Root.Position - GameData.DefaultCFrame.Position).Magnitude
-            GameData.IsDiscoNow = dist > 1
-
-            -- Disco Mulai
-            if GameData.IsDiscoNow and not GameData.DiscoActive then
-                GameData.DiscoActive = true
-                GameData.DiscoParagraph:UpdateBody("🎉 Disco BEGINS!")
-            end
-
-            -- Disco Berhenti
-            if not GameData.IsDiscoNow and GameData.DiscoActive then
-                GameData.DiscoActive = false
-                GameData.DiscoParagraph:UpdateBody("❌ NO DISCO")
-            end
-        end)
-    end
-end)
-
-
-GameData.LocalPlayer = GameData.Players.LocalPlayer
-GameData.Character = GameData.LocalPlayer.Character or GameData.LocalPlayer.CharacterAdded:Wait()
-GameData.HumanoidRootPart = GameData.Character:WaitForChild("HumanoidRootPart")
-
-GameData.eventCF = CFrame.new(
-    -8625, -532.471008, 161.125,
-    1, 0, 0,
-    0, 1, 0,
-    0, 0, 1
-)
-
-GameData.targetTP = CFrame.new(
-    -8642.99414, -547.400183, 159.353485,
-    0.139343381, -2.42283136e-08, -0.99024415,
-    4.18495816e-08, 1, -1.85780973e-08,
-    0.99024415, -3.88525692e-08, 0.139343381
-)
-
-GameData.AutoDiscoEvent = false
-GameData.savedPosition = nil
-GameData.teleported = false
-
--- TOGGLE UI
-sections.Fishing:Toggle({
-    Name = "Auto Disco Event",
-    Default = false,
-    Callback = function(value)
-        GameData.AutoDiscoEvent = value
-
-        Window:Notify({
-            Title = "Auto Disco Event",
-            Description = value and "Enabled" or "Disabled"
-        })
-
-        if not value then
-            if GameData.teleported and GameData.savedPosition then
-                GameData.HumanoidRootPart.CFrame = GameData.savedPosition
-            end
-            GameData.teleported = false
-            GameData.savedPosition = nil
-        end
-    end,
-}, "AutoDiscoToggle")
-
--- MAIN LOOP
-task.spawn(function()
-    while task.wait(0.1) do
-        if GameData.AutoDiscoEvent then
-
-            -- Event aktif → teleport sekali
-            if GameData.DiscoRoot.CFrame == GameData.eventCF and not GameData.teleported then
-                GameData.savedPosition = GameData.HumanoidRootPart.CFrame
-                GameData.HumanoidRootPart.CFrame = GameData.targetTP
-                GameData.teleported = true
-            end
-
-            -- Event selesai → kembalikan posisi
-            if GameData.teleported and GameData.DiscoRoot.CFrame ~= GameData.eventCF then
-                if GameData.savedPosition then
-                    GameData.HumanoidRootPart.CFrame = GameData.savedPosition
-                end
-                GameData.teleported = false
-                GameData.savedPosition = nil
-            end
-
-        end
-    end
-end)
 
 sections.Fishing1:Header({
 	Name = "Status Info Fishing"
@@ -1995,208 +1799,6 @@ sections.Fishing2:Input({
     end,
 }, "AntiStuckTimeInput")
 
-sections.Fishing3:Header({
-	Name = "Totems"
-})
-
-GameData.Client = require(GameData.ReplicatedStorage.Packages.Replion).Client
-GameData.Data = GameData.Client:WaitReplion("Data")
-
-GameData.TotemParagraph = sections.Fishing3:Paragraph({
-    Header = "Totem Info",
-    Body =
-        "Luck Totem: 0\n" ..
-        "Mutation Totem: 0\n" ..
-        "Shiny Totem: 0"
-}, "TotemCountParagraph")
-
-function GameData.UpdateTotemCount()
-    local inventory = GameData.Data:GetExpect({"Inventory"})
-
-    if not inventory or not inventory.Totems then
-        GameData.TotemParagraph:UpdateBody("Totems not found")
-        return
-    end
-
-    GameData.TotemCount.Luck = 0
-    GameData.TotemCount.Mutation = 0
-    GameData.TotemCount.Shiny = 0
-
-    for _, totem in ipairs(inventory.Totems) do
-        if totem.Id == 1 then
-            GameData.TotemCount.Luck += 1
-        elseif totem.Id == 2 then
-            GameData.TotemCount.Mutation += 1
-        elseif totem.Id == 3 then
-            GameData.TotemCount.Shiny += 1
-        end
-    end
-
-    GameData.TotemParagraph:UpdateBody(
-        "Luck Totem: " .. GameData.TotemCount.Luck .. "\n" ..
-        "Mutation Totem: " .. GameData.TotemCount.Mutation .. "\n" ..
-        "Shiny Totem: " .. GameData.TotemCount.Shiny
-    )
-end
-
-sections.Fishing3:Button({
-    Name = "Refresh Info",
-    Callback = function()
-        GameData.UpdateTotemCount()
-
-        Window:Notify({
-            Title = "Totem Info",
-            Description = "Totem count refreshed"
-        })
-    end,
-})
-
-sections.Fishing3:Divider()
-
-GameData.Client =
-    require(GameData.ReplicatedStorage.Packages.Replion).Client
-
-GameData.Data =
-    GameData.Client:WaitReplion("Data")
-
-GameData.SpawnTotemRE =
-    GameData.ReplicatedStorage
-        :WaitForChild("Packages")
-        :WaitForChild("_Index")
-        :WaitForChild("sleitnick_net@0.2.0")
-        :WaitForChild("net")
-        :WaitForChild("RE/SpawnTotem")
-
-sections.Fishing3:Dropdown({
-    Name = "Select Totems",
-    Search = true,
-    Multi = false,
-    Required = true,
-    Options = {
-        "Luck Totem",
-        "Mutation Totem",
-        "Shiny Totem"
-    },
-    Default = "Luck Totem",
-    Callback = function(value)
-        GameData.SelectedTotemId = GameData.TotemMap[value]
-    end,
-}, "SelectTotemDropdown")
-
-sections.Fishing3:Toggle({
-    Name = "Auto Spawn Totem",
-    Default = false,
-    Callback = function(value)
-        GameData.SpawnToggle = value
-
-        Window:Notify({
-            Title = "Totem",
-            Description = value
-                and "Enabled Auto Spawn Totem"
-                or "Disabled Auto Spawn Totem"
-        })
-
-        if not value or not GameData.SelectedTotemId then
-            return
-        end
-
-        task.spawn(function()
-            while GameData.SpawnToggle do
-                local inventory = GameData.Data:GetExpect("Inventory")
-
-                if inventory and inventory.Totems then
-                    for _, totem in ipairs(inventory.Totems) do
-                        if not GameData.SpawnToggle then break end
-                        if totem.Id == GameData.SelectedTotemId and totem.UUID then
-                            GameData.SpawnTotemRE:FireServer(totem.UUID)
-                            task.wait(5)
-                        end
-                    end
-                end
-
-                task.wait(10)
-            end
-        end)
-    end,
-}, "AutoSpawnTotemToggle")
-
-sections.Fishing3:Divider()
-
-GameData.LocalPlayer = GameData.Players.LocalPlayer
-
-function GameData:CreateRange(model)
-    local handle = model:FindFirstChild("Handle")
-    if not handle or not handle:IsA("BasePart") then return end
-    if handle:FindFirstChild("BottomPart") then return end
-
-    local range = Instance.new("Part")
-    range.Name = "BottomPart"
-    range.Size = Vector3.new(100, 1, 100)
-    range.Anchored = true
-    range.CanCollide = false
-    range.Material = Enum.Material.SmoothPlastic
-    range.Color = self.RangeColor
-    range.Transparency = self.ShowTotemRange and self.RangeAlpha or 1
-
-    range.CFrame = handle.CFrame * CFrame.new(
-        0,
-        -(handle.Size.Y / 2 + range.Size.Y / 2),
-        0
-    )
-
-    range.Parent = handle
-end
-
-function GameData:UpdateTotemRanges()
-    for _, model in ipairs(self.Totems:GetChildren()) do
-        if model:IsA("Model") and model.Name == "PlacedModel" then
-            local handle = model:FindFirstChild("Handle")
-            if handle then
-                local range = handle:FindFirstChild("BottomPart")
-                if range then
-                    range.Color = self.RangeColor
-                    range.Transparency = self.ShowTotemRange and self.RangeAlpha or 1
-                end
-            end
-        end
-    end
-end
-
-for _, model in ipairs(GameData.Totems:GetChildren()) do
-    if model:IsA("Model") and model.Name == "PlacedModel" then
-        GameData:CreateRange(model)
-    end
-end
-
-GameData.Totems.ChildAdded:Connect(function(model)
-    if model:IsA("Model") and model.Name == "PlacedModel" then
-        task.wait(0.1)
-        GameData:CreateRange(model)
-        GameData:UpdateTotemRanges()
-    end
-end)
-
-sections.Fishing3:Toggle({
-    Name = "Show Totem Range",
-    Default = false,
-    Callback = function(value)
-        GameData.ShowTotemRange = value
-        GameData:UpdateTotemRanges()
-    end,
-}, "ToggleTotemRange")
-
-sections.Fishing3:Colorpicker({
-    Name = "Range Color",
-    Default = GameData.RangeColor,
-    Alpha = GameData.RangeAlpha,
-    IgnoreConfig = false,
-    Callback = function(color, alpha)
-        GameData.RangeColor = color
-        GameData.RangeAlpha = alpha
-        GameData:UpdateTotemRanges()
-    end,
-}, "RangeColorToggle")
-
 sections.Fishing5:Header({
 	Name = "Blatant"
 })
@@ -2586,36 +2188,112 @@ GameData.UI.ItemName:GetPropertyChangedSignal("Text"):Connect(function()
 
 end)
 
-sections.Fishing7:Header({
+sections.Exploit:Header({
+	Name = "Candy"
+})
+
+GameData.Player = GameData.Services.Players.LocalPlayer
+
+function GameData:SaveConfig()
+    if not writefile then return end
+
+    writefile(
+        self.SaveFile,
+        self.Services.HttpService:JSONEncode({
+            InfCandy = self.InfCandy
+        })
+    )
+end
+
+function GameData:LoadConfig()
+    if not readfile or not isfile or not isfile(self.SaveFile) then
+        return
+    end
+
+    local ok, data = pcall(function()
+        return self.Services.HttpService:JSONDecode(readfile(self.SaveFile))
+    end)
+
+    if ok and data then
+        self.InfCandy = data.InfCandy == true
+    end
+end
+
+GameData:LoadConfig()
+
+function GameData:StartInfCandy()
+    if self.InfCandyThread then return end
+
+    self.InfCandyThread = task.spawn(function()
+        while self.InfCandy do
+            task.wait(self.RejoinDelay)
+
+            if not self.InfCandy then break end
+
+            pcall(function()
+                self.Services.TeleportService:TeleportToPlaceInstance(
+                    self.PlaceId,
+                    self.JobId,
+                    self.Player
+                )
+            end)
+        end
+
+        self.InfCandyThread = nil
+    end)
+end
+
+function GameData:StopInfCandy()
+    self.InfCandy = false
+end
+
+sections.Exploit:Toggle({
+    Name = "Inf Candy",
+    Default = GameData.InfCandy,
+    Callback = function(value)
+        GameData.InfCandy = value
+        GameData:SaveConfig()
+
+        Window:Notify({
+            Title = "Inf Candy",
+            Description = value
+                and ("Enabled - Delay " .. GameData.RejoinDelay .. " detik")
+                or "Disabled"
+        })
+
+        if value then
+            GameData:StartInfCandy()
+        else
+            GameData:StopInfCandy()
+        end
+    end,
+}, "InfCandyToggle")
+
+if GameData.InfCandy then
+    GameData:StartInfCandy()
+end
+
+sections.Backpack:Header({
 	Name = "Equipment Feature"
 })
 
--- Module
 local Net = require(ReplicatedStorage.Packages.Net)
 local Replion = require(ReplicatedStorage.Packages.Replion).Client
 
--- RemoteEvent EquipItem
 local EquipItemEvent = Net:RemoteEvent("EquipItem")
 
--- Data player
 local data = Replion:WaitReplion("Data")
 
 local RodIDs = GameData.RodIDs
 
---------------------------------------------------------------------
--- BUILD ROD NAME LIST (AUTO)
---------------------------------------------------------------------
 local RodNames = {}
 for name, _ in pairs(RodIDs) do
     table.insert(RodNames, name)
 end
 
---------------------------------------------------------------------
--- SELECT ROD (EQUIP)
---------------------------------------------------------------------
 local SelectedRodName = "Starter Rod"
 
-sections.Fishing7:Dropdown({
+sections.Backpack:Dropdown({
     Name = "Select Rod",
     Search = true,
     Multi = false,
@@ -2626,7 +2304,7 @@ sections.Fishing7:Dropdown({
     end,
 }, "RodDropdown")
 
-sections.Fishing7:Button({
+sections.Backpack:Button({
     Name = "Equip Selected Rod",
     Callback = function()
 
@@ -2647,9 +2325,6 @@ sections.Fishing7:Button({
 
 local BaitIDs = GameData.BaitIDs
 
---------------------------------------------------------------------
--- REMOTE EQUIP BAIT
---------------------------------------------------------------------
 local equipBaitRemote = ReplicatedStorage
     :WaitForChild("Packages")
     :WaitForChild("_Index")
@@ -2657,20 +2332,14 @@ local equipBaitRemote = ReplicatedStorage
     :WaitForChild("net")
     :WaitForChild("RE/EquipBait")
 
---------------------------------------------------------------------
--- GENERATE BAIT NAME LIST (AUTO)
---------------------------------------------------------------------
 local baitNames = {}
 for name, _ in pairs(BaitIDs) do
     table.insert(baitNames, name)
 end
 
---------------------------------------------------------------------
--- SELECT BAIT FOR EQUIP
---------------------------------------------------------------------
 local selectedBaitID = BaitIDs["Starter Bait"]
 
-sections.Fishing7:Dropdown({
+sections.Backpack:Dropdown({
     Name = "Select Bait",
     Options = baitNames,
     Default = "Starter Bait",
@@ -2681,7 +2350,7 @@ sections.Fishing7:Dropdown({
     end,
 })
 
-sections.Fishing7:Button({
+sections.Backpack:Button({
     Name = "Equip Selected Bait",
     Callback = function()
         if selectedBaitID then
@@ -2690,11 +2359,6 @@ sections.Fishing7:Button({
     end,
 })
 
----------------------------------------------------------------------
--- AUTO EQUIP ROD
----------------------------------------------------------------------
-
--- Ambil RemoteEvent untuk equip rod
 local netEvent = ReplicatedStorage
 	:WaitForChild("Packages")
 	:WaitForChild("_Index")
@@ -2705,8 +2369,7 @@ local netEvent = ReplicatedStorage
 local args = {1}
 local autoEquipRod = false
 
--- Toggle auto-equip
-sections.Fishing7:Toggle({
+sections.Backpack:Toggle({
 	Name = "Auto Equip Rod",
 	Default = false,
 	Callback = function(state)
@@ -2714,7 +2377,6 @@ sections.Fishing7:Toggle({
 	end,
 })
 
--- Loop auto equip
 task.spawn(function()
 	while true do
 		if autoEquipRod then
@@ -2724,14 +2386,10 @@ task.spawn(function()
 	end
 end)
 
-
-sections.Fishing8:Header({
+sections.Backpack1:Header({
 	Name = "Sell Feature"
 })
 
--- ==========================================================
--- AUTO SELL VARIABLES
--- ==========================================================
 local sellRemote = ReplicatedStorage:WaitForChild("Packages")
     :WaitForChild("_Index")
     :WaitForChild("sleitnick_net@0.2.0")
@@ -2743,24 +2401,18 @@ local sellDelay = 2
 local mode = "Sell Delay"
 local autoSellLoop = nil
 
--- ==========================================================
--- WINDUI: Slider Sell Delay
--- ==========================================================
-sections.Fishing8:Slider({
+sections.Backpack1:Slider({
 	Name = "Sell Delay (seconds)",
 	Default = 2,
 	Minimum = 1,
-	Maximum = 100,
-	Rounding = 0,
+	Maximum = 200,
+    DisplayMethod = "Percent",
 	Callback = function(value)
 		sellDelay = value
 	end,
 }, "SellDelaySlider")
 
--- ==========================================================
--- WINDUI: Dropdown Mode
--- ==========================================================
-sections.Fishing8:Dropdown({
+sections.Backpack1:Dropdown({
 	Name = "Select Mode",
 	Options = { "Backpack Full", "Sell Delay" },
 	Default = "Sell Delay",
@@ -2772,10 +2424,7 @@ sections.Fishing8:Dropdown({
 	end,
 }, "SellModeDropdown")
 
--- ==========================================================
--- WINDUI: Toggle Auto Sell
--- ==========================================================
-sections.Fishing8:Toggle({
+sections.Backpack1:Toggle({
 	Name = "Auto Sell All Items",
 	Default = false,
 	Callback = function(state)
@@ -2807,75 +2456,399 @@ sections.Fishing8:Toggle({
 	end,
 }, "AutoSellToggle")
 
-sections.Exploit:Header({
-	Name = "Candy"
+sections.Backpack2:Header({
+	Name = "Totems"
 })
 
-GameData.Player = GameData.Services.Players.LocalPlayer
+GameData.Client = require(GameData.ReplicatedStorage.Packages.Replion).Client
+GameData.Data = GameData.Client:WaitReplion("Data")
 
-function GameData:StartInfCandy()
-    if GameData.InfCandyThread then return end
+GameData.TotemParagraph = sections.Backpack2:Paragraph({
+    Header = "Totem Info",
+    Body =
+        "Luck Totem: 0\n" ..
+        "Mutation Totem: 0\n" ..
+        "Shiny Totem: 0"
+}, "TotemCountParagraph")
 
-    GameData.InfCandyThread = task.spawn(function()
-        while GameData.InfCandy do
-            task.wait(GameData.RejoinDelay)
+function GameData.UpdateTotemCount()
+    local inventory = GameData.Data:GetExpect({"Inventory"})
 
-            if not GameData.InfCandy then
-                break
-            end
+    if not inventory or not inventory.Totems then
+        GameData.TotemParagraph:UpdateBody("Totems not found")
+        return
+    end
 
-            pcall(function()
-                GameData.Services.TeleportService:TeleportToPlaceInstance(
-                    GameData.PlaceId,
-                    GameData.JobId,
-                    GameData.Player
-                )
-            end)
+    GameData.TotemCount.Luck = 0
+    GameData.TotemCount.Mutation = 0
+    GameData.TotemCount.Shiny = 0
+
+    for _, totem in ipairs(inventory.Totems) do
+        if totem.Id == 1 then
+            GameData.TotemCount.Luck += 1
+        elseif totem.Id == 2 then
+            GameData.TotemCount.Mutation += 1
+        elseif totem.Id == 3 then
+            GameData.TotemCount.Shiny += 1
         end
+    end
 
-        GameData.InfCandyThread = nil
-    end)
+    GameData.TotemParagraph:UpdateBody(
+        "Luck Totem: " .. GameData.TotemCount.Luck .. "\n" ..
+        "Mutation Totem: " .. GameData.TotemCount.Mutation .. "\n" ..
+        "Shiny Totem: " .. GameData.TotemCount.Shiny
+    )
 end
 
-function GameData:StopInfCandy()
-    GameData.InfCandy = false
-end
-
-sections.Exploit:Toggle({
-    Name = "Inf Candy",
-    Default = false,
-    Callback = function(value)
-
-        GameData.InfCandy = value
+sections.Backpack2:Button({
+    Name = "Refresh Info",
+    Callback = function()
+        GameData.UpdateTotemCount()
 
         Window:Notify({
-            Title = "Inf Candy",
-            Description = value
-                and ("Enabled - Delay " .. GameData.RejoinDelay .. " detik")
-                or "Disabled"
+            Title = "Totem Info",
+            Description = "Totem count refreshed"
         })
-
-        if value then
-            GameData:StartInfCandy()
-        else
-            GameData:StopInfCandy()
-        end
     end,
-}, "InfCandyToggle")
-
-sections.Event:Header({
-	Name = "Event Hunt (Fix Bug)"
 })
 
+sections.Backpack2:Divider()
+
+GameData.Client =
+    require(GameData.ReplicatedStorage.Packages.Replion).Client
+
+GameData.Data =
+    GameData.Client:WaitReplion("Data")
+
+GameData.SpawnTotemRE =
+    GameData.ReplicatedStorage
+        :WaitForChild("Packages")
+        :WaitForChild("_Index")
+        :WaitForChild("sleitnick_net@0.2.0")
+        :WaitForChild("net")
+        :WaitForChild("RE/SpawnTotem")
+
+sections.Backpack2:Dropdown({
+    Name = "Select Totems",
+    Search = true,
+    Multi = false,
+    Required = true,
+    Options = {
+        "Luck Totem",
+        "Mutation Totem",
+        "Shiny Totem"
+    },
+    Default = "Luck Totem",
+    Callback = function(value)
+        GameData.SelectedTotemId = GameData.TotemMap[value]
+    end,
+}, "SelectTotemDropdown")
+
+sections.Backpack2:Toggle({
+    Name = "Auto Spawn Totem",
+    Default = false,
+    Callback = function(value)
+        GameData.SpawnToggle = value
+
+        Window:Notify({
+            Title = "Totem",
+            Description = value
+                and "Enabled Auto Spawn Totem"
+                or "Disabled Auto Spawn Totem"
+        })
+
+        if not value or not GameData.SelectedTotemId then
+            return
+        end
+
+        task.spawn(function()
+            while GameData.SpawnToggle do
+                local inventory = GameData.Data:GetExpect("Inventory")
+
+                if inventory and inventory.Totems then
+                    for _, totem in ipairs(inventory.Totems) do
+                        if not GameData.SpawnToggle then break end
+                        if totem.Id == GameData.SelectedTotemId and totem.UUID then
+                            GameData.SpawnTotemRE:FireServer(totem.UUID)
+                            task.wait(5)
+                        end
+                    end
+                end
+
+                task.wait(10)
+            end
+        end)
+    end,
+}, "AutoSpawnTotemToggle")
+
+sections.Backpack2:Divider()
+
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+
+function GameData:CreateRange(model)
+    local handle = model:FindFirstChild("Handle")
+    if not handle or not handle:IsA("BasePart") then return end
+    if handle:FindFirstChild("BottomPart") then return end
+
+    local range = Instance.new("Part")
+    range.Name = "BottomPart"
+    range.Size = Vector3.new(100, 1, 100)
+    range.Anchored = true
+    range.CanCollide = false
+    range.Material = Enum.Material.SmoothPlastic
+    range.Color = self.RangeColor
+    range.Transparency = self.ShowTotemRange and self.RangeAlpha or 1
+
+    range.CFrame = handle.CFrame * CFrame.new(
+        0,
+        -(handle.Size.Y / 2 + range.Size.Y / 2),
+        0
+    )
+
+    range.Parent = handle
+end
+
+function GameData:UpdateTotemRanges()
+    for _, model in ipairs(self.Totems:GetChildren()) do
+        if model:IsA("Model") and model.Name == "PlacedModel" then
+            local handle = model:FindFirstChild("Handle")
+            if handle then
+                local range = handle:FindFirstChild("BottomPart")
+                if range then
+                    range.Color = self.RangeColor
+                    range.Transparency = self.ShowTotemRange and self.RangeAlpha or 1
+                end
+            end
+        end
+    end
+end
+
+for _, model in ipairs(GameData.Totems:GetChildren()) do
+    if model:IsA("Model") and model.Name == "PlacedModel" then
+        GameData:CreateRange(model)
+    end
+end
+
+GameData.Totems.ChildAdded:Connect(function(model)
+    if model:IsA("Model") and model.Name == "PlacedModel" then
+        task.wait(0.1)
+        GameData:CreateRange(model)
+        GameData:UpdateTotemRanges()
+    end
+end)
+
+sections.Backpack2:Toggle({
+    Name = "Show Totem Range",
+    Default = false,
+    Callback = function(value)
+        GameData.ShowTotemRange = value
+        GameData:UpdateTotemRanges()
+    end,
+}, "ToggleTotemRange")
+
+sections.Backpack2:Colorpicker({
+    Name = "Range Color",
+    Default = GameData.RangeColor,
+    Alpha = GameData.RangeAlpha,
+    IgnoreConfig = false,
+    Callback = function(color, alpha)
+        GameData.RangeColor = color
+        GameData.RangeAlpha = alpha
+        GameData:UpdateTotemRanges()
+    end,
+}, "RangeColorToggle")
+
+sections.Event:Header({
+	Name = "Event Hunt"
+})
+
+GameData.DiscoParagraph = sections.Event:Paragraph({
+    Header = "Status Event Disco",
+    Body = "Loading..."
+})
+
+task.spawn(function()
+    while true do
+        task.wait(1)
+
+        pcall(function()
+            local dist = (GameData.Root.Position - GameData.DefaultCFrame.Position).Magnitude
+            GameData.IsDiscoNow = dist > 1
+
+            if GameData.IsDiscoNow and not GameData.DiscoActive then
+                GameData.DiscoActive = true
+                GameData.DiscoParagraph:UpdateBody("🎉 Disco BEGINS!")
+            end
+
+            if not GameData.IsDiscoNow and GameData.DiscoActive then
+                GameData.DiscoActive = false
+                GameData.DiscoParagraph:UpdateBody("❌ NO DISCO")
+            end
+        end)
+    end
+end)
+
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+GameData.Character = GameData.LocalPlayer.Character or GameData.LocalPlayer.CharacterAdded:Wait()
+GameData.HumanoidRootPart = GameData.Character:WaitForChild("HumanoidRootPart")
+
+GameData.eventCF = CFrame.new(
+    -8625, -532.471008, 161.125,
+    1, 0, 0,
+    0, 1, 0,
+    0, 0, 1
+)
+
+GameData.targetTP = CFrame.new(
+    -8642.99414, -547.400183, 159.353485,
+    0.139343381, -2.42283136e-08, -0.99024415,
+    4.18495816e-08, 1, -1.85780973e-08,
+    0.99024415, -3.88525692e-08, 0.139343381
+)
+
+GameData.AutoDiscoEvent = false
+GameData.savedPosition = nil
+GameData.teleported = false
+
+sections.Event:Toggle({
+    Name = "Auto Disco Event",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoDiscoEvent = value
+
+        Window:Notify({
+            Title = "Auto Disco Event",
+            Description = value and "Enabled" or "Disabled"
+        })
+
+        if not value then
+            if GameData.teleported and GameData.savedPosition then
+                GameData.HumanoidRootPart.CFrame = GameData.savedPosition
+            end
+            GameData.teleported = false
+            GameData.savedPosition = nil
+        end
+    end,
+}, "AutoDiscoToggle")
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if GameData.AutoDiscoEvent then
+
+            if GameData.DiscoRoot.CFrame == GameData.eventCF and not GameData.teleported then
+                GameData.savedPosition = GameData.HumanoidRootPart.CFrame
+                GameData.HumanoidRootPart.CFrame = GameData.targetTP
+                GameData.teleported = true
+            end
+
+            if GameData.teleported and GameData.DiscoRoot.CFrame ~= GameData.eventCF then
+                if GameData.savedPosition then
+                    GameData.HumanoidRootPart.CFrame = GameData.savedPosition
+                end
+                GameData.teleported = false
+                GameData.savedPosition = nil
+            end
+
+        end
+    end
+end)
+
+-- ====================[Lochness Monster]====================
+
+GameData.CountdownLabel =
+    GameData.Workspace["!!! MENU RINGS"]["Event Tracker"]
+        .Main.Gui.Content.Items.Countdown.Label
+
+
+GameData.CountdownParagraph = sections.Event:Paragraph({
+    Header = "Lochness Monster Countdown",
+    Body = "Waiting..."
+}, "Lochness Monster Countdown")
+
+
+task.spawn(function()
+    while true do
+        if GameData.CountdownLabel and GameData.CountdownLabel:IsA("TextLabel") then
+            GameData.CountdownParagraph:UpdateBody(
+                GameData.CountdownLabel.Text
+            )
+        else
+            GameData.CountdownParagraph:UpdateBody("Countdown not found")
+        end
+
+        task.wait(GameData.UpdateDelay)
+    end
+end)
+
+
+
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+
+GameData.TimerLabel =
+    GameData.Workspace["!!! MENU RINGS"]["Event Tracker"]
+        .Main.Gui.Content.Items.Stats.Timer.Label
+
+sections.Event:Toggle({
+    Name = "Auto Lochness Monster",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoLochEnabled = value
+
+        Window:Notify({
+            Title = "Lochness Monster",
+            Description = (value and "Enabled" or "Disabled")
+        })
+
+        if not value then
+            local char = GameData.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+            if hrp and GameData.SavedCFrame then
+                hrp.CFrame = GameData.SavedCFrame
+            end
+
+            GameData.SavedCFrame = nil
+            GameData.Teleporting = false
+        end
+    end
+}, "LochnessMonsterToggle")
+
+task.spawn(function()
+    while true do
+        if GameData.AutoLochEnabled
+        and GameData.TimerLabel
+        and GameData.TimerLabel:IsA("TextLabel") then
+
+            local text = GameData.TimerLabel.Text
+            local char = GameData.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+            if hrp then
+                if text ~= "0M 0S LEFT" then
+                    if not GameData.Teleporting then
+                        GameData.SavedCFrame = hrp.CFrame
+                        GameData.Teleporting = true
+                    end
+                    hrp.CFrame = GameData.TargetCFrame
+                else
+                    if GameData.Teleporting and GameData.SavedCFrame then
+                        hrp.CFrame = GameData.SavedCFrame
+                    end
+                    GameData.Teleporting = false
+                    GameData.SavedCFrame = nil
+                end
+            end
+        end
+        task.wait(GameData.LoopDelay)
+    end
+end)
 
 sections.Quest:Header({
 	Name = "View Quest Status"
 })
 
--- Init Player
 GameData.LocalPlayer = GameData.Players.LocalPlayer
 
--- Safe get QuestList
 local function GetQuestList()
     local gui = GameData.LocalPlayer:FindFirstChild("PlayerGui")
     local quest = gui and gui:FindFirstChild("Quest")
@@ -5321,7 +5294,7 @@ GameData.waterVFXFolder = GameData.RS:WaitForChild("VFX")
 -- REMOVE VFX TOGGLE
 ---------------------------------------------------------
 sections.Player:Toggle({
-    Name = "Remove VFX",
+    Name = "Remove Skin Effect",
     Default = false,
     Callback = function(value)
 
