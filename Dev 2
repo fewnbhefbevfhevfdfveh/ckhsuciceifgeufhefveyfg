@@ -441,7 +441,7 @@ local GameData = {
     SpawnBoatOptions = {},
     SelectedSpawnBoatID = nil,
 
-    
+
     StageList = {
         ["rbxassetid://112089909495700"] = "Hourglass Diamond Artifact", -- Stage 1
         ["rbxassetid://108196402536011"] = "Arrow Artifact",             -- Stage 2
@@ -756,12 +756,28 @@ local GameData = {
 
     AntiAfkRunning = false,
     AntiAfkThread = nil,
+
+    -- ================== [Inf Candy] ==================
+
+        Services = {
+        TeleportService = game:GetService("TeleportService"),
+        Players = game:GetService("Players")
+    },
+
+    Player = nil,
+    PlaceId = game.PlaceId,
+    JobId = game.JobId,
+
+    RejoinDelay = 5,
+
+    InfCandy = false,
+    InfCandyThread = nil,
 }
 
 
 local Window = MacLib:Window({
     Title = "NexaHub",
-    Subtitle = "Fish It - Premium | V0.0.3",
+    Subtitle = "Fish It - Premium | V0.0.4",
     Size = UDim2.fromOffset(550, 380),
     DragStyle = 2,
     DisabledWindowControls = {},
@@ -874,6 +890,7 @@ local tabGroups = {
 local tabs = {
     Home = tabGroups.TabGroup1:Tab({ Name = "Home", Image = "rbxassetid://103124389616816" }),
 	Fishing = tabGroups.TabGroup1:Tab({ Name = "Fishing", Image = "rbxassetid://97899956724998" }),
+    Exploit = tabGroups.TabGroup1:Tab({ Name = "Exploit", Image = "rbxassetid://97624371540285" }),
     Event = tabGroups.TabGroup1:Tab({ Name = "Event", Image = "rbxassetid://139605405636145" }),
 	Quest = tabGroups.TabGroup1:Tab({ Name = "Quest", Image = "rbxassetid://70719631016787" }),
     Auto = tabGroups.TabGroup1:Tab({ Name = "Automatic", Image = "rbxassetid://100691400534443" }),
@@ -897,6 +914,8 @@ local sections = {
     Fishing6 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing7 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing8 = tabs.Fishing:Section({ Side = "Full" }),
+
+    Exploit = tabs.Exploit:Section({ Side = "Full" }),
 
     Event = tabs.Event:Section({ Side = "Full" }),
     Event1 = tabs.Event:Section({ Side = "Full" }),
@@ -940,16 +959,7 @@ sections.Home:Header({
 sections.Home:Paragraph({
     Header = "Update List",
     Body = [[
-[/] Rework Fishing Counter to Fish Caught
-[-] Delete Blatant v1
-[!] Fixed Skip Rarity not working
-[/] Improve Auto Totems
-[+] Addded Traveling Merchant 
- - Status Info Stock Merchant
- - Dropdwon Select MarketId
-[-] Delete Reduce Lag
-[/] Fixed Status Info Quest
-[/] Fixed Auto Quest
+[+] Added Inf Candy
 ]]
 }, "Info")
 
@@ -2796,6 +2806,62 @@ sections.Fishing8:Toggle({
 		end
 	end,
 }, "AutoSellToggle")
+
+sections.Exploit:Header({
+	Name = "Candy"
+})
+
+GameData.Player = GameData.Services.Players.LocalPlayer
+
+function GameData:StartInfCandy()
+    if GameData.InfCandyThread then return end
+
+    GameData.InfCandyThread = task.spawn(function()
+        while GameData.InfCandy do
+            task.wait(GameData.RejoinDelay)
+
+            if not GameData.InfCandy then
+                break
+            end
+
+            pcall(function()
+                GameData.Services.TeleportService:TeleportToPlaceInstance(
+                    GameData.PlaceId,
+                    GameData.JobId,
+                    GameData.Player
+                )
+            end)
+        end
+
+        GameData.InfCandyThread = nil
+    end)
+end
+
+function GameData:StopInfCandy()
+    GameData.InfCandy = false
+end
+
+sections.Exploit:Toggle({
+    Name = "Inf Candy",
+    Default = false,
+    Callback = function(value)
+
+        GameData.InfCandy = value
+
+        Window:Notify({
+            Title = "Inf Candy",
+            Description = value
+                and ("Enabled - Delay " .. GameData.RejoinDelay .. " detik")
+                or "Disabled"
+        })
+
+        if value then
+            GameData:StartInfCandy()
+        else
+            GameData:StopInfCandy()
+        end
+    end,
+}, "InfCandyToggle")
 
 sections.Event:Header({
 	Name = "Event Hunt (Fix Bug)"
