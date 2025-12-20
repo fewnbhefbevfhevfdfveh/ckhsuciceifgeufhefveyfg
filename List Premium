@@ -1,9 +1,8 @@
 -- WHITELIST USER ID
 local WHITELIST = {
-    123456789,
-    987654321,
-    1122334455,
-    -- tambahkan UserId lain di sini
+    3576360668,
+    9005676891,
+    2304459668,
 }
 
 local Players = game:GetService("Players")
