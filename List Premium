@@ -1,8 +1,61 @@
--- Langsung load script premium tanpa cek user atau key
-print("Loaded Script Premium Nexa")
+-- WHITELIST USER ID
+local WHITELIST = {
+    123456789,
+    987654321,
+    1122334455,
+    -- tambahkan UserId lain di sini
+}
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/jduwgfPREMIUM"))()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
-print("Berhasil Load")
-print("Welcome!!!")
-print("9620395")
+-- FUNCTION CEK WHITELIST
+local function IsWhitelisted(id)
+    for _, v in ipairs(WHITELIST) do
+        if v == id then
+            return true
+        end
+    end
+    return false
+end
+
+-- CEK AKSES
+if not IsWhitelisted(LocalPlayer.UserId) then
+    LocalPlayer:Kick("❌ You are not allowed to use this script.")
+    return
+end
+
+-- LOAD PREMIUM SCRIPT
+loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/jduwgfPREMIUM"
+))()
+
+----------------------------------------------------
+-- WELCOME / INFO PRINT (FULL)
+----------------------------------------------------
+
+-- SERVICES
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- CONFIG
+local SCRIPT_NAME = "NexaHub"
+local SHOW_TIME = true
+
+-- TIME
+local timeNow = SHOW_TIME and os.date("%H:%M:%S") or "??:??:??"
+
+-- PRINT WELCOME
+print("==============================================")
+print("  SELAMAT DATANG DI "..SCRIPT_NAME)
+print("----------------------------------------------")
+print("  Player : "..player.Name)
+print("  Time   : "..timeNow)
+print("  Status : LOADED")
+print("----------------------------------------------")
+print("  INFO :")
+print("  - Semua fitur siap digunakan")
+print("  - Gunakan toggle di UI untuk ON / OFF fitur")
+print("  - Script berjalan di Client")
+print("==============================================")
+print("[INFO] Script berhasil dijalankan ✔")
