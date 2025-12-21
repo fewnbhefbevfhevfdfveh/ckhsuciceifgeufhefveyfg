@@ -769,31 +769,6 @@ local GameData = {
 
     -- ================== [FishCaught Animation] ==================
 
-    Services = {
-        ReplicatedStorage = game:GetService("ReplicatedStorage"),
-        Players = game:GetService("Players"),
-    },
-
-    Player = nil,
-
-    REFishCaught = nil,
-
-    AnimationController = nil,
-    OldPlayAnimation = nil,
-
-    AnimationsFolder = nil,
-    AnimationList = {},
-    AnimationMap = {},
-    SelectedAnimationId = nil,
-
-    AnimationEnabled = false,
-    AnimDisabled = false,
-    CurrentTrack = nil,
-
-    Character = nil,
-    Humanoid = nil,
-    Animator = nil,
-    AnimationInstance = nil,
 
     -- ================== [Auto Reconnect] ==================             
 
@@ -810,6 +785,61 @@ local GameData = {
 
     Connections = {},
 
+    -- ================== [Costumisasi Player] ==================
+
+    Services = {
+        Players = game:GetService("Players"),
+    },
+
+    LocalPlayer = nil,
+
+    CustomName = "",
+    CustomLevel = "",
+    OverheadEnabled = false,
+
+    Character = nil,
+    HRP = nil,
+    Overhead = nil,
+    Content = nil,
+    Header = nil,
+    LevelContainer = nil,
+    LevelLabel = nil,
+
+    GetSuccess = false,
+
+    -- ================== [Auto Christmas Presents] ==================
+
+    Services = {
+        ReplicatedStorage = game:GetService("ReplicatedStorage"),
+    },
+
+    Packages = nil,
+    Index = nil,
+    NetPackage = nil,
+    Net = nil,
+    Remote = nil,
+    NpcFolder = nil,
+
+    AutoChristmas = false,
+    AutoThread = nil,
+
+    -- ================== [Auto Christmas Presents] ==================
+
+    Services = {
+        ReplicatedStorage = game:GetService("ReplicatedStorage"),
+        Workspace = game:GetService("Workspace"),
+    },
+
+    ChristmasDoors = nil,
+
+    Packages = nil,
+    Index = nil,
+    NetPackage = nil,
+    Net = nil,
+    NetEvent = nil,
+
+    AutoPresentChristmasDoor = false,
+    AutoThread = nil,
 }
 
 
@@ -922,41 +952,6 @@ Window:Dialog({
 })
 
 
-local CoreGui = game:GetService("CoreGui")
-
-local HIDE_TABS = {
-    Exploit = true,
-}
-
-local function getGui()
-    for _, v in ipairs(CoreGui:GetChildren()) do
-        if v.Name == "7b1ba2d6f6d59f993855c6c7616ea41a1e4ef7787e7d3b6dd825dfec57fa882a" then
-            return v
-        end
-    end
-    return nil
-end
-
-local gui = getGui()
-if not gui then
-    warn("[TabHider] GUI not found, skipping")
-    return
-end
-
-
-for _, obj in ipairs(gui:GetDescendants()) do
-    if obj and obj:IsA("TextLabel") and obj.Name == "TabSwitcherName" then
-        local text = obj.Text
-        if text and HIDE_TABS[text] then
-            local tabSwitcher = obj:FindFirstAncestor("TabSwitcher")
-            if tabSwitcher and tabSwitcher:IsA("GuiObject") then
-                tabSwitcher.Visible = false
-            end
-        end
-    end
-end
-
-
 local tabGroups = {
 	TabGroup1 = Window:TabGroup()
 }
@@ -983,7 +978,6 @@ local sections = {
 
     Fishing1 = tabs.Fishing:Section({ Side = "Full" }),
 	Fishing2 = tabs.Fishing:Section({ Side = "Full" }),
-    Fishing3 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing5 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing6 = tabs.Fishing:Section({ Side = "Full" }),
 
@@ -1020,6 +1014,7 @@ local sections = {
     Player = tabs.Player:Section({ Side = "Full" }),
     Player1 = tabs.Player:Section({ Side = "Full" }),
     Player2 = tabs.Player:Section({ Side = "Full" }),
+    Player3 = tabs.Player:Section({ Side = "Full" }),
 
     Config = tabs.Config:Section({ Side = "Full" }),
     Config1 = tabs.Config:Section({ Side = "Full" }),
@@ -1035,12 +1030,13 @@ sections.Home:Paragraph({
     Header = "Update List",
     Body = [[
 [+] Added Tab Backpack
+[+] Added Teleport To Christmas Cave
+[+] Added Auto Reconnect
 [/] Move Desync Sell, Totem, Equipment To Backpack Tab
 [-] Delete Auto Disco Event
 [-] Delete Tp To Classic Island
-[+] Added Teleport To Christmas Cave
 [-] Delete Inf Candy (Premium)
-[+] Added Auto Reconnect
+[-] Delete FishCaught Animation (Premium)
 ]]
 }, "Info")
 
@@ -1152,6 +1148,163 @@ sections.Home2:Button({
         end
     end,
 })
+
+function GameData:GetRemote()
+    self.Packages = self.Services.ReplicatedStorage:FindFirstChild("Packages")
+    if not self.Packages then return end
+
+    self.Index = self.Packages:FindFirstChild("_Index")
+    if not self.Index then return end
+
+    self.NetPackage = self.Index:FindFirstChild("sleitnick_net@0.2.0")
+    if not self.NetPackage then return end
+
+    self.Net = self.NetPackage:FindFirstChild("net")
+    if not self.Net then return end
+
+    self.Remote = self.Net:FindFirstChild("RF/SpecialDialogueEvent")
+    return self.Remote
+end
+
+function GameData:GetNpcFolder()
+    self.NpcFolder = self.Services.ReplicatedStorage:FindFirstChild("NPC")
+    return self.NpcFolder
+end
+
+function GameData:StartAutoChristmas()
+    if self.AutoThread then return end
+
+    self.AutoThread = task.spawn(function()
+        while self.AutoChristmas do
+
+            self:GetNpcFolder()
+            self:GetRemote()
+
+            if not self.NpcFolder or not self.Remote then
+                task.wait(1)
+            else
+                for _, npc in ipairs(self.NpcFolder:GetChildren()) do
+                    if not self.AutoChristmas then break end
+
+                    if npc:IsA("Folder") or npc:IsA("Model") then
+                        pcall(function()
+                            self.Remote:InvokeServer(npc.Name, "ChristmasPresents")
+                        end)
+                        task.wait(0.3)
+                    end
+                end
+            end
+
+            task.wait(1)
+        end
+
+        self.AutoThread = nil
+    end)
+end
+
+function GameData:StopAutoChristmas()
+    self.AutoChristmas = false
+    self.AutoThread = nil
+end
+
+sections.Home2:Toggle({
+    Name = "Auto Christmas Presents",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoChristmas = value
+
+        Window:Notify({
+            Title = "Christmas Presents",
+            Description = (value and "Enabled " or "Disabled ") .. "Auto Christmas Presents"
+        })
+
+        if value then
+            GameData:StartAutoChristmas()
+        else
+            GameData:StopAutoChristmas()
+        end
+    end,
+}, "ChristmasPresentsToggle")
+
+function GameData:InitNet()
+    local success, err = pcall(function()
+        self.Packages = self.Services.ReplicatedStorage:FindFirstChild("Packages")
+        if not self.Packages then return end
+
+        self.Index = self.Packages:FindFirstChild("_Index")
+        if not self.Index then return end
+
+        self.NetPackage = self.Index:FindFirstChild("sleitnick_net@0.2.0")
+        if not self.NetPackage then return end
+
+        self.Net = self.NetPackage:FindFirstChild("net")
+        if not self.Net then return end
+
+        self.NetEvent = self.Net:FindFirstChild("RF/SpecialDialogueEvent")
+    end)
+    return success
+end
+
+function GameData:InitDoors()
+    local success, err = pcall(function()
+        self.ChristmasDoors = self.Services.Workspace:FindFirstChild("ChristmasDoors")
+    end)
+    return success
+end
+
+function GameData:StartAutoPresent()
+    if self.AutoThread then return end
+
+    self:InitNet()
+    self:InitDoors()
+
+    self.AutoThread = task.spawn(function()
+        while self.AutoPresentChristmasDoor do
+            if not self.ChristmasDoors or not self.NetEvent then
+                task.wait(1)
+                continue
+            end
+
+            for _, door in pairs(self.ChristmasDoors:GetChildren()) do
+                if not self.AutoPresentChristmasDoor then break end
+
+                pcall(function()
+                    self.NetEvent:InvokeServer(door.Name, "PresentChristmasDoor")
+                end)
+
+                task.wait(0.1)
+            end
+
+            task.wait(10)
+        end
+
+        self.AutoThread = nil
+    end)
+end
+
+function GameData:StopAutoPresent()
+    self.AutoPresentChristmasDoor = false
+    self.AutoThread = nil
+end
+
+sections.Home2:Toggle({
+    Name = "Auto Present Christmas Door",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoPresentChristmasDoor = value
+
+        Window:Notify({
+            Title = "Christmas Door",
+            Description = (value and "Enabled " or "Disabled ") .. "Auto Present Christmas Door"
+        })
+
+        if value then
+            GameData:StartAutoPresent()
+        else
+            GameData:StopAutoPresent()
+        end
+    end,
+}, "PresentChristmasDoorToggle")
 
 sections.Home3:Header({
 	Name = "Discord Server Info"
@@ -1877,113 +2030,7 @@ sections.Fishing2:Input({
     end,
 }, "AntiStuckTimeInput")
 
-sections.Fishing3:Header({
-	Name = "Animation Fishing"
-})
 
-GameData.Player = GameData.Services.Players.LocalPlayer
-
-GameData.REFishCaught =
-    GameData.Services.ReplicatedStorage
-        .Packages._Index["sleitnick_net@0.2.0"]
-        .net["RE/FishCaught"]
-
-GameData.AnimationsFolder = GameData.Services.ReplicatedStorage
-    :WaitForChild("Modules")
-    :WaitForChild("Animations")
-
-GameData.AnimationController =
-    require(GameData.Services.ReplicatedStorage.Controllers.AnimationController)
-
-GameData.OldPlayAnimation = GameData.AnimationController.PlayAnimation
-
-GameData.AnimationController.PlayAnimation = function(self, animName, ...)
-    if GameData.AnimDisabled then
-        return
-    end
-    return GameData.OldPlayAnimation(self, animName, ...)
-end
-
-for _, anim in ipairs(GameData.AnimationsFolder:GetChildren()) do
-    if anim:IsA("Animation") and anim.Name:find("FishCaught") then
-        table.insert(GameData.AnimationList, anim.Name)
-        GameData.AnimationMap[anim.Name] = anim.AnimationId
-    end
-end
-
-function GameData:PlayFishCaught()
-    if not self.AnimationEnabled then return end
-    if not self.SelectedAnimationId then return end
-
-    self.Character = self.Player.Character or self.Player.CharacterAdded:Wait()
-    if not self.Character then return end
-
-    self.Humanoid = self.Character:FindFirstChildOfClass("Humanoid")
-    if not self.Humanoid then return end
-
-    self.Animator = self.Humanoid:FindFirstChildOfClass("Animator")
-    if not self.Animator then
-        self.Animator = Instance.new("Animator")
-        self.Animator.Parent = self.Humanoid
-    end
-
-    if self.CurrentTrack then
-        self.CurrentTrack:Stop()
-        self.CurrentTrack:Destroy()
-        self.CurrentTrack = nil
-    end
-
-    self.AnimationInstance = Instance.new("Animation")
-    self.AnimationInstance.AnimationId = self.SelectedAnimationId
-
-    self.CurrentTrack = self.Animator:LoadAnimation(self.AnimationInstance)
-    self.CurrentTrack:Play()
-end
-
-GameData.REFishCaught.OnClientEvent:Connect(function()
-    GameData:PlayFishCaught()
-end)
-
-sections.Fishing3:Dropdown({
-    Name = "Select Animation FishCaught",
-    Search = true,
-    Multi = false,
-    Required = false,
-    Options = GameData.AnimationList,
-    Default = "",
-    Callback = function(value)
-        GameData.SelectedAnimationId = GameData.AnimationMap[value]
-    end,
-}, "SelectAnimationDropdown")
-
-sections.Fishing3:Toggle({
-    Name = "Load Animation",
-    Default = false,
-    Callback = function(value)
-
-        GameData.AnimationEnabled = value
-        GameData.AnimDisabled = value
-
-        if not value and GameData.CurrentTrack then
-            GameData.CurrentTrack:Stop()
-            GameData.CurrentTrack:Destroy()
-            GameData.CurrentTrack = nil
-        end
-
-        if value then
-            pcall(function()
-                GameData.AnimationController:DestroyActiveAnimationTracks()
-            end)
-        end
-
-        Window:Notify({
-            Title = "Animation",
-            Description = value
-                and "Animation DISABLED"
-                or "Animation NORMAL"
-        })
-    end,
-}, "LoadAnimationToggle")
 sections.Fishing5:Header({
 	Name = "Blatant"
 })
@@ -5189,10 +5236,84 @@ sections.Tp2:Toggle({
 
 print("Teleport system loaded.")
 
-sections.Player:Header({
-	Name = "Hide User Identity"
+sections.Player3:Header({
+	Name = "Player Identity"
 })
 
+GameData.LocalPlayer = GameData.Services.Players.LocalPlayer
+
+function GameData:GetOverhead()
+    if not self.LocalPlayer then return end
+
+    self.Character = self.LocalPlayer.Character
+    if not self.Character then return end
+
+    self.HRP = self.Character:FindFirstChild("HumanoidRootPart")
+    if not self.HRP then return end
+
+    self.Overhead = self.HRP:FindFirstChild("Overhead")
+    if not self.Overhead then return end
+
+    self.Content = self.Overhead:FindFirstChild("Content")
+    self.Header = self.Content and self.Content:FindFirstChild("Header")
+
+    self.LevelContainer = self.Overhead:FindFirstChild("LevelContainer")
+    self.LevelLabel = self.LevelContainer and self.LevelContainer:FindFirstChild("Label")
+end
+
+sections.Player3:Input({
+    Name = "Custom Name",
+    Placeholder = "Username",
+    AcceptedCharacters = "All",
+    Callback = function(input)
+        GameData.CustomName = input or ""
+    end,
+})
+
+sections.Player3:Input({
+    Name = "Custom Level",
+    Placeholder = "Lvl: 999",
+    AcceptedCharacters = "All",
+    Callback = function(input)
+        GameData.CustomLevel = input or ""
+    end,
+})
+
+sections.Player3:Toggle({
+    Name = "Custom Overhead",
+    Default = false,
+    Callback = function(value)
+        GameData.OverheadEnabled = value
+        Window:Notify({
+            Title = "Custom Overhead",
+            Description = value and "Enabled" or "Disabled"
+        })
+    end,
+})
+
+task.spawn(function()
+    while task.wait(0.2) do
+        if not GameData.OverheadEnabled then
+            continue
+        end
+
+        GameData.GetSuccess = pcall(function()
+            GameData:GetOverhead()
+        end)
+
+        if not GameData.GetSuccess then
+            continue
+        end
+
+        if GameData.Header and GameData.CustomName ~= "" then
+            GameData.Header.Text = GameData.CustomName
+        end
+
+        if GameData.LevelLabel and GameData.CustomLevel ~= "" then
+            GameData.LevelLabel.Text = GameData.CustomLevel
+        end
+    end
+end)
 
 sections.Player:Header({
 	Name = "Utility"
@@ -6229,3 +6350,38 @@ Window.onUnloaded(function()
 
     GameData.uiVisible = false
 end)
+
+
+local CoreGui = game:GetService("CoreGui")
+
+local HIDE_TABS = {
+    Exploit = true,
+}
+
+local function getGui()
+    for _, v in ipairs(CoreGui:GetChildren()) do
+        if v.Name == "7b1ba2d6f6d59f993855c6c7616ea41a1e4ef7787e7d3b6dd825dfec57fa882a" then
+            return v
+        end
+    end
+    return nil
+end
+
+local gui = getGui()
+if not gui then
+    warn("[TabHider] GUI not found, skipping")
+    return
+end
+
+
+for _, obj in ipairs(gui:GetDescendants()) do
+    if obj and obj:IsA("TextLabel") and obj.Name == "TabSwitcherName" then
+        local text = obj.Text
+        if text and HIDE_TABS[text] then
+            local tabSwitcher = obj:FindFirstAncestor("TabSwitcher")
+            if tabSwitcher and tabSwitcher:IsA("GuiObject") then
+                tabSwitcher.Visible = false
+            end
+        end
+    end
+end
