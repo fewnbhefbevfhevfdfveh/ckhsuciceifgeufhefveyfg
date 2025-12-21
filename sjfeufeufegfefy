@@ -957,7 +957,6 @@ local sections = {
 
     Fishing1 = tabs.Fishing:Section({ Side = "Full" }),
 	Fishing2 = tabs.Fishing:Section({ Side = "Full" }),
-    Fishing3 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing5 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing6 = tabs.Fishing:Section({ Side = "Full" }),
 
@@ -1851,11 +1850,6 @@ sections.Fishing2:Input({
         end
     end,
 }, "AntiStuckTimeInput")
-
-sections.Fishing3:Header({
-	Name = "Animation Fishing"
-})
-
 
 
 sections.Fishing5:Header({
