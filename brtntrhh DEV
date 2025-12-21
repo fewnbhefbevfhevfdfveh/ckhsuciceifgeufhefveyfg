@@ -481,20 +481,6 @@ local GameData = {
 
     LoopDelay = 1,
 
-    -- ================== [Disco Paragraph] ==================
-    DiscoParagraph = nil,
-    Root = workspace.ClassicEvent.DiscoEvent.DiscoBall:WaitForChild("Root"),
-
-    DefaultCFrame = CFrame.new(-8625, -426.221008, 161.125, 1, 0, 0, 0, 1, 0, 0, 0, 1),
-
-    IsDiscoNow = false,
-    DiscoActive = false,
-
-    -- ================== [Disco Teleport] ==================
-
-    DiscoRoot = workspace.ClassicEvent.DiscoEvent.DiscoBall:WaitForChild("Root"),
-    Players = game:GetService("Players"),
-
     -- ================== [Totems Info Paragraph] ==================
 
     ReplicatedStorage = game:GetService("ReplicatedStorage"),
@@ -802,6 +788,21 @@ local GameData = {
     Humanoid = nil,
     Animator = nil,
     AnimationInstance = nil,
+
+    -- ================== [Auto Reconnect] ==================
+
+    Services = {
+        Players = game:GetService("Players"),
+        TeleportService = game:GetService("TeleportService"),
+        GuiService = game:GetService("GuiService"),
+    },
+
+    Player = nil,
+    PlaceId = game.PlaceId,
+
+    AutoReconnect = false,
+
+    Connections = {},
 }
 
 
@@ -2292,7 +2293,7 @@ GameData.UI.ItemName:GetPropertyChangedSignal("Text"):Connect(function()
         },
 
         ["image"] = {
-            ["url"] = "https://i.imgur.com/4PfH6rb.jpeg"
+            ["url"] = "https://tr.rbxcdn.com/180DAY-f446c1264701227ae463835b155f44af/768/432/Image/Webp/noFilter"
         },
 
         ["author"] = {
@@ -2301,8 +2302,8 @@ GameData.UI.ItemName:GetPropertyChangedSignal("Text"):Connect(function()
         },
 
         ["footer"] = {
-            ["text"] = "Caught by " .. GameData.LocalPlayer.Name .. " | " .. os.date("%H:%M:%S"),
-            ["icon_url"] = "https://tr.rbxcdn.com/180DAY-f446c1264701227ae463835b155f44af/768/432/Image/Webp/noFilter"
+            ["text"] = "Caught by "** .. GameData.LocalPlayer.Name .. **" | " .. os.date("%H:%M:%S"),
+            ["icon_url"] = "https://i.imgur.com/4PfH6rb.jpeg"
         },
 
         ["fields"] = {
@@ -2392,7 +2393,7 @@ sections.Exploit:Toggle({
         Window:Notify({
             Title = "Inf Candy",
             Description = value
-                and ("Enabled - Delay " .. GameData.RejoinDelay .. " detik")
+                and ("Enabled - Delay " .. GameData.RejoinDelay .. " Seconds")
                 or "Disabled"
         })
 
@@ -2796,97 +2797,6 @@ sections.Backpack2:Colorpicker({
 sections.Event:Header({
 	Name = "Event Hunt"
 })
-
-GameData.DiscoParagraph = sections.Event:Paragraph({
-    Header = "Status Event Disco",
-    Body = "Loading..."
-})
-
-task.spawn(function()
-    while true do
-        task.wait(1)
-
-        pcall(function()
-            local dist = (GameData.Root.Position - GameData.DefaultCFrame.Position).Magnitude
-            GameData.IsDiscoNow = dist > 1
-
-            if GameData.IsDiscoNow and not GameData.DiscoActive then
-                GameData.DiscoActive = true
-                GameData.DiscoParagraph:UpdateBody("🎉 Disco BEGINS!")
-            end
-
-            if not GameData.IsDiscoNow and GameData.DiscoActive then
-                GameData.DiscoActive = false
-                GameData.DiscoParagraph:UpdateBody("❌ NO DISCO")
-            end
-        end)
-    end
-end)
-
-GameData.LocalPlayer = GameData.Players.LocalPlayer
-GameData.Character = GameData.LocalPlayer.Character or GameData.LocalPlayer.CharacterAdded:Wait()
-GameData.HumanoidRootPart = GameData.Character:WaitForChild("HumanoidRootPart")
-
-GameData.eventCF = CFrame.new(
-    -8625, -532.471008, 161.125,
-    1, 0, 0,
-    0, 1, 0,
-    0, 0, 1
-)
-
-GameData.targetTP = CFrame.new(
-    -8642.99414, -547.400183, 159.353485,
-    0.139343381, -2.42283136e-08, -0.99024415,
-    4.18495816e-08, 1, -1.85780973e-08,
-    0.99024415, -3.88525692e-08, 0.139343381
-)
-
-GameData.AutoDiscoEvent = false
-GameData.savedPosition = nil
-GameData.teleported = false
-
-sections.Event:Toggle({
-    Name = "Auto Disco Event",
-    Default = false,
-    Callback = function(value)
-        GameData.AutoDiscoEvent = value
-
-        Window:Notify({
-            Title = "Auto Disco Event",
-            Description = value and "Enabled" or "Disabled"
-        })
-
-        if not value then
-            if GameData.teleported and GameData.savedPosition then
-                GameData.HumanoidRootPart.CFrame = GameData.savedPosition
-            end
-            GameData.teleported = false
-            GameData.savedPosition = nil
-        end
-    end,
-}, "AutoDiscoToggle")
-
-task.spawn(function()
-    while task.wait(0.1) do
-        if GameData.AutoDiscoEvent then
-
-            if GameData.DiscoRoot.CFrame == GameData.eventCF and not GameData.teleported then
-                GameData.savedPosition = GameData.HumanoidRootPart.CFrame
-                GameData.HumanoidRootPart.CFrame = GameData.targetTP
-                GameData.teleported = true
-            end
-
-            if GameData.teleported and GameData.DiscoRoot.CFrame ~= GameData.eventCF then
-                if GameData.savedPosition then
-                    GameData.HumanoidRootPart.CFrame = GameData.savedPosition
-                end
-                GameData.teleported = false
-                GameData.savedPosition = nil
-            end
-
-        end
-    end
-end)
 
 -- ====================[Lochness Monster]====================
 
@@ -5505,9 +5415,70 @@ GameData.player.CharacterAdded:Connect(function(char)
 end)
 
 
----------------------------------------------------------
--- 🌊 WALK ON WATER TOGGLE
----------------------------------------------------------
+GameData.Player = GameData.Services.Players.LocalPlayer
+
+function GameData:Rejoin()
+    if not self.AutoReconnect then return end
+
+    task.wait(2)
+
+    local jobId = game.JobId
+    if jobId ~= "" then
+        self.Services.TeleportService:TeleportToPlaceInstance(
+            self.PlaceId,
+            jobId,
+            self.Player
+        )
+    else
+        self.Services.TeleportService:Teleport(
+            self.PlaceId,
+            self.Player
+        )
+    end
+end
+
+function GameData:EnableAutoReconnect()
+    self.Connections.Error =
+        self.Services.GuiService.ErrorMessageChanged:Connect(function()
+            self:Rejoin()
+        end)
+
+    self.Connections.Teleport =
+        self.Player.OnTeleport:Connect(function(state)
+            if state == Enum.TeleportState.Failed then
+                self:Rejoin()
+            end
+        end)
+end
+
+function GameData:DisableAutoReconnect()
+    for _, conn in pairs(self.Connections) do
+        if conn then
+            conn:Disconnect()
+        end
+    end
+    table.clear(self.Connections)
+end
+
+sections.Player:Toggle({
+    Name = "Auto Reconnect",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoReconnect = value
+
+        if value then
+            GameData:EnableAutoReconnect()
+        else
+            GameData:DisableAutoReconnect()
+        end
+
+        Window:Notify({
+            Title = "Auto Reconnect",
+            Description = value and "Enabled" or "Disabled"
+        })
+    end,
+}, "AutoReconnectToggle")
+
 sections.Player:Toggle({ 
     Name = "Walk On Water", 
     Default = false,
