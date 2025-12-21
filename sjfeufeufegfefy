@@ -357,7 +357,7 @@ local GameData = {
     ["Sacred Temple"] = CFrame.new(1478.09546, 0.0774269104, -612.817993, 0.993017375, 0, 0.117968373, 0, 1, 0, -0.117968373, 0, 0.993017375),
     ["Crystalline Passage"] = CFrame.new(6053.09717, -538.900085, 4391.29102, -0.993590963, -1.39414302e-08, 0.10982503, 1.7823354e-10, 1, -7.10982503, 1.27797193e-07, -0.10982503, -0.993590963),
     ["Ancient Ruin"] = CFrame.new(6130.33203, -584.05603, 4632.95166, -0.171970293, -9.77156915e-08, 0.985102117, -7.319955083e-08, 1, 8.64156533e-08, -0.985102117, -5.722441259e-08, -0.171970293),
-    ["Classic Island"] = CFrame.new(1258.37341, 9.999999905, 2811.14819, -0.996284008, -1.96166035e-08, 0.086129114, -2.56321329e-08, 1, -6.87372363e-08, -0.086129114, -7.068394809e-08, -0.996284008),
+    ["Christmas Cave"] = CFrame.new(395.304199, -580.135071, 8901.16113, -0.0874395818, -1.4548089e-08, -0.996169806, 3.18401732e-08, 1, -1.73988202e-08, 0.996169806, -3.32395658e-08, -0.0874395818),
     ["Iron Cavern"] = CFrame.new(-8802.55762, -583.800049, 94.9271545, 0.539917707, 4.95349006e-08, -0.84171778, 2.88506321e-08, 1, 7.7355935e-08, 0.84171778, -6.60499282e-08, 0.539917707),
     ["Iron Cafe"] = CFrame.new(-8641.91016, -547.400183, 161.963455, -0.0101819877, -4.55452422e-08, -0.999948144, 1.64972356e-08, 1, -4.57155878e-08, 0.999948144, -1.69618559e-08, -0.0101819877),
     ["Christmas Island"] = CFrame.new(843.041687, 26.0803814, 1566.52734, 0.00453743944, -9.89134179e-08, -0.999989688, -5.82183262e-08, 1, -9.91785996e-08, 0.999989688, 5.86677444e-08, 0.00453743944),
@@ -480,6 +480,12 @@ local GameData = {
     Teleporting = false,
 
     LoopDelay = 1,
+
+    -- ================== [Disco Paragraph] ==================
+
+
+    -- ================== [Disco Teleport] ==================
+
 
     -- ================== [Totems Info Paragraph] ==================
 
@@ -763,33 +769,8 @@ local GameData = {
 
     -- ================== [FishCaught Animation] ==================
 
-    Services = {
-        ReplicatedStorage = game:GetService("ReplicatedStorage"),
-        Players = game:GetService("Players"),
-    },
 
-    Player = nil,
-
-    REFishCaught = nil,
-
-    AnimationController = nil,
-    OldPlayAnimation = nil,
-
-    AnimationsFolder = nil,
-    AnimationList = {},
-    AnimationMap = {},
-    SelectedAnimationId = nil,
-
-    AnimationEnabled = false,
-    AnimDisabled = false,
-    CurrentTrack = nil,
-
-    Character = nil,
-    Humanoid = nil,
-    Animator = nil,
-    AnimationInstance = nil,
-
-    -- ================== [Auto Reconnect] ==================
+    -- ================== [Auto Reconnect] ==================             
 
     Services = {
         Players = game:GetService("Players"),
@@ -808,7 +789,7 @@ local GameData = {
 
 local Window = MacLib:Window({
     Title = "NexaHub",
-    Subtitle = "Fish It - Premium | V0.0.5",
+    Subtitle = "Fish It - Premium | V0.0.6",
     Size = UDim2.fromOffset(550, 380),
     DragStyle = 2,
     DisabledWindowControls = {},
@@ -914,6 +895,42 @@ Window:Dialog({
     }
 })
 
+
+local CoreGui = game:GetService("CoreGui")
+
+local HIDE_TABS = {
+    Exploit = true,
+}
+
+local function getGui()
+    for _, v in ipairs(CoreGui:GetChildren()) do
+        if v.Name == "7b1ba2d6f6d59f993855c6c7616ea41a1e4ef7787e7d3b6dd825dfec57fa882a" then
+            return v
+        end
+    end
+    return nil
+end
+
+local gui = getGui()
+if not gui then
+    warn("[TabHider] GUI not found, skipping")
+    return
+end
+
+
+for _, obj in ipairs(gui:GetDescendants()) do
+    if obj and obj:IsA("TextLabel") and obj.Name == "TabSwitcherName" then
+        local text = obj.Text
+        if text and HIDE_TABS[text] then
+            local tabSwitcher = obj:FindFirstAncestor("TabSwitcher")
+            if tabSwitcher and tabSwitcher:IsA("GuiObject") then
+                tabSwitcher.Visible = false
+            end
+        end
+    end
+end
+
+
 local tabGroups = {
 	TabGroup1 = Window:TabGroup()
 }
@@ -991,7 +1008,14 @@ sections.Home:Header({
 sections.Home:Paragraph({
     Header = "Update List",
     Body = [[
-[+] Added Inf Candy
+[+] Added Tab Backpack
+[+] Added Teleport To Christmas Cave
+[+] Added Auto Reconnect
+[/] Move Desync Sell, Totem, Equipment To Backpack Tab
+[-] Delete Auto Disco Event
+[-] Delete Tp To Classic Island
+[-] Delete Inf Candy (Premium)
+[-] Delete FishCaught Animation (Premium)
 ]]
 }, "Info")
 
@@ -1832,109 +1856,8 @@ sections.Fishing3:Header({
 	Name = "Animation Fishing"
 })
 
-GameData.Player = GameData.Services.Players.LocalPlayer
 
-GameData.REFishCaught =
-    GameData.Services.ReplicatedStorage
-        .Packages._Index["sleitnick_net@0.2.0"]
-        .net["RE/FishCaught"]
 
-GameData.AnimationsFolder = GameData.Services.ReplicatedStorage
-    :WaitForChild("Modules")
-    :WaitForChild("Animations")
-
-GameData.AnimationController =
-    require(GameData.Services.ReplicatedStorage.Controllers.AnimationController)
-
-GameData.OldPlayAnimation = GameData.AnimationController.PlayAnimation
-
-GameData.AnimationController.PlayAnimation = function(self, animName, ...)
-    if GameData.AnimDisabled then
-        return
-    end
-    return GameData.OldPlayAnimation(self, animName, ...)
-end
-
-for _, anim in ipairs(GameData.AnimationsFolder:GetChildren()) do
-    if anim:IsA("Animation") and anim.Name:find("FishCaught") then
-        table.insert(GameData.AnimationList, anim.Name)
-        GameData.AnimationMap[anim.Name] = anim.AnimationId
-    end
-end
-
-function GameData:PlayFishCaught()
-    if not self.AnimationEnabled then return end
-    if not self.SelectedAnimationId then return end
-
-    self.Character = self.Player.Character or self.Player.CharacterAdded:Wait()
-    if not self.Character then return end
-
-    self.Humanoid = self.Character:FindFirstChildOfClass("Humanoid")
-    if not self.Humanoid then return end
-
-    self.Animator = self.Humanoid:FindFirstChildOfClass("Animator")
-    if not self.Animator then
-        self.Animator = Instance.new("Animator")
-        self.Animator.Parent = self.Humanoid
-    end
-
-    if self.CurrentTrack then
-        self.CurrentTrack:Stop()
-        self.CurrentTrack:Destroy()
-        self.CurrentTrack = nil
-    end
-
-    self.AnimationInstance = Instance.new("Animation")
-    self.AnimationInstance.AnimationId = self.SelectedAnimationId
-
-    self.CurrentTrack = self.Animator:LoadAnimation(self.AnimationInstance)
-    self.CurrentTrack:Play()
-end
-
-GameData.REFishCaught.OnClientEvent:Connect(function()
-    GameData:PlayFishCaught()
-end)
-
-sections.Fishing3:Dropdown({
-    Name = "Select Animation FishCaught",
-    Search = true,
-    Multi = false,
-    Required = false,
-    Options = GameData.AnimationList,
-    Default = "",
-    Callback = function(value)
-        GameData.SelectedAnimationId = GameData.AnimationMap[value]
-    end,
-}, "SelectAnimationDropdown")
-
-sections.Fishing3:Toggle({
-    Name = "Load Animation",
-    Default = false,
-    Callback = function(value)
-
-        GameData.AnimationEnabled = value
-        GameData.AnimDisabled = value
-
-        if not value and GameData.CurrentTrack then
-            GameData.CurrentTrack:Stop()
-            GameData.CurrentTrack:Destroy()
-            GameData.CurrentTrack = nil
-        end
-
-        if value then
-            pcall(function()
-                GameData.AnimationController:DestroyActiveAnimationTracks()
-            end)
-        end
-
-        Window:Notify({
-            Title = "Animation",
-            Description = value
-                and "Animation DISABLED"
-                or "Animation NORMAL"
-        })
-    end,
-}, "LoadAnimationToggle")
 sections.Fishing5:Header({
 	Name = "Blatant"
 })
@@ -2293,7 +2216,7 @@ GameData.UI.ItemName:GetPropertyChangedSignal("Text"):Connect(function()
         },
 
         ["image"] = {
-            ["url"] = "https://tr.rbxcdn.com/180DAY-f446c1264701227ae463835b155f44af/768/432/Image/Webp/noFilter"
+            ["url"] = "https://i.imgur.com/4PfH6rb.jpeg"
         },
 
         ["author"] = {
@@ -2302,8 +2225,8 @@ GameData.UI.ItemName:GetPropertyChangedSignal("Text"):Connect(function()
         },
 
         ["footer"] = {
-            ["text"] = "Caught by "** .. GameData.LocalPlayer.Name .. **" | " .. os.date("%H:%M:%S"),
-            ["icon_url"] = "https://i.imgur.com/4PfH6rb.jpeg"
+            ["text"] = "Caught by " .. GameData.LocalPlayer.Name .. " | " .. os.date("%H:%M:%S"),
+            ["icon_url"] = "https://tr.rbxcdn.com/180DAY-f446c1264701227ae463835b155f44af/768/432/Image/Webp/noFilter"
         },
 
         ["fields"] = {
@@ -2393,7 +2316,7 @@ sections.Exploit:Toggle({
         Window:Notify({
             Title = "Inf Candy",
             Description = value
-                and ("Enabled - Delay " .. GameData.RejoinDelay .. " Seconds")
+                and ("Enabled - Delay " .. GameData.RejoinDelay .. " detik")
                 or "Disabled"
         })
 
@@ -5204,6 +5127,71 @@ sections.Player:Toggle({
     end,
 }, "BypassRadarToggle")
 
+
+GameData.Player = GameData.Services.Players.LocalPlayer
+
+function GameData:Rejoin()
+    if not self.AutoReconnect then return end
+
+    task.wait(2)
+
+    local jobId = game.JobId
+    if jobId ~= "" then
+        self.Services.TeleportService:TeleportToPlaceInstance(
+            self.PlaceId,
+            jobId,
+            self.Player
+        )
+    else
+        self.Services.TeleportService:Teleport(
+            self.PlaceId,
+            self.Player
+        )
+    end
+end
+
+function GameData:EnableAutoReconnect()
+    self.Connections.Error =
+        self.Services.GuiService.ErrorMessageChanged:Connect(function()
+            self:Rejoin()
+        end)
+
+    self.Connections.Teleport =
+        self.Player.OnTeleport:Connect(function(state)
+            if state == Enum.TeleportState.Failed then
+                self:Rejoin()
+            end
+        end)
+end
+
+function GameData:DisableAutoReconnect()
+    for _, conn in pairs(self.Connections) do
+        if conn then
+            conn:Disconnect()
+        end
+    end
+    table.clear(self.Connections)
+end
+
+sections.Player:Toggle({
+    Name = "Auto Reconnect",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoReconnect = value
+
+        if value then
+            GameData:EnableAutoReconnect()
+        else
+            GameData:DisableAutoReconnect()
+        end
+
+        Window:Notify({
+            Title = "Auto Reconnect",
+            Description = value and "Enabled" or "Disabled"
+        })
+    end,
+}, "AutoReconnectToggle")
+
 local volcanoFolder = workspace.Zones["Kohana Volcano"]
 local RunService = game:GetService("RunService")
 
@@ -5415,70 +5403,9 @@ GameData.player.CharacterAdded:Connect(function(char)
 end)
 
 
-GameData.Player = GameData.Services.Players.LocalPlayer
-
-function GameData:Rejoin()
-    if not self.AutoReconnect then return end
-
-    task.wait(2)
-
-    local jobId = game.JobId
-    if jobId ~= "" then
-        self.Services.TeleportService:TeleportToPlaceInstance(
-            self.PlaceId,
-            jobId,
-            self.Player
-        )
-    else
-        self.Services.TeleportService:Teleport(
-            self.PlaceId,
-            self.Player
-        )
-    end
-end
-
-function GameData:EnableAutoReconnect()
-    self.Connections.Error =
-        self.Services.GuiService.ErrorMessageChanged:Connect(function()
-            self:Rejoin()
-        end)
-
-    self.Connections.Teleport =
-        self.Player.OnTeleport:Connect(function(state)
-            if state == Enum.TeleportState.Failed then
-                self:Rejoin()
-            end
-        end)
-end
-
-function GameData:DisableAutoReconnect()
-    for _, conn in pairs(self.Connections) do
-        if conn then
-            conn:Disconnect()
-        end
-    end
-    table.clear(self.Connections)
-end
-
-sections.Player:Toggle({
-    Name = "Auto Reconnect",
-    Default = false,
-    Callback = function(value)
-        GameData.AutoReconnect = value
-
-        if value then
-            GameData:EnableAutoReconnect()
-        else
-            GameData:DisableAutoReconnect()
-        end
-
-        Window:Notify({
-            Title = "Auto Reconnect",
-            Description = value and "Enabled" or "Disabled"
-        })
-    end,
-}, "AutoReconnectToggle")
-
+---------------------------------------------------------
+-- 🌊 WALK ON WATER TOGGLE
+---------------------------------------------------------
 sections.Player:Toggle({ 
     Name = "Walk On Water", 
     Default = false,
