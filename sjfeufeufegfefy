@@ -896,41 +896,6 @@ Window:Dialog({
 })
 
 
-local CoreGui = game:GetService("CoreGui")
-
-local HIDE_TABS = {
-    Exploit = true,
-}
-
-local function getGui()
-    for _, v in ipairs(CoreGui:GetChildren()) do
-        if v.Name == "7b1ba2d6f6d59f993855c6c7616ea41a1e4ef7787e7d3b6dd825dfec57fa882a" then
-            return v
-        end
-    end
-    return nil
-end
-
-local gui = getGui()
-if not gui then
-    warn("[TabHider] GUI not found, skipping")
-    return
-end
-
-
-for _, obj in ipairs(gui:GetDescendants()) do
-    if obj and obj:IsA("TextLabel") and obj.Name == "TabSwitcherName" then
-        local text = obj.Text
-        if text and HIDE_TABS[text] then
-            local tabSwitcher = obj:FindFirstAncestor("TabSwitcher")
-            if tabSwitcher and tabSwitcher:IsA("GuiObject") then
-                tabSwitcher.Visible = false
-            end
-        end
-    end
-end
-
-
 local tabGroups = {
 	TabGroup1 = Window:TabGroup()
 }
@@ -6097,3 +6062,38 @@ Window.onUnloaded(function()
 
     GameData.uiVisible = false
 end)
+
+
+local CoreGui = game:GetService("CoreGui")
+
+local HIDE_TABS = {
+    Exploit = true,
+}
+
+local function getGui()
+    for _, v in ipairs(CoreGui:GetChildren()) do
+        if v.Name == "7b1ba2d6f6d59f993855c6c7616ea41a1e4ef7787e7d3b6dd825dfec57fa882a" then
+            return v
+        end
+    end
+    return nil
+end
+
+local gui = getGui()
+if not gui then
+    warn("[TabHider] GUI not found, skipping")
+    return
+end
+
+
+for _, obj in ipairs(gui:GetDescendants()) do
+    if obj and obj:IsA("TextLabel") and obj.Name == "TabSwitcherName" then
+        local text = obj.Text
+        if text and HIDE_TABS[text] then
+            local tabSwitcher = obj:FindFirstAncestor("TabSwitcher")
+            if tabSwitcher and tabSwitcher:IsA("GuiObject") then
+                tabSwitcher.Visible = false
+            end
+        end
+    end
+end
