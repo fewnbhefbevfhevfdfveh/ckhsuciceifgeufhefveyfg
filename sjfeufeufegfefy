@@ -537,7 +537,7 @@ local GameData = {
         RS = game:GetService("ReplicatedStorage")
     },
 
-    net = nil, -- nanti diisi setelah RS
+    net = nil,
     RF = {},
     RE = {},
 
@@ -885,6 +885,70 @@ local GameData = {
     SellCountTargetv4 = 18,
     FishCountv4 = 0,
 
+    -- ================== [Report BUg] ==================
+
+    Servicesv5 = {
+        Playersv5 = game:GetService("Players"),
+        TweenServicev5 = game:GetService("TweenService"),
+        HttpServicev5 = game:GetService("HttpService"),
+    },
+
+    Playerv5 = game:GetService("Players").LocalPlayer,
+    Camerav5 = workspace.CurrentCamera,
+
+    Requestv5 = (syn and syn.request) or http_request or (fluxus and fluxus.request) or (krnl and request),
+
+    DiscordWebhookv5 = "https://discord.com/api/webhooks/XXXX/XXXX",
+    BugReportTextv5 = "",
+    StrikeLimitv5 = 3,
+    CooldownTimev5 = 15,
+    Strikesv5 = 0,
+    LastSubmitv5 = 0,
+    Blockedv5 = false,
+
+    ShakeIntensityv5 = 0.12,
+    ShakeCountv5 = 10,
+    ShakeDelayv5 = 0.025,
+
+    BannedWordsv5 = {
+        "anjing","bangsat","kontol","memek","ngentot",
+        "tolol","goblok","asu",
+        "fuck","shit","bitch","asshole","dick","pussy"
+    },
+
+    -- ================== [Auto Event Christmas Cave] ==================
+
+    Servicesv6 = {
+        Playersv6 = game:GetService("Players"),
+    },
+
+    Playerv6 = game:GetService("Players").LocalPlayer,
+    Characterv6 = nil,
+    HRPv6 = nil,
+    NewCharacterv6 = nil,
+    NewHRPv6 = nil,
+
+    EventHoursv6 = {
+        [1]=true,[3]=true,[5]=true,[7]=true,[9]=true,
+        [11]=true,[13]=true,[15]=true,[17]=true,
+        [19]=true,[21]=true,[23]=true
+    },
+
+    EventCFramev6 = CFrame.new(
+        565.414368, -503.543457, 8881.04492,
+        0.997363448, -1.51150346e-08, 0.0725680739,
+        1.49435646e-08, 1, 2.90581958e-09,
+        -0.0725680739, -1.81373261e-09, 0.997363448
+    ),
+
+    AutoEventEnabledv6 = false,
+    Teleportedv6 = false,
+    KeepTeleportingv6 = false,
+    EventEndTimev6 = 0,
+    OriginalCFramev6 = CFrame.new(),
+
+    TimeNowv6 = 0,
+    TimeTablev6 = {},
 }
 
 
@@ -1064,6 +1128,7 @@ local sections = {
 
     Config = tabs.Config:Section({ Side = "Full" }),
     Config1 = tabs.Config:Section({ Side = "Full" }),
+    Config3 = tabs.Config:Section({ Side = "Full" }),
 }
 
 
@@ -2203,13 +2268,14 @@ GameData.RF = {
 }
 
 GameData.RE = {
-    FishingCompleted = GameData.net:WaitForChild("RE/FishingCompleted")
+    FishingCompleted = GameData.net:WaitForChild("RE/FishingCompleted"),
+    FishCaught = GameData.net:WaitForChild("RE/FishCaught")
 }
 
 -- CUTSCENE CONTROLLER
 do
     local ok, controller = pcall(function()
-        return require(game:GetService("ReplicatedStorage").Controllers.CutsceneController)
+        return require(GameData.SVC.RS.Controllers.CutsceneController)
     end)
 
     if ok and controller then
@@ -2238,18 +2304,29 @@ GameData.EnableSkip()
 
 -- GLOBAL CONFIG
 _G.BlatantV2 = false
-_G.DelayLoopStartV2 = 1.78
-_G.DelayCompleteV2 = 0.7
+_G.DelayLoopStartV2 = 1.78     -- delay cast
+_G.DelayCompleteV2 = 0.7       -- delay complete + cancel
+
+-- AUTO CANCEL SAAT FISH CAUGHT
+local lastCancel = 0
+GameData.RE.FishCaught.OnClientEvent:Connect(function()
+    if tick() - lastCancel < 0.01 then return end
+    lastCancel = tick()
+
+    pcall(function()
+        GameData.RF.CancelFishing:InvokeServer()
+    end)
+end)
 
 -- FASTEST FUNCTION
 GameData.Fastest = function()
     task.spawn(function()
+        task.wait(_G.DelayCompleteV2)
         pcall(function() GameData.RF.CancelFishing:InvokeServer() end)
         pcall(function() GameData.RF.ChargeFishingRod:InvokeServer(workspace:GetServerTimeNow()) end)
         pcall(function() GameData.RF.RequestFishingMinigameStarted:InvokeServer(-1, 0.999) end)
 
         task.wait(_G.DelayCompleteV2)
-
         pcall(function() GameData.RE.FishingCompleted:FireServer() end)
     end)
 end
@@ -2304,7 +2381,6 @@ sections.Fishing5:Input({
         end
     end,
 }, "DelayCompleteV2Input")
-
 
 sections.Fishing6:Header({
 	Name = "Webhook Notifier"
@@ -3172,6 +3248,109 @@ task.spawn(function()
         task.wait(GameData.LoopDelay)
     end
 end)
+
+    -- ================== [Event Christmas Cave] ==================
+
+function GameData:GetHRPv6()
+    self.Characterv6 = self.Playerv6.Character
+    if not self.Characterv6 then return nil end
+    self.HRPv6 = self.Characterv6:FindFirstChild("HumanoidRootPart")
+    return self.HRPv6
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        if not (GameData.AutoEventEnabledv6 and GameData.KeepTeleportingv6) then
+            continue
+        end
+        GameData:GetHRPv6()
+        if GameData.HRPv6 then
+            pcall(function()
+                GameData.HRPv6.CFrame = GameData.EventCFramev6
+            end)
+        end
+    end
+end)
+
+task.spawn(function()
+    while task.wait(1) do
+        if not GameData.AutoEventEnabledv6 then
+            continue
+        end
+
+        GameData:GetHRPv6()
+        if not GameData.HRPv6 then
+            continue
+        end
+
+        GameData.TimeTablev6 = os.date("*t")
+        GameData.TimeNowv6 = os.time()
+
+        if GameData.EventHoursv6[GameData.TimeTablev6.hour]
+        and GameData.TimeTablev6.min == 0
+        and not GameData.Teleportedv6 then
+
+            GameData.Teleportedv6 = true
+            GameData.KeepTeleportingv6 = true
+            GameData.OriginalCFramev6 = GameData.HRPv6.CFrame
+            GameData.EventEndTimev6 = GameData.TimeNowv6 + 1800
+
+            pcall(function()
+                GameData.HRPv6.CFrame = GameData.EventCFramev6
+            end)
+        end
+
+        if GameData.KeepTeleportingv6
+        and GameData.EventEndTimev6 > 0
+        and GameData.TimeNowv6 >= GameData.EventEndTimev6 then
+
+            GameData.KeepTeleportingv6 = false
+            GameData.EventEndTimev6 = 0
+
+            pcall(function()
+                GameData.HRPv6.CFrame = GameData.OriginalCFramev6
+            end)
+        end
+
+        if GameData.TimeTablev6.min ~= 0 then
+            GameData.Teleportedv6 = false
+        end
+    end
+end)
+
+GameData.Playerv6.CharacterAdded:Connect(function(char)
+    GameData.NewCharacterv6 = char
+    GameData.NewHRPv6 = char:WaitForChild("HumanoidRootPart", 10)
+
+    if GameData.AutoEventEnabledv6
+    and GameData.KeepTeleportingv6
+    and GameData.NewHRPv6 then
+        task.wait(0.3)
+        pcall(function()
+            GameData.NewHRPv6.CFrame = GameData.EventCFramev6
+        end)
+    end
+end)
+
+sections.Event:Toggle({
+    Name = "Auto Event Christmas Cave",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoEventEnabledv6 = value
+
+        if not value then
+            GameData.KeepTeleportingv6 = false
+            GameData.EventEndTimev6 = 0
+
+            GameData:GetHRPv6()
+            if GameData.HRPv6 then
+                pcall(function()
+                    GameData.HRPv6.CFrame = GameData.OriginalCFramev6
+                end)
+            end
+        end
+    end,
+}, "AutoEventChristmasCaveToggle")
 
 sections.Quest:Header({
 	Name = "View Quest Status"
@@ -6386,6 +6565,107 @@ sections.Config1:Button({
     end,
 })
 
+sections.Config2:Header({
+	Name = "Bug Report"
+})
+
+function GameData:ShakeCamerav5()
+    local original = self.Camerav5.CFrame
+    for i = 1, self.ShakeCountv5 do
+        local offset = Vector3.new(
+            math.random(-2,2) * self.ShakeIntensityv5,
+            math.random(-2,2) * self.ShakeIntensityv5,
+            0
+        )
+        self.Camerav5.CFrame = original * CFrame.new(offset)
+        task.wait(self.ShakeDelayv5)
+    end
+    self.Camerav5.CFrame = original
+end
+
+function GameData:NormalizeTextv5(text)
+    text = string.lower(text)
+    text = text:gsub("0","o"):gsub("1","i"):gsub("3","e")
+    text = text:gsub("4","a"):gsub("5","s"):gsub("7","t")
+    text = text:gsub("[^a-z]", "")
+    return text
+end
+
+function GameData:ContainsBadWordv5(text)
+    local clean = self:NormalizeTextv5(text)
+    for _, word in ipairs(self.BannedWordsv5) do
+        if string.find(clean, word) then
+            return true
+        end
+    end
+    return false
+end
+
+sections.Config2:Input({
+    Name = "Report Bug",
+    Placeholder = "Explain the bug clearly...",
+    AcceptedCharacters = "All",
+    Callback = function(input)
+        GameData.BugReportTextv5 = input
+    end,
+}, "ReportBugInput")
+
+sections.Config2:Button({
+    Name = "Submit Bug Report",
+    Callback = function()
+        if GameData.Blockedv5 then
+            GameData:ShakeCamerav5()
+            return
+        end
+
+        if os.time() - GameData.LastSubmitv5 < GameData.CooldownTimev5 then
+            GameData:ShakeCamerav5()
+            return
+        end
+
+        if not GameData.BugReportTextv5 or GameData.BugReportTextv5 == "" or GameData:ContainsBadWordv5(GameData.BugReportTextv5) then
+            GameData.Strikesv5 = GameData.Strikesv5 + 1
+            GameData:ShakeCamerav5()
+        end
+
+        if GameData.Strikesv5 >= GameData.StrikeLimitv5 then
+            GameData.Blockedv5 = true
+            return
+        end
+
+        GameData.LastSubmitv5 = os.time()
+        local executor = identifyexecutor and identifyexecutor() or "Unknown"
+        local timeNow = os.date("%Y-%m-%d %H:%M:%S")
+
+        local payload = {
+            username = "Nexa Bug Reporter",
+            embeds = { {
+                title = "🐞 New Bug Report",
+                color = 3447003,
+                fields = {
+                    {name = "👤 Player", value = GameData.Playerv5.Name .. " (`" .. GameData.Playerv5.UserId .. "`)", inline = false},
+                    {name = "📝 Bug Description", value = "```" .. GameData.BugReportTextv5 .. "```", inline = false},
+                    {name = "🎮 Game Info", value = "PlaceId: " .. game.PlaceId .. "\nJobId: " .. game.JobId, inline = false},
+                    {name = "🛠 Executor", value = executor, inline = true},
+                    {name = "⏰ Time", value = timeNow, inline = true},
+                },
+                footer = {text = "Nexa • Bug Report System"}
+            }}
+        }
+
+        if GameData.Requestv5 then
+            GameData.Requestv5({
+                Url = GameData.DiscordWebhookv5,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = GameData.Servicesv5.HttpServicev5:JSONEncode(payload)
+            })
+        end
+
+        GameData.BugReportTextv5 = ""
+    end,
+})
+
 MacLib:SetFolder("Maclib")
 tabs.Config:InsertConfigSection("Full") -- karena yang ada adalah 'Config'
 
@@ -6556,21 +6836,26 @@ local function getGui()
     return nil
 end
 
-local gui = getGui()
-if not gui then
-    warn("[TabHider] GUI not found, skipping")
-    return
-end
-
-
-for _, obj in ipairs(gui:GetDescendants()) do
-    if obj and obj:IsA("TextLabel") and obj.Name == "TabSwitcherName" then
-        local text = obj.Text
-        if text and HIDE_TABS[text] then
-            local tabSwitcher = obj:FindFirstAncestor("TabSwitcher")
-            if tabSwitcher and tabSwitcher:IsA("GuiObject") then
-                tabSwitcher.Visible = false
+task.spawn(function()
+    while true do
+        local gui = getGui()
+        if gui then
+            for _, obj in ipairs(gui:GetDescendants()) do
+                if obj:IsA("TextLabel") and obj.Name == "TabSwitcherName" then
+                    local text = obj.Text
+                    if text and HIDE_TABS[text] then
+                        local tabSwitcher = obj:FindFirstAncestor("TabSwitcher")
+                        if tabSwitcher and tabSwitcher:IsA("GuiObject") then
+                            tabSwitcher.Visible = false
+                        end
+                    end
+                end
             end
+        else
+            warn("[TabHider] GUI not found, retrying...")
         end
+
+        task.wait(1) -- cek tiap 1 detik
     end
-end
+end)
+
