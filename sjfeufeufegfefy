@@ -1075,8 +1075,6 @@ local sections = {
     Fishing5 = tabs.Fishing:Section({ Side = "Full" }),
     Fishing6 = tabs.Fishing:Section({ Side = "Full" }),
 
-    Exploit = tabs.Exploit:Section({ Side = "Full" }),
-
     Backpack = tabs.Backpack:Section({ Side = "Full" }),
     Backpack1 = tabs.Backpack:Section({ Side = "Full" }),
     Backpack2 = tabs.Backpack:Section({ Side = "Full" }),
