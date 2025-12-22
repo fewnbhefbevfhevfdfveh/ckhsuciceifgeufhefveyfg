@@ -751,21 +751,6 @@ local GameData = {
 
     -- ================== [Inf Candy] ==================
 
-    Services = {
-        HttpService = game:GetService("HttpService"),
-        TeleportService = game:GetService("TeleportService"),
-        Players = game:GetService("Players"),
-    },
-
-    Player = nil,
-    PlaceId = game.PlaceId,
-    JobId = game.JobId,
-
-    RejoinDelay = 5,
-    SaveFile = "InfCandyConfig.json",
-
-    InfCandy = false,
-    InfCandyThread = nil,
 
     -- ================== [FishCaught Animation] ==================
 
@@ -1069,7 +1054,6 @@ local tabs = {
     Home = tabGroups.TabGroup1:Tab({ Name = "Home", Image = "rbxassetid://103124389616816" }),
 	Fishing = tabGroups.TabGroup1:Tab({ Name = "Fishing", Image = "rbxassetid://97899956724998" }),
     Backpack = tabGroups.TabGroup1:Tab({ Name = "Backpack", Image = "rbxassetid://107912851707883" }),
-    Exploit = tabGroups.TabGroup1:Tab({ Name = "Exploit", Image = "rbxassetid://97624371540285" }),
     Event = tabGroups.TabGroup1:Tab({ Name = "Event", Image = "rbxassetid://139605405636145" }),
 	Quest = tabGroups.TabGroup1:Tab({ Name = "Quest", Image = "rbxassetid://70719631016787" }),
     Auto = tabGroups.TabGroup1:Tab({ Name = "Automatic", Image = "rbxassetid://100691400534443" }),
@@ -1128,7 +1112,7 @@ local sections = {
 
     Config = tabs.Config:Section({ Side = "Full" }),
     Config1 = tabs.Config:Section({ Side = "Full" }),
-    Config3 = tabs.Config:Section({ Side = "Full" }),
+    Config2 = tabs.Config:Section({ Side = "Full" }),
 }
 
 
@@ -2653,91 +2637,6 @@ GameData.UI.ItemName:GetPropertyChangedSignal("Text"):Connect(function()
     GameData.SendEmbed({embeds = embed})
 
 end)
-
-sections.Exploit:Header({
-	Name = "Candy"
-})
-
-GameData.Player = GameData.Services.Players.LocalPlayer
-
-function GameData:SaveConfig()
-    if not writefile then return end
-
-    writefile(
-        self.SaveFile,
-        self.Services.HttpService:JSONEncode({
-            InfCandy = self.InfCandy
-        })
-    )
-end
-
-function GameData:LoadConfig()
-    if not readfile or not isfile or not isfile(self.SaveFile) then
-        return
-    end
-
-    local ok, data = pcall(function()
-        return self.Services.HttpService:JSONDecode(readfile(self.SaveFile))
-    end)
-
-    if ok and data then
-        self.InfCandy = data.InfCandy == true
-    end
-end
-
-GameData:LoadConfig()
-
-function GameData:StartInfCandy()
-    if self.InfCandyThread then return end
-
-    self.InfCandyThread = task.spawn(function()
-        while self.InfCandy do
-            task.wait(self.RejoinDelay)
-
-            if not self.InfCandy then break end
-
-            pcall(function()
-                self.Services.TeleportService:TeleportToPlaceInstance(
-                    self.PlaceId,
-                    self.JobId,
-                    self.Player
-                )
-            end)
-        end
-
-        self.InfCandyThread = nil
-    end)
-end
-
-function GameData:StopInfCandy()
-    self.InfCandy = false
-end
-
-sections.Exploit:Toggle({
-    Name = "Inf Candy",
-    Default = GameData.InfCandy,
-    Callback = function(value)
-        GameData.InfCandy = value
-        GameData:SaveConfig()
-
-        Window:Notify({
-            Title = "Inf Candy",
-            Description = value
-                and ("Enabled - Delay " .. GameData.RejoinDelay .. " detik")
-                or "Disabled"
-        })
-
-        if value then
-            GameData:StartInfCandy()
-        else
-            GameData:StopInfCandy()
-        end
-    end,
-}, "InfCandyToggle")
-
-if GameData.InfCandy then
-    GameData:StartInfCandy()
-end
 
 sections.Backpack:Header({
 	Name = "Equipment Feature"
@@ -6818,44 +6717,5 @@ Window.onUnloaded(function()
     end
 
     GameData.uiVisible = false
-end)
-
-
-local CoreGui = game:GetService("CoreGui")
-
-local HIDE_TABS = {
-    Exploit = true,
-}
-
-local function getGui()
-    for _, v in ipairs(CoreGui:GetChildren()) do
-        if v.Name == "7b1ba2d6f6d59f993855c6c7616ea41a1e4ef7787e7d3b6dd825dfec57fa882a" then
-            return v
-        end
-    end
-    return nil
-end
-
-task.spawn(function()
-    while true do
-        local gui = getGui()
-        if gui then
-            for _, obj in ipairs(gui:GetDescendants()) do
-                if obj:IsA("TextLabel") and obj.Name == "TabSwitcherName" then
-                    local text = obj.Text
-                    if text and HIDE_TABS[text] then
-                        local tabSwitcher = obj:FindFirstAncestor("TabSwitcher")
-                        if tabSwitcher and tabSwitcher:IsA("GuiObject") then
-                            tabSwitcher.Visible = false
-                        end
-                    end
-                end
-            end
-        else
-            warn("[TabHider] GUI not found, retrying...")
-        end
-
-        task.wait(1) -- cek tiap 1 detik
-    end
 end)
 
