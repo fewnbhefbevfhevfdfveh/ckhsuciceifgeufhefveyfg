@@ -3,6 +3,7 @@ local WHITELIST = {
     3576360668,
     9005676891,
     2304459668,
+    8309797161,
 }
 
 local Players = game:GetService("Players")
