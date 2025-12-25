@@ -20,16 +20,6 @@ local GameData = {
 
     executorName = "Detecting...",
 
-    -- ================== [View Bobbers] ==================
-
-    Players = game:GetService("Players"),
-    RunService = game:GetService("RunService"),
-    Camera = workspace.CurrentCamera,
-    Player = nil, -- nanti diisi
-    UserIdString = nil, -- nanti diisi
-    CosmeticFolder = workspace:WaitForChild("CosmeticFolder"),
-    ViewBobbersEnabled = false,
-
    -- ================== [Codes] ==================
 
     Codes = {
@@ -2292,7 +2282,7 @@ _G.DelayCompleteV2 = 0.7       -- delay complete + cancel
 -- AUTO CANCEL SAAT FISH CAUGHT
 local lastCancel = 0
 GameData.RE.FishCaught.OnClientEvent:Connect(function()
-    if tick() - lastCancel < 0.01 then return end
+    if tick() - lastCancel < 0.001 then return end
     lastCancel = tick()
 
     pcall(function()
@@ -3059,7 +3049,7 @@ sections.Event:Header({
 -- ====================[Lochness Monster]====================
 
 GameData.CountdownLabel =
-    GameData.Workspace["!!! MENU RINGS"]["Event Tracker"]
+    GameData.Workspace["!!! DEPENDENCIES"]["Event Tracker"]
         .Main.Gui.Content.Items.Countdown.Label
 
 
@@ -3088,7 +3078,7 @@ end)
 GameData.LocalPlayer = GameData.Players.LocalPlayer
 
 GameData.TimerLabel =
-    GameData.Workspace["!!! MENU RINGS"]["Event Tracker"]
+    GameData.Workspace["!!! DEPENDENCIES"]["Event Tracker"]
         .Main.Gui.Content.Items.Stats.Timer.Label
 
 sections.Event:Toggle({
@@ -5755,61 +5745,6 @@ sections.Player:Toggle({
         })
     end,
 }, "HideNotificationsToggle")
-
--- set player dan userId
-GameData.Player = GameData.Players.LocalPlayer
-GameData.UserIdString = tostring(GameData.Player.UserId)
-
--- kembalikan kamera ke normal
-function GameData.RestoreCamera()
-    if GameData.Player.Character and GameData.Player.Character:FindFirstChild("Humanoid") then
-        GameData.Camera.CameraSubject = GameData.Player.Character.Humanoid
-        GameData.Camera.CameraType = Enum.CameraType.Custom
-    end
-end
-
--- fokus ke part
-function GameData.ViewObject(part)
-    GameData.Camera.CameraSubject = part
-    GameData.Camera.CameraType = Enum.CameraType.Attach
-end
-
--- monitoring muncul/hilang
-GameData.RunService.RenderStepped:Connect(function()
-    if GameData.ViewBobbersEnabled then
-        local part = GameData.CosmeticFolder:FindFirstChild(GameData.UserIdString)
-
-        if part and part:IsA("BasePart") then
-            if GameData.Camera.CameraSubject ~= part then
-                GameData.ViewObject(part)
-            end
-        else
-            if GameData.Player.Character and GameData.Player.Character:FindFirstChild("Humanoid") then
-                if GameData.Camera.CameraSubject ~= GameData.Player.Character.Humanoid then
-                    GameData.RestoreCamera()
-                end
-            end
-        end
-    else
-        GameData.RestoreCamera()
-    end
-end)
-
--- toggle GUI
-sections.Player:Toggle({
-    Name = "View Bobbers",
-    Default = false,
-    Callback = function(value)
-        GameData.ViewBobbersEnabled = value
-        Window:Notify({
-            Title = "View Bobbers",
-            Description = (value and "Enabled" or "Disabled") .. " View Bobbers"
-        })
-        if not value then
-            GameData.RestoreCamera()
-        end
-    end
-}, "ViewBobbersToggle")
 
 sections.Player:Toggle({
     Name = "Infinite Zoom", 
