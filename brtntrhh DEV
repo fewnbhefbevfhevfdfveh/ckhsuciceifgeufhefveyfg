@@ -3088,7 +3088,7 @@ end)
 GameData.LocalPlayer = GameData.Players.LocalPlayer
 
 GameData.TimerLabel =
-    GameData.Workspace["!!! MENU RINGS"]["Event Tracker"]
+    GameData.Workspace["!!! DEPENDENCIES"]["Event Tracker"]
         .Main.Gui.Content.Items.Stats.Timer.Label
 
 sections.Event:Toggle({
