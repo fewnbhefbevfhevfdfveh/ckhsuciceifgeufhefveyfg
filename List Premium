@@ -6,7 +6,7 @@ local player = Players.LocalPlayer
 --// CONFIG (USER + KEY)
 local validUsers = {
 	[8309797161] = "f60b6f03-361b-4aeb-84dd-f118624c9b20",
-	[1444873051] = "NexaPremium_6DB404IG",
+	[9005676891] = "4bbd770f-8cb9-4db8-bd92-023d4009fb82",
 }
 
 --// NOTIFICATION
