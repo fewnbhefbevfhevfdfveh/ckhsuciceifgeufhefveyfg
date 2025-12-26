@@ -7,6 +7,7 @@ local player = Players.LocalPlayer
 local validUsers = {
 	[8309797161] = "f60b6f03-361b-4aeb-84dd-f118624c9b20",
 	[9005676891] = "4bbd770f-8cb9-4db8-bd92-023d4009fb82",
+	[3576360668] = "39b39b2a-6503-4cbf-8ef2-ed3c12c97631",
 }
 
 --// NOTIFICATION
