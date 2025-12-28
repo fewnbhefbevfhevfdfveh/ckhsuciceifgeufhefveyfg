@@ -20,16 +20,6 @@ local GameData = {
 
     executorName = "Detecting...",
 
-    -- ================== [View Bobbers] ==================
-
-    Players = game:GetService("Players"),
-    RunService = game:GetService("RunService"),
-    Camera = workspace.CurrentCamera,
-    Player = nil, -- nanti diisi
-    UserIdString = nil, -- nanti diisi
-    CosmeticFolder = workspace:WaitForChild("CosmeticFolder"),
-    ViewBobbersEnabled = false,
-
    -- ================== [Codes] ==================
 
     Codes = {
@@ -934,12 +924,102 @@ local GameData = {
 
     TimeNowv6 = 0,
     TimeTablev6 = {},
+
+   -- ================== [Auto Join Event] ==================
+
+    -- SERVICES
+    Services = {
+        Players = game:GetService("Players"),
+        RunService = game:GetService("RunService"),
+    },
+
+    -- PLAYER / CHARACTER
+    Player = game:GetService("Players").LocalPlayer,
+    Character = nil,
+    HRP = nil,
+
+    -- EVENT HUB
+    EventHub = {
+        ["Megalodon Hunt"] = "Megalodon Hunt",
+        ["Worm Hunt"] = "Model",
+        ["Shark Hunt"] = "Shark Hunt",
+        ["Ghost Shark Hunt"] = "Ghost Shark Hunt"
+    },
+
+    -- STATE
+    AutoJoinEvent = false,
+    SelectedEvents = {},
+
+    WatchingEvent = nil,
+    SavedCFrame = CFrame.new(),
+    CurrentPlatform = nil,
+    PlatformCFrame = CFrame.new(),
+    ProtectConnection = nil,
+
+    -- UI CACHE
+    EventOptions = {},
+
+   -- ================== [Drone Camera] ==================
+
+	Services = {
+		Players = game:GetService("Players"),
+		UIS = game:GetService("UserInputService"),
+		RunService = game:GetService("RunService"),
+	},
+
+	Player = game:GetService("Players").LocalPlayer,
+	Camera = workspace.CurrentCamera,
+
+	Drone = false,
+	Speed = 1.4,
+	Sensitivity = 0.3,
+
+	Yaw = 0,
+	Pitch = 0,
+	MoveForward = 0,
+	MoveRight = 0,
+
+	GUI = nil,
+	LeftFrame = nil,
+
+	Buttons = {
+		Forward = nil,
+		Back = nil,
+		Left = nil,
+		Right = nil,
+	},
+
+   -- ================== [Ping Panel] ==================
+
+	--================ SERVICES =================
+	Servicesv7 = {
+		Playersv7 = game:GetService("Players"),
+		Statsv7 = game:GetService("Stats"),
+		RunServicev7 = game:GetService("RunService"),
+		TweenServicev7 = game:GetService("TweenService"),
+		UISv7 = game:GetService("UserInputService"),
+	},
+
+	--================ PLAYER ===================
+	Playerv7 = game:GetService("Players").LocalPlayer,
+
+	--================ STATE ====================
+	PingGuiv7 = nil,
+	UpdateConnectionv7 = nil,
+
+	Draggingv7 = false,
+	DragStartv7 = nil,
+	StartPosv7 = nil,
+
+	--================ UI OBJECTS ===============
+	Mainv7 = nil,
+	PingTextv7 = nil,
 }
 
 
 local Window = MacLib:Window({
     Title = "NexaHub",
-    Subtitle = "Fish It - Premium | V0.0.7",
+    Subtitle = "Fish It - Premium | V0.0.8",
     Size = UDim2.fromOffset(550, 380),
     DragStyle = 2,
     DisabledWindowControls = {},
@@ -1080,6 +1160,7 @@ local sections = {
     Backpack2 = tabs.Backpack:Section({ Side = "Full" }),
 
     Event = tabs.Event:Section({ Side = "Full" }),
+    Event1 = tabs.Event:Section({ Side = "Full" }),
 
     Quest = tabs.Quest:Section({ Side = "Full" }),
     Quest1 = tabs.Quest:Section({ Side = "Full" }),
@@ -1760,7 +1841,154 @@ sections.Fishing1:Toggle({
 }, "UniversalAutoFishToggle")
 
 
+function GameData:CreatePingGuiv7()
+	if self.PingGuiv7 then return end
+
+	-- ScreenGui
+	self.PingGuiv7 = Instance.new("ScreenGui")
+	self.PingGuiv7.Name = "PingGuiv7"
+	self.PingGuiv7.ResetOnSpawn = false
+	self.PingGuiv7.Parent = self.Playerv7:WaitForChild("PlayerGui")
+
+	-- Main Frame
+	self.Mainv7 = Instance.new("Frame")
+	self.Mainv7.Size = UDim2.new(0, 200, 0, 55)
+	self.Mainv7.Position = UDim2.new(0, 20, 0, 20)
+	self.Mainv7.BackgroundColor3 = Color3.fromRGB(18,18,18)
+	self.Mainv7.BorderSizePixel = 0
+	self.Mainv7.Active = true
+	self.Mainv7.Parent = self.PingGuiv7
+
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0,14)
+	Corner.Parent = self.Mainv7
+
+	local Stroke = Instance.new("UIStroke")
+	Stroke.Color = Color3.fromRGB(60,60,60)
+	Stroke.Thickness = 1
+	Stroke.Parent = self.Mainv7
+
+	local Gradient = Instance.new("UIGradient")
+	Gradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(40,40,40)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(15,15,15))
+	}
+	Gradient.Rotation = 90
+	Gradient.Parent = self.Mainv7
+
+	-- Title
+	local Title = Instance.new("TextLabel")
+	Title.Size = UDim2.new(1,-12,0,20)
+	Title.Position = UDim2.new(0,6,0,4)
+	Title.BackgroundTransparency = 1
+	Title.Text = "NETWORK PANEL"
+	Title.Font = Enum.Font.GothamBold
+	Title.TextSize = 12
+	Title.TextXAlignment = Enum.TextXAlignment.Left
+	Title.TextColor3 = Color3.fromRGB(170,170,170)
+	Title.Parent = self.Mainv7
+
+	-- Ping Text
+	self.PingTextv7 = Instance.new("TextLabel")
+	self.PingTextv7.Size = UDim2.new(1,-12,0,26)
+	self.PingTextv7.Position = UDim2.new(0,6,0,26)
+	self.PingTextv7.BackgroundTransparency = 1
+	self.PingTextv7.Text = "Ping: -- ms"
+	self.PingTextv7.Font = Enum.Font.Gotham
+	self.PingTextv7.TextSize = 15
+	self.PingTextv7.TextXAlignment = Enum.TextXAlignment.Left
+	self.PingTextv7.TextColor3 = Color3.fromRGB(255,255,255)
+	self.PingTextv7.Parent = self.Mainv7
+
+	self.UpdateConnectionv7 = self.Servicesv7.RunServicev7.RenderStepped:Connect(function()
+		local network = self.Servicesv7.Statsv7:FindFirstChild("Network")
+		local pingValue = 0
+
+		if network and network:FindFirstChild("ServerStatsItem") then
+			local ping = network.ServerStatsItem:FindFirstChild("Data Ping")
+			if ping then
+				pingValue = math.floor(ping:GetValue())
+			end
+		end
+
+		self.PingTextv7.Text = "Ping: "..pingValue.." ms"
+
+		local color
+		if pingValue <= 80 then
+			color = Color3.fromRGB(0,220,120)
+		elseif pingValue <= 150 then
+			color = Color3.fromRGB(255,190,60)
+		else
+			color = Color3.fromRGB(255,80,80)
+		end
+
+		self.Servicesv7.TweenServicev7:Create(
+			self.PingTextv7,
+			TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{TextColor3 = color}
+		):Play()
+	end)
+
+	self.Mainv7.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			GameData.Draggingv7 = true
+			GameData.DragStartv7 = input.Position
+			GameData.StartPosv7 = GameData.Mainv7.Position
+		end
+	end)
+
+	self.Mainv7.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			GameData.Draggingv7 = false
+		end
+	end)
+
+	self.Servicesv7.UISv7.InputChanged:Connect(function(input)
+		if GameData.Draggingv7 and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local delta = input.Position - GameData.DragStartv7
+			GameData.Mainv7.Position = UDim2.new(
+				GameData.StartPosv7.X.Scale,
+				GameData.StartPosv7.X.Offset + delta.X,
+				GameData.StartPosv7.Y.Scale,
+				GameData.StartPosv7.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+function GameData:RemovePingGuiv7()
+	if self.UpdateConnectionv7 then
+		self.UpdateConnectionv7:Disconnect()
+		self.UpdateConnectionv7 = nil
+	end
+
+	if self.PingGuiv7 then
+		self.PingGuiv7:Destroy()
+		self.PingGuiv7 = nil
+	end
+end
+
+
+sections.Fishing1:Toggle({
+	Name = "Show Ping Panel",
+	Default = false,
+	Callback = function(value)
+		if value then
+			GameData:CreatePingGuiv7()
+		else
+			GameData:RemovePingGuiv7()
+		end
+
+		Window:Notify({
+			Title = "Ping Panel",
+			Description = value and "Enabled" or "Disabled"
+		})
+	end,
+}, "ShowPingPanelTogglev7")
+
+
 -- ========= [No Animation] =========
+
 local stopAnimConnections = {}
 
 local function setGameAnimationsEnabled(state)
@@ -3248,6 +3476,119 @@ sections.Event:Toggle({
         end
     end,
 }, "AutoEventChristmasCaveToggle")
+
+sections.Event1:Header({
+	Name = "Join Event"
+})
+
+GameData.Character = GameData.Player.Character or GameData.Player.CharacterAdded:Wait()
+GameData.HRP = GameData.Character:WaitForChild("HumanoidRootPart")
+
+function GameData:Cleanup(back)
+    if self.ProtectConnection then
+        self.ProtectConnection:Disconnect()
+        self.ProtectConnection = nil
+    end
+
+    if self.CurrentPlatform then
+        self.CurrentPlatform:Destroy()
+        self.CurrentPlatform = nil
+    end
+
+    if back and self.SavedCFrame and self.HRP and self.HRP.Parent then
+        self.HRP.CFrame = self.SavedCFrame
+    end
+
+    self.WatchingEvent = nil
+    self.PlatformCFrame = CFrame.new()
+end
+
+function GameData:FindEvent(eventName)
+    for _, v in ipairs(workspace.Props:GetDescendants()) do
+        if v.Name == self.EventHub[eventName] then
+            return v
+        end
+    end
+end
+
+function GameData:MakePlatform(cf)
+    self.CurrentPlatform = Instance.new("Part")
+    self.CurrentPlatform.Size = Vector3.new(16,1,16)
+    self.CurrentPlatform.Anchored = true
+    self.CurrentPlatform.CanCollide = true
+    self.CurrentPlatform.Transparency = 0.3
+    self.CurrentPlatform.CFrame = cf - Vector3.new(0,3,0)
+    self.CurrentPlatform.Parent = workspace
+    return self.CurrentPlatform
+end
+
+for name in pairs(GameData.EventHub) do
+    table.insert(GameData.EventOptions, name)
+end
+
+sections.Event1:Dropdown({
+    Name = "Select Event",
+    Search = true,
+    Multi = true,
+    Options = GameData.EventOptions,
+    Callback = function(v)
+        GameData.SelectedEvents = {}
+        for eventName, state in pairs(v) do
+            if state then
+                table.insert(GameData.SelectedEvents, eventName)
+            end
+        end
+    end
+})
+
+sections.Event1:Toggle({
+    Name = "Auto Join Event",
+    Default = false,
+    Callback = function(v)
+        GameData.AutoJoinEvent = v
+        if not v then
+            GameData:Cleanup(true)
+        end
+    end
+})
+
+task.spawn(function()
+    while task.wait(0.01) do
+        if not GameData.AutoJoinEvent then continue end
+        if GameData.WatchingEvent then continue end
+        if #GameData.SelectedEvents == 0 then continue end
+
+        for _, eventName in ipairs(GameData.SelectedEvents) do
+            GameData.WatchingEvent = GameData:FindEvent(eventName)
+
+            if GameData.WatchingEvent then
+                GameData.SavedCFrame = GameData.HRP.CFrame
+
+                GameData.HRP.CFrame =
+                    GameData.WatchingEvent:FindFirstChildWhichIsA("BasePart", true).CFrame
+                    + Vector3.new(0,10,0)
+
+                GameData.PlatformCFrame = GameData.HRP.CFrame
+                GameData:MakePlatform(GameData.PlatformCFrame)
+
+                GameData.ProtectConnection =
+                    GameData.Services.RunService.Heartbeat:Connect(function()
+                        if not GameData.AutoJoinEvent or not GameData.WatchingEvent then return end
+                        if (GameData.HRP.Position - GameData.PlatformCFrame.Position).Magnitude > 12 then
+                            GameData.HRP.CFrame = GameData.PlatformCFrame
+                        end
+                    end)
+
+                while GameData.AutoJoinEvent and GameData.WatchingEvent.Parent do
+                    task.wait(0.3)
+                end
+
+                GameData:Cleanup(GameData.AutoJoinEvent)
+                break
+            end
+        end
+    end
+end)
 
 sections.Quest:Header({
 	Name = "View Quest Status"
@@ -5584,6 +5925,209 @@ sections.Player:Header({
 	Name = "Utility"
 })
 
+----------------------------------------------------
+-- CAMERA RESET
+----------------------------------------------------
+function GameData:ResetCameraToPlayer()
+	local char = self.Player.Character
+	if not char then return end
+
+	local head = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+	if head then
+		self.Camera.CFrame = head.CFrame
+	end
+end
+
+----------------------------------------------------
+-- GUI CREATE
+----------------------------------------------------
+GameData.GUI = Instance.new("ScreenGui")
+GameData.GUI.Name = "DroneCameraGUI"
+GameData.GUI.ResetOnSpawn = false
+GameData.GUI.Enabled = false
+GameData.GUI.Parent = GameData.Player.PlayerGui
+
+GameData.LeftFrame = Instance.new("Frame")
+GameData.LeftFrame.Size = UDim2.fromScale(0.28, 0.35)
+GameData.LeftFrame.Position = UDim2.fromScale(0.03, 0.55)
+GameData.LeftFrame.AnchorPoint = Vector2.new(0, 1)
+GameData.LeftFrame.BackgroundTransparency = 1
+GameData.LeftFrame.Parent = GameData.GUI
+
+function GameData:CreateButton(text, pos)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.fromScale(0.32, 0.32)
+	b.Position = pos
+	b.Text = text
+	b.Font = Enum.Font.GothamBold
+	b.TextScaled = true
+	b.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	b.TextColor3 = Color3.new(1,1,1)
+	b.Parent = self.LeftFrame
+
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0.25,0)
+	c.Parent = b
+
+	return b
+end
+
+-- D-PAD
+GameData.Buttons.Forward = GameData:CreateButton("▲", UDim2.fromScale(0.34, 0))
+GameData.Buttons.Back    = GameData:CreateButton("▼", UDim2.fromScale(0.34, 0.68))
+GameData.Buttons.Left    = GameData:CreateButton("◀", UDim2.fromScale(0, 0.34))
+GameData.Buttons.Right   = GameData:CreateButton("▶", UDim2.fromScale(0.68, 0.34))
+
+----------------------------------------------------
+-- DRONE ON / OFF
+----------------------------------------------------
+function GameData:EnableDrone()
+	self.Drone = true
+	self.Yaw = 0
+	self.Pitch = 0
+	self.Camera.CameraType = Enum.CameraType.Scriptable
+	self:ResetCameraToPlayer()
+	self.GUI.Enabled = true
+end
+
+function GameData:DisableDrone()
+	self.Drone = false
+	self.Camera.CameraType = Enum.CameraType.Custom
+	self:ResetCameraToPlayer()
+	self.GUI.Enabled = false
+end
+
+----------------------------------------------------
+-- MOBILE BUTTON MOVE
+----------------------------------------------------
+GameData.Buttons.Forward.MouseButton1Down:Connect(function()
+	GameData.MoveForward = 1
+end)
+GameData.Buttons.Forward.MouseButton1Up:Connect(function()
+	GameData.MoveForward = 0
+end)
+
+GameData.Buttons.Back.MouseButton1Down:Connect(function()
+	GameData.MoveForward = -1
+end)
+GameData.Buttons.Back.MouseButton1Up:Connect(function()
+	GameData.MoveForward = 0
+end)
+
+GameData.Buttons.Left.MouseButton1Down:Connect(function()
+	GameData.MoveRight = -1
+end)
+GameData.Buttons.Left.MouseButton1Up:Connect(function()
+	GameData.MoveRight = 0
+end)
+
+GameData.Buttons.Right.MouseButton1Down:Connect(function()
+	GameData.MoveRight = 1
+end)
+GameData.Buttons.Right.MouseButton1Up:Connect(function()
+	GameData.MoveRight = 0
+end)
+
+----------------------------------------------------
+-- MOBILE TOUCH LOOK
+----------------------------------------------------
+GameData.Services.UIS.TouchMoved:Connect(function(input, gpe)
+	if not GameData.Drone or gpe then return end
+
+	GameData.Yaw -= input.Delta.X * GameData.Sensitivity
+	GameData.Pitch -= input.Delta.Y * GameData.Sensitivity
+	GameData.Pitch = math.clamp(GameData.Pitch, -80, 80)
+end)
+
+----------------------------------------------------
+-- KEYBOARD (PC)
+----------------------------------------------------
+GameData.Services.UIS.InputBegan:Connect(function(input, gpe)
+	if gpe or not GameData.Drone then return end
+
+	if input.KeyCode == Enum.KeyCode.W then
+		GameData.MoveForward = 1
+	elseif input.KeyCode == Enum.KeyCode.S then
+		GameData.MoveForward = -1
+	elseif input.KeyCode == Enum.KeyCode.A then
+		GameData.MoveRight = -1
+	elseif input.KeyCode == Enum.KeyCode.D then
+		GameData.MoveRight = 1
+	end
+end)
+
+GameData.Services.UIS.InputEnded:Connect(function(input)
+	if not GameData.Drone then return end
+
+	if input.KeyCode == Enum.KeyCode.W or input.KeyCode == Enum.KeyCode.S then
+		GameData.MoveForward = 0
+	elseif input.KeyCode == Enum.KeyCode.A or input.KeyCode == Enum.KeyCode.D then
+		GameData.MoveRight = 0
+	end
+end)
+
+----------------------------------------------------
+-- MOUSE / GAMEPAD LOOK
+----------------------------------------------------
+GameData.Services.UIS.InputChanged:Connect(function(input, gpe)
+	if not GameData.Drone or gpe then return end
+
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		GameData.Yaw -= input.Delta.X * GameData.Sensitivity
+		GameData.Pitch -= input.Delta.Y * GameData.Sensitivity
+	end
+
+	if input.KeyCode == Enum.KeyCode.Thumbstick1 then
+		GameData.MoveRight = input.Position.X
+		GameData.MoveForward = -input.Position.Y
+	end
+
+	if input.KeyCode == Enum.KeyCode.Thumbstick2 then
+		GameData.Yaw -= input.Position.X * GameData.Sensitivity * 5
+		GameData.Pitch -= input.Position.Y * GameData.Sensitivity * 5
+	end
+
+	GameData.Pitch = math.clamp(GameData.Pitch, -80, 80)
+end)
+
+----------------------------------------------------
+-- CAMERA UPDATE
+----------------------------------------------------
+GameData.Services.RunService.RenderStepped:Connect(function()
+	if not GameData.Drone then return end
+
+	local cf =
+		CFrame.new(GameData.Camera.CFrame.Position) *
+		CFrame.Angles(0, math.rad(GameData.Yaw), 0) *
+		CFrame.Angles(math.rad(GameData.Pitch), 0, 0)
+
+	local move =
+		(cf.LookVector * GameData.MoveForward) +
+		(cf.RightVector * GameData.MoveRight)
+
+	GameData.Camera.CFrame = cf + (move * GameData.Speed)
+end)
+
+----------------------------------------------------
+-- WINDUI TOGGLE
+----------------------------------------------------
+sections.Player:Toggle({
+	Name = "Drone Camera",
+	Default = false,
+	Callback = function(value)
+		if value then
+			GameData:EnableDrone()
+		else
+			GameData:DisableDrone()
+		end
+
+		Window:Notify({
+			Title = "Drone Camera",
+			Description = value and "Enabled" or "Disabled"
+		})
+	end,
+}, "DroneCameraToggle")
+
 --// Anti Drown Variable
 local AntiDrown_Enabled = false
 
@@ -5755,61 +6299,6 @@ sections.Player:Toggle({
         })
     end,
 }, "HideNotificationsToggle")
-
--- set player dan userId
-GameData.Player = GameData.Players.LocalPlayer
-GameData.UserIdString = tostring(GameData.Player.UserId)
-
--- kembalikan kamera ke normal
-function GameData.RestoreCamera()
-    if GameData.Player.Character and GameData.Player.Character:FindFirstChild("Humanoid") then
-        GameData.Camera.CameraSubject = GameData.Player.Character.Humanoid
-        GameData.Camera.CameraType = Enum.CameraType.Custom
-    end
-end
-
--- fokus ke part
-function GameData.ViewObject(part)
-    GameData.Camera.CameraSubject = part
-    GameData.Camera.CameraType = Enum.CameraType.Attach
-end
-
--- monitoring muncul/hilang
-GameData.RunService.RenderStepped:Connect(function()
-    if GameData.ViewBobbersEnabled then
-        local part = GameData.CosmeticFolder:FindFirstChild(GameData.UserIdString)
-
-        if part and part:IsA("BasePart") then
-            if GameData.Camera.CameraSubject ~= part then
-                GameData.ViewObject(part)
-            end
-        else
-            if GameData.Player.Character and GameData.Player.Character:FindFirstChild("Humanoid") then
-                if GameData.Camera.CameraSubject ~= GameData.Player.Character.Humanoid then
-                    GameData.RestoreCamera()
-                end
-            end
-        end
-    else
-        GameData.RestoreCamera()
-    end
-end)
-
--- toggle GUI
-sections.Player:Toggle({
-    Name = "View Bobbers",
-    Default = false,
-    Callback = function(value)
-        GameData.ViewBobbersEnabled = value
-        Window:Notify({
-            Title = "View Bobbers",
-            Description = (value and "Enabled" or "Disabled") .. " View Bobbers"
-        })
-        if not value then
-            GameData.RestoreCamera()
-        end
-    end
-}, "ViewBobbersToggle")
 
 sections.Player:Toggle({
     Name = "Infinite Zoom", 
