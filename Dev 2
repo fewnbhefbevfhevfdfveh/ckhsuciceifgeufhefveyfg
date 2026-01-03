@@ -368,6 +368,7 @@ local GameData = {
     char = nil,
     hrp = nil,
 
+    SaveInput = nil,
     SaveDropdown = nil,
     SaveButton = nil,
     DeleteButton = nil,
@@ -715,12 +716,21 @@ local GameData = {
 
     -- ================== [Boost FPS] ==================
 
-    Lighting = game:GetService("Lighting"),
-    Workspace = game:GetService("Workspace"),
-    Terrain = nil,
+	Servicesv8 = {
+		Playersv8 = game:GetService("Players"),
+		Lightingv8 = game:GetService("Lighting"),
+		RunServicev8 = game:GetService("RunService"),
+	},
 
-    MinecraftFPS = false,
-    FPSLoop = nil,
+	Terrainv8 = workspace:FindFirstChildOfClass("Terrain"),
+
+	Playerv8 = game:GetService("Players").LocalPlayer,
+
+	BoostEnabledv8 = false,
+	Connectionsv8 = {},
+
+	GRAYv8 = Color3.fromRGB(135,135,135),
+
 
     -- ================== [Center Header] ==================
 
@@ -3724,6 +3734,7 @@ task.spawn(function()
     end
 end)
 
+
 sections.Quest1:Header({
 	Name = "Auto Quest"
 })
@@ -5840,8 +5851,6 @@ sections.Tp2:Toggle({
     end,
 }, "TeleportToggleConfig")
 
-print("Teleport system loaded.")
-
 sections.Player3:Header({
 	Name = "Player Identity"
 })
@@ -5925,22 +5934,29 @@ sections.Player:Header({
 	Name = "Utility"
 })
 
-----------------------------------------------------
--- CAMERA RESET
-----------------------------------------------------
 function GameData:ResetCameraToPlayer()
 	local char = self.Player.Character
 	if not char then return end
-
 	local head = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
 	if head then
 		self.Camera.CFrame = head.CFrame
 	end
 end
 
-----------------------------------------------------
--- GUI CREATE
-----------------------------------------------------
+function GameData:SetCharacterMove(enabled)
+	local char = self.Player.Character
+	if not char then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
+	if enabled then
+		hum.WalkSpeed = 16
+		hum.JumpPower = 50
+	else
+		hum.WalkSpeed = 0
+		hum.JumpPower = 50
+	end
+end
+
 GameData.GUI = Instance.new("ScreenGui")
 GameData.GUI.Name = "DroneCameraGUI"
 GameData.GUI.ResetOnSpawn = false
@@ -5964,27 +5980,22 @@ function GameData:CreateButton(text, pos)
 	b.BackgroundColor3 = Color3.fromRGB(30,30,30)
 	b.TextColor3 = Color3.new(1,1,1)
 	b.Parent = self.LeftFrame
-
 	local c = Instance.new("UICorner")
 	c.CornerRadius = UDim.new(0.25,0)
 	c.Parent = b
-
 	return b
 end
 
--- D-PAD
 GameData.Buttons.Forward = GameData:CreateButton("▲", UDim2.fromScale(0.34, 0))
 GameData.Buttons.Back    = GameData:CreateButton("▼", UDim2.fromScale(0.34, 0.68))
 GameData.Buttons.Left    = GameData:CreateButton("◀", UDim2.fromScale(0, 0.34))
 GameData.Buttons.Right   = GameData:CreateButton("▶", UDim2.fromScale(0.68, 0.34))
 
-----------------------------------------------------
--- DRONE ON / OFF
-----------------------------------------------------
 function GameData:EnableDrone()
 	self.Drone = true
 	self.Yaw = 0
 	self.Pitch = 0
+	self:SetCharacterMove(false)
 	self.Camera.CameraType = Enum.CameraType.Scriptable
 	self:ResetCameraToPlayer()
 	self.GUI.Enabled = true
@@ -5992,14 +6003,12 @@ end
 
 function GameData:DisableDrone()
 	self.Drone = false
+	self:SetCharacterMove(true)
 	self.Camera.CameraType = Enum.CameraType.Custom
 	self:ResetCameraToPlayer()
 	self.GUI.Enabled = false
 end
 
-----------------------------------------------------
--- MOBILE BUTTON MOVE
-----------------------------------------------------
 GameData.Buttons.Forward.MouseButton1Down:Connect(function()
 	GameData.MoveForward = 1
 end)
@@ -6028,23 +6037,15 @@ GameData.Buttons.Right.MouseButton1Up:Connect(function()
 	GameData.MoveRight = 0
 end)
 
-----------------------------------------------------
--- MOBILE TOUCH LOOK
-----------------------------------------------------
 GameData.Services.UIS.TouchMoved:Connect(function(input, gpe)
 	if not GameData.Drone or gpe then return end
-
 	GameData.Yaw -= input.Delta.X * GameData.Sensitivity
 	GameData.Pitch -= input.Delta.Y * GameData.Sensitivity
 	GameData.Pitch = math.clamp(GameData.Pitch, -80, 80)
 end)
 
-----------------------------------------------------
--- KEYBOARD (PC)
-----------------------------------------------------
 GameData.Services.UIS.InputBegan:Connect(function(input, gpe)
 	if gpe or not GameData.Drone then return end
-
 	if input.KeyCode == Enum.KeyCode.W then
 		GameData.MoveForward = 1
 	elseif input.KeyCode == Enum.KeyCode.S then
@@ -6058,7 +6059,6 @@ end)
 
 GameData.Services.UIS.InputEnded:Connect(function(input)
 	if not GameData.Drone then return end
-
 	if input.KeyCode == Enum.KeyCode.W or input.KeyCode == Enum.KeyCode.S then
 		GameData.MoveForward = 0
 	elseif input.KeyCode == Enum.KeyCode.A or input.KeyCode == Enum.KeyCode.D then
@@ -6066,51 +6066,35 @@ GameData.Services.UIS.InputEnded:Connect(function(input)
 	end
 end)
 
-----------------------------------------------------
--- MOUSE / GAMEPAD LOOK
-----------------------------------------------------
 GameData.Services.UIS.InputChanged:Connect(function(input, gpe)
 	if not GameData.Drone or gpe then return end
-
 	if input.UserInputType == Enum.UserInputType.MouseMovement then
 		GameData.Yaw -= input.Delta.X * GameData.Sensitivity
 		GameData.Pitch -= input.Delta.Y * GameData.Sensitivity
 	end
-
 	if input.KeyCode == Enum.KeyCode.Thumbstick1 then
 		GameData.MoveRight = input.Position.X
 		GameData.MoveForward = -input.Position.Y
 	end
-
 	if input.KeyCode == Enum.KeyCode.Thumbstick2 then
 		GameData.Yaw -= input.Position.X * GameData.Sensitivity * 5
 		GameData.Pitch -= input.Position.Y * GameData.Sensitivity * 5
 	end
-
 	GameData.Pitch = math.clamp(GameData.Pitch, -80, 80)
 end)
 
-----------------------------------------------------
--- CAMERA UPDATE
-----------------------------------------------------
 GameData.Services.RunService.RenderStepped:Connect(function()
 	if not GameData.Drone then return end
-
 	local cf =
 		CFrame.new(GameData.Camera.CFrame.Position) *
 		CFrame.Angles(0, math.rad(GameData.Yaw), 0) *
 		CFrame.Angles(math.rad(GameData.Pitch), 0, 0)
-
 	local move =
 		(cf.LookVector * GameData.MoveForward) +
 		(cf.RightVector * GameData.MoveRight)
-
 	GameData.Camera.CFrame = cf + (move * GameData.Speed)
 end)
 
-----------------------------------------------------
--- WINDUI TOGGLE
-----------------------------------------------------
 sections.Player:Toggle({
 	Name = "Drone Camera",
 	Default = false,
@@ -6120,7 +6104,6 @@ sections.Player:Toggle({
 		else
 			GameData:DisableDrone()
 		end
-
 		Window:Notify({
 			Title = "Drone Camera",
 			Description = value and "Enabled" or "Disabled"
@@ -6128,36 +6111,42 @@ sections.Player:Toggle({
 	end,
 }, "DroneCameraToggle")
 
---// Anti Drown Variable
+sections.Player:Toggle({ 
+	Name = "Hide Gui Drone", 
+	Default = false,
+	Callback = function(value)
+
+		local gui = game.Players.LocalPlayer.PlayerGui:WaitForChild("DroneCameraGUI")
+		gui.Enabled = not value  
+
+		Window:Notify({
+			Title = "",
+			Description = (value and "Drone GUI Hidden" or "Drone GUI Shown")
+		})
+	end,
+}, "HideGuiDroneToggle")
+
 local AntiDrown_Enabled = false
 
---// Toggle di WindUI
-sections.Player:Toggle({
-    Name = "Anti Drown",
+Sec.Player:Toggle({
+    Title = "Anti Drown",
+    Flag = "AntiDrown",
     Default = false,
     Callback = function(value)
         AntiDrown_Enabled = value
+    end
+})
 
-        Window:Notify({
-            Title = "Drown",
-            Description = (value and "Enabled " or "Disabled ") .. "Anti Drown"
-        })
-    end,
-}, "AntiDrownToggle")
-
---// Metamethod Hook (Anti Drown)
 local rawmt = getrawmetatable(game)
 setreadonly(rawmt, false)
 
 local oldNamecall = rawmt.__namecall
-
 rawmt.__namecall = newcclosure(function(self, ...)
     local method = getnamecallmethod()
 
     if AntiDrown_Enabled 
-        and tostring(self) == "URE/UpdateOxygen" 
-        and method == "FireServer" then
-        
+       and tostring(self) == "URE/UpdateOxygen" 
+       and method == "FireServer" then
         return nil
     end
 
@@ -6500,111 +6489,151 @@ sections.Player:Toggle({
     end,
 }, "HideQuestToggle")
 
-GameData.Terrain = GameData.Workspace:FindFirstChildOfClass("Terrain")
+function GameData:LowObjectv8(obj)
+	if not self.BoostEnabledv8 then return end
 
-function GameData.ApplyMinecraftFPS()
-    GameData.Lighting.GlobalShadows = false
-    GameData.Lighting.FogEnd = 1e10
-    GameData.Lighting.Brightness = 1
-    GameData.Lighting.ExposureCompensation = 0
-    GameData.Lighting.EnvironmentDiffuseScale = 0
-    GameData.Lighting.EnvironmentSpecularScale = 0
-    GameData.Lighting.ShadowSoftness = 0
-    GameData.Lighting.OutdoorAmbient = Color3.fromRGB(140,140,140)
+	if obj:IsA("BasePart") then
+		obj.Material = Enum.Material.SmoothPlastic
+		obj.Color = self.GRAYv8
+		obj.Reflectance = 0
+		obj.CastShadow = false
 
-    for _, v in pairs(GameData.Lighting:GetChildren()) do
-        if v:IsA("PostEffect") then
-            v.Enabled = false
-        end
-    end
-
-    if GameData.Terrain then
-        GameData.Terrain.WaterWaveSize = 0
-        GameData.Terrain.WaterWaveSpeed = 0
-        GameData.Terrain.WaterReflectance = 0
-        GameData.Terrain.WaterTransparency = 1
-        pcall(function()
-            sethiddenproperty(GameData.Terrain, "Decoration", false)
-        end)
-    end
-
-    for _, obj in pairs(GameData.Workspace:GetDescendants()) do
-        if not GameData.MinecraftFPS then break end
-
-        if obj:IsA("ParticleEmitter")
-        or obj:IsA("Trail")
-        or obj:IsA("Smoke")
-        or obj:IsA("Fire")
-        or obj:IsA("Sparkles")
-        or obj:IsA("Beam")
-        or obj:IsA("Explosion") then
-            obj.Enabled = false
-
-        elseif obj:IsA("Decal") or obj:IsA("Texture") then
-            obj.Transparency = 1
-
-        elseif obj:IsA("SurfaceAppearance") then
-            obj:Destroy()
-
-        elseif obj:IsA("MeshPart") then
-            obj.Material = Enum.Material.SmoothPlastic
-            obj.Color = Color3.fromRGB(150,150,150)
-            obj.Reflectance = 0
-            obj.CastShadow = false
-            obj.LOD = Enum.MeshPartDetailLevel.Low
-
-        elseif obj:IsA("UnionOperation") or obj:IsA("Part") then
-            obj.Material = Enum.Material.SmoothPlastic
-            obj.Color = Color3.fromRGB(150,150,150)
-            obj.Reflectance = 0
-            obj.CastShadow = false
-        end
-    end
-
-    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-
-    if GameData.Workspace.CurrentCamera then
-        GameData.Workspace.CurrentCamera.FieldOfView = 70
-    end
-
-    pcall(function()
-        collectgarbage("collect")
-    end)
+	elseif obj:IsA("Decal")
+	or obj:IsA("Texture")
+	or obj:IsA("SurfaceAppearance")
+	or obj:IsA("ParticleEmitter")
+	or obj:IsA("Beam")
+	or obj:IsA("Trail")
+	or obj:IsA("Fire")
+	or obj:IsA("Smoke")
+	or obj:IsA("Sparkles") then
+		obj:Destroy()
+	end
 end
 
+function GameData:LowLightingv8()
+	if not self.BoostEnabledv8 then return end
+
+	local Lighting = self.Servicesv8.Lightingv8
+
+	Lighting.GlobalShadows = false
+	Lighting.Brightness = 1
+	Lighting.FogEnd = 1e8
+	Lighting.EnvironmentDiffuseScale = 0
+	Lighting.EnvironmentSpecularScale = 0
+	Lighting.Ambient = self.GRAYv8
+	Lighting.OutdoorAmbient = self.GRAYv8
+
+	for _, v in ipairs(Lighting:GetChildren()) do
+		if v:IsA("BloomEffect")
+		or v:IsA("BlurEffect")
+		or v:IsA("SunRaysEffect")
+		or v:IsA("ColorCorrectionEffect")
+		or v:IsA("DepthOfFieldEffect")
+		or v:IsA("Atmosphere") then
+			v:Destroy()
+		end
+	end
+end
+
+function GameData:KillWaterv8()
+	if not self.BoostEnabledv8 or not self.Terrainv8 then return end
+
+	self.Terrainv8.WaterTransparency = 1
+	self.Terrainv8.WaterReflectance = 0
+	self.Terrainv8.WaterWaveSize = 0
+	self.Terrainv8.WaterWaveSpeed = 0
+end
+
+function GameData:LowCharacterv8(char)
+	if not self.BoostEnabledv8 then return end
+
+	for _, v in ipairs(char:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.Material = Enum.Material.SmoothPlastic
+			v.Color = self.GRAYv8
+			v.CastShadow = false
+
+		elseif v:IsA("Decal")
+		or v:IsA("Texture")
+		or v:IsA("SurfaceAppearance")
+		or v:IsA("Shirt")
+		or v:IsA("Pants")
+		or v:IsA("Accessory") then
+			v:Destroy()
+		end
+	end
+end
+
+----------------------------------------------------
+-- START / STOP BOOST
+----------------------------------------------------
+function GameData:StartBoostv8()
+	if self.BoostEnabledv8 then return end
+	self.BoostEnabledv8 = true
+
+	self:LowLightingv8()
+	self:KillWaterv8()
+
+	for _, obj in ipairs(workspace:GetDescendants()) do
+		self:LowObjectv8(obj)
+	end
+
+	if self.Playerv8.Character then
+		self:LowCharacterv8(self.Playerv8.Character)
+	end
+
+	self.Connectionsv8[#self.Connectionsv8+1] =
+		workspace.DescendantAdded:Connect(function(obj)
+			task.wait()
+			GameData:LowObjectv8(obj)
+		end)
+
+	self.Connectionsv8[#self.Connectionsv8+1] =
+		self.Playerv8.CharacterAdded:Connect(function(char)
+			char:WaitForChild("Humanoid")
+			task.wait(0.15)
+			GameData:LowCharacterv8(char)
+		end)
+
+	self.Connectionsv8[#self.Connectionsv8+1] =
+		self.Servicesv8.RunServicev8.Heartbeat:Connect(function()
+			GameData:LowLightingv8()
+			GameData:KillWaterv8()
+		end)
+end
+
+function GameData:StopBoostv8()
+	self.BoostEnabledv8 = false
+
+	for _, c in ipairs(self.Connectionsv8) do
+		pcall(function()
+			c:Disconnect()
+		end)
+	end
+
+	table.clear(self.Connectionsv8)
+end
+
+----------------------------------------------------
+-- UI TOGGLE (WINDUI)
+----------------------------------------------------
 sections.Player:Toggle({
-    Name = "Boost FPS",
-    Default = false,
-    Callback = function(value)
-        GameData.MinecraftFPS = value
+	Name = "Boost Fps",
+	Default = false,
+	Callback = function(value)
+		if value then
+			GameData:StartBoostv8()
+		else
+			GameData:StopBoostv8()
+		end
 
-        if value then
-            GameData.ApplyMinecraftFPS()
-
-            GameData.FPSLoop = GameData.Workspace.DescendantAdded:Connect(function()
-                if GameData.MinecraftFPS then
-                    task.wait(0.1)
-                    GameData.ApplyMinecraftFPS()
-                end
-            end)
-
-            Window:Notify({
-                Title = "FPS Boost",
-                Description = "Enabled Mode"
-            })
-        else
-            if GameData.FPSLoop then
-                GameData.FPSLoop:Disconnect()
-                GameData.FPSLoop = nil
-            end
-
-            Window:Notify({
-                Title = "FPS Boost",
-                Description = "Disabled (visual tidak direstore)"
-            })
-        end
-    end,
-}, "BoostFPSToggle")
+		Window:Notify({
+			Title = "Boost Fps",
+			Description = value and "Enabled" or "Disabled"
+		})
+	end,
+}, "BoostFpsTogglev8")
 
 
 
