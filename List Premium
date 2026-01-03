@@ -1,16 +1,30 @@
 --// SERVICES
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 
---// CONFIG (USER + KEY)
-local validUsers = {
-	[8309797161] = "f60b6f03-361b-4aeb-84dd-f118624c9b20",
-	[9005676891] = "4bbd770f-8cb9-4db8-bd92-023d4009fb82",
-	[3576360668] = "39b39b2a-6503-4cbf-8ef2-ed3c12c97631",
-}
+--// EXECUTOR REQUEST FUNCTION
+local Request = (syn and syn.request)
+	or http_request
+	or request
+	or (fluxus and fluxus.request)
 
---// NOTIFICATION
+if not Request then
+	player:Kick("Executor not supported")
+	return
+end
+
+--// API URL
+local API_URL = "https://han2343.pythonanywhere.com/check"
+
+--// KEY HARUS DIISI DARI LUAR SCRIPT
+if typeof(script_key) ~= "string" or script_key == "" then
+	player:Kick("❌ Key is required")
+	return
+end
+
+--// FUNCTION NOTIFIKASI
 local function ShowNotification(text)
 	local playerGui = player:WaitForChild("PlayerGui")
 	if playerGui:FindFirstChild("NexaNotify") then
@@ -51,33 +65,51 @@ local function ShowNotification(text)
 	end)
 end
 
---// KEY CHECK
-if typeof(script_key) ~= "string" or script_key == "" then
-	ShowNotification("❌ No key detected.")
+--// REQUEST CHECK KE SERVER
+local response = Request({
+	Url = API_URL .. "?user_id=" .. player.UserId .. "&key=" .. script_key,
+	Method = "GET",
+	Headers = {
+		["Content-Type"] = "application/json"
+	}
+})
+
+if not response or not response.Body then
+	ShowNotification("❌ Gagal terhubung ke server.")
 	task.wait(2)
-	player:Kick("❌ Key is required to use this script.")
+	player:Kick("❌ Failed to connect to server")
 	return
 end
 
-local expectedKey = validUsers[player.UserId]
-
--- USERID TIDAK TERDAFTAR
-if not expectedKey then
-	ShowNotification("❌ You are not a Premium user.")
+local data = nil
+local success, err = pcall(function()
+	data = HttpService:JSONDecode(response.Body)
+end)
+if not success then
+	ShowNotification("❌ Response server tidak valid.")
 	task.wait(2)
-	player:Kick("❌ You are not whitelisted.")
+	player:Kick("❌ Invalid server response")
 	return
 end
 
--- KEY SALAH
-if script_key ~= expectedKey then
-	ShowNotification("❌ Invalid Premium Key.")
-	task.wait(2)
-	player:Kick("❌ Invalid key for this account.")
+if not data.allowed then
+	if data.reason == "user_not_whitelisted" then
+		ShowNotification("❌ Kamu bukan pengguna Premium.")
+		task.wait(2)
+		player:Kick("❌ You are not whitelisted.")
+	elseif data.reason == "invalid_key" then
+		ShowNotification("❌ Key Premium salah.")
+		task.wait(2)
+		player:Kick("❌ Invalid key.")
+	else
+		ShowNotification("❌ Akses ditolak.")
+		task.wait(2)
+		player:Kick("❌ Access denied.")
+	end
 	return
 end
 
--- VALID
+--// VALID
 ShowNotification("💎 Lifetime Premium Access Granted!")
 task.wait(1)
 
