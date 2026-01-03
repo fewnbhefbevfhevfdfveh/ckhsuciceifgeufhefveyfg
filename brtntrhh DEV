@@ -601,6 +601,28 @@ local GameData = {
     -- Connections
     childAddedConn = nil,
 
+    -- ================== [Anti AFK Time] ==================
+
+    UserInputService = game:GetService("UserInputService"),
+
+    intervalMinutes = 15,
+    showSeconds = 10,
+
+    lastInput = tick(),
+
+    AntiAFKParagraph = nil,
+
+    runtime = {
+        totalSeconds = 0,
+        minutes = 0,
+        seconds = 0,
+    },
+
+    connections = {
+        began = nil,
+        changed = nil,
+        ended = nil,
+    },
 
     -- ================== [Teleport Service & Server Job Id] ==================
 
@@ -5274,9 +5296,8 @@ function GameData:StartAntiAfk()
     end)
 end
 
-Sec.Player1:Toggle({
-    Title = "Anti AFK",
-    Flag = "AntiAFK",
+sections.Player1:Toggle({
+    Name = "Anti AFK",
     Default = false,
     Callback = function(value)
         GameData.AntiAfkRunning = value
@@ -5287,10 +5308,11 @@ Sec.Player1:Toggle({
 
         Window:Notify({
             Title = "Anti AFK",
-            Description = value and "Enabled" or "Disabled"
+            Description = (value and "Enabled" or "Disabled")
         })
-    end
-})
+    end,
+}, "AntiAfkToggle")
+
 
 Sec.Player3 = Tabs.Player:Section({
     Title = "User Settings",
