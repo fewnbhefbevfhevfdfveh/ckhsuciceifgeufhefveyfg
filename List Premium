@@ -1,11 +1,10 @@
--- SERVICES
+--// SERVICES
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
-local PlayerGui = player:WaitForChild("PlayerGui")
 
--- EXECUTOR REQUEST FUNCTION
+--// EXECUTOR REQUEST FUNCTION
 local Request = (syn and syn.request)
 	or http_request
 	or request
@@ -16,44 +15,23 @@ if not Request then
 	return
 end
 
--- API URL dan SCRIPT URL
+--// API URL
 local API_URL = "https://han2343.pythonanywhere.com/check"
-local SCRIPT_URL = "https://han2343.pythonanywhere.com/premium_script.lua?key=secret_premium_key_123"
 
--- GUI Input Key
-local ScreenGui = Instance.new("ScreenGui", PlayerGui)
-ScreenGui.Name = "KeyInputGui"
+--// KEY HARUS DIISI DARI LUAR SCRIPT
+if typeof(script_key) ~= "string" or script_key == "" then
+	player:Kick("❌ Key is required")
+	return
+end
 
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 300, 0, 100)
-Frame.Position = UDim2.new(0.5, -150, 0.5, -50)
-Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Frame.BorderSizePixel = 0
-Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-Instance.new("UICorner", Frame)
-
-local TextBox = Instance.new("TextBox", Frame)
-TextBox.Size = UDim2.new(1, -20, 0, 30)
-TextBox.Position = UDim2.new(0, 10, 0, 20)
-TextBox.PlaceholderText = "Enter your premium key here"
-TextBox.ClearTextOnFocus = false
-TextBox.Text = ""
-
-local Button = Instance.new("TextButton", Frame)
-Button.Size = UDim2.new(0, 100, 0, 30)
-Button.Position = UDim2.new(0.5, -50, 1, -40)
-Button.AnchorPoint = Vector2.new(0.5, 1)
-Button.Text = "Submit"
-Button.BackgroundColor3 = Color3.fromRGB(255, 130, 0)
-Button.TextColor3 = Color3.fromRGB(0, 0, 0)
-Instance.new("UICorner", Button)
-
+--// FUNCTION NOTIFIKASI
 local function ShowNotification(text)
-	if PlayerGui:FindFirstChild("NexaNotify") then
-		PlayerGui.NexaNotify:Destroy()
+	local playerGui = player:WaitForChild("PlayerGui")
+	if playerGui:FindFirstChild("NexaNotify") then
+		playerGui.NexaNotify:Destroy()
 	end
 
-	local gui = Instance.new("ScreenGui", PlayerGui)
+	local gui = Instance.new("ScreenGui", playerGui)
 	gui.Name = "NexaNotify"
 
 	local frame = Instance.new("Frame", gui)
@@ -87,67 +65,56 @@ local function ShowNotification(text)
 	end)
 end
 
-local function ValidateKey(key)
-	-- Request check ke server
-	local response = Request({
-		Url = API_URL .. "?user_id=" .. player.UserId .. "&key=" .. key,
-		Method = "GET",
-		Headers = { ["Content-Type"] = "application/json" }
-	})
+--// REQUEST CHECK KE SERVER
+local response = Request({
+	Url = API_URL .. "?user_id=" .. player.UserId .. "&key=" .. script_key,
+	Method = "GET",
+	Headers = {
+		["Content-Type"] = "application/json"
+	}
+})
 
-	if not response or not response.Body then
-		ShowNotification("❌ Gagal terhubung ke server.")
-		task.wait(2)
-		player:Kick("❌ Failed to connect to server")
-		return false
-	end
-
-	local data = nil
-	local success, err = pcall(function()
-		data = HttpService:JSONDecode(response.Body)
-	end)
-	if not success then
-		ShowNotification("❌ Response server tidak valid.")
-		task.wait(2)
-		player:Kick("❌ Invalid server response")
-		return false
-	end
-
-	if not data.allowed then
-		if data.reason == "user_not_whitelisted" then
-			ShowNotification("❌ Kamu bukan pengguna Premium.")
-			task.wait(2)
-			player:Kick("❌ You are not whitelisted.")
-		elseif data.reason == "invalid_key" then
-			ShowNotification("❌ Key Premium salah.")
-			task.wait(2)
-			player:Kick("❌ Invalid key.")
-		else
-			ShowNotification("❌ Akses ditolak.")
-			task.wait(2)
-			player:Kick("❌ Access denied.")
-		end
-		return false
-	end
-
-	return true
+if not response or not response.Body then
+	ShowNotification("❌ Gagal terhubung ke server.")
+	task.wait(2)
+	player:Kick("❌ Failed to connect to server")
+	return
 end
 
-Button.MouseButton1Click:Connect(function()
-	local enteredKey = TextBox.Text
-	if enteredKey == "" then
-		ShowNotification("❌ Key tidak boleh kosong.")
-		return
-	end
+local data = nil
+local success, err = pcall(function()
+	data = HttpService:JSONDecode(response.Body)
+end)
+if not success then
+	ShowNotification("❌ Response server tidak valid.")
+	task.wait(2)
+	player:Kick("❌ Invalid server response")
+	return
+end
 
-	if ValidateKey(enteredKey) then
-		ShowNotification("💎 Lifetime Premium Access Granted!")
-		task.wait(1)
-		ScreenGui:Destroy()
-
-		-- Load script premium dengan key proteksi
-		pcall(function()
-			loadstring(game:HttpGet(SCRIPT_URL .. "?key=" .. "secret_premium_key_123"))()
-		end)
+if not data.allowed then
+	if data.reason == "user_not_whitelisted" then
+		ShowNotification("❌ Kamu bukan pengguna Premium.")
+		task.wait(2)
+		player:Kick("❌ You are not whitelisted.")
+	elseif data.reason == "invalid_key" then
+		ShowNotification("❌ Key Premium salah.")
+		task.wait(2)
+		player:Kick("❌ Invalid key.")
+	else
+		ShowNotification("❌ Akses ditolak.")
+		task.wait(2)
+		player:Kick("❌ Access denied.")
 	end
+	return
+end
+
+--// VALID
+ShowNotification("💎 Lifetime Premium Access Granted!")
+task.wait(1)
+
+pcall(function()
+	loadstring(game:HttpGet(
+		"https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/jduwgfPREMIUM"
+	))()
 end)
