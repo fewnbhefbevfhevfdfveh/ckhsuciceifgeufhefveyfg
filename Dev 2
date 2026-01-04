@@ -309,6 +309,39 @@ local GameData = {
     ElementParagraph = nil,
     DeepSeaParagraph = nil,
 
+    -- ================== [Auto Quest Diamond Rod] ==================
+
+    Servicesv13 = {
+        Playersv13 = game:GetService("Players"),
+    },
+
+    Playerv13 = nil,
+    Characterv13 = nil,
+    HRPv13 = nil,
+
+    AutoQuestv13 = false,
+    AutoThreadv13 = nil,
+
+    Questv13 = nil,
+    Headerv13 = nil,
+
+    Obj2v13 = nil,
+    Obj3v13 = nil,
+    Obj4v13 = nil,
+
+    -- ================== [Progres Quest Diamond Rod] ==================
+
+
+    Players = game:GetService("Players"),
+    Player = game:GetService("Players").LocalPlayer,
+    Inside = game:GetService("Players").LocalPlayer.PlayerGui.Quest.List.Inside,
+
+    ProgresDiamondRod = nil,
+    DescText = {},
+    QuestName = "Diamond Researcher",
+
+    UpdateDiamondQuestDesc = nil,
+
     -- ================== [Island] ==================
     Islands = {
     ["Kohana"] = CFrame.new(-642.243561, 16.0354481, 624.918884, 0.999580681, 0, -0.0289562326, 0, 1, 0, 0.0289562326, 0, 0.999580681),
@@ -635,10 +668,10 @@ local GameData = {
     Players = game:GetService("Players"),
     HttpService = game:GetService("HttpService"),
 
-    LocalPlayer = nil,
+    LocalPlayer = game:GetService("Players").LocalPlayer,
     PlaceId = game.PlaceId,
-    targetJobId = "",
-    JobIdLabel = nil,
+    TargetJobId = "",
+    JobIdParagraph = nil,
 
     -- ================== [Hide Quest] ==================
     
@@ -979,6 +1012,24 @@ local GameData = {
     TargetPlayerv12 = nil,
     CurrentValuev12 = nil,
     NewValuesv12 = {},
+
+	--================ Wind Ui Title Gradiant ===============
+
+    RunServicev14 = game:GetService("RunService"),
+    CoreGuiv14 = game:GetService("CoreGui"),
+
+    Titlev14 = nil,
+    Errv14 = nil,
+
+    RootUIv14 = nil,
+    WindUIv14 = nil,
+    Pathv14 = nil,
+
+    GetTitleFuncv14 = nil,
+
+    UIGradientv14 = nil,
+    GradientSpeedv14 = 35,
+
 }
 
 local Window = WindUI:CreateWindow({
@@ -1011,14 +1062,14 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.0.0",
+    Title = "v0.0.6",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
 })
 
 Window:Tag({
-    Title = "Dev",
+    Title = "Premium",
     Icon = "star",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1039,6 +1090,57 @@ local Tabs = {
     Config = Window:Tab({ Title = "Config", Icon = "folder" }),
 }
 
+GameData.GetTitleFuncv14 = function()
+    GameData.RootUIv14 = GameData.CoreGuiv14:FindFirstChild("7b1ba2d6f6d59f993855c6c7616ea41a1e4ef7787e7d3b6dd825dfec57fa882a")
+    if not GameData.RootUIv14 then
+        return nil, "Root UI tidak ditemukan"
+    end
+
+    GameData.WindUIv14 = GameData.RootUIv14:FindFirstChild("WindUI")
+    if not GameData.WindUIv14 then
+        return nil, "WindUI tidak ditemukan"
+    end
+
+    GameData.Pathv14 =
+        GameData.WindUIv14
+        :FindFirstChild("Window")
+        and GameData.WindUIv14.Window:FindFirstChild("Frame")
+        and GameData.WindUIv14.Window.Frame:FindFirstChild("Main")
+        and GameData.WindUIv14.Window.Frame.Main:FindFirstChild("Topbar")
+        and GameData.WindUIv14.Window.Frame.Main.Topbar:FindFirstChild("Left")
+        and GameData.WindUIv14.Window.Frame.Main.Topbar.Left:FindFirstChild("Title")
+        and GameData.WindUIv14.Window.Frame.Main.Topbar.Left.Title:FindFirstChild("Title")
+
+    if not GameData.Pathv14 then
+        return nil, "TextLabel Title tidak ditemukan"
+    end
+
+    return GameData.Pathv14
+end
+
+GameData.Titlev14, GameData.Errv14 = GameData.GetTitleFuncv14()
+if not GameData.Titlev14 then
+    print("[Gradient Title] Skip:", GameData.Errv14)
+    return
+end
+
+GameData.UIGradientv14 = Instance.new("UIGradient")
+GameData.UIGradientv14.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.new(0, 0.0901961, 0.592157)),
+    ColorSequenceKeypoint.new(0.5, Color3.new(0, 0.6, 1)),
+    ColorSequenceKeypoint.new(1, Color3.new(0.0431373, 0.584314, 1))
+})
+GameData.UIGradientv14.Rotation = 0
+GameData.UIGradientv14.Parent = GameData.Titlev14
+
+GameData.RunServicev14.RenderStepped:Connect(function(dt)
+    if GameData.UIGradientv14.Parent then
+        GameData.UIGradientv14.Rotation = (GameData.UIGradientv14.Rotation + GameData.GradientSpeedv14 * dt) % 360
+    end
+end)
+
+print("[Gradient Title] Loaded successfully")
+
 local Sec = {}
 
 local ConfigManager = Window.ConfigManager
@@ -1056,11 +1158,17 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-[+] Added Auto Christmas Presents
-[+] Added Auto Present Christmas Door
-[+] Added Animation Fishing Fish Cought
-[+] Added Custom Name & Level
-[+] Added Auto Sell By Count
+[/] Change Ui
+[+] Show Network Stats (Real Ping)
+[+] Auto Join Event
+[+] Drone Camera
+[+] Hide Gui Drone Camera
+[+] New Tab Trading
+[/] Moved Auto Favorite to Main tab
+[/] Renamed Fishing tab to Main
+[/] Improve Boost Fps
+[-] Delete Auto Enchant (Want to fix it)
+[-] Delete Tab Automatic
 ]],
     Locked = false
 })
@@ -1144,7 +1252,7 @@ Sec.Home2:Button({
 
         for i = 1, 15 do
             remote:FireServer(i)
-            task.wait(0.01) -- safe delay
+            task.wait(1) -- safe delay
         end
 
         WindUI:Notify({
@@ -3797,6 +3905,193 @@ Sec.Quest3:Toggle({
     end
 })
 
+Sec.Quest4 = Tabs.Quest:Section({
+    Title = "Diamond Rod",
+    Box = true,
+    BoxBorder = true,
+    Opened = false,
+})
+
+GameData.ProgresDiamondRod = Sec.Mian4:Paragraph({
+    Title = "Progres Quest Diamond Rod",
+    Desc = "Loading..."
+})
+
+GameData.UpdateDiamondQuestDesc = function()
+    table.clear(GameData.DescText)
+
+    for _, GameData.Quest in ipairs(GameData.Inside:GetChildren()) do
+        GameData.Header =
+            GameData.Quest:FindFirstChild("Top")
+            and GameData.Quest.Top:FindFirstChild("TopFrame")
+            and GameData.Quest.Top.TopFrame:FindFirstChild("Header")
+
+        if GameData.Header and GameData.Header.Text == GameData.QuestName then
+            for GameData.I = 1, 6 do
+                GameData.Objective = GameData.Quest.Content:FindFirstChild("Objective" .. GameData.I)
+                if GameData.Objective then
+                    GameData.Vector = GameData.Objective.Content.Check:FindFirstChild("Vector")
+                    GameData.IsDone = GameData.Vector and GameData.Vector.Visible or false
+
+                    GameData.Display = GameData.Objective.Content:FindFirstChild("Display")
+                    if GameData.Display then
+                        GameData.Prefix = GameData.Display:FindFirstChild("Prefix")
+                        GameData.ItemName = GameData.Display:FindFirstChild("ItemName")
+                        GameData.Suffix = GameData.Display:FindFirstChild("Suffix")
+
+                        GameData.TextPrefix = GameData.Prefix and GameData.Prefix.Text or ""
+                        GameData.TextItem = GameData.ItemName and GameData.ItemName.Text or ""
+                        GameData.TextSuffix = GameData.Suffix and GameData.Suffix.Text or ""
+
+                        GameData.StatusText = GameData.IsDone and "(1 / 1)" or "(0 / 1)"
+
+                        table.insert(
+                            GameData.DescText,
+                            GameData.TextPrefix .. " " ..
+                            GameData.TextItem .. " " ..
+                            GameData.TextSuffix .. " " ..
+                            GameData.StatusText
+                        )
+                    end
+                end
+            end
+            break
+        end
+    end
+
+    GameData.ProgresDiamondRod:SetDesc(
+        table.concat(GameData.DescText, "\n")
+    )
+end
+
+
+GameData.AutoUpdateThread = task.spawn(function()
+    while task.wait(5) do
+        GameData.UpdateDiamondQuestDesc()
+    end
+end)
+
+GameData.Playerv13 = GameData.Servicesv13.Playersv13.LocalPlayer
+GameData.Characterv13 =
+    GameData.Playerv13.Character
+    or GameData.Playerv13.CharacterAdded:Wait()
+GameData.HRPv13 =
+    GameData.Characterv13:WaitForChild("HumanoidRootPart")
+
+function GameData:GetQuestv13()
+    for _, v in ipairs(
+        self.Playerv13.PlayerGui.Quest.List.Inside:GetChildren()
+    ) do
+        self.Headerv13 =
+            v:FindFirstChild("Top")
+            and v.Top:FindFirstChild("TopFrame")
+            and v.Top.TopFrame:FindFirstChild("Header")
+
+        if self.Headerv13
+            and self.Headerv13:IsA("TextLabel")
+            and self.Headerv13.Text == "Diamond Researcher"
+        then
+            return v
+        end
+    end
+end
+
+function GameData:QuestFinishedv13(quest)
+    self.Obj2v13 =
+        quest.Content.Objective2.Content.Check:FindFirstChild("Vector")
+    self.Obj3v13 =
+        quest.Content.Objective3.Content.Check:FindFirstChild("Vector")
+    self.Obj4v13 =
+        quest.Content.Objective4.Content.Check:FindFirstChild("Vector")
+
+    return
+        (not self.Obj2v13 or self.Obj2v13.Visible == false)
+        and (not self.Obj3v13 or self.Obj3v13.Visible == false)
+        and (not self.Obj4v13 or self.Obj4v13.Visible == false)
+end
+
+function GameData:StartAutoQuestv13()
+    if self.AutoThreadv13 then return end
+
+    self.AutoThreadv13 = task.spawn(function()
+        while self.AutoQuestv13 do
+            self.Questv13 = self:GetQuestv13()
+            if not self.Questv13 then break end
+
+            if self:QuestFinishedv13(self.Questv13) then
+                self.AutoQuestv13 = false
+                break
+            end
+
+            self.Obj2v13 =
+                self.Questv13.Content.Objective2.Content.Check
+                :FindFirstChild("Vector")
+
+            if self.Obj2v13 then
+                if self.Obj2v13.Visible == false then
+                    self.HRPv13.CFrame = CFrame.new(
+                        -3025.8418, 2.51780939, 2258.98633,
+                        0.997445524, 0, 0.0714312196,
+                        0, 1, 0,
+                        -0.0714312196, 0, 0.997445524
+                    )
+                else
+                    self.HRPv13.CFrame = CFrame.new(
+                        -2069.37671, 4.02332687, 3663.43384,
+                        -0.999497592, 0, 0.0316939764,
+                        0, 1, 0,
+                        -0.0316939764, 0, -0.999497592
+                    )
+                end
+            end
+
+            self.Obj3v13 =
+                self.Questv13.Content.Objective3.Content.Check
+                :FindFirstChild("Vector")
+
+            if self.Obj3v13 and self.Obj3v13.Visible == true then
+                self.HRPv13.CFrame = CFrame.new(
+                    -2581.56738, 5.51361609, -20.6182747,
+                    0.985532045, 0, 0.169489205,
+                    0, 1, 0,
+                    -0.169489205, 0, 0.985532045
+                )
+            end
+
+            self.Obj4v13 =
+                self.Questv13.Content.Objective4.Content.Check
+                :FindFirstChild("Vector")
+
+            if self.Obj4v13 and self.Obj4v13.Visible == true then
+                self.HRPv13.CFrame = CFrame.new(
+                    -830.055359, 53.5000572, 220.208191,
+                    -0.0131458649, 0, 0.999913573,
+                    0, 1, 0,
+                    -0.999913573, 0, -0.0131458649
+                )
+            end
+
+            task.wait(5)
+        end
+
+        self.AutoThreadv13 = nil
+    end)
+end
+
+Sec.Quest4:Toggle({
+    Title = "Auto Quest Diamond Rod",
+    Flag = "AutoQuestDiamond",
+    Desc = "Auto teleport sampai quest Diamond Researcher selesai",
+    Value = false,
+
+    Callback = function(state)
+        GameData.AutoQuestv13 = state
+        if state then
+            GameData:StartAutoQuestv13()
+        end
+    end
+})
+
 Sec.Trading1 = Tabs.Trading:Section({
     Title = "Trading",
     Box = true,
@@ -5797,7 +6092,6 @@ end
 
 GameData.Player = game.Players.LocalPlayer
 GameData.char = GameData.Player.Character or GameData.Player.CharacterAdded:Wait()
-
 GameData.hum = GameData:GetHumanoid()
 
 GameData.Player.CharacterAdded:Connect(function(char)
@@ -5810,99 +6104,106 @@ end)
 
 Sec.Player3:Slider({
     Title = "Set Walkspeed",
-    Flag = "WalkspeedSlider",
-    Desc = "Adjust your walkspeed",
+    Desc = "Player Walkspeed",
+    Flag = "WalkspeedValue",
     Step = 1,
     Value = {
         Min = 0,
         Max = 300,
         Default = GameData.WalkspeedValue,
     },
-    Callback = function(Value)
-        GameData.WalkspeedValue = Value
+    Callback = function(value)
+        GameData.WalkspeedValue = value
         GameData:ApplyWalkspeed()
     end
 })
 
 Sec.Player3:Toggle({
     Title = "Walkspeed",
+    Desc = "Enable custom walkspeed",
     Flag = "WalkspeedToggle",
-    Desc = "Enable/Disable Walkspeed",
-    Type = "Checkbox",
     Value = GameData.WalkspeedEnabled,
     Callback = function(state)
         GameData.WalkspeedEnabled = state
-        Window:Notify({
-            Title = "Walkspeed",
-            Description = state and ("Enabled ("..GameData.WalkspeedValue..")") or "Disabled"
-        })
         GameData:ApplyWalkspeed()
+
+        WindUI:Notify({
+            Title = "Walkspeed",
+            Content = state and ("Enabled (" .. GameData.WalkspeedValue .. ")") or "Disabled",
+            Duration = 3,
+            Icon = "zap"
+        })
     end
 })
 
 Sec.Player3:Slider({
     Title = "Set Jump Power",
-    Flag = "JumpPowerSlider",
-    Desc = "Adjust your jump power",
+    Desc = "Player Jump Power",
+    Flag = "JumpPowerValue",
     Step = 1,
     Value = {
         Min = 0,
         Max = 300,
         Default = GameData.JumpValue,
     },
-    Callback = function(Value)
-        GameData.JumpValue = Value
+    Callback = function(value)
+        GameData.JumpValue = value
         GameData:ApplyJumpPower()
     end
 })
 
 Sec.Player3:Toggle({
-    Title = "Auto Jump Power",
-    Flag = "JumpToggle",
-    Desc = "Enable/Disable Auto Jump Power",
-    Type = "Checkbox",
+    Title = "Jump Power",
+    Desc = "Enable custom jump power",
+    Flag = "JumpPowerToggle",
     Value = GameData.JumpEnabled,
     Callback = function(state)
         GameData.JumpEnabled = state
-        Window:Notify({
-            Title = "Jump Power",
-            Description = state and ("Enabled ("..GameData.JumpValue..")") or "Disabled"
-        })
         GameData:ApplyJumpPower()
+
+        WindUI:Notify({
+            Title = "Jump Power",
+            Content = state and ("Enabled (" .. GameData.JumpValue .. ")") or "Disabled",
+            Duration = 3,
+            Icon = "arrow-up"
+        })
     end
 })
 
 Sec.Player3:Slider({
     Title = "Set Gravity",
-    Flag = "GravitySlider",
-    Desc = "Adjust your gravity",
+    Desc = "Workspace Gravity",
+    Flag = "GravityValue",
     Step = 1,
     Value = {
         Min = 0,
         Max = 400,
         Default = GameData.GravityValue,
     },
-    Callback = function(Value)
-        GameData.GravityValue = Value
+    Callback = function(value)
+        GameData.GravityValue = value
         GameData:ApplyGravity()
     end
 })
 
 Sec.Player3:Toggle({
     Title = "Gravity Controller",
+    Desc = "Enable custom gravity",
     Flag = "GravityToggle",
-    Desc = "Enable/Disable custom gravity",
-    Type = "Checkbox",
     Value = GameData.GravityEnabled,
     Callback = function(state)
         GameData.GravityEnabled = state
-        Window:Notify({
-            Title = "Gravity",
-            Description = state and ("Enabled ("..GameData.GravityValue..")") or "Disabled"
-        })
         GameData:ApplyGravity()
+
+        WindUI:Notify({
+            Title = "Gravity",
+            Content = state and ("Enabled (" .. GameData.GravityValue .. ")") or "Disabled",
+            Duration = 3,
+            Icon = "globe"
+        })
     end
 })
+
 
 Sec.Config1 = Tabs.Config:Section({
     Title = "Save Config",
@@ -6066,6 +6367,87 @@ Sec.Config2:Button({
     end
 })
 
+Sec.Config3 = Tabs.Config:Section({
+    Title = "Server Joiner",
+    Box = true,
+    BoxBorder = true,
+    Opened = true,
+})
+
+GameData.JobIdParagraph = Sec.Config3:Paragraph({
+    Title = "Current Job ID",
+    Desc = game.JobId,
+    Flag = "JobIdParagraph"
+})
+
+Sec.Config3:Button({
+    Title = "Rejoin Server",
+    Callback = function()
+        GameData.TeleportService:TeleportToPlaceInstance(
+            GameData.PlaceId,
+            game.JobId,
+            GameData.LocalPlayer
+        )
+    end
+})
+
+Sec.Config3:Button({
+    Title = "Server Hop",
+    Callback = function()
+        local success, response = pcall(function()
+            return game:HttpGet(
+                ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100")
+                :format(GameData.PlaceId)
+            )
+        end)
+
+        if not success then return end
+
+        local servers = GameData.HttpService:JSONDecode(response)
+
+        for _, server in ipairs(servers.data or {}) do
+            if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                GameData.TeleportService:TeleportToPlaceInstance(
+                    GameData.PlaceId,
+                    server.id,
+                    GameData.LocalPlayer
+                )
+                return
+            end
+        end
+    end
+})
+
+Sec.Config3:Button({
+    Title = "Copy Job ID",
+    Callback = function()
+        setclipboard(game.JobId)
+    end
+})
+
+Sec.Config3:Input({
+    Title = "Enter Job ID",
+    Desc = "Paste JobId here",
+    Placeholder = "JobId...",
+    Flag = "InputJobId",
+    Callback = function(text)
+        GameData.TargetJobId = text or ""
+    end
+})
+
+Sec.Config3:Button({
+    Title = "Teleport to Job ID",
+    Flag = "TeleportJobId",
+    Callback = function()
+        if GameData.TargetJobId ~= "" then
+            GameData.TeleportService:TeleportToPlaceInstance(
+                GameData.PlaceId,
+                GameData.TargetJobId,
+                GameData.LocalPlayer
+            )
+        end
+    end
+})
 
 -------------------------------------------------------------
 -- CREATE TOGGLE GUI
