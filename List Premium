@@ -4,7 +4,7 @@ local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 
---// EXECUTOR REQUEST
+--// EXECUTOR REQUEST FUNCTION
 local Request = (syn and syn.request)
 	or http_request
 	or request
@@ -18,22 +18,28 @@ end
 --// API URL
 local API_URL = "https://han2343.pythonanywhere.com/check"
 
---// KEY DARI LUAR
+--// KEY HARUS DIISI DARI LUAR SCRIPT
 if typeof(script_key) ~= "string" or script_key == "" then
 	player:Kick("❌ Key is required")
 	return
 end
 
---// NOTIFIKASI
+--// FUNCTION NOTIFIKASI
 local function ShowNotification(text)
-	local gui = Instance.new("ScreenGui", player.PlayerGui)
+	local playerGui = player:WaitForChild("PlayerGui")
+	if playerGui:FindFirstChild("NexaNotify") then
+		playerGui.NexaNotify:Destroy()
+	end
+
+	local gui = Instance.new("ScreenGui", playerGui)
 	gui.Name = "NexaNotify"
 
 	local frame = Instance.new("Frame", gui)
-	frame.Size = UDim2.new(0, 320, 0, 60)
+	frame.Size = UDim2.new(0, 300, 0, 60)
 	frame.Position = UDim2.new(0.5, 0, 0, -80)
 	frame.AnchorPoint = Vector2.new(0.5, 0)
-	frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+	frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+	frame.BorderColor3 = Color3.fromRGB(60, 60, 60)
 	Instance.new("UICorner", frame)
 
 	local label = Instance.new("TextLabel", frame)
@@ -43,48 +49,72 @@ local function ShowNotification(text)
 	label.TextWrapped = true
 	label.Font = Enum.Font.Code
 	label.TextSize = 14
-	label.TextColor3 = Color3.fromRGB(255, 140, 0)
+	label.TextColor3 = Color3.fromRGB(255, 130, 0)
 	label.Text = text
 
-	TweenService:Create(frame, TweenInfo.new(0.3), {
+	TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
 		Position = UDim2.new(0.5, 0, 0, 40)
 	}):Play()
 
 	task.delay(2, function()
+		TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+			Position = UDim2.new(0.5, 0, 0, -80)
+		}):Play()
+		task.wait(0.3)
 		gui:Destroy()
 	end)
 end
 
---// REQUEST KE API
+--// REQUEST CHECK KE SERVER
 local response = Request({
 	Url = API_URL .. "?user_id=" .. player.UserId .. "&key=" .. script_key,
 	Method = "GET",
-	Headers = {["Content-Type"] = "application/json"}
+	Headers = {
+		["Content-Type"] = "application/json"
+	}
 })
 
 if not response or not response.Body then
-	ShowNotification("❌ Server tidak merespon")
-	player:Kick("Server error")
+	ShowNotification("❌ Gagal terhubung ke server.")
+	task.wait(2)
+	player:Kick("❌ Failed to connect to server")
 	return
 end
 
-local data = HttpService:JSONDecode(response.Body)
+local data = nil
+local success, err = pcall(function()
+	data = HttpService:JSONDecode(response.Body)
+end)
+if not success then
+	ShowNotification("❌ Response server tidak valid.")
+	task.wait(2)
+	player:Kick("❌ Invalid server response")
+	return
+end
 
 if not data.allowed then
-	ShowNotification("❌ Access denied")
-	player:Kick("Access denied")
+	if data.reason == "user_not_whitelisted" then
+		ShowNotification("❌ Kamu bukan pengguna Premium.")
+		task.wait(2)
+		player:Kick("❌ You are not whitelisted.")
+	elseif data.reason == "invalid_key" then
+		ShowNotification("❌ Key Premium salah.")
+		task.wait(2)
+		player:Kick("❌ Invalid key.")
+	else
+		ShowNotification("❌ Akses ditolak.")
+		task.wait(2)
+		player:Kick("❌ Access denied.")
+	end
 	return
 end
 
---// LOAD SCRIPT DARI API
-if not data.script then
-	ShowNotification("❌ Script kosong")
-	player:Kick("Script missing")
-	return
-end
-
-ShowNotification("💎 Premium Access Granted")
+--// VALID
+ShowNotification("💎 Lifetime Premium Access Granted!")
+task.wait(1)
 
 pcall(function()
-	loadstring(data.script)()
+	loadstring(game:HttpGet(
+		"https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/jduwgfPREMIUM"
+	))()
 end)
