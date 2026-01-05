@@ -6461,14 +6461,20 @@ end)
 	--================ Wind Ui Title Gradiant ===============
 
 GameData.GetTitleFuncv14 = function()
-    GameData.RootUIv14 = GameData.CoreGuiv14:FindFirstChild(
-        "7b1ba2d6f6d59f993855c6c7616ea41a1e4ef7787e7d3b6dd825dfec57fa882a"
-    )
-    if not GameData.RootUIv14 then
-        return nil, "Root UI tidak ditemukan"
+    GameData.RootUIv14 = nil
+    GameData.WindUIv14 = nil
+
+    for _, v in ipairs(GameData.CoreGuiv14:GetChildren()) do
+        if v:IsA("ScreenGui") or v:IsA("Folder") then
+            local wind = v:FindFirstChild("WindUI", true)
+            if wind then
+                GameData.RootUIv14 = v
+                GameData.WindUIv14 = wind
+                break
+            end
+        end
     end
 
-    GameData.WindUIv14 = GameData.RootUIv14:FindFirstChild("WindUI")
     if not GameData.WindUIv14 then
         return nil, "WindUI tidak ditemukan"
     end
@@ -6494,11 +6500,9 @@ end
 local function ApplyGradient()
     GameData.Titlev14, GameData.Errv14 = GameData.GetTitleFuncv14()
     if not GameData.Titlev14 then
-        warn("[Gradient Title] Skip:", GameData.Errv14)
         return
     end
 
-    -- Cegah double gradient
     if GameData.Titlev14:FindFirstChild("GradientTitlev14") then
         return
     end
@@ -6512,8 +6516,6 @@ local function ApplyGradient()
     })
     GameData.UIGradientv14.Rotation = 0
     GameData.UIGradientv14.Parent = GameData.Titlev14
-
-    print("[Gradient Title] Applied")
 end
 
 --// ROTATION LOOP
@@ -6531,5 +6533,3 @@ task.spawn(function()
         ApplyGradient()
     end
 end)
-
-print("[Gradient Title] Loaded with 5s checker")
