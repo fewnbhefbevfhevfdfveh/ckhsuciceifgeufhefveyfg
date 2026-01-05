@@ -6442,11 +6442,11 @@ end)
 -- WINDOW EVENTS (API RESMI)
 -------------------------------------------------------------
 Window:OnOpen(function()
-    print("Window Opened")
+
 end)
 
 Window:OnClose(function()
-    print("Window Closed")
+
 end)
 
 Window:OnDestroy(function()
@@ -6461,7 +6461,9 @@ end)
 	--================ Wind Ui Title Gradiant ===============
 
 GameData.GetTitleFuncv14 = function()
-    GameData.RootUIv14 = GameData.CoreGuiv14:FindFirstChild("7b1ba2d6f6d59f993855c6c7616ea41a1e4ef7787e7d3b6dd825dfec57fa882a")
+    GameData.RootUIv14 = GameData.CoreGuiv14:FindFirstChild(
+        "7b1ba2d6f6d59f993855c6c7616ea41a1e4ef7787e7d3b6dd825dfec57fa882a"
+    )
     if not GameData.RootUIv14 then
         return nil, "Root UI tidak ditemukan"
     end
@@ -6471,7 +6473,7 @@ GameData.GetTitleFuncv14 = function()
         return nil, "WindUI tidak ditemukan"
     end
 
-    GameData.Pathv14 =
+    local Path =
         GameData.WindUIv14
         :FindFirstChild("Window")
         and GameData.WindUIv14.Window:FindFirstChild("Frame")
@@ -6481,32 +6483,53 @@ GameData.GetTitleFuncv14 = function()
         and GameData.WindUIv14.Window.Frame.Main.Topbar.Left:FindFirstChild("Title")
         and GameData.WindUIv14.Window.Frame.Main.Topbar.Left.Title:FindFirstChild("Title")
 
-    if not GameData.Pathv14 then
+    if not Path then
         return nil, "TextLabel Title tidak ditemukan"
     end
 
-    return GameData.Pathv14
+    return Path
 end
 
-GameData.Titlev14, GameData.Errv14 = GameData.GetTitleFuncv14()
-if not GameData.Titlev14 then
-    print("[Gradient Title] Skip:", GameData.Errv14)
-    return
+--// APPLY GRADIENT
+local function ApplyGradient()
+    GameData.Titlev14, GameData.Errv14 = GameData.GetTitleFuncv14()
+    if not GameData.Titlev14 then
+        warn("[Gradient Title] Skip:", GameData.Errv14)
+        return
+    end
+
+    -- Cegah double gradient
+    if GameData.Titlev14:FindFirstChild("GradientTitlev14") then
+        return
+    end
+
+    GameData.UIGradientv14 = Instance.new("UIGradient")
+    GameData.UIGradientv14.Name = "GradientTitlev14"
+    GameData.UIGradientv14.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.new(0, 0.0901961, 0.592157)),
+        ColorSequenceKeypoint.new(0.5, Color3.new(0, 0.6, 1)),
+        ColorSequenceKeypoint.new(1, Color3.new(0.0431373, 0.584314, 1))
+    })
+    GameData.UIGradientv14.Rotation = 0
+    GameData.UIGradientv14.Parent = GameData.Titlev14
+
+    print("[Gradient Title] Applied")
 end
 
-GameData.UIGradientv14 = Instance.new("UIGradient")
-GameData.UIGradientv14.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.new(0, 0.0901961, 0.592157)),
-    ColorSequenceKeypoint.new(0.5, Color3.new(0, 0.6, 1)),
-    ColorSequenceKeypoint.new(1, Color3.new(0.0431373, 0.584314, 1))
-})
-GameData.UIGradientv14.Rotation = 0
-GameData.UIGradientv14.Parent = GameData.Titlev14
-
+--// ROTATION LOOP
 GameData.RunServicev14.RenderStepped:Connect(function(dt)
-    if GameData.UIGradientv14.Parent then
-        GameData.UIGradientv14.Rotation = (GameData.UIGradientv14.Rotation + GameData.GradientSpeedv14 * dt) % 360
+    if GameData.UIGradientv14 and GameData.UIGradientv14.Parent then
+        GameData.UIGradientv14.Rotation =
+            (GameData.UIGradientv14.Rotation + GameData.GradientSpeedv14 * dt) % 360
     end
 end)
 
-print("[Gradient Title] Loaded successfully")
+--// CHECK LOOP EVERY 5 SECONDS
+task.spawn(function()
+    while true do
+        task.wait(5)
+        ApplyGradient()
+    end
+end)
+
+print("[Gradient Title] Loaded with 5s checker")
