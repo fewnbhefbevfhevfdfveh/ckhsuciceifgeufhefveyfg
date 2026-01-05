@@ -1107,7 +1107,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.0.6",
+    Title = "v0.0.7",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
