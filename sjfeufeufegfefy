@@ -312,22 +312,17 @@ local GameData = {
 
     -- ================== [Auto Quest Diamond Rod] ==================
 
-    -- SERVICES
     Players = game:GetService("Players"),
 
-    -- PLAYER / CHARACTER
     Player = nil,
     Character = nil,
     HRP = nil,
 
-    -- STATE
     AutoQuest = false,
     AutoThread = nil,
 
-    -- CONST
     QuestName = "Diamond Researcher",
 
-    -- OBJECTIVE CFRAME
     ObjectiveCFrame = {
         Obj2 = CFrame.new(
             -2925.67725, 3.24999976, 2083.38892,
@@ -603,8 +598,6 @@ local GameData = {
     Stroke = nil,
 
     Dragging = false,
-    DragStart = nil,
-    StartPos = nil,
 
     -- ================== [Walkspeed, Jump Power, Gravity] ==================
 
@@ -1107,7 +1100,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.0.7",
+    Title = "v0.0.8",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1152,17 +1145,7 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-[/] Change Ui
-[+] Show Network Stats (Real Ping)
-[+] Auto Quest Diamond Rod
-[+] Drone Camera
-[+] Hide Gui Drone Camera
-[+] New Tab Trading
-[/] Moved Auto Favorite to Main tab
-[/] Renamed Fishing tab to Main
-[/] Improve Boost Fps
-[-] Delete Auto Enchant (Want to fix it)
-[-] Delete Tab Automatic
+[/] Fixed Auto Diamond Quest
 ]],
     Locked = false
 })
@@ -3382,6 +3365,36 @@ Sec.Event1:Toggle({
     end
 })
 
+task.spawn(function()
+    while true do
+        if GameData.AutoLochEnabled
+        and GameData.TimerLabel
+        and GameData.TimerLabel:IsA("TextLabel") then
+
+            local text = GameData.TimerLabel.Text
+            local char = GameData.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+            if hrp then
+                if text ~= "0M 0S LEFT" then
+                    if not GameData.Teleporting then
+                        GameData.SavedCFrame = hrp.CFrame
+                        GameData.Teleporting = true
+                    end
+                    hrp.CFrame = GameData.TargetCFrame
+                else
+                    if GameData.Teleporting and GameData.SavedCFrame then
+                        hrp.CFrame = GameData.SavedCFrame
+                    end
+                    GameData.Teleporting = false
+                    GameData.SavedCFrame = nil
+                end
+            end
+        end
+        task.wait(GameData.LoopDelay)
+    end
+end)
+
 Sec.Quest1 = Tabs.Quest:Section({
     Title = "Progress Quests",
     Box = true,
@@ -3897,10 +3910,24 @@ task.spawn(function()
 end)
 
 GameData.Player = GameData.Players.LocalPlayer
-GameData.Character = GameData.Player.Character or GameData.Player.CharacterAdded:Wait()
-GameData.HRP = GameData.Character:WaitForChild("HumanoidRootPart")
+
+function GameData.InitCharacter()
+    GameData.Character = GameData.Player.Character
+        or GameData.Player.CharacterAdded:Wait()
+
+    GameData.HRP = GameData.Character:WaitForChild("HumanoidRootPart")
+end
+
+GameData.InitCharacter()
+GameData.Player.CharacterAdded:Connect(GameData.InitCharacter)
 
 function GameData.GetQuest()
+    if not GameData.Player
+    or not GameData.Player:FindFirstChild("PlayerGui")
+    or not GameData.Player.PlayerGui:FindFirstChild("Quest") then
+        return
+    end
+
     for _, v in ipairs(
         GameData.Player.PlayerGui.Quest.List.Inside:GetChildren()
     ) do
@@ -3918,56 +3945,62 @@ function GameData.GetQuest()
 end
 
 function GameData.AutoQuestLoop()
-    while GameData.AutoQuest do
+    while true do
         task.wait(5)
 
+        if not GameData.AutoQuest then
+            continue
+        end
+
+        if not GameData.HRP then
+            continue
+        end
+
         GameData.Quest = GameData.GetQuest()
-        if GameData.Quest then
-            GameData.Obj2 =
-                GameData.Quest.Content.Objective2.Content.Check:FindFirstChild("Vector")
-            GameData.Obj3 =
-                GameData.Quest.Content.Objective3.Content.Check:FindFirstChild("Vector")
-            GameData.Obj4 =
-                GameData.Quest.Content.Objective4.Content.Check:FindFirstChild("Vector")
+        if not GameData.Quest then
+            continue
+        end
 
-            -- QUEST FINISHED
-            if GameData.Obj2 and GameData.Obj3 and GameData.Obj4
-            and GameData.Obj2.Visible
-            and GameData.Obj3.Visible
-            and GameData.Obj4.Visible then
-                GameData.AutoQuest = false
-                GameData.AutoThread = nil
-                break
+        GameData.Obj2 =
+            GameData.Quest.Content.Objective2.Content.Check:FindFirstChild("Vector")
+        GameData.Obj3 =
+            GameData.Quest.Content.Objective3.Content.Check:FindFirstChild("Vector")
+        GameData.Obj4 =
+            GameData.Quest.Content.Objective4.Content.Check:FindFirstChild("Vector")
 
-            -- OBJECTIVE 2
-            elseif GameData.Obj2 and GameData.Obj2.Visible == false then
-                GameData.HRP.CFrame = GameData.ObjectiveCFrame.Obj2
+        -- QUEST FINISHED
+        if GameData.Obj2 and GameData.Obj3 and GameData.Obj4
+        and GameData.Obj2.Visible
+        and GameData.Obj3.Visible
+        and GameData.Obj4.Visible then
+            GameData.AutoQuest = false
+            continue
+        end
 
-            -- OBJECTIVE 3
-            elseif GameData.Obj3 and GameData.Obj3.Visible == false then
-                GameData.HRP.CFrame = GameData.ObjectiveCFrame.Obj3
+        -- OBJECTIVE PRIORITY
+        if GameData.Obj2 and not GameData.Obj2.Visible then
+            GameData.HRP.CFrame = GameData.ObjectiveCFrame.Obj2
 
-            -- OBJECTIVE 4
-            elseif GameData.Obj4 and GameData.Obj4.Visible == false then
-                GameData.HRP.CFrame = GameData.ObjectiveCFrame.Obj4
-            end
+        elseif GameData.Obj3 and not GameData.Obj3.Visible then
+            GameData.HRP.CFrame = GameData.ObjectiveCFrame.Obj3
+
+        elseif GameData.Obj4 and not GameData.Obj4.Visible then
+            GameData.HRP.CFrame = GameData.ObjectiveCFrame.Obj4
         end
     end
 end
+
+GameData.AutoThread = task.spawn(GameData.AutoQuestLoop)
 
 Sec.Quest4:Toggle({
     Title = "Auto Quest Diamond Rod",
     Flag = "AutoQuestDiamondRod",
     Value = false,
-
     Callback = function(state)
         GameData.AutoQuest = state
-
-        if state and not GameData.AutoThread then
-            GameData.AutoThread = task.spawn(GameData.AutoQuestLoop)
-        end
     end
 })
+
 
 Sec.Trading1 = Tabs.Trading:Section({
     Title = "Trading",
@@ -6326,9 +6359,6 @@ Sec.Config3:Button({
     end
 })
 
--------------------------------------------------------------
--- CREATE TOGGLE GUI
--------------------------------------------------------------
 GameData.ScreenGui = Instance.new("ScreenGui")
 GameData.ScreenGui.Name = "NexaUIToggle"
 GameData.ScreenGui.IgnoreGuiInset = true
@@ -6344,6 +6374,8 @@ GameData.ToggleFrame.Size = UDim2.new(0, 50, 0, 50)
 GameData.ToggleFrame.Position = UDim2.new(0, 110, 0, 95)
 GameData.ToggleFrame.BackgroundColor3 = Color3.fromRGB(20, 80, 200)
 GameData.ToggleFrame.BorderSizePixel = 0
+GameData.ToggleFrame.Active = true
+GameData.ToggleFrame.Selectable = true
 
 GameData.Corner = Instance.new("UICorner")
 GameData.Corner.CornerRadius = UDim.new(0, 14)
@@ -6382,38 +6414,46 @@ GameData.ToggleBtn.Size = UDim2.new(0, 40, 0, 40)
 GameData.ToggleBtn.Position = UDim2.new(0.5, -20, 0.5, -20)
 GameData.ToggleBtn.BackgroundTransparency = 1
 GameData.ToggleBtn.Image = "rbxassetid://123906607434048"
+GameData.ToggleBtn.AutoButtonColor = false
 
 -------------------------------------------------------------
--- DRAG SYSTEM
+-- DRAG SYSTEM (PC + MOBILE FIXED)
 -------------------------------------------------------------
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    GameData.ToggleFrame.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
 GameData.ToggleFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
     or input.UserInputType == Enum.UserInputType.Touch then
+
         GameData.Dragging = true
-        GameData.DragStart = input.Position
-        GameData.StartPos = GameData.ToggleFrame.Position
+        dragStart = input.Position
+        startPos = GameData.ToggleFrame.Position
+        dragInput = input
     end
 end)
 
-GameData.UIS.InputChanged:Connect(function(input)
-    if GameData.Dragging then
-        if input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch then
-            local delta = input.Position - GameData.DragStart
-            GameData.ToggleFrame.Position = UDim2.new(
-                GameData.StartPos.X.Scale,
-                GameData.StartPos.X.Offset + delta.X,
-                GameData.StartPos.Y.Scale,
-                GameData.StartPos.Y.Offset + delta.Y
-            )
-        end
+GameData.ToggleFrame.InputChanged:Connect(function(input)
+    if input == dragInput and GameData.Dragging then
+        update(input)
     end
 end)
 
-GameData.UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
+GameData.ToggleFrame.InputEnded:Connect(function(input)
+    if input == dragInput then
         GameData.Dragging = false
+        dragInput = nil
     end
 end)
 
@@ -6422,7 +6462,6 @@ end)
 -------------------------------------------------------------
 GameData.ToggleBtn.MouseButton1Click:Connect(function()
 
-    -- click animation
     GameData.TweenService:Create(GameData.ToggleBtn, TweenInfo.new(0.08), {
         Size = UDim2.new(0, 35, 0, 35)
     }):Play()
@@ -6439,24 +6478,24 @@ GameData.ToggleBtn.MouseButton1Click:Connect(function()
 end)
 
 -------------------------------------------------------------
--- WINDOW EVENTS (API RESMI)
+-- WINDOW EVENTS (API)
 -------------------------------------------------------------
-Window:OnOpen(function()
+if Window then
+    Window:OnOpen(function()
+        -- on open
+    end)
 
-end)
+    Window:OnClose(function()
+        -- on close
+    end)
 
-Window:OnClose(function()
-
-end)
-
-Window:OnDestroy(function()
-    print("Window Destroyed")
-
-    if GameData.ScreenGui then
-        GameData.ScreenGui:Destroy()
-        GameData.ScreenGui = nil
-    end
-end)
+    Window:OnDestroy(function()
+        if GameData.ScreenGui then
+            GameData.ScreenGui:Destroy()
+            GameData.ScreenGui = nil
+        end
+    end)
+end
 
 	--================ Wind Ui Title Gradiant ===============
 
