@@ -1,4 +1,5 @@
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/xwvufdwgqudwyfwdvwedyuvwd/gbewufbeufbeugfvr/refs/heads/main/ggegrhrhhr%20Info%20Fish%20Mythic"))()
 
 local workspace = workspace
 local Players = game:GetService("Players")
@@ -39,36 +40,38 @@ local GameData = {
 	},
 
 	TierList001 = {
-		"Common","Uncommon","Rare","Epic","Legendary","Mythic","SECRET"
+		"Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "SECRET"
 	},
 
 	-----------------------------------------------------
-	-- CORE
+	-- CORE SERVICES
 	-----------------------------------------------------
-	RS = ReplicatedStorage,
-	Players = Players,
-	player = Players.LocalPlayer,
+	ReplicatedStorage = game:GetService("ReplicatedStorage"),
+	Players = game:GetService("Players"),
+	HttpService = game:GetService("HttpService"),
 
-	Net = require(ReplicatedStorage.Packages.Net),
-	ReplionClient = require(ReplicatedStorage.Packages.Replion).Client,
+	player = game:GetService("Players").LocalPlayer,
+
+	Net = require(game:GetService("ReplicatedStorage").Packages.Net),
+	ReplionClient = require(game:GetService("ReplicatedStorage").Packages.Replion).Client,
 	DataReplion = nil,
 
-	ItemUtility = require(ReplicatedStorage.Shared.ItemUtility),
+	ItemUtility = require(game:GetService("ReplicatedStorage").Shared.ItemUtility),
 
-	TradeRemote = ReplicatedStorage
+	TradeRemote = game:GetService("ReplicatedStorage")
 		:WaitForChild("Packages")
 		:WaitForChild("_Index")
 		:WaitForChild("sleitnick_net@0.2.0")
 		:WaitForChild("net")
 		:WaitForChild("RF/InitiateTrade"),
 
-	ItemsFolder = ReplicatedStorage:WaitForChild("Items"),
+	ItemsFolder = game:GetService("ReplicatedStorage"):WaitForChild("Items"),
 
 	-----------------------------------------------------
 	-- STATE
 	-----------------------------------------------------
 	state = {
-		selectedTiers = {},
+		selectedTiers = { "Common" },
 		Auto2Trade = false,
 		stopTrade = false,
 		targetPlayer = "",
@@ -82,7 +85,10 @@ local GameData = {
 	notifGui = nil,
 	notifFrame = nil,
 
-    
+	PlayerMap = {},
+
+	PlayerDropdown = nil,
+
     -- ==================[Jenis Ikan v1]==================
 
         TierMap = {
@@ -303,6 +309,51 @@ local GameData = {
 
     ElementParagraph = nil,
     DeepSeaParagraph = nil,
+
+    -- ================== [Auto Quest Diamond Rod] ==================
+
+    Players = game:GetService("Players"),
+
+    Player = nil,
+    Character = nil,
+    HRP = nil,
+
+    AutoQuest = false,
+    AutoThread = nil,
+
+    QuestName = "Diamond Researcher",
+
+    ObjectiveCFrame = {
+        Obj2 = CFrame.new(
+            -2925.67725, 3.24999976, 2083.38892,
+            0.243188113, -5.11769471e-08, 0.969979167,
+            -1.45992791e-08, 1, 5.64211291e-08,
+            -0.969979167, -2.78819439e-08, 0.243188113
+        ),
+        Obj3 = CFrame.new(
+            -2124.42578, 79.487114, 3673.15967,
+            0.272527188, 7.98157416e-08, -0.96214807,
+            -3.16044826e-08, 1, 7.40038502e-08,
+            0.96214807, 1.02401305e-08, 0.272527188
+        ),
+        Obj4 = CFrame.new(
+            -2551.72827, 27.9015656, 50.7129707,
+            -0.512793481, -4.00187616e-08, -0.858511984,
+            3.39993278e-09, 1, -4.86448926e-08,
+            0.858511984, -2.78636669e-08, -0.512793481
+        )
+    },
+
+    -- ================== [Progres Quest Diamond Rod] ==================
+
+    Players = game:GetService("Players"),
+    player = game:GetService("Players").LocalPlayer,
+
+    inside = nil,
+    ProgresDiamondRod = nil,
+
+    descText = {},
+    questName = "Diamond Researcher",
 
     -- ================== [Island] ==================
     Islands = {
@@ -547,8 +598,6 @@ local GameData = {
     Stroke = nil,
 
     Dragging = false,
-    DragStart = nil,
-    StartPos = nil,
 
     -- ================== [Walkspeed, Jump Power, Gravity] ==================
 
@@ -630,10 +679,10 @@ local GameData = {
     Players = game:GetService("Players"),
     HttpService = game:GetService("HttpService"),
 
-    LocalPlayer = nil,
+    LocalPlayer = game:GetService("Players").LocalPlayer,
     PlaceId = game.PlaceId,
-    targetJobId = "",
-    JobIdLabel = nil,
+    TargetJobId = "",
+    JobIdParagraph = nil,
 
     -- ================== [Hide Quest] ==================
     
@@ -919,26 +968,38 @@ local GameData = {
 
    -- ================== [Ping Panel] ==================
 
-Servicesv7 = {
-	Playersv7 = game:GetService("Players"),
-	Statsv7 = game:GetService("Stats"),
-	RunServicev7 = game:GetService("RunService"),
-	TweenServicev7 = game:GetService("TweenService"),
-	UISv7 = game:GetService("UserInputService"),
-},
+    Servicesv7 = {
+        Playersv7 = game:GetService("Players"),
+        Statsv7 = game:GetService("Stats"),
+        RunServicev7 = game:GetService("RunService"),
+        TweenServicev7 = game:GetService("TweenService"),
+        UISv7 = game:GetService("UserInputService"),
+    },
 
-Playerv7 = game:GetService("Players").LocalPlayer,
+    Playerv7 = game:GetService("Players").LocalPlayer,
 
-PingGuiv7 = nil,
-UpdateConnectionv7 = nil,
+    Guiv7 = nil,
+    MainFramev7 = nil,
 
-Draggingv7 = false,
-DragStartv7 = nil,
-StartPosv7 = nil,
+    PingTextv7 = nil,
+    CpuTextv7 = nil,
+    FpsTextv7 = nil,
 
-Mainv7 = nil,
-PingTextv7 = nil,
+    UpdateConnectionv7 = nil,
 
+    -- Dragging state
+    Draggingv7 = false,
+    DragInputv7 = nil,
+    DragStartv7 = nil,
+    StartPosv7 = nil,
+
+    -- FPS helper values
+    _lastTickv7 = 0,
+    _frameCountv7 = 0,
+    _fpsv7 = 0,
+
+    -- CPU MS value
+    CPU_MSv7 = 0,
 	--================ Botton Cancle ===============
 
 	Servicesv9 = {
@@ -962,6 +1023,76 @@ PingTextv7 = nil,
     TargetPlayerv12 = nil,
     CurrentValuev12 = nil,
     NewValuesv12 = {},
+
+	--================ Wind Ui Title Gradiant ===============
+
+    RunServicev14 = game:GetService("RunService"),
+    CoreGuiv14 = game:GetService("CoreGui"),
+
+    Titlev14 = nil,
+    Errv14 = nil,
+
+    RootUIv14 = nil,
+    WindUIv14 = nil,
+    Pathv14 = nil,
+
+    GetTitleFuncv14 = nil,
+
+    UIGradientv14 = nil,
+    GradientSpeedv14 = 35,
+
+	--================ Translate Note Info ===============
+
+    Players = game:GetService("Players"),
+
+    Player = nil,
+    Locale = nil,
+
+    Translations = {
+        ["en-us"] = {
+            Title = "Note:",
+            Desc = "For Quests 5 and 6, you are on your own."
+        },
+        ["id-id"] = {
+            Title = "Catatan:",
+            Desc = "Untuk Quest 5 dan 6, kamu harus menyelesaikannya sendiri."
+        },
+        ["ja-jp"] = {
+            Title = "注意:",
+            Desc = "クエスト5と6は自分でやってください。"
+        }
+    },
+
+    -- UI
+    Paragraph = nil,
+
+    -- TEMP VARS
+    Translation = nil,
+
+	--================ Perfect Fishing ===============
+
+    Players = game:GetService("Players"),
+    ReplicatedStorage = game:GetService("ReplicatedStorage"),
+    Camera = workspace.CurrentCamera,
+
+    LocalPlayer = nil,
+
+    Net = nil,
+
+    RFRequestFishingMinigameStarted = nil,
+    REReplicateTextEffect = nil,
+    REFishingCompleted = nil,
+
+    AutoFishing = false,
+    CompletedDelay = 1.5,
+
+    BaseLuckLabel = nil,
+
+    BaseLuckX2 = false,
+    FiredMinigame = false,
+
+    FishingModule = nil,
+    ChargeModule = nil,
 }
 
 local Window = WindUI:CreateWindow({
@@ -970,7 +1101,7 @@ local Window = WindUI:CreateWindow({
     Folder = "NexaHub Wind UIV2",
     Icon = "rbxassetid://123906607434048",
     NewElements = true,
-    
+    Transparent = true, 
     HideSearchBar = false,
     
     OpenButton = {
@@ -994,14 +1125,14 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.0.0",
+    Title = "v0.0.8",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
 })
 
 Window:Tag({
-    Title = "Dev",
+    Title = "Premium",
     Icon = "star",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1039,11 +1170,7 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-[+] Added Auto Christmas Presents
-[+] Added Auto Present Christmas Door
-[+] Added Animation Fishing Fish Cought
-[+] Added Custom Name & Level
-[+] Added Auto Sell By Count
+[/] Fixed Auto Diamond Quest
 ]],
     Locked = false
 })
@@ -1127,7 +1254,7 @@ Sec.Home2:Button({
 
         for i = 1, 15 do
             remote:FireServer(i)
-            task.wait(0.01) -- safe delay
+            task.wait(1) -- safe delay
         end
 
         WindUI:Notify({
@@ -1537,149 +1664,241 @@ Sec.Main1:Toggle({
     end
 })
 
-function GameData:CreatePingGuiv7()
-	if self.PingGuiv7 then return end
+function GameData:CreateGuiv7()
+    if self.Guiv7 then return end
 
-	-- ScreenGui
-	self.PingGuiv7 = Instance.new("ScreenGui")
-	self.PingGuiv7.Name = "PingGuiv7"
-	self.PingGuiv7.ResetOnSpawn = false
-	self.PingGuiv7.Parent = self.Playerv7:WaitForChild("PlayerGui")
+    self.Guiv7 = Instance.new("ScreenGui")
+    self.Guiv7.Name = "NetworkStatsGuiv7"
+    self.Guiv7.ResetOnSpawn = false
+    self.Guiv7.Parent = self.Playerv7:WaitForChild("PlayerGui")
 
-	-- Main Frame
-	self.Mainv7 = Instance.new("Frame")
-	self.Mainv7.Size = UDim2.new(0, 200, 0, 55)
-	self.Mainv7.Position = UDim2.new(0, 20, 0, 20)
-	self.Mainv7.BackgroundColor3 = Color3.fromRGB(18,18,18)
-	self.Mainv7.BorderSizePixel = 0
-	self.Mainv7.Active = true
-	self.Mainv7.Parent = self.PingGuiv7
+    self.MainFramev7 = Instance.new("Frame")
+    self.MainFramev7.Size = UDim2.new(0, 200, 0, 90)
+    self.MainFramev7.Position = UDim2.new(0, 20, 0, 20)
+    self.MainFramev7.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    self.MainFramev7.BorderSizePixel = 0
+    self.MainFramev7.Active = true
+    self.MainFramev7.Parent = self.Guiv7
 
-	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0,14)
-	Corner.Parent = self.Mainv7
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 14)
+    corner.Parent = self.MainFramev7
 
-	local Stroke = Instance.new("UIStroke")
-	Stroke.Color = Color3.fromRGB(60,60,60)
-	Stroke.Thickness = 1
-	Stroke.Parent = self.Mainv7
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(60, 60, 60)
+    stroke.Thickness = 1
+    stroke.Parent = self.MainFramev7
 
-	local Gradient = Instance.new("UIGradient")
-	Gradient.Color = ColorSequence.new{
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(40,40,40)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(15,15,15))
-	}
-	Gradient.Rotation = 90
-	Gradient.Parent = self.Mainv7
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 40)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 15))
+    }
+    gradient.Rotation = 90
+    gradient.Parent = self.MainFramev7
 
-	-- Title
-	local Title = Instance.new("TextLabel")
-	Title.Size = UDim2.new(1,-12,0,20)
-	Title.Position = UDim2.new(0,6,0,4)
-	Title.BackgroundTransparency = 1
-	Title.Text = "NETWORK PANEL"
-	Title.Font = Enum.Font.GothamBold
-	Title.TextSize = 12
-	Title.TextXAlignment = Enum.TextXAlignment.Left
-	Title.TextColor3 = Color3.fromRGB(170,170,170)
-	Title.Parent = self.Mainv7
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -12, 0, 20)
+    title.Position = UDim2.new(0, 6, 0, 4)
+    title.BackgroundTransparency = 1
+    title.Text = "NEXA X NETWORK PANEL"
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 12
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.TextColor3 = Color3.fromRGB(170, 170, 170)
+    title.Parent = self.MainFramev7
 
-	-- Ping Text
-	self.PingTextv7 = Instance.new("TextLabel")
-	self.PingTextv7.Size = UDim2.new(1,-12,0,26)
-	self.PingTextv7.Position = UDim2.new(0,6,0,26)
-	self.PingTextv7.BackgroundTransparency = 1
-	self.PingTextv7.Text = "Ping: -- ms"
-	self.PingTextv7.Font = Enum.Font.Gotham
-	self.PingTextv7.TextSize = 15
-	self.PingTextv7.TextXAlignment = Enum.TextXAlignment.Left
-	self.PingTextv7.TextColor3 = Color3.fromRGB(255,255,255)
-	self.PingTextv7.Parent = self.Mainv7
+    -- Ping Text
+    self.PingTextv7 = Instance.new("TextLabel")
+    self.PingTextv7.Size = UDim2.new(1, -12, 0, 20)
+    self.PingTextv7.Position = UDim2.new(0, 6, 0, 28)
+    self.PingTextv7.BackgroundTransparency = 1
+    self.PingTextv7.Text = "Ping: -- ms"
+    self.PingTextv7.Font = Enum.Font.Gotham
+    self.PingTextv7.TextSize = 15
+    self.PingTextv7.TextXAlignment = Enum.TextXAlignment.Left
+    self.PingTextv7.TextColor3 = Color3.fromRGB(255, 255, 255)
+    self.PingTextv7.Parent = self.MainFramev7
 
-	self.UpdateConnectionv7 = self.Servicesv7.RunServicev7.RenderStepped:Connect(function()
-		local network = self.Servicesv7.Statsv7:FindFirstChild("Network")
-		local pingValue = 0
+    -- CPU Text (ms)
+    self.CpuTextv7 = Instance.new("TextLabel")
+    self.CpuTextv7.Size = UDim2.new(1, -12, 0, 20)
+    self.CpuTextv7.Position = UDim2.new(0, 6, 0, 50)
+    self.CpuTextv7.BackgroundTransparency = 1
+    self.CpuTextv7.Text = "CPU: -- ms"
+    self.CpuTextv7.Font = Enum.Font.Gotham
+    self.CpuTextv7.TextSize = 15
+    self.CpuTextv7.TextXAlignment = Enum.TextXAlignment.Left
+    self.CpuTextv7.TextColor3 = Color3.fromRGB(255, 255, 255)
+    self.CpuTextv7.Parent = self.MainFramev7
 
-		if network and network:FindFirstChild("ServerStatsItem") then
-			local ping = network.ServerStatsItem:FindFirstChild("Data Ping")
-			if ping then
-				pingValue = math.floor(ping:GetValue())
-			end
-		end
+    -- FPS Text
+    self.FpsTextv7 = Instance.new("TextLabel")
+    self.FpsTextv7.Size = UDim2.new(1, -12, 0, 20)
+    self.FpsTextv7.Position = UDim2.new(0, 6, 0, 72)
+    self.FpsTextv7.BackgroundTransparency = 1
+    self.FpsTextv7.Text = "FPS: --"
+    self.FpsTextv7.Font = Enum.Font.Gotham
+    self.FpsTextv7.TextSize = 15
+    self.FpsTextv7.TextXAlignment = Enum.TextXAlignment.Left
+    self.FpsTextv7.TextColor3 = Color3.fromRGB(255, 255, 255)
+    self.FpsTextv7.Parent = self.MainFramev7
 
-		self.PingTextv7.Text = "Ping: "..pingValue.." ms"
+    -- Drag support for mouse & touch
+    self.MainFramev7.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+           input.UserInputType == Enum.UserInputType.Touch then
+            self.Draggingv7 = true
+            self.DragInputv7 = input
+            self.DragStartv7 = input.Position
+            self.StartPosv7 = self.MainFramev7.Position
 
-		local color
-		if pingValue <= 80 then
-			color = Color3.fromRGB(0,220,120)
-		elseif pingValue <= 150 then
-			color = Color3.fromRGB(255,190,60)
-		else
-			color = Color3.fromRGB(255,80,80)
-		end
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    if self.DragInputv7 == input then
+                        self.Draggingv7 = false
+                        self.DragInputv7 = nil
+                    end
+                end
+            end)
+        end
+    end)
 
-		self.Servicesv7.TweenServicev7:Create(
-			self.PingTextv7,
-			TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{TextColor3 = color}
-		):Play()
-	end)
+    self.Servicesv7.UISv7.InputChanged:Connect(function(input)
+        if self.Draggingv7 and input == self.DragInputv7 and
+           (input.UserInputType == Enum.UserInputType.MouseMovement or
+            input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - self.DragStartv7
+            self.MainFramev7.Position = UDim2.new(
+                self.StartPosv7.X.Scale,
+                self.StartPosv7.X.Offset + delta.X,
+                self.StartPosv7.Y.Scale,
+                self.StartPosv7.Y.Offset + delta.Y
+            )
+        end
+    end)
 
-	self.Mainv7.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			GameData.Draggingv7 = true
-			GameData.DragStartv7 = input.Position
-			GameData.StartPosv7 = GameData.Mainv7.Position
-		end
-	end)
+    -- FPS helper vars
+    self._lastTickv7 = tick()
+    self._frameCountv7 = 0
+    self._fpsv7 = 0
 
-	self.Mainv7.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			GameData.Draggingv7 = false
-		end
-	end)
+    -- Update loop
+    self.UpdateConnectionv7 = self.Servicesv7.RunServicev7.RenderStepped:Connect(function()
+        -- Ping
+        local network = self.Servicesv7.Statsv7:FindFirstChild("Network")
+        local pingValue = 0
+        if network and network:FindFirstChild("ServerStatsItem") then
+            local ping = network.ServerStatsItem:FindFirstChild("Data Ping")
+            if ping then
+                pingValue = math.floor(ping:GetValue())
+            end
+        end
+        self.PingTextv7.Text = "Ping: "..pingValue.." ms"
 
-	self.Servicesv7.UISv7.InputChanged:Connect(function(input)
-		if GameData.Draggingv7 and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local delta = input.Position - GameData.DragStartv7
-			GameData.Mainv7.Position = UDim2.new(
-				GameData.StartPosv7.X.Scale,
-				GameData.StartPosv7.X.Offset + delta.X,
-				GameData.StartPosv7.Y.Scale,
-				GameData.StartPosv7.Y.Offset + delta.Y
-			)
-		end
-	end)
+        local pingColorv7
+        if pingValue <= 80 then
+            pingColorv7 = Color3.fromRGB(0,220,120)
+        elseif pingValue <= 150 then
+            pingColorv7 = Color3.fromRGB(255,190,60)
+        else
+            pingColorv7 = Color3.fromRGB(255,80,80)
+        end
+
+        self.Servicesv7.TweenServicev7:Create(
+            self.PingTextv7,
+            TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {TextColor3 = pingColorv7}
+        ):Play()
+
+        -- CPU ms
+        local perf = self.Servicesv7.Statsv7:FindFirstChild("PerformanceStats")
+        local cpuMs = 0
+        if perf then
+            local cpu = perf:FindFirstChild("CPU")
+            if cpu then
+                cpuMs = cpu:GetValue()
+                self.CPU_MSv7 = cpuMs
+            end
+        end
+        self.CpuTextv7.Text = string.format("CPU: %.2f ms", cpuMs)
+
+        local cpuColorv7
+        if cpuMs <= 5 then
+            cpuColorv7 = Color3.fromRGB(0,220,120)
+        elseif cpuMs <= 10 then
+            cpuColorv7 = Color3.fromRGB(255,190,60)
+        else
+            cpuColorv7 = Color3.fromRGB(255,80,80)
+        end
+
+        self.Servicesv7.TweenServicev7:Create(
+            self.CpuTextv7,
+            TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {TextColor3 = cpuColorv7}
+        ):Play()
+
+        -- FPS
+        self._frameCountv7 = self._frameCountv7 + 1
+        local currentTick = tick()
+        if currentTick - self._lastTickv7 >= 1 then
+            self._fpsv7 = self._frameCountv7
+            self._frameCountv7 = 0
+            self._lastTickv7 = currentTick
+
+            self.FpsTextv7.Text = "FPS: "..self._fpsv7
+
+            local fpsColorv7
+            if self._fpsv7 >= 60 then
+                fpsColorv7 = Color3.fromRGB(0,220,120)
+            elseif self._fpsv7 >= 30 then
+                fpsColorv7 = Color3.fromRGB(255,190,60)
+            else
+                fpsColorv7 = Color3.fromRGB(255,80,80)
+            end
+
+            self.Servicesv7.TweenServicev7:Create(
+                self.FpsTextv7,
+                TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                {TextColor3 = fpsColorv7}
+            ):Play()
+        end
+    end)
 end
 
-function GameData:RemovePingGuiv7()
-	if self.UpdateConnectionv7 then
-		self.UpdateConnectionv7:Disconnect()
-		self.UpdateConnectionv7 = nil
-	end
+function GameData:RemoveGuiv7()
+    if self.UpdateConnectionv7 then
+        self.UpdateConnectionv7:Disconnect()
+        self.UpdateConnectionv7 = nil
+    end
 
-	if self.PingGuiv7 then
-		self.PingGuiv7:Destroy()
-		self.PingGuiv7 = nil
-	end
+    if self.Guiv7 then
+        self.Guiv7:Destroy()
+        self.Guiv7 = nil
+        self.MainFramev7 = nil
+        self.PingTextv7 = nil
+        self.CpuTextv7 = nil
+        self.FpsTextv7 = nil
+    end
 end
 
-
+-- Toggle (sesuaikan dengan sistem toggle mu)
 Sec.Main1:Toggle({
-    Title = "Show Ping Panel",
-    Flag = "Show Ping Panel",
-    Desc = "Display ping information panel",
+    Title = "Show Network Stats",
+    Flag = "Show Network Stats",
+    Desc = "Display ping, CPU (ms), and FPS panel",
     Value = false,
 
     Callback = function(value)
         if value then
-            GameData:CreatePingGuiv7()
+            GameData:CreateGuiv7()
         else
-            GameData:RemovePingGuiv7()
+            GameData:RemoveGuiv7()
         end
 
         WindUI:Notify({
-            Title = "Ping Panel",
+            Title = "Network Stats v7",
             Content = value and "Enabled" or "Disabled",
             Duration = 3,
             Icon = "activity"
@@ -1801,6 +2020,167 @@ Sec.Main1:Button({
 			GameData.CancelFishingv9:InvokeServer()
 		end)
 	end
+})
+
+Sec.Main7 = Tabs.Main:Section({
+    Title = "Perfect Fishing",
+    Box = true,
+    BoxBorder = true,
+    Opened = false,
+})
+
+GameData.LocalPlayer = GameData.Players.LocalPlayer
+
+GameData.Net = GameData.ReplicatedStorage
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+
+GameData.RFRequestFishingMinigameStarted =
+    GameData.Net:WaitForChild("RF/RequestFishingMinigameStarted")
+
+GameData.REReplicateTextEffect =
+    GameData.Net:WaitForChild("RE/ReplicateTextEffect")
+
+GameData.REFishingCompleted =
+    GameData.Net:WaitForChild("RE/FishingCompleted")
+
+GameData.BaseLuckLabel =
+    GameData.LocalPlayer.PlayerGui
+        :WaitForChild("Charge")
+        .Main.Frame.Top:WaitForChild("BaseLuck")
+
+function GameData.CheckBaseLuck()
+    GameData.Text = GameData.BaseLuckLabel.Text
+    GameData.Luck = tonumber(GameData.Text:match("x([%d%.]+)"))
+
+    if GameData.Luck and GameData.Luck >= 2 then
+        GameData.BaseLuckX2 = true
+    else
+        GameData.BaseLuckX2 = false
+        GameData.FiredMinigame = false
+    end
+end
+
+GameData.CheckBaseLuck()
+GameData.BaseLuckLabel
+    :GetPropertyChangedSignal("Text")
+    :Connect(function()
+        GameData.CheckBaseLuck()
+    end)
+
+for _, v in pairs(getgc(true)) do
+    if type(v) == "table" then
+        if rawget(v, "_getPower") then
+            GameData.FishingModule = v
+        end
+        if rawget(v, "RequestChargeFishingRod") then
+            GameData.ChargeModule = v
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(0.01) do
+        if not GameData.AutoFishing then
+            continue
+        end
+
+        -- START CHARGE
+        if GameData.ChargeModule and not _G.confirmFishingInput then
+            GameData.Center = Vector2.new(
+                GameData.Camera.ViewportSize.X / 2,
+                GameData.Camera.ViewportSize.Y / 2
+            )
+
+            GameData.ChargeModule:RequestChargeFishingRod(
+                GameData.Center
+            )
+        end
+
+        -- FORCE MINIGAME (x2 LUCK)
+        if GameData.BaseLuckX2
+        and not GameData.FiredMinigame
+        and GameData.FishingModule then
+
+            GameData.FiredMinigame = true
+
+            GameData.Power =
+                GameData.FishingModule:_getPower()
+
+            GameData.ServerTime =
+                workspace:GetServerTimeNow()
+
+            GameData.HitY =
+                GameData.LocalPlayer.Character
+                and GameData.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                and GameData.LocalPlayer.Character.HumanoidRootPart.Position.Y
+                or 0
+
+            pcall(function()
+                GameData.RFRequestFishingMinigameStarted
+                    :InvokeServer(
+                        GameData.HitY,
+                        GameData.Power,
+                        GameData.ServerTime
+                    )
+            end)
+        end
+    end
+end)
+
+GameData.REReplicateTextEffect.OnClientEvent
+    :Connect(function(data)
+
+        if not GameData.AutoFishing then
+            return
+        end
+
+        if not data or not data.TextData then
+            return
+        end
+
+        if data.TextData.EffectType ~= "Exclaim" then
+            return
+        end
+
+        GameData.Character = GameData.LocalPlayer.Character
+        if not GameData.Character then
+            return
+        end
+
+        if data.Container
+        ~= GameData.Character:FindFirstChild("Head") then
+            return
+        end
+
+        task.delay(GameData.CompletedDelay, function()
+            pcall(function()
+                GameData.REFishingCompleted:FireServer()
+            end)
+        end)
+    end)
+
+Sec.Main7:Input({
+    Title = "Completed Delay",
+    Value = tostring(GameData.CompletedDelay),
+    InputIcon = "timer",
+    Placeholder = "1.5",
+    Callback = function(input)
+        GameData.Num = tonumber(input)
+        if GameData.Num then
+            GameData.CompletedDelay = GameData.Num
+        end
+    end
+})
+
+Sec.Main7:Toggle({
+    Title = "Auto Fishing",
+    Value = false,
+    Callback = function(state)
+        GameData.AutoFishing = state
+    end
 })
 
 Sec.Main2 = Tabs.Main:Section({
@@ -2215,6 +2595,60 @@ Sec.Main4:Input({
         end
     end
 })
+
+local stopAnimConnections = {}
+
+local function setGameAnimationsEnabled(state)
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then
+        return
+    end
+
+    for _, conn in ipairs(stopAnimConnections) do
+        conn:Disconnect()
+    end
+    stopAnimConnections = {}
+
+    if state then
+        local animator = humanoid:FindFirstChildOfClass("Animator")
+        if animator then
+            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                track:Stop(0)
+            end
+
+            local conn = animator.AnimationPlayed:Connect(function(track)
+                task.defer(function()
+                    track:Stop(0)
+                end)
+            end)
+            table.insert(stopAnimConnections, conn)
+        end
+    else
+        for _, conn in ipairs(stopAnimConnections) do
+            conn:Disconnect()
+        end
+        stopAnimConnections = {}
+    end
+
+    WindUI:Notify({
+        Title = "No Animation",
+        Content = state and "No Animation Enabled" or "No Animation Disabled",
+        Duration = 3,
+        Icon = "ban",
+    })
+end
+
+Sec.Main4:Toggle({
+    Title = "No Animation",
+    Desc = "Disable fishing animations",
+    Flag = "NoAnimation",
+    Value = false,
+    Callback = function(state)
+        setGameAnimationsEnabled(state)
+    end
+})
+
 
 Sec.Main5 = Tabs.Main:Section({
     Title = "Webhook Notification",
@@ -2691,6 +3125,7 @@ local SelectedRodName = "Starter Rod"
 Sec.Backpack1:Dropdown({
     Title = "Select Rod",
     Flag = "SelectRod",
+    SearchBarEnabled = true,
     Desc = "Choose your fishing rod",
     Values = RodNames,
     Value = SelectedRodName,
@@ -2740,6 +3175,7 @@ local selectedBaitID = BaitIDs["Starter Bait"]
 Sec.Backpack1:Dropdown({
     Title = "Select Bait",
     Flag = "SelectBait",
+    SearchBarEnabled = true,
     Desc = "Choose your bait",
     Values = baitNames,
     Value = "Starter Bait",
@@ -3062,7 +3498,7 @@ Sec.Event1 = Tabs.Event:Section({
     Title = "Event Hunts",
     Box = true,
     BoxBorder = true,
-    Opened = false,
+    Opened = true,
 })
 
 
@@ -3115,118 +3551,33 @@ Sec.Event1:Toggle({
     end
 })
 
-Sec.Event2 = Tabs.Event:Section({
-    Title = "Join Event",
-    Box = true,
-    BoxBorder = true,
-    Opened = false,
-})
-
-GameData.Character = GameData.Player.Character or GameData.Player.CharacterAdded:Wait()
-GameData.HRP = GameData.Character:WaitForChild("HumanoidRootPart")
-
-function GameData:Cleanup(back)
-    if self.ProtectConnection then
-        self.ProtectConnection:Disconnect()
-        self.ProtectConnection = nil
-    end
-
-    if self.CurrentPlatform then
-        self.CurrentPlatform:Destroy()
-        self.CurrentPlatform = nil
-    end
-
-    if back and self.SavedCFrame and self.HRP and self.HRP.Parent then
-        self.HRP.CFrame = self.SavedCFrame
-    end
-
-    self.WatchingEvent = nil
-    self.PlatformCFrame = CFrame.new()
-end
-
-function GameData:FindEvent(eventName)
-    for _, v in ipairs(workspace.Props:GetDescendants()) do
-        if v.Name == self.EventHub[eventName] then
-            return v
-        end
-    end
-end
-
-function GameData:MakePlatform(cf)
-    self.CurrentPlatform = Instance.new("Part")
-    self.CurrentPlatform.Size = Vector3.new(16,1,16)
-    self.CurrentPlatform.Anchored = true
-    self.CurrentPlatform.CanCollide = true
-    self.CurrentPlatform.Transparency = 1
-    self.CurrentPlatform.CFrame = cf - Vector3.new(0,3,0)
-    self.CurrentPlatform.Parent = workspace
-    return self.CurrentPlatform
-end
-
-for name in pairs(GameData.EventHub) do
-    table.insert(GameData.EventOptions, name)
-end
-
-Sec.Event2:Dropdown({
-    Title = "Select Event",
-    Flag = "SelectEvent",
-    Desc = "Select events to auto join",
-    Values = GameData.EventOptions,
-    Value = {},
-    Multi = true,
-    AllowNone = true,
-    Callback = function(option)
-        GameData.SelectedEvents = option
-    end
-})
-
-Sec.Event2:Toggle({
-    Title = "Auto Join Event",
-    Flag = "AutoJoinQuest",
-    Value = false,
-    Callback = function(v)
-        GameData.AutoJoinEvent = v
-        if not v then
-            GameData:Cleanup(true)
-        end
-    end
-})
-
 task.spawn(function()
-    while task.wait(0.01) do
-        if not GameData.AutoJoinEvent then continue end
-        if GameData.WatchingEvent then continue end
-        if #GameData.SelectedEvents == 0 then continue end
+    while true do
+        if GameData.AutoLochEnabled
+        and GameData.TimerLabel
+        and GameData.TimerLabel:IsA("TextLabel") then
 
-        for _, eventName in ipairs(GameData.SelectedEvents) do
-            GameData.WatchingEvent = GameData:FindEvent(eventName)
+            local text = GameData.TimerLabel.Text
+            local char = GameData.LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
-            if GameData.WatchingEvent then
-                GameData.SavedCFrame = GameData.HRP.CFrame
-
-                GameData.HRP.CFrame =
-                    GameData.WatchingEvent:FindFirstChildWhichIsA("BasePart", true).CFrame
-                    + Vector3.new(0,10,0)
-
-                GameData.PlatformCFrame = GameData.HRP.CFrame
-                GameData:MakePlatform(GameData.PlatformCFrame)
-
-                GameData.ProtectConnection =
-                    GameData.Services.RunService.Heartbeat:Connect(function()
-                        if not GameData.AutoJoinEvent or not GameData.WatchingEvent then return end
-                        if (GameData.HRP.Position - GameData.PlatformCFrame.Position).Magnitude > 12 then
-                            GameData.HRP.CFrame = GameData.PlatformCFrame
-                        end
-                    end)
-
-                while GameData.AutoJoinEvent and GameData.WatchingEvent.Parent do
-                    task.wait(0.3)
+            if hrp then
+                if text ~= "0M 0S LEFT" then
+                    if not GameData.Teleporting then
+                        GameData.SavedCFrame = hrp.CFrame
+                        GameData.Teleporting = true
+                    end
+                    hrp.CFrame = GameData.TargetCFrame
+                else
+                    if GameData.Teleporting and GameData.SavedCFrame then
+                        hrp.CFrame = GameData.SavedCFrame
+                    end
+                    GameData.Teleporting = false
+                    GameData.SavedCFrame = nil
                 end
-
-                GameData:Cleanup(GameData.AutoJoinEvent)
-                break
             end
         end
+        task.wait(GameData.LoopDelay)
     end
 end)
 
@@ -3234,7 +3585,7 @@ Sec.Quest1 = Tabs.Quest:Section({
     Title = "Progress Quests",
     Box = true,
     BoxBorder = true,
-    Opened = false,
+    Opened = true,
 })
 
 GameData.LocalPlayer = GameData.Players.LocalPlayer
@@ -3366,7 +3717,7 @@ Sec.Quest2 = Tabs.Quest:Section({
     Title = "Auto Quests",
     Box = true,
     BoxBorder = true,
-    Opened = false,
+    Opened = true,
 })
 
 GameData.LocalPlayer = GameData.Players.LocalPlayer
@@ -3598,7 +3949,7 @@ Sec.Quest3 = Tabs.Quest:Section({
     Title = "Unlock Doors",
     Box = true,
     BoxBorder = true,
-    Opened = false,
+    Opened = true,
 })
 
 Sec.Quest3:Toggle({
@@ -3632,11 +3983,501 @@ Sec.Quest3:Toggle({
     end
 })
 
+Sec.Quest4 = Tabs.Quest:Section({
+    Title = "Diamond Rod",
+    Box = true,
+    BoxBorder = true,
+    Opened = false,
+})
+
+GameData.Player = GameData.Players.LocalPlayer
+
+function GameData.NormalizeLocale(locale)
+    return locale:lower():gsub("_", "-")
+end
+
+GameData.Locale = GameData.NormalizeLocale(GameData.Player.LocaleId)
+GameData.Translation =
+    GameData.Translations[GameData.Locale]
+    or GameData.Translations["en-us"]
+
+GameData.Paragraph = Sec.Quest4:Paragraph({
+    Title = GameData.Translation.Title,
+    Desc = GameData.Translation.Desc
+})
+
+task.spawn(function()
+    while true do
+        GameData.Locale = GameData.NormalizeLocale(GameData.Player.LocaleId)
+
+        GameData.Translation =
+            GameData.Translations[GameData.Locale]
+            or GameData.Translations["en-us"]
+
+        GameData.Paragraph:SetTitle(GameData.Translation.Title)
+        GameData.Paragraph:SetDesc(GameData.Translation.Desc)
+
+        task.wait(3)
+    end
+end)
+
+GameData.ProgresDiamondRod = Sec.Quest4:Paragraph({
+    Title = "Progres Quest Diamond Rod",
+    Desc = "Loading..."
+})
+
+function GameData.UpdateDiamondQuestDesc()
+    local pg = GameData.player:FindFirstChild("PlayerGui")
+    if not pg then
+        GameData.ProgresDiamondRod:SetDesc("Loading...")
+        return
+    end
+
+    local questGui = pg:FindFirstChild("Quest")
+    if not questGui or not questGui:FindFirstChild("List") then
+        GameData.ProgresDiamondRod:SetDesc("Loading...")
+        return
+    end
+
+    GameData.inside = questGui.List:FindFirstChild("Inside")
+    if not GameData.inside then
+        GameData.ProgresDiamondRod:SetDesc("Loading...")
+        return
+    end
+
+    table.clear(GameData.descText)
+
+    for _, quest in pairs(GameData.inside:GetChildren()) do
+        local header =
+            quest:FindFirstChild("Top")
+            and quest.Top:FindFirstChild("TopFrame")
+            and quest.Top.TopFrame:FindFirstChild("Header")
+
+        if header and header.Text == GameData.questName then
+            for i = 1, 6 do
+                local objective = quest.Content:FindFirstChild("Objective" .. i)
+                if objective then
+                    local vector = objective.Content.Check:FindFirstChild("Vector")
+                    local isDone = vector and vector.Visible or false
+
+                    local display = objective.Content:FindFirstChild("Display")
+                    if display then
+                        local prefix = display:FindFirstChild("Prefix")
+                        local itemName = display:FindFirstChild("ItemName")
+                        local suffix = display:FindFirstChild("Suffix")
+
+                        table.insert(
+                            GameData.descText,
+                            (prefix and prefix.Text or "") .. " " ..
+                            (itemName and itemName.Text or "") .. " " ..
+                            (suffix and suffix.Text or "") .. " " ..
+                            (isDone and "(1 / 1)" or "(0 / 1)")
+                        )
+                    end
+                end
+            end
+            break
+        end
+    end
+
+    if #GameData.descText == 0 then
+        GameData.ProgresDiamondRod:SetDesc("Loading...")
+    else
+        GameData.ProgresDiamondRod:SetDesc(
+            table.concat(GameData.descText, "\n")
+        )
+    end
+end
+
+task.spawn(function()
+    while task.wait(5) do
+        pcall(GameData.UpdateDiamondQuestDesc)
+    end
+end)
+
+GameData.Player = GameData.Players.LocalPlayer
+
+function GameData.InitCharacter()
+    GameData.Character = GameData.Player.Character
+        or GameData.Player.CharacterAdded:Wait()
+
+    GameData.HRP = GameData.Character:WaitForChild("HumanoidRootPart")
+end
+
+GameData.InitCharacter()
+GameData.Player.CharacterAdded:Connect(GameData.InitCharacter)
+
+function GameData.GetQuest()
+    if not GameData.Player
+    or not GameData.Player:FindFirstChild("PlayerGui")
+    or not GameData.Player.PlayerGui:FindFirstChild("Quest") then
+        return
+    end
+
+    for _, v in ipairs(
+        GameData.Player.PlayerGui.Quest.List.Inside:GetChildren()
+    ) do
+        GameData.Header =
+            v:FindFirstChild("Top")
+            and v.Top:FindFirstChild("TopFrame")
+            and v.Top.TopFrame:FindFirstChild("Header")
+
+        if GameData.Header
+        and GameData.Header:IsA("TextLabel")
+        and GameData.Header.Text == GameData.QuestName then
+            return v
+        end
+    end
+end
+
+function GameData.AutoQuestLoop()
+    while true do
+        task.wait(5)
+
+        if not GameData.AutoQuest then
+            continue
+        end
+
+        if not GameData.HRP then
+            continue
+        end
+
+        GameData.Quest = GameData.GetQuest()
+        if not GameData.Quest then
+            continue
+        end
+
+        GameData.Obj2 =
+            GameData.Quest.Content.Objective2.Content.Check:FindFirstChild("Vector")
+        GameData.Obj3 =
+            GameData.Quest.Content.Objective3.Content.Check:FindFirstChild("Vector")
+        GameData.Obj4 =
+            GameData.Quest.Content.Objective4.Content.Check:FindFirstChild("Vector")
+
+        -- QUEST FINISHED
+        if GameData.Obj2 and GameData.Obj3 and GameData.Obj4
+        and GameData.Obj2.Visible
+        and GameData.Obj3.Visible
+        and GameData.Obj4.Visible then
+            GameData.AutoQuest = false
+            continue
+        end
+
+        -- OBJECTIVE PRIORITY
+        if GameData.Obj2 and not GameData.Obj2.Visible then
+            GameData.HRP.CFrame = GameData.ObjectiveCFrame.Obj2
+
+        elseif GameData.Obj3 and not GameData.Obj3.Visible then
+            GameData.HRP.CFrame = GameData.ObjectiveCFrame.Obj3
+
+        elseif GameData.Obj4 and not GameData.Obj4.Visible then
+            GameData.HRP.CFrame = GameData.ObjectiveCFrame.Obj4
+        end
+    end
+end
+
+GameData.AutoThread = task.spawn(GameData.AutoQuestLoop)
+
+Sec.Quest4:Toggle({
+    Title = "Auto Quest Diamond Rod",
+    Flag = "AutoQuestDiamondRod",
+    Value = false,
+    Callback = function(state)
+        GameData.AutoQuest = state
+    end
+})
+
+
 Sec.Trading1 = Tabs.Trading:Section({
     Title = "Trading",
     Box = true,
     BoxBorder = true,
     Opened = true,
+})
+
+-- Setup DataReplion & TierList
+GameData.DataReplion = GameData.ReplionClient:WaitReplion("Data")
+GameData.TierList = GameData.TierList001
+
+for num, name in pairs(GameData.TierMap001) do
+	GameData.nameToTier[name] = num
+end
+
+-- Normalize helper
+function GameData.normalize(value)
+	if not value then return {} end
+	if type(value) == "string" then
+		return { value }
+	end
+
+	local out = {}
+	for k, v in pairs(value) do
+		if type(k) == "string" and v == true then
+			table.insert(out, k)
+		elseif type(v) == "string" then
+			table.insert(out, v)
+		end
+	end
+	return out
+end
+
+-- Check if item tier matches selected tiers
+function GameData.isTierMatch(itemTier, selected)
+	for _, tName in ipairs(selected) do
+		if GameData.nameToTier[tName] == tonumber(itemTier) then
+			return true
+		end
+	end
+	return false
+end
+
+-- Safe invoke trade request
+function GameData.safeTrade(userid, uuid)
+	pcall(function()
+		GameData.TradeRemote:InvokeServer(userid, uuid)
+	end)
+end
+
+-- Worker function for auto trade
+function GameData.workerTrade()
+	GameData.RATE = 0.15
+	GameData.LOOP_DELAY = 1
+
+	while GameData.state.Auto2Trade do
+		if GameData.state.stopTrade then
+			return
+		end
+
+		local target = GameData.Players:FindFirstChild(GameData.state.targetPlayer)
+		if not target then
+			GameData.state.Auto2Trade = false
+			WindUI:Notify({
+				Title = "Trade",
+				Content = "Target player not found, stopping trade.",
+				Duration = 4,
+				Icon = "error"
+			})
+			return
+		end
+
+		local inventory = GameData.DataReplion:GetExpect({ "Inventory", "Items" }) or {}
+		local list = {}
+
+		for _, item in ipairs(inventory) do
+			local ok, data = pcall(function()
+				return GameData.ItemUtility.GetItemDataFromItemType("Items", item.Id)
+			end)
+
+			if ok and data and data.Data then
+				if data.Data.Type == "Fish"
+					and GameData.isTierMatch(
+						data.Data.Tier,
+						GameData.state.selectedTiers
+					) then
+					table.insert(list, item.UUID)
+				end
+			end
+		end
+
+		if #list == 0 then
+			WindUI:Notify({
+				Title = "Trade",
+				Content = "No more fish for selected tier",
+				Duration = 4,
+				Icon = "fish"
+			})
+			GameData.state.Auto2Trade = false
+			break
+		end
+
+		for _, uuid in ipairs(list) do
+			if not GameData.state.Auto2Trade then
+				break
+			end
+
+			GameData.safeTrade(target.UserId, uuid)
+			task.wait(GameData.RATE)
+		end
+
+		task.wait(GameData.LOOP_DELAY)
+	end
+end
+
+-- Notification handler for trade completion
+GameData.notifGui = GameData.player.PlayerGui:WaitForChild("Text Notifications")
+GameData.notifFrame = GameData.notifGui:WaitForChild("Frame")
+
+function GameData.checkTradeTile(tile)
+	local header = tile:FindFirstChild("Header")
+	if header and header:IsA("TextLabel") then
+		if header.Text == "Trade completed!" then
+			GameData.state.fishCount = GameData.state.fishCount + 1
+
+			WindUI:Notify({
+				Title = "Trade",
+				Content = "Trade completed! (" .. GameData.state.fishCount .. "/" .. GameData.state.fishTarget .. ")",
+				Duration = 3,
+				Icon = "trade"
+			})
+
+			if GameData.state.fishTarget > 0 and GameData.state.fishCount >= GameData.state.fishTarget then
+				GameData.state.Auto2Trade = false
+				GameData.state.stopTrade = true
+
+				WindUI:Notify({
+					Title = "Trade",
+					Content = "Trade target reached!",
+					Duration = 3,
+					Icon = "success"
+				})
+			end
+		end
+	end
+end
+
+for _, tile in ipairs(GameData.notifFrame:GetChildren()) do
+	if tile.Name == "TextTile" then
+		GameData.checkTradeTile(tile)
+	end
+end
+
+GameData.notifFrame.ChildAdded:Connect(function(child)
+	if child.Name == "TextTile" then
+		local headerObj = child:WaitForChild("Header", 5)
+		if headerObj then
+			GameData.checkTradeTile(child)
+		end
+	end
+end)
+
+---------------------------------------------------------
+-- UI SETUP
+---------------------------------------------------------
+
+GameData.PlayerMap = {}
+
+GameData.RefreshPlayers = function(dropdown)
+	local options = {}
+	table.clear(GameData.PlayerMap)
+
+	for _, plr in ipairs(GameData.Players:GetPlayers()) do
+		if plr ~= GameData.player then
+			local label = plr.DisplayName .. " @" .. plr.Name
+			GameData.PlayerMap[label] = plr.Name
+			table.insert(options, label)
+		end
+	end
+
+	dropdown:Refresh(options)
+
+	if #options > 0 then
+		dropdown:Select(options[1])
+		GameData.state.targetPlayer = GameData.PlayerMap[options[1]]
+	end
+end
+
+GameData.PlayerDropdown = Sec.Trading1:Dropdown({
+	Title = "Select Target Player",
+    Flag = "SelectTargetPlayer",
+
+    SearchBarEnabled = true,
+	Desc = "Choose a player to trade with",
+	Values = {}, -- will refresh later
+	Value = nil,
+	Multi = false,
+	AllowNone = false,
+	Callback = function(selection)
+		if GameData.PlayerMap[selection] then
+			GameData.state.targetPlayer = GameData.PlayerMap[selection]
+			WindUI:Notify({
+				Title = "Target",
+				Content = "Selected: " .. selection,
+				Duration = 3,
+				Icon = "user"
+			})
+		end
+	end
+})
+
+-- Refresh player list on load
+GameData.RefreshPlayers(GameData.PlayerDropdown)
+
+Sec.Trading1:Button({
+	Title = "Refresh Player List",
+	Desc = "Update the player dropdown",
+	Callback = function()
+		GameData.RefreshPlayers(GameData.PlayerDropdown)
+	end
+})
+
+Sec.Trading1:Input({
+	Title = "Fish Amount Trade",
+    Flag = "FishAmountTrade",
+	Desc = "Enter the number of fish to trade",
+	Value = tostring(GameData.state.fishTarget or ""),
+	Placeholder = "Example: 10",
+	Type = "Input",
+	Callback = function(input)
+		local amount = tonumber(input)
+		if amount then
+			GameData.state.fishTarget = amount
+			GameData.state.fishCount = 0
+			WindUI:Notify({
+				Title = "Trade",
+				Content = "Trade target set: " .. amount,
+				Duration = 3,
+				Icon = "fish"
+			})
+		else
+			WindUI:Notify({
+				Title = "Error",
+				Content = "Input must be a number!",
+				Duration = 3,
+				Icon = "error"
+			})
+		end
+	end
+})
+
+Sec.Trading1:Dropdown({
+	Title = "Select Tier(s)",
+    Flag = "SelectTiers(s)",
+	Desc = "Choose one or more tiers",
+	Values = GameData.TierList001,
+	Value = { "Common" },
+	Multi = true,
+	AllowNone = true,
+	Callback = function(selectedTiers)
+		GameData.state.selectedTiers = GameData.normalize(selectedTiers)
+		WindUI:Notify({
+			Title = "Tier Selected",
+			Content = table.concat(GameData.state.selectedTiers, ", "),
+			Duration = 3,
+			Icon = "star"
+		})
+	end
+})
+
+Sec.Trading1:Toggle({
+	Title = "Auto Trade",
+    Flag = "AutoTrade",
+	Desc = "Enable or disable auto trading",
+	Value = false,
+	Callback = function(state)
+		GameData.state.Auto2Trade = state
+		GameData.state.stopTrade = not state
+
+		if state then
+			task.spawn(GameData.workerTrade)
+		end
+
+		WindUI:Notify({
+			Title = "Auto Trade",
+			Content = state and "Auto Trade Enabled" or "Auto Trade Disabled",
+			Duration = 3,
+			Icon = "trade"
+		})
+	end
 })
 
 Sec.Shop1 = Tabs.Shop:Section({
@@ -3652,6 +4493,7 @@ local autoBuyRods = false
 Sec.Shop1:Dropdown({
     Title = "Select Rods",
     Flag = "SelectRods",
+    SearchBarEnabled = true,
     Values = RodNames,
     Value = {},
     Multi = true,
@@ -3710,6 +4552,7 @@ local autoBuyBait = false
 Sec.Shop2:Dropdown({
     Title = "Select Baits",
     Flag = "SelectBaits",
+    SearchBarEnabled = true,
     Values = baitNames,
     Value = {},
     Multi = true,
@@ -3836,6 +4679,7 @@ table.sort(GameData.PurchaseBoatOptionsv11)
 Sec.Shop4:Dropdown({
     Title = "Select Boat to Purchase",
     Flag = "SelectBoatv11",
+    SearchBarEnabled = true,
     Values = GameData.PurchaseBoatOptionsv11,
     Value = nil,
     Multi = false,
@@ -4097,6 +4941,7 @@ GameData.SelectedSpawnBoatID =
 Sec.Boat1:Dropdown({
     Title = "Select Boat to Spawn",
     Flag = "SelectSpawnBoat",
+    SearchBarEnabled = true,
     Desc = "Choose a boat to spawn",
     Values = GameData.SpawnBoatOptions,
     Value = GameData.SpawnBoatOptions[1],
@@ -4199,6 +5044,7 @@ local selectedIsland = islandNames[1] or "Kohana"
 Sec.Tp1:Dropdown({
     Title = "Select Island",
     Flag = "SelectIsland",
+    SearchBarEnabled = true,
     Desc = "Choose an island to teleport",
     Values = islandNames,
     Value = selectedIsland,
@@ -4254,6 +5100,7 @@ end
 GameData.PlayerDropdownv12 = Sec.Tp2:Dropdown({
     Title = "Select Player",
     Flag = "SelectPlayerv12",
+    SearchBarEnabled = true,
     Desc = "Choose the player you want to teleport to",
     Values = GameData:GetPlayerDisplayListv12(),
     Value = GameData:GetPlayerDisplayListv12()[1] or "",
@@ -5296,22 +6143,19 @@ function GameData:StartAntiAfk()
     end)
 end
 
-sections.Player1:Toggle({
-    Name = "Anti AFK",
-    Default = false,
+Sec.Player2:Toggle({
+    Title = "Anti AFK",
+    Desc = "Prevent kick when idle",
+    Flag = "AntiAFK",
+    Value = false,
     Callback = function(value)
         GameData.AntiAfkRunning = value
 
         if value then
             GameData:StartAntiAfk()
         end
-
-        Window:Notify({
-            Title = "Anti AFK",
-            Description = (value and "Enabled" or "Disabled")
-        })
-    end,
-}, "AntiAfkToggle")
+    end
+})
 
 
 Sec.Player3 = Tabs.Player:Section({
@@ -5344,7 +6188,6 @@ end
 
 GameData.Player = game.Players.LocalPlayer
 GameData.char = GameData.Player.Character or GameData.Player.CharacterAdded:Wait()
-
 GameData.hum = GameData:GetHumanoid()
 
 GameData.Player.CharacterAdded:Connect(function(char)
@@ -5357,99 +6200,106 @@ end)
 
 Sec.Player3:Slider({
     Title = "Set Walkspeed",
-    Flag = "WalkspeedSlider",
-    Desc = "Adjust your walkspeed",
+    Desc = "Player Walkspeed",
+    Flag = "WalkspeedValue",
     Step = 1,
     Value = {
         Min = 0,
         Max = 300,
         Default = GameData.WalkspeedValue,
     },
-    Callback = function(Value)
-        GameData.WalkspeedValue = Value
+    Callback = function(value)
+        GameData.WalkspeedValue = value
         GameData:ApplyWalkspeed()
     end
 })
 
 Sec.Player3:Toggle({
     Title = "Walkspeed",
+    Desc = "Enable custom walkspeed",
     Flag = "WalkspeedToggle",
-    Desc = "Enable/Disable Walkspeed",
-    Type = "Checkbox",
     Value = GameData.WalkspeedEnabled,
     Callback = function(state)
         GameData.WalkspeedEnabled = state
-        Window:Notify({
-            Title = "Walkspeed",
-            Description = state and ("Enabled ("..GameData.WalkspeedValue..")") or "Disabled"
-        })
         GameData:ApplyWalkspeed()
+
+        WindUI:Notify({
+            Title = "Walkspeed",
+            Content = state and ("Enabled (" .. GameData.WalkspeedValue .. ")") or "Disabled",
+            Duration = 3,
+            Icon = "zap"
+        })
     end
 })
 
 Sec.Player3:Slider({
     Title = "Set Jump Power",
-    Flag = "JumpPowerSlider",
-    Desc = "Adjust your jump power",
+    Desc = "Player Jump Power",
+    Flag = "JumpPowerValue",
     Step = 1,
     Value = {
         Min = 0,
         Max = 300,
         Default = GameData.JumpValue,
     },
-    Callback = function(Value)
-        GameData.JumpValue = Value
+    Callback = function(value)
+        GameData.JumpValue = value
         GameData:ApplyJumpPower()
     end
 })
 
 Sec.Player3:Toggle({
-    Title = "Auto Jump Power",
-    Flag = "JumpToggle",
-    Desc = "Enable/Disable Auto Jump Power",
-    Type = "Checkbox",
+    Title = "Jump Power",
+    Desc = "Enable custom jump power",
+    Flag = "JumpPowerToggle",
     Value = GameData.JumpEnabled,
     Callback = function(state)
         GameData.JumpEnabled = state
-        Window:Notify({
-            Title = "Jump Power",
-            Description = state and ("Enabled ("..GameData.JumpValue..")") or "Disabled"
-        })
         GameData:ApplyJumpPower()
+
+        WindUI:Notify({
+            Title = "Jump Power",
+            Content = state and ("Enabled (" .. GameData.JumpValue .. ")") or "Disabled",
+            Duration = 3,
+            Icon = "arrow-up"
+        })
     end
 })
 
 Sec.Player3:Slider({
     Title = "Set Gravity",
-    Flag = "GravitySlider",
-    Desc = "Adjust your gravity",
+    Desc = "Workspace Gravity",
+    Flag = "GravityValue",
     Step = 1,
     Value = {
         Min = 0,
         Max = 400,
         Default = GameData.GravityValue,
     },
-    Callback = function(Value)
-        GameData.GravityValue = Value
+    Callback = function(value)
+        GameData.GravityValue = value
         GameData:ApplyGravity()
     end
 })
 
 Sec.Player3:Toggle({
     Title = "Gravity Controller",
+    Desc = "Enable custom gravity",
     Flag = "GravityToggle",
-    Desc = "Enable/Disable custom gravity",
-    Type = "Checkbox",
     Value = GameData.GravityEnabled,
     Callback = function(state)
         GameData.GravityEnabled = state
-        Window:Notify({
-            Title = "Gravity",
-            Description = state and ("Enabled ("..GameData.GravityValue..")") or "Disabled"
-        })
         GameData:ApplyGravity()
+
+        WindUI:Notify({
+            Title = "Gravity",
+            Content = state and ("Enabled (" .. GameData.GravityValue .. ")") or "Disabled",
+            Duration = 3,
+            Icon = "globe"
+        })
     end
 })
+
 
 Sec.Config1 = Tabs.Config:Section({
     Title = "Save Config",
@@ -5613,10 +6463,88 @@ Sec.Config2:Button({
     end
 })
 
+Sec.Config3 = Tabs.Config:Section({
+    Title = "Server Joiner",
+    Box = true,
+    BoxBorder = true,
+    Opened = true,
+})
 
--------------------------------------------------------------
--- CREATE TOGGLE GUI
--------------------------------------------------------------
+GameData.JobIdParagraph = Sec.Config3:Paragraph({
+    Title = "Current Job ID",
+    Desc = game.JobId,
+    Flag = "JobIdParagraph"
+})
+
+Sec.Config3:Button({
+    Title = "Rejoin Server",
+    Callback = function()
+        GameData.TeleportService:TeleportToPlaceInstance(
+            GameData.PlaceId,
+            game.JobId,
+            GameData.LocalPlayer
+        )
+    end
+})
+
+Sec.Config3:Button({
+    Title = "Server Hop",
+    Callback = function()
+        local success, response = pcall(function()
+            return game:HttpGet(
+                ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100")
+                :format(GameData.PlaceId)
+            )
+        end)
+
+        if not success then return end
+
+        local servers = GameData.HttpService:JSONDecode(response)
+
+        for _, server in ipairs(servers.data or {}) do
+            if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                GameData.TeleportService:TeleportToPlaceInstance(
+                    GameData.PlaceId,
+                    server.id,
+                    GameData.LocalPlayer
+                )
+                return
+            end
+        end
+    end
+})
+
+Sec.Config3:Button({
+    Title = "Copy Job ID",
+    Callback = function()
+        setclipboard(game.JobId)
+    end
+})
+
+Sec.Config3:Input({
+    Title = "Enter Job ID",
+    Desc = "Paste JobId here",
+    Placeholder = "JobId...",
+    Flag = "InputJobId",
+    Callback = function(text)
+        GameData.TargetJobId = text or ""
+    end
+})
+
+Sec.Config3:Button({
+    Title = "Teleport to Job ID",
+    Flag = "TeleportJobId",
+    Callback = function()
+        if GameData.TargetJobId ~= "" then
+            GameData.TeleportService:TeleportToPlaceInstance(
+                GameData.PlaceId,
+                GameData.TargetJobId,
+                GameData.LocalPlayer
+            )
+        end
+    end
+})
+
 GameData.ScreenGui = Instance.new("ScreenGui")
 GameData.ScreenGui.Name = "NexaUIToggle"
 GameData.ScreenGui.IgnoreGuiInset = true
@@ -5632,6 +6560,8 @@ GameData.ToggleFrame.Size = UDim2.new(0, 50, 0, 50)
 GameData.ToggleFrame.Position = UDim2.new(0, 110, 0, 95)
 GameData.ToggleFrame.BackgroundColor3 = Color3.fromRGB(20, 80, 200)
 GameData.ToggleFrame.BorderSizePixel = 0
+GameData.ToggleFrame.Active = true
+GameData.ToggleFrame.Selectable = true
 
 GameData.Corner = Instance.new("UICorner")
 GameData.Corner.CornerRadius = UDim.new(0, 14)
@@ -5670,38 +6600,46 @@ GameData.ToggleBtn.Size = UDim2.new(0, 40, 0, 40)
 GameData.ToggleBtn.Position = UDim2.new(0.5, -20, 0.5, -20)
 GameData.ToggleBtn.BackgroundTransparency = 1
 GameData.ToggleBtn.Image = "rbxassetid://123906607434048"
+GameData.ToggleBtn.AutoButtonColor = false
 
 -------------------------------------------------------------
--- DRAG SYSTEM
+-- DRAG SYSTEM (PC + MOBILE FIXED)
 -------------------------------------------------------------
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    GameData.ToggleFrame.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
 GameData.ToggleFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
     or input.UserInputType == Enum.UserInputType.Touch then
+
         GameData.Dragging = true
-        GameData.DragStart = input.Position
-        GameData.StartPos = GameData.ToggleFrame.Position
+        dragStart = input.Position
+        startPos = GameData.ToggleFrame.Position
+        dragInput = input
     end
 end)
 
-GameData.UIS.InputChanged:Connect(function(input)
-    if GameData.Dragging then
-        if input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch then
-            local delta = input.Position - GameData.DragStart
-            GameData.ToggleFrame.Position = UDim2.new(
-                GameData.StartPos.X.Scale,
-                GameData.StartPos.X.Offset + delta.X,
-                GameData.StartPos.Y.Scale,
-                GameData.StartPos.Y.Offset + delta.Y
-            )
-        end
+GameData.ToggleFrame.InputChanged:Connect(function(input)
+    if input == dragInput and GameData.Dragging then
+        update(input)
     end
 end)
 
-GameData.UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
+GameData.ToggleFrame.InputEnded:Connect(function(input)
+    if input == dragInput then
         GameData.Dragging = false
+        dragInput = nil
     end
 end)
 
@@ -5710,7 +6648,6 @@ end)
 -------------------------------------------------------------
 GameData.ToggleBtn.MouseButton1Click:Connect(function()
 
-    -- click animation
     GameData.TweenService:Create(GameData.ToggleBtn, TweenInfo.new(0.08), {
         Size = UDim2.new(0, 35, 0, 35)
     }):Play()
@@ -5727,21 +6664,97 @@ GameData.ToggleBtn.MouseButton1Click:Connect(function()
 end)
 
 -------------------------------------------------------------
--- WINDOW EVENTS (API RESMI)
+-- WINDOW EVENTS (API)
 -------------------------------------------------------------
-Window:OnOpen(function()
-    print("Window Opened")
+if Window then
+    Window:OnOpen(function()
+        -- on open
+    end)
+
+    Window:OnClose(function()
+        -- on close
+    end)
+
+    Window:OnDestroy(function()
+        if GameData.ScreenGui then
+            GameData.ScreenGui:Destroy()
+            GameData.ScreenGui = nil
+        end
+    end)
+end
+
+	--================ Wind Ui Title Gradiant ===============
+
+GameData.GetTitleFuncv14 = function()
+    GameData.RootUIv14 = nil
+    GameData.WindUIv14 = nil
+
+    for _, v in ipairs(GameData.CoreGuiv14:GetChildren()) do
+        if v:IsA("ScreenGui") or v:IsA("Folder") then
+            local wind = v:FindFirstChild("WindUI", true)
+            if wind then
+                GameData.RootUIv14 = v
+                GameData.WindUIv14 = wind
+                break
+            end
+        end
+    end
+
+    if not GameData.WindUIv14 then
+        return nil, "WindUI tidak ditemukan"
+    end
+
+    local Path =
+        GameData.WindUIv14
+        :FindFirstChild("Window")
+        and GameData.WindUIv14.Window:FindFirstChild("Frame")
+        and GameData.WindUIv14.Window.Frame:FindFirstChild("Main")
+        and GameData.WindUIv14.Window.Frame.Main:FindFirstChild("Topbar")
+        and GameData.WindUIv14.Window.Frame.Main.Topbar:FindFirstChild("Left")
+        and GameData.WindUIv14.Window.Frame.Main.Topbar.Left:FindFirstChild("Title")
+        and GameData.WindUIv14.Window.Frame.Main.Topbar.Left.Title:FindFirstChild("Title")
+
+    if not Path then
+        return nil, "TextLabel Title tidak ditemukan"
+    end
+
+    return Path
+end
+
+--// APPLY GRADIENT
+local function ApplyGradient()
+    GameData.Titlev14, GameData.Errv14 = GameData.GetTitleFuncv14()
+    if not GameData.Titlev14 then
+        return
+    end
+
+    if GameData.Titlev14:FindFirstChild("GradientTitlev14") then
+        return
+    end
+
+    GameData.UIGradientv14 = Instance.new("UIGradient")
+    GameData.UIGradientv14.Name = "GradientTitlev14"
+    GameData.UIGradientv14.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.new(0, 0.0901961, 0.592157)),
+        ColorSequenceKeypoint.new(0.5, Color3.new(0, 0.6, 1)),
+        ColorSequenceKeypoint.new(1, Color3.new(0.0431373, 0.584314, 1))
+    })
+    GameData.UIGradientv14.Rotation = 0
+    GameData.UIGradientv14.Parent = GameData.Titlev14
+end
+
+--// ROTATION LOOP
+GameData.RunServicev14.RenderStepped:Connect(function(dt)
+    if GameData.UIGradientv14 and GameData.UIGradientv14.Parent then
+        GameData.UIGradientv14.Rotation =
+            (GameData.UIGradientv14.Rotation + GameData.GradientSpeedv14 * dt) % 360
+    end
 end)
 
-Window:OnClose(function()
-    print("Window Closed")
-end)
-
-Window:OnDestroy(function()
-    print("Window Destroyed")
-
-    if GameData.ScreenGui then
-        GameData.ScreenGui:Destroy()
-        GameData.ScreenGui = nil
+--// CHECK LOOP EVERY 5 SECONDS
+task.spawn(function()
+    while true do
+        task.wait(5)
+        ApplyGradient()
     end
 end)
