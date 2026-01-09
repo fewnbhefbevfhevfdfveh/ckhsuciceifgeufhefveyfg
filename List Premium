@@ -1,38 +1,70 @@
+--// ================================
 --// SERVICES
+--// ================================
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
+local RbxAnalytics = game:GetService("RbxAnalyticsService")
+
 local player = Players.LocalPlayer
 
---// EXECUTOR REQUEST FUNCTION
-local Request = (syn and syn.request)
-	or http_request
-	or request
-	or (fluxus and fluxus.request)
+--// ================================
+--// EXECUTOR REQUEST
+--// ================================
+local Request =
+	(syn and syn.request) or
+	http_request or
+	request or
+	(fluxus and fluxus.request)
 
 if not Request then
-	player:Kick("Executor not supported")
+	player:Kick("❌ Executor not supported")
 	return
 end
 
---// API URL
-local API_URL = "https://han2343.pythonanywhere.com/check"
-
---// KEY WAJIB DISET SEBELUM LOADSTRING
--- script_key = "KEY_KAMU"
-
-if typeof(script_key) ~= "string" or script_key == "" then
-	player:Kick("❌ Key is required")
-	return
-end
-
---// 🔒 DEVICE ID (ANTI SHARE KEY)
+--// ================================
+--// DEVICE ID (ANTI SHARE)
+--// ================================
 local DEVICE_ID =
 	(syn and syn.gethwid and syn.gethwid()) or
 	(gethwid and gethwid()) or
-	game:GetService("RbxAnalyticsService"):GetClientId()
+	RbxAnalytics:GetClientId()
 
+--// ================================
+--// KEY FILE
+--// ================================
+local KEY_FILE = "nexa_key.txt"
+
+local function LoadKey()
+	if isfile(KEY_FILE) then
+		return readfile(KEY_FILE)
+	end
+end
+
+local function SaveKey(key)
+	if key and key ~= "" then
+		writefile(KEY_FILE, key)
+	end
+end
+
+--// ================================
+--// GET KEY
+--// ================================
+local KEY = script_key or LoadKey()
+
+if typeof(KEY) ~= "string" or KEY == "" then
+	player:Kick("❌ Key tidak ditemukan")
+	return
+end
+
+-- auto save key
+if script_key and not isfile(KEY_FILE) then
+	SaveKey(script_key)
+end
+
+--// ================================
 --// NOTIFICATION UI
+--// ================================
 local function ShowNotification(text)
 	local playerGui = player:WaitForChild("PlayerGui")
 
@@ -62,7 +94,7 @@ local function ShowNotification(text)
 	label.TextWrapped = true
 	label.Font = Enum.Font.Code
 	label.TextSize = 14
-	label.TextColor3 = Color3.fromRGB(255, 130, 0)
+	label.TextColor3 = Color3.fromRGB(255, 140, 0)
 	label.Text = text
 
 	TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
@@ -78,11 +110,15 @@ local function ShowNotification(text)
 	end)
 end
 
---// REQUEST KE SERVER (PAKAI DEVICE ID)
+--// ================================
+--// API CHECK
+--// ================================
+local API_URL = "https://han2343.pythonanywhere.com/check"
+
 local response = Request({
 	Url = API_URL
 		.. "?user_id=" .. player.UserId
-		.. "&key=" .. script_key
+		.. "&key=" .. KEY
 		.. "&device=" .. DEVICE_ID,
 	Method = "GET",
 	Headers = {
@@ -91,63 +127,64 @@ local response = Request({
 })
 
 if not response or not response.Body then
-	ShowNotification("❌ Gagal terhubung ke server.")
+	ShowNotification("❌ Gagal terhubung ke server")
 	task.wait(2)
-	player:Kick("❌ Failed to connect to server")
+	player:Kick("❌ Failed to connect server")
 	return
 end
 
---// PARSE RESPONSE
 local data
-local ok = pcall(function()
+local success = pcall(function()
 	data = HttpService:JSONDecode(response.Body)
 end)
 
-if not ok or typeof(data) ~= "table" then
-	ShowNotification("❌ Response server tidak valid.")
+if not success or typeof(data) ~= "table" then
+	ShowNotification("❌ Response server tidak valid")
 	task.wait(2)
 	player:Kick("❌ Invalid server response")
 	return
 end
 
---// VALIDASI AKSES
+--// ================================
+--// ACCESS VALIDATION
+--// ================================
 if not data.allowed then
 	if data.reason == "device_mismatch" then
 		ShowNotification("❌ Key sudah dipakai di device lain")
 		task.wait(2)
-		player:Kick("❌ Key already used on another device")
-	elseif data.reason == "user_not_whitelisted" then
-		ShowNotification("❌ Kamu bukan pengguna Premium.")
-		task.wait(2)
-		player:Kick("❌ You are not whitelisted.")
-	elseif data.reason == "invalid_key" then
-		ShowNotification("❌ Key Premium salah.")
-		task.wait(2)
-		player:Kick("❌ Invalid key.")
+		player:Kick("❌ Device mismatch")
 	elseif data.reason == "expired" then
-		ShowNotification("⏳ Premium kamu sudah EXPIRED.")
+		ShowNotification("⏳ Premium kamu sudah EXPIRED")
 		task.wait(2)
-		player:Kick("❌ Premium expired.")
+		player:Kick("❌ Premium expired")
+	elseif data.reason == "invalid_key" then
+		ShowNotification("❌ Key Premium salah")
+		task.wait(2)
+		player:Kick("❌ Invalid key")
 	else
-		ShowNotification("❌ Akses ditolak.")
+		ShowNotification("❌ Akses ditolak")
 		task.wait(2)
-		player:Kick("❌ Access denied.")
+		player:Kick("❌ Access denied")
 	end
 	return
 end
 
---// AKSES VALID
+--// ================================
+--// SUCCESS
+--// ================================
 if data.type == "lifetime" then
 	ShowNotification("💎 Lifetime Premium Access Granted!")
 elseif data.type == "30d" then
-	ShowNotification("⏳ Premium 30 Hari Aktif\nExpired: " .. tostring(data.expires))
+	ShowNotification("⏳ Premium Aktif\nExpired: " .. tostring(data.expires))
 else
 	ShowNotification("✅ Premium Access Granted!")
 end
 
 task.wait(1)
 
+--// ================================
 --// LOAD PREMIUM SCRIPT
+--// ================================
 pcall(function()
 	loadstring(game:HttpGet(
 		"https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/jduwgfPREMIUM"
