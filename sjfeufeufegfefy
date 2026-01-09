@@ -2055,7 +2055,7 @@ function GameData.CheckBaseLuck()
     GameData.Text = GameData.BaseLuckLabel.Text
     GameData.Luck = tonumber(GameData.Text:match("x([%d%.]+)"))
 
-    if GameData.Luck and GameData.Luck >= 2 then
+    if GameData.Luck and GameData.Luck >= 1.9 then
         GameData.BaseLuckX2 = true
     else
         GameData.BaseLuckX2 = false
@@ -2082,7 +2082,7 @@ for _, v in pairs(getgc(true)) do
 end
 
 task.spawn(function()
-    while task.wait(0.01) do
+    while task.wait(0.1) do
         if not GameData.AutoFishing then
             continue
         end
