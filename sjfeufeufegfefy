@@ -2036,7 +2036,6 @@ Sec.Main7 = Tabs.Main:Section({
     Opened = false,
 })
 
---// ================= INIT PLAYER =================
 GameData.LocalPlayer = GameData.Players.LocalPlayer
 
 --// ================= INIT NET =================
@@ -2072,7 +2071,7 @@ function GameData.CheckBaseLuck()
     local text = GameData.BaseLuckLabel.Text
     local luck = tonumber(text:match("x([%d%.]+)"))
 
-    if luck and luck >= 1.8 then
+    if luck and luck >= 1.9 then
         GameData.BaseLuckX2 = true
     else
         GameData.BaseLuckX2 = false
@@ -2165,25 +2164,35 @@ GameData.REReplicateTextEffect.OnClientEvent:Connect(function(data)
     end
 
     task.delay(GameData.CompletedDelay, function()
-        pcall(function()
-            GameData.REFishingCompleted:FireServer()
-        end)
+        if GameData.AutoFishing then
+            pcall(function()
+                GameData.REFishingCompleted:FireServer()
+            end)
+        end
     end)
 end)
 
 --// ================= CANCEL INPUT (INDEX 1–4) =================
 GameData.REPlayFishingEffect.OnClientEvent:Connect(function(plr, head, index)
-    -- pastikan karakter kita sendiri
+
+    -- 🔒 HARD STOP JIKA TOGGLE OFF
+    if not GameData.AutoFishing then
+        return
+    end
+
+    -- pastikan event untuk karakter kita
     if plr ~= GameData.LocalPlayer then
         return
     end
 
-    -- hanya index 1 sampai 4
+    -- hanya index 1–4
     if index >= 1 and index <= 4 then
         task.delay(0.1, function()
-            pcall(function()
-                GameData.RFCancelFishingInputs:InvokeServer()
-            end)
+            if GameData.AutoFishing then
+                pcall(function()
+                    GameData.RFCancelFishingInputs:InvokeServer()
+                end)
+            end
         end)
     end
 end)
@@ -2209,7 +2218,6 @@ Sec.Main7:Toggle({
         GameData.AutoFishing = state
     end
 })
-
 Sec.Main2 = Tabs.Main:Section({
     Title = "Instant",
     Box = true,
