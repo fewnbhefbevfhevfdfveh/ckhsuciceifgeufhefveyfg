@@ -1071,26 +1071,33 @@ local GameData = {
 
 	--================ Perfect Fishing ===============
 
+    -- Services
     Players = game:GetService("Players"),
     ReplicatedStorage = game:GetService("ReplicatedStorage"),
     Camera = workspace.CurrentCamera,
 
+    -- Player
     LocalPlayer = nil,
 
+    -- Net
     Net = nil,
 
+    -- Remotes
     RFRequestFishingMinigameStarted = nil,
     REReplicateTextEffect = nil,
     REFishingCompleted = nil,
+    REPlayFishingEffect = nil,
+    RFCancelFishingInputs = nil,
 
+    -- State
     AutoFishing = false,
     CompletedDelay = 1.5,
 
     BaseLuckLabel = nil,
-
     BaseLuckX2 = false,
     FiredMinigame = false,
 
+    -- Modules
     FishingModule = nil,
     ChargeModule = nil,
 }
@@ -1125,7 +1132,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.0.8",
+    Title = "v0.0.9",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1170,7 +1177,7 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-[/] Fixed Auto Diamond Quest
+[+] Added Perfect Fishing
 ]],
     Locked = false
 })
@@ -2031,12 +2038,14 @@ Sec.Main7 = Tabs.Main:Section({
 
 GameData.LocalPlayer = GameData.Players.LocalPlayer
 
+--// ================= INIT NET =================
 GameData.Net = GameData.ReplicatedStorage
     :WaitForChild("Packages")
     :WaitForChild("_Index")
     :WaitForChild("sleitnick_net@0.2.0")
     :WaitForChild("net")
 
+--// ================= INIT REMOTES =================
 GameData.RFRequestFishingMinigameStarted =
     GameData.Net:WaitForChild("RF/RequestFishingMinigameStarted")
 
@@ -2046,16 +2055,23 @@ GameData.REReplicateTextEffect =
 GameData.REFishingCompleted =
     GameData.Net:WaitForChild("RE/FishingCompleted")
 
+GameData.REPlayFishingEffect =
+    GameData.Net:WaitForChild("RE/PlayFishingEffect")
+
+GameData.RFCancelFishingInputs =
+    GameData.Net:WaitForChild("RF/CancelFishingInputs")
+
+--// ================= BASE LUCK UI =================
 GameData.BaseLuckLabel =
     GameData.LocalPlayer.PlayerGui
         :WaitForChild("Charge")
         .Main.Frame.Top:WaitForChild("BaseLuck")
 
 function GameData.CheckBaseLuck()
-    GameData.Text = GameData.BaseLuckLabel.Text
-    GameData.Luck = tonumber(GameData.Text:match("x([%d%.]+)"))
+    local text = GameData.BaseLuckLabel.Text
+    local luck = tonumber(text:match("x([%d%.]+)"))
 
-    if GameData.Luck and GameData.Luck >= 2 then
+    if luck and luck >= 1.9 then
         GameData.BaseLuckX2 = true
     else
         GameData.BaseLuckX2 = false
@@ -2064,12 +2080,11 @@ function GameData.CheckBaseLuck()
 end
 
 GameData.CheckBaseLuck()
-GameData.BaseLuckLabel
-    :GetPropertyChangedSignal("Text")
-    :Connect(function()
-        GameData.CheckBaseLuck()
-    end)
+GameData.BaseLuckLabel:GetPropertyChangedSignal("Text"):Connect(function()
+    GameData.CheckBaseLuck()
+end)
 
+--// ================= GET MODULES =================
 for _, v in pairs(getgc(true)) do
     if type(v) == "table" then
         if rawget(v, "_getPower") then
@@ -2081,22 +2096,21 @@ for _, v in pairs(getgc(true)) do
     end
 end
 
+--// ================= AUTO FISH LOOP =================
 task.spawn(function()
-    while task.wait(0.01) do
+    while task.wait(0) do
         if not GameData.AutoFishing then
             continue
         end
 
         -- START CHARGE
         if GameData.ChargeModule and not _G.confirmFishingInput then
-            GameData.Center = Vector2.new(
+            local center = Vector2.new(
                 GameData.Camera.ViewportSize.X / 2,
                 GameData.Camera.ViewportSize.Y / 2
             )
 
-            GameData.ChargeModule:RequestChargeFishingRod(
-                GameData.Center
-            )
+            GameData.ChargeModule:RequestChargeFishingRod(center)
         end
 
         -- FORCE MINIGAME (x2 LUCK)
@@ -2106,83 +2120,104 @@ task.spawn(function()
 
             GameData.FiredMinigame = true
 
-            GameData.Power =
-                GameData.FishingModule:_getPower()
+            local power = GameData.FishingModule:_getPower()
+            local serverTime = workspace:GetServerTimeNow()
 
-            GameData.ServerTime =
-                workspace:GetServerTimeNow()
-
-            GameData.HitY =
+            local hrp =
                 GameData.LocalPlayer.Character
                 and GameData.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                and GameData.LocalPlayer.Character.HumanoidRootPart.Position.Y
-                or 0
+
+            local hitY = hrp and hrp.Position.Y or 0
 
             pcall(function()
-                GameData.RFRequestFishingMinigameStarted
-                    :InvokeServer(
-                        GameData.HitY,
-                        GameData.Power,
-                        GameData.ServerTime
-                    )
+                GameData.RFRequestFishingMinigameStarted:InvokeServer(
+                    hitY,
+                    power,
+                    serverTime
+                )
             end)
         end
     end
 end)
 
-GameData.REReplicateTextEffect.OnClientEvent
-    :Connect(function(data)
+--// ================= AUTO COMPLETE =================
+GameData.REReplicateTextEffect.OnClientEvent:Connect(function(data)
+    if not GameData.AutoFishing then
+        return
+    end
 
-        if not GameData.AutoFishing then
-            return
-        end
+    if not data or not data.TextData then
+        return
+    end
 
-        if not data or not data.TextData then
-            return
-        end
+    if data.TextData.EffectType ~= "Exclaim" then
+        return
+    end
 
-        if data.TextData.EffectType ~= "Exclaim" then
-            return
-        end
+    local character = GameData.LocalPlayer.Character
+    if not character then
+        return
+    end
 
-        GameData.Character = GameData.LocalPlayer.Character
-        if not GameData.Character then
-            return
-        end
+    if data.Container ~= character:FindFirstChild("Head") then
+        return
+    end
 
-        if data.Container
-        ~= GameData.Character:FindFirstChild("Head") then
-            return
-        end
-
-        task.delay(GameData.CompletedDelay, function()
+    task.delay(GameData.CompletedDelay, function()
+        if GameData.AutoFishing then
             pcall(function()
                 GameData.REFishingCompleted:FireServer()
             end)
-        end)
+        end
     end)
+end)
 
-Sec.Main2:Input({
+--// ================= CANCEL INPUT (INDEX 1–4) =================
+GameData.REPlayFishingEffect.OnClientEvent:Connect(function(plr, head, index)
+
+    -- 🔒 HARD STOP JIKA TOGGLE OFF
+    if not GameData.AutoFishing then
+        return
+    end
+
+    -- pastikan event untuk karakter kita
+    if plr ~= GameData.LocalPlayer then
+        return
+    end
+
+    -- hanya index 1–4
+    if index >= 1 and index <= 4 then
+        task.delay(0.1, function()
+            if GameData.AutoFishing then
+                pcall(function()
+                    GameData.RFCancelFishingInputs:InvokeServer()
+                end)
+            end
+        end)
+    end
+end)
+
+--// ================= UI =================
+Sec.Main7:Input({
     Title = "Completed Delay",
     Value = tostring(GameData.CompletedDelay),
     InputIcon = "timer",
     Placeholder = "1.5",
     Callback = function(input)
-        GameData.Num = tonumber(input)
-        if GameData.Num then
-            GameData.CompletedDelay = GameData.Num
+        local num = tonumber(input)
+        if num then
+            GameData.CompletedDelay = num
         end
     end
 })
 
-Sec.Main2:Toggle({
+Sec.Main7:Toggle({
     Title = "Auto Fishing",
     Value = false,
     Callback = function(state)
         GameData.AutoFishing = state
     end
 })
-
 Sec.Main2 = Tabs.Main:Section({
     Title = "Instant",
     Box = true,
