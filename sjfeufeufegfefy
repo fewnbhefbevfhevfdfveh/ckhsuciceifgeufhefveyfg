@@ -2055,7 +2055,7 @@ function GameData.CheckBaseLuck()
     GameData.Text = GameData.BaseLuckLabel.Text
     GameData.Luck = tonumber(GameData.Text:match("x([%d%.]+)"))
 
-    if GameData.Luck and GameData.Luck >= 1.9 then
+    if GameData.Luck and GameData.Luck >= 1.8 then
         GameData.BaseLuckX2 = true
     else
         GameData.BaseLuckX2 = false
