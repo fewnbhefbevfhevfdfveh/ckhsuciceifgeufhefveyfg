@@ -12,23 +12,23 @@ local player = Players.LocalPlayer
 --// EXECUTOR REQUEST
 --// ================================
 local Request =
-	(syn and syn.request) or
-	http_request or
-	request or
-	(fluxus and fluxus.request)
+    (syn and syn.request) or
+    http_request or
+    request or
+    (fluxus and fluxus.request)
 
 if not Request then
-	player:Kick("❌ Executor not supported")
-	return
+    player:Kick("❌ Executor not supported")
+    return
 end
 
 --// ================================
 --// DEVICE ID (ANTI SHARE)
 --// ================================
 local DEVICE_ID =
-	(syn and syn.gethwid and syn.gethwid()) or
-	(gethwid and gethwid()) or
-	RbxAnalytics:GetClientId()
+    (syn and syn.gethwid and syn.gethwid()) or
+    (gethwid and gethwid()) or
+    RbxAnalytics:GetClientId()
 
 --// ================================
 --// KEY FILE
@@ -36,15 +36,15 @@ local DEVICE_ID =
 local KEY_FILE = "nexa_key.txt"
 
 local function LoadKey()
-	if isfile(KEY_FILE) then
-		return readfile(KEY_FILE)
-	end
+    if isfile(KEY_FILE) then
+        return readfile(KEY_FILE)
+    end
 end
 
 local function SaveKey(key)
-	if key and key ~= "" then
-		writefile(KEY_FILE, key)
-	end
+    if key and key ~= "" then
+        writefile(KEY_FILE, key)
+    end
 end
 
 --// ================================
@@ -53,131 +53,131 @@ end
 local KEY = script_key or LoadKey()
 
 if typeof(KEY) ~= "string" or KEY == "" then
-	player:Kick("❌ Key tidak ditemukan")
-	return
+    player:Kick("❌ Key required")
+    return
 end
 
 -- auto save key
 if script_key and not isfile(KEY_FILE) then
-	SaveKey(script_key)
+    SaveKey(script_key)
 end
 
 --// ================================
 --// NOTIFICATION UI
 --// ================================
 local function ShowNotification(text)
-	local playerGui = player:WaitForChild("PlayerGui")
+    local playerGui = player:WaitForChild("PlayerGui")
 
-	if playerGui:FindFirstChild("NexaNotify") then
-		playerGui.NexaNotify:Destroy()
-	end
+    if playerGui:FindFirstChild("NexaNotify") then
+        playerGui.NexaNotify:Destroy()
+    end
 
-	local gui = Instance.new("ScreenGui")
-	gui.Name = "NexaNotify"
-	gui.ResetOnSpawn = false
-	gui.Parent = playerGui
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "NexaNotify"
+    gui.ResetOnSpawn = false
+    gui.Parent = playerGui
 
-	local frame = Instance.new("Frame")
-	frame.Parent = gui
-	frame.Size = UDim2.new(0, 320, 0, 60)
-	frame.Position = UDim2.new(0.5, 0, 0, -80)
-	frame.AnchorPoint = Vector2.new(0.5, 0)
-	frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-	frame.BorderColor3 = Color3.fromRGB(60, 60, 60)
-	Instance.new("UICorner", frame)
+    local frame = Instance.new("Frame")
+    frame.Parent = gui
+    frame.Size = UDim2.new(0, 320, 0, 60)
+    frame.Position = UDim2.new(0.5, 0, 0, -80)
+    frame.AnchorPoint = Vector2.new(0.5, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    frame.BorderColor3 = Color3.fromRGB(60, 60, 60)
+    Instance.new("UICorner", frame)
 
-	local label = Instance.new("TextLabel")
-	label.Parent = frame
-	label.Size = UDim2.new(1, -20, 1, 0)
-	label.Position = UDim2.new(0, 10, 0, 0)
-	label.BackgroundTransparency = 1
-	label.TextWrapped = true
-	label.Font = Enum.Font.Code
-	label.TextSize = 14
-	label.TextColor3 = Color3.fromRGB(255, 140, 0)
-	label.Text = text
+    local label = Instance.new("TextLabel")
+    label.Parent = frame
+    label.Size = UDim2.new(1, -20, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.TextWrapped = true
+    label.Font = Enum.Font.Code
+    label.TextSize = 14
+    label.TextColor3 = Color3.fromRGB(255, 140, 0)
+    label.Text = text
 
-	TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
-		Position = UDim2.new(0.5, 0, 0, 40)
-	}):Play()
+    TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+        Position = UDim2.new(0.5, 0, 0, 40)
+    }):Play()
 
-	task.delay(2.5, function()
-		TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
-			Position = UDim2.new(0.5, 0, 0, -80)
-		}):Play()
-		task.wait(0.3)
-		gui:Destroy()
-	end)
+    task.delay(2.5, function()
+        TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+            Position = UDim2.new(0.5, 0, 0, -80)
+        }):Play()
+        task.wait(0.3)
+        gui:Destroy()
+    end)
 end
 
 --// ================================
---// API CHECK
+--// API CHECK (GABUNGAN)
 --// ================================
 local API_URL = "https://han2343.pythonanywhere.com/check"
 
 local response = Request({
-	Url = API_URL
-		.. "?user_id=" .. player.UserId
-		.. "&key=" .. KEY
-		.. "&device=" .. DEVICE_ID,
-	Method = "GET",
-	Headers = {
-		["Content-Type"] = "application/json"
-	}
+    Url = API_URL
+        .. "?key=" .. KEY
+        .. "&device=" .. DEVICE_ID
+        .. "&user_id=" .. player.UserId,
+    Method = "GET",
+    Headers = {
+        ["Content-Type"] = "application/json"
+    }
 })
 
 if not response or not response.Body then
-	ShowNotification("❌ Gagal terhubung ke server")
-	task.wait(2)
-	player:Kick("❌ Failed to connect server")
-	return
+    ShowNotification("❌ Gagal terhubung ke server")
+    task.wait(2)
+    player:Kick("❌ Failed to connect server")
+    return
 end
 
 local data
 local success = pcall(function()
-	data = HttpService:JSONDecode(response.Body)
+    data = HttpService:JSONDecode(response.Body)
 end)
 
 if not success or typeof(data) ~= "table" then
-	ShowNotification("❌ Response server tidak valid")
-	task.wait(2)
-	player:Kick("❌ Invalid server response")
-	return
+    ShowNotification("❌ Response server tidak valid")
+    task.wait(2)
+    player:Kick("❌ Invalid server response")
+    return
 end
 
 --// ================================
 --// ACCESS VALIDATION
 --// ================================
 if not data.allowed then
-	if data.reason == "device_mismatch" then
-		ShowNotification("❌ Key sudah dipakai di device lain")
-		task.wait(2)
-		player:Kick("❌ Device mismatch")
-	elseif data.reason == "expired" then
-		ShowNotification("⏳ Premium kamu sudah EXPIRED")
-		task.wait(2)
-		player:Kick("❌ Premium expired")
-	elseif data.reason == "invalid_key" then
-		ShowNotification("❌ Key Premium salah")
-		task.wait(2)
-		player:Kick("❌ Invalid key")
-	else
-		ShowNotification("❌ Akses ditolak")
-		task.wait(2)
-		player:Kick("❌ Access denied")
-	end
-	return
+    if data.reason == "device_mismatch" then
+        ShowNotification("❌ Key dipakai di device lain")
+        task.wait(2)
+        player:Kick("❌ Device mismatch")
+    elseif data.reason == "expired" then
+        ShowNotification("⏳ Key expired")
+        task.wait(2)
+        player:Kick("❌ Key expired")
+    elseif data.reason == "invalid_key" then
+        ShowNotification("❌ Invalid key")
+        task.wait(2)
+        player:Kick("❌ Invalid key")
+    else
+        ShowNotification("❌ Akses ditolak")
+        task.wait(2)
+        player:Kick("❌ Access denied")
+    end
+    return
 end
 
 --// ================================
 --// SUCCESS
 --// ================================
 if data.type == "lifetime" then
-	ShowNotification("💎 Lifetime Premium Access Granted!")
+    ShowNotification("💎 Lifetime Premium Access Granted!")
 elseif data.type == "30d" then
-	ShowNotification("⏳ Premium Aktif\nExpired: " .. tostring(data.expires))
+    ShowNotification("⏳ Premium Aktif\nExpired: " .. tostring(data.expires))
 else
-	ShowNotification("✅ Premium Access Granted!")
+    ShowNotification("✅ Premium Access Granted!")
 end
 
 task.wait(1)
@@ -186,7 +186,7 @@ task.wait(1)
 --// LOAD PREMIUM SCRIPT
 --// ================================
 pcall(function()
-	loadstring(game:HttpGet(
-		"https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/jduwgfPREMIUM"
-	))()
+    loadstring(game:HttpGet(
+        "https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/jduwgfPREMIUM"
+    ))()
 end)
