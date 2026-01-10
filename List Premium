@@ -23,6 +23,11 @@ if not Request then
 end
 
 --// ================================
+--// API URL
+--// ================================
+local API_URL = "https://han2343.pythonanywhere.com/check"
+
+--// ================================
 --// DEVICE ID (ANTI SHARE)
 --// ================================
 local DEVICE_ID =
@@ -31,36 +36,14 @@ local DEVICE_ID =
     RbxAnalytics:GetClientId()
 
 --// ================================
---// KEY FILE
+--// KEY VALIDATION (WAJIB INPUT)
 --// ================================
-local KEY_FILE = "nexa_key.txt"
-
-local function LoadKey()
-    if isfile(KEY_FILE) then
-        return readfile(KEY_FILE)
-    end
-end
-
-local function SaveKey(key)
-    if key and key ~= "" then
-        writefile(KEY_FILE, key)
-    end
-end
-
---// ================================
---// GET KEY
---// ================================
-local KEY = script_key or LoadKey()
-
-if typeof(KEY) ~= "string" or KEY == "" then
-    player:Kick("❌ Key required")
+if typeof(script_key) ~= "string" or script_key == "" then
+    player:Kick("❌ Key wajib diinput sebelum load script")
     return
 end
 
--- auto save key
-if script_key and not isfile(KEY_FILE) then
-    SaveKey(script_key)
-end
+local KEY = tostring(script_key)
 
 --// ================================
 --// NOTIFICATION UI
@@ -79,10 +62,10 @@ local function ShowNotification(text)
 
     local frame = Instance.new("Frame")
     frame.Parent = gui
-    frame.Size = UDim2.new(0, 320, 0, 60)
+    frame.Size = UDim2.new(0, 330, 0, 60)
     frame.Position = UDim2.new(0.5, 0, 0, -80)
     frame.AnchorPoint = Vector2.new(0.5, 0)
-    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     frame.BorderColor3 = Color3.fromRGB(60, 60, 60)
     Instance.new("UICorner", frame)
 
@@ -111,15 +94,12 @@ local function ShowNotification(text)
 end
 
 --// ================================
---// API CHECK (GABUNGAN)
+--// REQUEST TO SERVER
 --// ================================
-local API_URL = "https://han2343.pythonanywhere.com/check"
-
 local response = Request({
     Url = API_URL
-        .. "?key=" .. KEY
-        .. "&device=" .. DEVICE_ID
-        .. "&user_id=" .. player.UserId,
+        .. "?key=" .. HttpService:UrlEncode(KEY)
+        .. "&device=" .. HttpService:UrlEncode(DEVICE_ID),
     Method = "GET",
     Headers = {
         ["Content-Type"] = "application/json"
@@ -133,6 +113,9 @@ if not response or not response.Body then
     return
 end
 
+--// ================================
+--// PARSE RESPONSE
+--// ================================
 local data
 local success = pcall(function()
     data = HttpService:JSONDecode(response.Body)
@@ -149,23 +132,22 @@ end
 --// ACCESS VALIDATION
 --// ================================
 if not data.allowed then
-    if data.reason == "device_mismatch" then
-        ShowNotification("❌ Key dipakai di device lain")
-        task.wait(2)
-        player:Kick("❌ Device mismatch")
-    elseif data.reason == "expired" then
-        ShowNotification("⏳ Key expired")
-        task.wait(2)
-        player:Kick("❌ Key expired")
-    elseif data.reason == "invalid_key" then
-        ShowNotification("❌ Invalid key")
-        task.wait(2)
-        player:Kick("❌ Invalid key")
+    local reason = data.reason or "unknown"
+
+    if reason == "missing_key" then
+        ShowNotification("❌ Key tidak terdeteksi")
+    elseif reason == "invalid_key" then
+        ShowNotification("❌ Key tidak valid")
+    elseif reason == "device_mismatch" then
+        ShowNotification("❌ Key sudah dipakai di device lain")
+    elseif reason == "expired" then
+        ShowNotification("⏳ Key sudah expired")
     else
         ShowNotification("❌ Akses ditolak")
-        task.wait(2)
-        player:Kick("❌ Access denied")
     end
+
+    task.wait(2)
+    player:Kick("❌ Access denied: " .. reason)
     return
 end
 
@@ -173,11 +155,11 @@ end
 --// SUCCESS
 --// ================================
 if data.type == "lifetime" then
-    ShowNotification("💎 Lifetime Premium Access Granted!")
+    ShowNotification("💎 Lifetime Premium Activated")
 elseif data.type == "30d" then
-    ShowNotification("⏳ Premium Aktif\nExpired: " .. tostring(data.expires))
+    ShowNotification("⏳ Premium Active\nExpired: " .. tostring(data.expires))
 else
-    ShowNotification("✅ Premium Access Granted!")
+    ShowNotification("✅ Premium Access Granted")
 end
 
 task.wait(1)
