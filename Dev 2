@@ -1121,6 +1121,25 @@ local GameData = {
     -- Modules
     FishingModule = nil,
     ChargeModule = nil,
+
+	--================ Auto Enchant ===============
+
+    ReplicatedStoragev18 = game:GetService("ReplicatedStorage"),
+    Playersv18 = game:GetService("Players"),
+    HttpServicev18 = game:GetService("HttpService"),
+    Playerv18 = game:GetService("Players").LocalPlayer,
+    Netv18 = require(game:GetService("ReplicatedStorage").Packages.Net),
+    RollEnchantREv18 = nil,
+    ActivateAltarREv18 = nil,
+    Replionv18 = require(game:GetService("ReplicatedStorage").Packages.Replion),
+    Datav18 = nil,
+    ItemUtilityv18 = require(game:GetService("ReplicatedStorage").Shared.ItemUtility),
+    Enchantsv18 = require(game:GetService("ReplicatedStorage"):WaitForChild("Enchants")),
+    ALL_ENCHANT_NAMESv18 = {},
+    AUTO_ENCHANTv18 = false,
+    DELAYv18 = 0.15,
+    TARGET_ENCHANTSv18 = {},
+
 }
 
 local Window = WindUI:CreateWindow({
@@ -3167,9 +3186,6 @@ local FavoriteRemote = Net:RemoteEvent("FavoriteItem")
 
 local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
 
--- ========================================================================
--- STATE
--- ========================================================================
 local state = {
     selectedTiers = {},
 
@@ -3213,18 +3229,12 @@ local function isTierMatch(itemTier, selected)
     return false
 end
 
--- ========================================================================
--- SAFE CALL
--- ========================================================================
 local function safeFavorite(uuid)
     pcall(function()
         FavoriteRemote:FireServer(uuid)
     end)
 end
 
--- ========================================================================
--- WORKER FAVORITE
--- ========================================================================
 local function workerFavorite()
     local RATE = 0.06
     local LOOP_DELAY = 1.1
@@ -3256,9 +3266,6 @@ local function workerFavorite()
     end
 end
 
--- ========================================================================
--- WORKER UNFAVORITE
--- ========================================================================
 local function workerUnfavorite()
     local RATE = 0.06
     local LOOP_DELAY = 1.1
@@ -3329,6 +3336,86 @@ Sec.Main6:Toggle({
     end
 })
 
+Sec.Main7 = Tabs.Main:Section({
+    Title = "Auto Enchant",
+    Box = true,
+    BoxBorder = true,
+    Opened = false,
+})
+
+GameData.RollEnchantREv18 = GameData.Netv18:RemoteEvent("RollEnchant")
+GameData.ActivateAltarREv18 = GameData.Netv18:RemoteEvent("ActivateEnchantingAltar")
+GameData.Datav18 = GameData.Replionv18.Client:WaitReplion("Data")
+
+for enchantName, enchantData in pairs(GameData.Enchantsv18) do
+    if type(enchantName) == "string" and type(enchantData) == "table" then
+        table.insert(GameData.ALL_ENCHANT_NAMESv18, enchantName)
+    end
+end
+table.sort(GameData.ALL_ENCHANT_NAMESv18)
+
+function GameData.isEnchantStoneEquippedv18()
+    return GameData.Datav18:GetExpect("EquippedType") == "Enchant Stones"
+end
+
+task.spawn(function()
+    while true do
+        if GameData.AUTO_ENCHANTv18 and GameData.isEnchantStoneEquippedv18() then
+            GameData.ActivateAltarREv18:FireServer()
+            task.wait(GameData.DELAYv18)
+            GameData.RollEnchantREv18:FireServer()
+        end
+        task.wait(GameData.DELAYv18)
+    end
+end)
+
+GameData.RollEnchantREv18.OnClientEvent:Connect(function(stoneId, enchantId, success)
+    if not success then return end
+    local enchantData = GameData.ItemUtilityv18:GetEnchantData(enchantId)
+    if not enchantData then return end
+    local enchantName = enchantData.Data.Name
+
+    WindUI:Notify({
+        Title = "Enchant Result",
+        Content = "Got: "..enchantName,
+        Duration = 2,
+        Icon = "sparkles"
+    })
+
+    if GameData.TARGET_ENCHANTSv18[enchantName] then
+        GameData.AUTO_ENCHANTv18 = false
+        WindUI:Notify({
+            Title = "Auto Enchant Stopped",
+            Content = "Target Enchant Found: "..enchantName,
+            Duration = 4,
+            Icon = "check"
+        })
+    end
+end)
+
+Sec.Main7:Dropdown({
+    Title = "Target Enchant",
+    Desc = "Automatically stop if this enchantment is obtained",
+    SearchBarEnabled = true,
+    Values = GameData.ALL_ENCHANT_NAMESv18,
+    Value = {},
+    Multi = true,
+    AllowNone = true,
+    Callback = function(options)
+        table.clear(GameData.TARGET_ENCHANTSv18)
+        for _, name in ipairs(options) do
+            GameData.TARGET_ENCHANTSv18[name] = true
+        end
+    end
+})
+
+Sec.Main7:Toggle({
+    Title = "Auto Enchant",
+    Value = false,
+    Callback = function(state)
+        GameData.AUTO_ENCHANTv18 = state
+    end
+})
 
 Sec.Backpack1 = Tabs.Backpack:Section({
     Title = "Equipment Feature",
