@@ -576,6 +576,27 @@ local GameData = {
     },
 
     LastEventTime = 0,
+
+    -- ================== [Blatant V3] ==================
+
+    ReplicatedStoragev19 = game:GetService("ReplicatedStorage"),
+    Playersv19 = game:GetService("Players"),
+
+    netFolderv19 = nil,
+    RF_ChargeFishingRodv19 = nil,
+    RF_RequestMinigamev19 = nil,
+    RF_CancelFishingInputsv19 = nil,
+    RF_UpdateAutoFishingStatev19 = nil,
+    RE_FishingCompletedv19 = nil,
+    RE_MinigameChangedv19 = nil,
+
+    BlatantV2Activev19 = false,
+
+    Settingsv19 = {
+        ChargeDelay = 0.007,
+        CompleteDelay = 0.685,
+        CancelDelay = 0.3,
+    },
     -- ================== [SKip Rraity] ==================
 
     Players = game:GetService("Players"),
@@ -1141,6 +1162,27 @@ local GameData = {
     DELAYv18 = 0.15,
     TARGET_ENCHANTSv18 = {},
 
+	--================ Auto Favorite Fish ===============
+
+    ReplicatedStoragev17 = game:GetService("ReplicatedStorage"),
+    HttpServicev17 = game:GetService("HttpService"),
+    Netv17 = nil,
+    ReplionClientv17 = nil,
+    ItemUtilityv17 = nil,
+    DataReplionv17 = nil,
+    FavoriteRemotev17 = nil,
+    RATE = 0.06,
+    LOOP_DELAY = 1,
+    state = {
+        selectedFish = {},
+        autoFavorite = false,
+        autoUnfavorite = false,
+        stopFavorite = false,
+        stopUnfavorite = false,
+    },
+    FishNameList = {},
+    FishMap = {},
+    ItemsFolderv17 = nil,
 }
 
 local Window = WindUI:CreateWindow({
@@ -1173,7 +1215,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.0.9",
+    Title = "v0.1.0",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1218,7 +1260,12 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-[+] Added Perfect Fishing
+Tab Main:
+ [+] Added Blatant V2
+ [+] Added Auto Enchant
+ [+] Added Auto Favorite Fish
+Tab Trade:
+[/] Improve Auto Trade
 ]],
     Locked = false
 })
@@ -1483,7 +1530,7 @@ Sec.Main1 = Tabs.Main:Section({
     Title = "Fishing",
     Box = true,
     BoxBorder = true,
-    Opened = false,
+    Opened = true,
 })
 
 GameData.REFishCaught =
@@ -2900,6 +2947,151 @@ Sec.Main4:Toggle({
     end
 })
 
+Sec.Main4:Space()
+
+GameData.netFolderv19 = GameData.ReplicatedStoragev19
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+
+GameData.RF_ChargeFishingRodv19 = GameData.netFolderv19:WaitForChild("RF/ChargeFishingRod")
+GameData.RF_RequestMinigamev19 = GameData.netFolderv19:WaitForChild("RF/RequestFishingMinigameStarted")
+GameData.RF_CancelFishingInputsv19 = GameData.netFolderv19:WaitForChild("RF/CancelFishingInputs")
+GameData.RF_UpdateAutoFishingStatev19 = GameData.netFolderv19:WaitForChild("RF/UpdateAutoFishingState")
+GameData.RE_FishingCompletedv19 = GameData.netFolderv19:WaitForChild("RE/FishingCompleted")
+GameData.RE_MinigameChangedv19 = GameData.netFolderv19:WaitForChild("RE/FishingMinigameChanged")
+
+local BlatantV2v19 = {}
+BlatantV2v19.Active = false
+
+local function safeFirev19(func)
+    task.spawn(function()
+        pcall(func)
+    end)
+end
+
+local function ultraSpamLoopv19()
+    while GameData.BlatantV2Activev19 do
+        local startTime = tick()
+
+        safeFirev19(function()
+            GameData.RF_ChargeFishingRodv19:InvokeServer({ [1] = startTime })
+        end)
+
+        task.wait(GameData.Settingsv19.ChargeDelay)
+
+        local releaseTime = tick()
+        safeFirev19(function()
+            GameData.RF_RequestMinigamev19:InvokeServer(1, 0, releaseTime)
+        end)
+
+        task.wait(GameData.Settingsv19.CompleteDelay)
+
+        safeFirev19(function()
+            GameData.RE_FishingCompletedv19:FireServer()
+        end)
+
+        task.wait(GameData.Settingsv19.CancelDelay)
+
+        safeFirev19(function()
+            GameData.RF_CancelFishingInputsv19:InvokeServer()
+        end)
+    end
+end
+
+GameData.RE_MinigameChangedv19.OnClientEvent:Connect(function()
+    if not GameData.BlatantV2Activev19 then return end
+
+    task.spawn(function()
+        task.wait(GameData.Settingsv19.CompleteDelay)
+
+        safeFirev19(function()
+            GameData.RE_FishingCompletedv19:FireServer()
+        end)
+
+        task.wait(GameData.Settingsv19.CancelDelay)
+
+        safeFirev19(function()
+            GameData.RF_CancelFishingInputsv19:InvokeServer()
+        end)
+    end)
+end)
+
+function BlatantV2v19.UpdateSettings(completeDelay, cancelDelay)
+    if completeDelay ~= nil then
+        if type(completeDelay) == "string" then
+            completeDelay = tonumber(completeDelay) or GameData.Settingsv19.CompleteDelay
+        end
+        GameData.Settingsv19.CompleteDelay = completeDelay
+    end
+
+    if cancelDelay ~= nil then
+        if type(cancelDelay) == "string" then
+            cancelDelay = tonumber(cancelDelay) or GameData.Settingsv19.CancelDelay
+        end
+        GameData.Settingsv19.CancelDelay = cancelDelay
+    end
+end
+
+function BlatantV2v19.Start()
+    if GameData.BlatantV2Activev19 then return end
+
+    GameData.BlatantV2Activev19 = true
+    BlatantV2v19.Active = true
+    task.spawn(ultraSpamLoopv19)
+end
+
+function BlatantV2v19.Stop()
+    if not GameData.BlatantV2Activev19 then return end
+
+    GameData.BlatantV2Activev19 = false
+    BlatantV2v19.Active = false
+
+    safeFirev19(function()
+        GameData.RF_UpdateAutoFishingStatev19:InvokeServer(true)
+    end)
+
+    task.wait(0.2)
+
+    safeFirev19(function()
+        GameData.RF_CancelFishingInputsv19:InvokeServer()
+    end)
+end
+
+Sec.Main4:Input({
+    Title = "CompleteDelay V3",
+    Value = "0.685",
+    InputIcon = "bird",
+    Placeholder = "Enter delay",
+    Callback = function(input)
+        BlatantV2v19.UpdateSettings(input, nil)
+    end
+})
+
+Sec.Main4:Input({
+    Title = "Cancel Delay V3",
+    Value = "0.3",
+    InputIcon = "bird",
+    Placeholder = "Enter delay",
+    Callback = function(input)
+        BlatantV2v19.UpdateSettings(nil, input)
+    end
+})
+
+Sec.Main4:Toggle({
+    Title = "Blatant V3",
+    Value = false,
+    Callback = function(state)
+        if state then
+            BlatantV2v19.Start()
+        else
+            BlatantV2v19.Stop()
+        end
+    end
+})
+
+return BlatantV2v19
 
 Sec.Main5 = Tabs.Main:Section({
     Title = "Webhook Notification",
@@ -3337,6 +3529,129 @@ Sec.Main6:Toggle({
     end
 })
 
+GameData.Netv17 = require(GameData.ReplicatedStoragev17.Packages.Net)
+GameData.ReplionClientv17 = require(GameData.ReplicatedStoragev17.Packages.Replion).Client
+GameData.ItemUtilityv17 = require(GameData.ReplicatedStoragev17.Shared.ItemUtility)
+GameData.DataReplionv17 = GameData.ReplionClientv17:WaitReplion("Data")
+GameData.FavoriteRemotev17 = GameData.Netv17:RemoteEvent("FavoriteItem")
+GameData.ItemsFolderv17 = GameData.ReplicatedStoragev17:WaitForChild("Items")
+
+for _, module in ipairs(GameData.ItemsFolderv17:GetChildren()) do
+    if module:IsA("ModuleScript") then
+        local ok, data = pcall(require, module)
+        if ok and data and data.Data and data.Data.Type == "Fish" then
+            local name = data.Data.Name or module.Name
+            if not GameData.FishMap[name] then
+                GameData.FishMap[name] = true
+                table.insert(GameData.FishNameList, name)
+            end
+        end
+    end
+end
+
+table.sort(GameData.FishNameList)
+
+local function workerFavorite()
+    while GameData.state.autoFavorite do
+        if GameData.state.stopFavorite then return end
+
+        local inventory = GameData.DataReplionv17:GetExpect("Inventory")
+        if inventory and inventory.Items then
+            for _, item in ipairs(inventory.Items) do
+                if GameData.state.stopFavorite then return end
+                if not item.UUID then continue end
+                if item.Favorited == true then continue end
+
+                local ok, data = pcall(function()
+                    return GameData.ItemUtilityv17.GetItemDataFromItemType("Items", item.Id)
+                end)
+
+                if ok and data and data.Data and data.Data.Type == "Fish" then
+                    local fishName = data.Data.Name
+                    if table.find(GameData.state.selectedFish, fishName) then
+                        GameData.FavoriteRemotev17:FireServer(item.UUID)
+                        task.wait(GameData.RATE)
+                    end
+                end
+            end
+        end
+
+        task.wait(GameData.LOOP_DELAY)
+    end
+end
+
+local function workerUnfavorite()
+    while GameData.state.autoUnfavorite do
+        if GameData.state.stopUnfavorite then return end
+
+        local inventory = GameData.DataReplionv17:GetExpect("Inventory")
+        if inventory and inventory.Items then
+            for _, item in ipairs(inventory.Items) do
+                if GameData.state.stopUnfavorite then return end
+                if not item.UUID then continue end
+                if item.Favorited ~= true then continue end
+
+                local ok, data = pcall(function()
+                    return GameData.ItemUtilityv17.GetItemDataFromItemType("Items", item.Id)
+                end)
+
+                if ok and data and data.Data and data.Data.Type == "Fish" then
+                    local fishName = data.Data.Name
+                    if table.find(GameData.state.selectedFish, fishName) then
+                        GameData.FavoriteRemotev17:FireServer(item.UUID)
+                        task.wait(GameData.RATE)
+                    end
+                end
+            end
+        end
+
+        task.wait(GameData.LOOP_DELAY)
+    end
+end
+
+Sec.Main6:Dropdown({
+    Title = "Select Fish",
+    Desc = "Favorite / Unfavorite Based on Fish Name",
+    SearchBarEnabled = true,
+    Values = GameData.FishNameList,
+    Value = {},
+    Multi = true,
+    AllowNone = false,
+    Callback = function(option)
+        GameData.state.selectedFish = option or {}
+    end
+})
+
+Sec.Main6:Toggle({
+    Title = "Favorite Fish",
+    Value = false,
+    Callback = function(b)
+        GameData.state.autoFavorite = b
+        GameData.state.stopFavorite = not b
+
+        if b then
+            GameData.state.autoUnfavorite = false
+            GameData.state.stopUnfavorite = true
+            task.spawn(workerFavorite)
+        end
+    end
+})
+
+Sec.Main6:Toggle({
+    Title = "Unfavorite Fish",
+    Value = false,
+    Callback = function(b)
+        GameData.state.autoUnfavorite = b
+        GameData.state.stopUnfavorite = not b
+
+        if b then
+            GameData.state.autoFavorite = false
+            GameData.state.stopFavorite = true
+            task.spawn(workerUnfavorite)
+        end
+    end
+})
+
 Sec.Main7 = Tabs.Main:Section({
     Title = "Enchant",
     Box = true,
@@ -3347,6 +3662,8 @@ Sec.Main7 = Tabs.Main:Section({
 Sec.Main7:Paragraph({
     Title = "Note:",
     Desc = "Enchant Stone Place in Slot 5 Hotbar",
+    Thumbnail = "https://i.imgur.com/6RexUmw.png",
+    ThumbnailSize = 40,
 })
 
 GameData.RollEnchantREv18 = GameData.Netv18:RemoteEvent("RollEnchant")
@@ -3426,7 +3743,7 @@ Sec.Main7:Toggle({
 local EquipLoop = false
 local args = {5}
 
-Sec.Mian7:Toggle({
+Sec.Main7:Toggle({
     Title = "Auto Equip Hotbar 5",
     Value = false,
     Callback = function(state)
