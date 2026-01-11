@@ -26,9 +26,6 @@ local GameData = {
 
    -- ================== [Auto Trade] ==================
 
-	-----------------------------------------------------
-	-- TIER DATA
-	-----------------------------------------------------
 	TierMap001 = {
 		[1] = "Common",
 		[2] = "Uncommon",
@@ -76,7 +73,11 @@ local GameData = {
 		stopTrade = false,
 		targetPlayer = "",
 		fishTarget = 0,
-		fishCount = 0
+		fishCount = 0,
+		
+		-- Fitur tambahan
+		selectedFish = {},
+		useFishFilter = false
 	},
 
 	TierList = nil,
@@ -858,7 +859,7 @@ local GameData = {
     SellCountTargetv4 = 18,
     FishCountv4 = 0,
 
-    -- ================== [Report Bgg] ==================
+    -- ================== [Report Bug] ==================
 
     Servicesv5 = {
         Playersv5 = game:GetService("Players"),
@@ -2857,7 +2858,7 @@ end
 Sec.Main4:Input({
     Title = "Complete Delay V2",
     Flag = "CompleteDelayV2",
-    Locked = true,
+    Locked = false,
     Value = tostring(GameData.UltraBlatant.Settings.CompleteDelay),
     InputIcon = "clock",
     Placeholder = "Enter Delay...",
@@ -2872,7 +2873,7 @@ Sec.Main4:Input({
 Sec.Main4:Input({
     Title = "Cancel Delay V2",
     Flag = "CancelDelayV2",
-    Locked = true,
+    Locked = false,
     Value = tostring(GameData.UltraBlatant.Settings.CancelDelay),
     InputIcon = "clock",
     Placeholder = "Enter Delay...",
@@ -2888,7 +2889,7 @@ Sec.Main4:Toggle({
     Title = "Blatant V2",
     Desc = "Beta Testing Blatant V2",
     Flag = "BlatantV2",
-    Locked = true,
+    Locked = false,
     Value = false,
     Callback = function(state)
         if state then
@@ -3337,10 +3338,15 @@ Sec.Main6:Toggle({
 })
 
 Sec.Main7 = Tabs.Main:Section({
-    Title = "Auto Enchant",
+    Title = "Enchant",
     Box = true,
     BoxBorder = true,
     Opened = false,
+})
+
+Sec.Main7:Paragraph({
+    Title = "Note:",
+    Desc = "Enchant Stone Place in Slot 5 Hotbar",
 })
 
 GameData.RollEnchantREv18 = GameData.Netv18:RemoteEvent("RollEnchant")
@@ -3414,6 +3420,33 @@ Sec.Main7:Toggle({
     Value = false,
     Callback = function(state)
         GameData.AUTO_ENCHANTv18 = state
+    end
+})
+
+local EquipLoop = false
+local args = {5}
+
+Sec.Mian7:Toggle({
+    Title = "Auto Equip Hotbar 5",
+    Value = false,
+    Callback = function(state)
+        EquipLoop = state
+
+        if state then
+            task.spawn(function()
+                while EquipLoop do
+                    game:GetService("ReplicatedStorage")
+                        :WaitForChild("Packages")
+                        :WaitForChild("_Index")
+                        :WaitForChild("sleitnick_net@0.2.0")
+                        :WaitForChild("net")
+                        :WaitForChild("RE/EquipToolFromHotbar")
+                        :FireServer(unpack(args))
+
+                    task.wait(1.5)
+                end
+            end)
+        end
     end
 })
 
@@ -4513,7 +4546,6 @@ Sec.Trading1 = Tabs.Trading:Section({
     Opened = true,
 })
 
--- Setup DataReplion & TierList
 GameData.DataReplion = GameData.ReplionClient:WaitReplion("Data")
 GameData.TierList = GameData.TierList001
 
@@ -4556,6 +4588,41 @@ function GameData.safeTrade(userid, uuid)
 	end)
 end
 
+-- Get fish list from inventory dengan jumlah
+function GameData.getFishList()
+	local inventory = GameData.DataReplion:GetExpect({ "Inventory", "Items" }) or {}
+	local fishCount = {} -- Menyimpan jumlah per jenis ikan
+	
+	-- Hitung jumlah per jenis ikan
+	for _, item in ipairs(inventory) do
+		local ok, data = pcall(function()
+			return GameData.ItemUtility.GetItemDataFromItemType("Items", item.Id)
+		end)
+
+		if ok and data and data.Data and data.Data.Type == "Fish" then
+			local fishName = data.Data.Name
+			fishCount[fishName] = (fishCount[fishName] or 0) + 1
+		end
+	end
+	
+	-- Konversi ke format yang diinginkan
+	local list = {}
+	for fishName, count in pairs(fishCount) do
+		table.insert(list, {
+			name = fishName,
+			display = fishName .. " [" .. count .. "]",
+			count = count
+		})
+	end
+	
+	-- Sort berdasarkan nama ikan
+	table.sort(list, function(a, b)
+		return a.name < b.name
+	end)
+	
+	return list, fishCount
+end
+
 -- Worker function for auto trade
 function GameData.workerTrade()
 	GameData.RATE = 0.15
@@ -4587,12 +4654,31 @@ function GameData.workerTrade()
 			end)
 
 			if ok and data and data.Data then
-				if data.Data.Type == "Fish"
-					and GameData.isTierMatch(
-						data.Data.Tier,
-						GameData.state.selectedTiers
-					) then
-					table.insert(list, item.UUID)
+				if data.Data.Type == "Fish" then
+					local pass = false
+					
+					-- Check fish filter (prioritas jika diaktifkan)
+					if GameData.state.useFishFilter and #GameData.state.selectedFish > 0 then
+						for _, fishName in ipairs(GameData.state.selectedFish) do
+							-- Extract nama ikan dari format "Granmaja [3]"
+							local cleanFishName = fishName:match("^(.+) %[%d+%]$") or fishName
+							-- Skip jika "None Fish"
+							if cleanFishName ~= "None Fish" and data.Data.Name == cleanFishName then
+								pass = true
+								break
+							end
+						end
+					else
+
+						pass = GameData.isTierMatch(
+							data.Data.Tier,
+							GameData.state.selectedTiers
+						)
+					end
+					
+					if pass then
+						table.insert(list, item.UUID)
+					end
 				end
 			end
 		end
@@ -4600,7 +4686,7 @@ function GameData.workerTrade()
 		if #list == 0 then
 			WindUI:Notify({
 				Title = "Trade",
-				Content = "No more fish for selected tier",
+				Content = "No more fish for selected filter",
 				Duration = 4,
 				Icon = "fish"
 			})
@@ -4621,7 +4707,6 @@ function GameData.workerTrade()
 	end
 end
 
--- Notification handler for trade completion
 GameData.notifGui = GameData.player.PlayerGui:WaitForChild("Text Notifications")
 GameData.notifFrame = GameData.notifGui:WaitForChild("Frame")
 
@@ -4668,9 +4753,6 @@ GameData.notifFrame.ChildAdded:Connect(function(child)
 	end
 end)
 
----------------------------------------------------------
--- UI SETUP
----------------------------------------------------------
 
 GameData.PlayerMap = {}
 
@@ -4696,11 +4778,10 @@ end
 
 GameData.PlayerDropdown = Sec.Trading1:Dropdown({
 	Title = "Select Target Player",
-    Flag = "SelectTargetPlayer",
-
-    SearchBarEnabled = true,
+	Flag = "SelectTargetPlayer",
+	SearchBarEnabled = true,
 	Desc = "Choose a player to trade with",
-	Values = {}, -- will refresh later
+	Values = {},
 	Value = nil,
 	Multi = false,
 	AllowNone = false,
@@ -4717,7 +4798,6 @@ GameData.PlayerDropdown = Sec.Trading1:Dropdown({
 	end
 })
 
--- Refresh player list on load
 GameData.RefreshPlayers(GameData.PlayerDropdown)
 
 Sec.Trading1:Button({
@@ -4730,7 +4810,7 @@ Sec.Trading1:Button({
 
 Sec.Trading1:Input({
 	Title = "Fish Amount Trade",
-    Flag = "FishAmountTrade",
+	Flag = "FishAmountTrade",
 	Desc = "Enter the number of fish to trade",
 	Value = tostring(GameData.state.fishTarget or ""),
 	Placeholder = "Example: 10",
@@ -4757,9 +4837,10 @@ Sec.Trading1:Input({
 	end
 })
 
+-- Tier selection dropdown
 Sec.Trading1:Dropdown({
 	Title = "Select Tier(s)",
-    Flag = "SelectTiers(s)",
+	Flag = "SelectTiers",
 	Desc = "Choose one or more tiers",
 	Values = GameData.TierList001,
 	Value = { "Common" },
@@ -4767,6 +4848,7 @@ Sec.Trading1:Dropdown({
 	AllowNone = true,
 	Callback = function(selectedTiers)
 		GameData.state.selectedTiers = GameData.normalize(selectedTiers)
+		GameData.state.useFishFilter = false -- Nonaktifkan fish filter saat tier dipilih
 		WindUI:Notify({
 			Title = "Tier Selected",
 			Content = table.concat(GameData.state.selectedTiers, ", "),
@@ -4776,9 +4858,98 @@ Sec.Trading1:Dropdown({
 	end
 })
 
+local FishDropdown
+local fishListData = {} 
+
+local function refreshFishDropdown()
+	local fishList, fishCount = GameData.getFishList()
+	local displayValues = {}
+	fishListData = {}
+
+	table.insert(displayValues, "None Fish")
+	fishListData["None Fish"] = "None Fish"
+	
+	for _, fishData in ipairs(fishList) do
+		table.insert(displayValues, fishData.display)
+		fishListData[fishData.display] = fishData.name
+	end
+	
+	FishDropdown:Refresh(displayValues)
+	
+	FishDropdown:Select({"None Fish"})
+	
+	local totalFish = 0
+	for _, count in pairs(fishCount) do
+		totalFish = totalFish + count
+	end
+	
+	return #fishList, totalFish
+end
+
+FishDropdown = Sec.Trading1:Dropdown({
+	Title = "Select Fish",
+	Flag = "SelectFish",
+    SearchBarEnabled = true,
+	Values = {},
+	Value = {},
+	Multi = true,
+	AllowNone = true,
+	Callback = function(selectedFish)
+
+		local cleanSelected = {}
+		for _, displayName in ipairs(GameData.normalize(selectedFish)) do
+			local cleanName = fishListData[displayName] or displayName:match("^(.+) %[%d+%]$") or displayName
+			table.insert(cleanSelected, cleanName)
+		end
+		
+		GameData.state.selectedFish = cleanSelected
+		GameData.state.useFishFilter = false
+		
+		for _, fishName in ipairs(cleanSelected) do
+			if fishName ~= "None Fish" then
+				GameData.state.useFishFilter = true
+				break
+			end
+		end
+		
+		if not GameData.state.useFishFilter then
+			GameData.state.selectedFish = {}
+		end
+		
+		WindUI:Notify({
+			Title = "Fish Filter",
+			Content = GameData.state.useFishFilter and 
+				("Selected " .. (#cleanSelected - (cleanSelected[1] == "None Fish" and 1 or 0)) .. " fish types") or 
+				"Fish filter disabled (None Fish selected)",
+			Duration = 3,
+			Icon = "fish"
+		})
+	end
+})
+
+-- Refresh fish list button
+Sec.Trading1:Button({
+	Title = "Refresh Fish List",
+	Desc = "Update available fish from inventory (auto-selects None Fish)",
+	Callback = function()
+		local fishTypes, totalFish = refreshFishDropdown()
+		
+		GameData.state.selectedFish = {}
+		GameData.state.useFishFilter = false
+		
+		WindUI:Notify({
+			Title = "Fish List",
+			Content = fishTypes .. " fish types (" .. totalFish .. " total fish)\nAuto-selected: None Fish",
+			Duration = 4,
+			Icon = "refresh"
+		})
+	end
+})
+
+-- Auto trade toggle
 Sec.Trading1:Toggle({
 	Title = "Auto Trade",
-    Flag = "AutoTrade",
+	Flag = "AutoTrade",
 	Desc = "Enable or disable auto trading",
 	Value = false,
 	Callback = function(state)
@@ -4797,6 +4968,8 @@ Sec.Trading1:Toggle({
 		})
 	end
 })
+
+refreshFishDropdown()
 
 Sec.Shop1 = Tabs.Shop:Section({
     Title = "Rod Shop",
