@@ -26,9 +26,6 @@ local GameData = {
 
    -- ================== [Auto Trade] ==================
 
-	-----------------------------------------------------
-	-- TIER DATA
-	-----------------------------------------------------
 	TierMap001 = {
 		[1] = "Common",
 		[2] = "Uncommon",
@@ -76,7 +73,11 @@ local GameData = {
 		stopTrade = false,
 		targetPlayer = "",
 		fishTarget = 0,
-		fishCount = 0
+		fishCount = 0,
+		
+		-- Fitur tambahan
+		selectedFish = {},
+		useFishFilter = false
 	},
 
 	TierList = nil,
@@ -858,7 +859,7 @@ local GameData = {
     SellCountTargetv4 = 18,
     FishCountv4 = 0,
 
-    -- ================== [Report Bgg] ==================
+    -- ================== [Report Bug] ==================
 
     Servicesv5 = {
         Playersv5 = game:GetService("Players"),
@@ -1121,6 +1122,46 @@ local GameData = {
     -- Modules
     FishingModule = nil,
     ChargeModule = nil,
+
+	--================ Auto Enchant ===============
+
+    ReplicatedStoragev18 = game:GetService("ReplicatedStorage"),
+    Playersv18 = game:GetService("Players"),
+    HttpServicev18 = game:GetService("HttpService"),
+    Playerv18 = game:GetService("Players").LocalPlayer,
+    Netv18 = require(game:GetService("ReplicatedStorage").Packages.Net),
+    RollEnchantREv18 = nil,
+    ActivateAltarREv18 = nil,
+    Replionv18 = require(game:GetService("ReplicatedStorage").Packages.Replion),
+    Datav18 = nil,
+    ItemUtilityv18 = require(game:GetService("ReplicatedStorage").Shared.ItemUtility),
+    Enchantsv18 = require(game:GetService("ReplicatedStorage"):WaitForChild("Enchants")),
+    ALL_ENCHANT_NAMESv18 = {},
+    AUTO_ENCHANTv18 = false,
+    DELAYv18 = 0.15,
+    TARGET_ENCHANTSv18 = {},
+
+	--================ Auto Favorite Fish ===============
+
+    ReplicatedStoragev17 = game:GetService("ReplicatedStorage"),
+    HttpServicev17 = game:GetService("HttpService"),
+    Netv17 = nil,
+    ReplionClientv17 = nil,
+    ItemUtilityv17 = nil,
+    DataReplionv17 = nil,
+    FavoriteRemotev17 = nil,
+    RATE = 0.06,
+    LOOP_DELAY = 1,
+    state = {
+        selectedFish = {},
+        autoFavorite = false,
+        autoUnfavorite = false,
+        stopFavorite = false,
+        stopUnfavorite = false,
+    },
+    FishNameList = {},
+    FishMap = {},
+    ItemsFolderv17 = nil,
 }
 
 local Window = WindUI:CreateWindow({
@@ -1153,7 +1194,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.0.9",
+    Title = "v0.1.0",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1198,7 +1239,13 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-[+] Added Perfect Fishing
+Tab Main:
+ [+] Added Blatant V2
+ [+] Added Auto Enchant
+ [+] Added Auto Favorite Fish
+Tab Trade:
+[/] Improve Auto Trade
+
 ]],
     Locked = false
 })
@@ -1463,7 +1510,7 @@ Sec.Main1 = Tabs.Main:Section({
     Title = "Fishing",
     Box = true,
     BoxBorder = true,
-    Opened = false,
+    Opened = true,
 })
 
 GameData.REFishCaught =
@@ -2838,7 +2885,7 @@ end
 Sec.Main4:Input({
     Title = "Complete Delay V2",
     Flag = "CompleteDelayV2",
-    Locked = true,
+    Locked = false,
     Value = tostring(GameData.UltraBlatant.Settings.CompleteDelay),
     InputIcon = "clock",
     Placeholder = "Enter Delay...",
@@ -2853,7 +2900,7 @@ Sec.Main4:Input({
 Sec.Main4:Input({
     Title = "Cancel Delay V2",
     Flag = "CancelDelayV2",
-    Locked = true,
+    Locked = false,
     Value = tostring(GameData.UltraBlatant.Settings.CancelDelay),
     InputIcon = "clock",
     Placeholder = "Enter Delay...",
@@ -2869,7 +2916,7 @@ Sec.Main4:Toggle({
     Title = "Blatant V2",
     Desc = "Beta Testing Blatant V2",
     Flag = "BlatantV2",
-    Locked = true,
+    Locked = false,
     Value = false,
     Callback = function(state)
         if state then
@@ -3167,9 +3214,6 @@ local FavoriteRemote = Net:RemoteEvent("FavoriteItem")
 
 local ItemsFolder = ReplicatedStorage:WaitForChild("Items")
 
--- ========================================================================
--- STATE
--- ========================================================================
 local state = {
     selectedTiers = {},
 
@@ -3213,18 +3257,12 @@ local function isTierMatch(itemTier, selected)
     return false
 end
 
--- ========================================================================
--- SAFE CALL
--- ========================================================================
 local function safeFavorite(uuid)
     pcall(function()
         FavoriteRemote:FireServer(uuid)
     end)
 end
 
--- ========================================================================
--- WORKER FAVORITE
--- ========================================================================
 local function workerFavorite()
     local RATE = 0.06
     local LOOP_DELAY = 1.1
@@ -3256,9 +3294,6 @@ local function workerFavorite()
     end
 end
 
--- ========================================================================
--- WORKER UNFAVORITE
--- ========================================================================
 local function workerUnfavorite()
     local RATE = 0.06
     local LOOP_DELAY = 1.1
@@ -3329,6 +3364,241 @@ Sec.Main6:Toggle({
     end
 })
 
+GameData.Netv17 = require(GameData.ReplicatedStoragev17.Packages.Net)
+GameData.ReplionClientv17 = require(GameData.ReplicatedStoragev17.Packages.Replion).Client
+GameData.ItemUtilityv17 = require(GameData.ReplicatedStoragev17.Shared.ItemUtility)
+GameData.DataReplionv17 = GameData.ReplionClientv17:WaitReplion("Data")
+GameData.FavoriteRemotev17 = GameData.Netv17:RemoteEvent("FavoriteItem")
+GameData.ItemsFolderv17 = GameData.ReplicatedStoragev17:WaitForChild("Items")
+
+for _, module in ipairs(GameData.ItemsFolderv17:GetChildren()) do
+    if module:IsA("ModuleScript") then
+        local ok, data = pcall(require, module)
+        if ok and data and data.Data and data.Data.Type == "Fish" then
+            local name = data.Data.Name or module.Name
+            if not GameData.FishMap[name] then
+                GameData.FishMap[name] = true
+                table.insert(GameData.FishNameList, name)
+            end
+        end
+    end
+end
+
+table.sort(GameData.FishNameList)
+
+local function workerFavorite()
+    while GameData.state.autoFavorite do
+        if GameData.state.stopFavorite then return end
+
+        local inventory = GameData.DataReplionv17:GetExpect("Inventory")
+        if inventory and inventory.Items then
+            for _, item in ipairs(inventory.Items) do
+                if GameData.state.stopFavorite then return end
+                if not item.UUID then continue end
+                if item.Favorited == true then continue end
+
+                local ok, data = pcall(function()
+                    return GameData.ItemUtilityv17.GetItemDataFromItemType("Items", item.Id)
+                end)
+
+                if ok and data and data.Data and data.Data.Type == "Fish" then
+                    local fishName = data.Data.Name
+                    if table.find(GameData.state.selectedFish, fishName) then
+                        GameData.FavoriteRemotev17:FireServer(item.UUID)
+                        task.wait(GameData.RATE)
+                    end
+                end
+            end
+        end
+
+        task.wait(GameData.LOOP_DELAY)
+    end
+end
+
+local function workerUnfavorite()
+    while GameData.state.autoUnfavorite do
+        if GameData.state.stopUnfavorite then return end
+
+        local inventory = GameData.DataReplionv17:GetExpect("Inventory")
+        if inventory and inventory.Items then
+            for _, item in ipairs(inventory.Items) do
+                if GameData.state.stopUnfavorite then return end
+                if not item.UUID then continue end
+                if item.Favorited ~= true then continue end
+
+                local ok, data = pcall(function()
+                    return GameData.ItemUtilityv17.GetItemDataFromItemType("Items", item.Id)
+                end)
+
+                if ok and data and data.Data and data.Data.Type == "Fish" then
+                    local fishName = data.Data.Name
+                    if table.find(GameData.state.selectedFish, fishName) then
+                        GameData.FavoriteRemotev17:FireServer(item.UUID)
+                        task.wait(GameData.RATE)
+                    end
+                end
+            end
+        end
+
+        task.wait(GameData.LOOP_DELAY)
+    end
+end
+
+Sec.Main6:Dropdown({
+    Title = "Select Fish",
+    Desc = "Favorite / Unfavorite Based on Fish Name",
+    SearchBarEnabled = true,
+    Values = GameData.FishNameList,
+    Value = {},
+    Multi = true,
+    AllowNone = false,
+    Callback = function(option)
+        GameData.state.selectedFish = option or {}
+    end
+})
+
+Sec.Main6:Toggle({
+    Title = "Favorite Fish",
+    Value = false,
+    Callback = function(b)
+        GameData.state.autoFavorite = b
+        GameData.state.stopFavorite = not b
+
+        if b then
+            GameData.state.autoUnfavorite = false
+            GameData.state.stopUnfavorite = true
+            task.spawn(workerFavorite)
+        end
+    end
+})
+
+Sec.Main6:Toggle({
+    Title = "Unfavorite Fish",
+    Value = false,
+    Callback = function(b)
+        GameData.state.autoUnfavorite = b
+        GameData.state.stopUnfavorite = not b
+
+        if b then
+            GameData.state.autoFavorite = false
+            GameData.state.stopFavorite = true
+            task.spawn(workerUnfavorite)
+        end
+    end
+})
+
+Sec.Main7 = Tabs.Main:Section({
+    Title = "Enchant",
+    Box = true,
+    BoxBorder = true,
+    Opened = false,
+})
+
+Sec.Main7:Paragraph({
+    Title = "Note:",
+    Desc = "Enchant Stone Place in Slot 5 Hotbar",
+})
+
+GameData.RollEnchantREv18 = GameData.Netv18:RemoteEvent("RollEnchant")
+GameData.ActivateAltarREv18 = GameData.Netv18:RemoteEvent("ActivateEnchantingAltar")
+GameData.Datav18 = GameData.Replionv18.Client:WaitReplion("Data")
+
+for enchantName, enchantData in pairs(GameData.Enchantsv18) do
+    if type(enchantName) == "string" and type(enchantData) == "table" then
+        table.insert(GameData.ALL_ENCHANT_NAMESv18, enchantName)
+    end
+end
+table.sort(GameData.ALL_ENCHANT_NAMESv18)
+
+function GameData.isEnchantStoneEquippedv18()
+    return GameData.Datav18:GetExpect("EquippedType") == "Enchant Stones"
+end
+
+task.spawn(function()
+    while true do
+        if GameData.AUTO_ENCHANTv18 and GameData.isEnchantStoneEquippedv18() then
+            GameData.ActivateAltarREv18:FireServer()
+            task.wait(GameData.DELAYv18)
+            GameData.RollEnchantREv18:FireServer()
+        end
+        task.wait(GameData.DELAYv18)
+    end
+end)
+
+GameData.RollEnchantREv18.OnClientEvent:Connect(function(stoneId, enchantId, success)
+    if not success then return end
+    local enchantData = GameData.ItemUtilityv18:GetEnchantData(enchantId)
+    if not enchantData then return end
+    local enchantName = enchantData.Data.Name
+
+    WindUI:Notify({
+        Title = "Enchant Result",
+        Content = "Got: "..enchantName,
+        Duration = 2,
+        Icon = "sparkles"
+    })
+
+    if GameData.TARGET_ENCHANTSv18[enchantName] then
+        GameData.AUTO_ENCHANTv18 = false
+        WindUI:Notify({
+            Title = "Auto Enchant Stopped",
+            Content = "Target Enchant Found: "..enchantName,
+            Duration = 4,
+            Icon = "check"
+        })
+    end
+end)
+
+Sec.Main7:Dropdown({
+    Title = "Target Enchant",
+    Desc = "Automatically stop if this enchantment is obtained",
+    SearchBarEnabled = true,
+    Values = GameData.ALL_ENCHANT_NAMESv18,
+    Value = {},
+    Multi = true,
+    AllowNone = true,
+    Callback = function(options)
+        table.clear(GameData.TARGET_ENCHANTSv18)
+        for _, name in ipairs(options) do
+            GameData.TARGET_ENCHANTSv18[name] = true
+        end
+    end
+})
+
+Sec.Main7:Toggle({
+    Title = "Auto Enchant",
+    Value = false,
+    Callback = function(state)
+        GameData.AUTO_ENCHANTv18 = state
+    end
+})
+
+local EquipLoop = false
+local args = {5}
+
+Sec.Main7:Toggle({
+    Title = "Auto Equip Hotbar 5",
+    Value = false,
+    Callback = function(state)
+        EquipLoop = state
+
+        if state then
+            task.spawn(function()
+                while EquipLoop do
+                    game:GetService("ReplicatedStorage")
+                        :WaitForChild("Packages")
+                        :WaitForChild("_Index")
+                        :WaitForChild("sleitnick_net@0.2.0")
+                        :WaitForChild("net")
+                        :WaitForChild("RE/EquipToolFromHotbar")
+                        :FireServer(unpack(args))
+
+                    task.wait(1.5)
+                end
+            end)
+        end
+    end
+})
 
 Sec.Backpack1 = Tabs.Backpack:Section({
     Title = "Equipment Feature",
@@ -4426,7 +4696,6 @@ Sec.Trading1 = Tabs.Trading:Section({
     Opened = true,
 })
 
--- Setup DataReplion & TierList
 GameData.DataReplion = GameData.ReplionClient:WaitReplion("Data")
 GameData.TierList = GameData.TierList001
 
@@ -4469,6 +4738,41 @@ function GameData.safeTrade(userid, uuid)
 	end)
 end
 
+-- Get fish list from inventory dengan jumlah
+function GameData.getFishList()
+	local inventory = GameData.DataReplion:GetExpect({ "Inventory", "Items" }) or {}
+	local fishCount = {} -- Menyimpan jumlah per jenis ikan
+	
+	-- Hitung jumlah per jenis ikan
+	for _, item in ipairs(inventory) do
+		local ok, data = pcall(function()
+			return GameData.ItemUtility.GetItemDataFromItemType("Items", item.Id)
+		end)
+
+		if ok and data and data.Data and data.Data.Type == "Fish" then
+			local fishName = data.Data.Name
+			fishCount[fishName] = (fishCount[fishName] or 0) + 1
+		end
+	end
+	
+	-- Konversi ke format yang diinginkan
+	local list = {}
+	for fishName, count in pairs(fishCount) do
+		table.insert(list, {
+			name = fishName,
+			display = fishName .. " [" .. count .. "]",
+			count = count
+		})
+	end
+	
+	-- Sort berdasarkan nama ikan
+	table.sort(list, function(a, b)
+		return a.name < b.name
+	end)
+	
+	return list, fishCount
+end
+
 -- Worker function for auto trade
 function GameData.workerTrade()
 	GameData.RATE = 0.15
@@ -4500,12 +4804,31 @@ function GameData.workerTrade()
 			end)
 
 			if ok and data and data.Data then
-				if data.Data.Type == "Fish"
-					and GameData.isTierMatch(
-						data.Data.Tier,
-						GameData.state.selectedTiers
-					) then
-					table.insert(list, item.UUID)
+				if data.Data.Type == "Fish" then
+					local pass = false
+					
+					-- Check fish filter (prioritas jika diaktifkan)
+					if GameData.state.useFishFilter and #GameData.state.selectedFish > 0 then
+						for _, fishName in ipairs(GameData.state.selectedFish) do
+							-- Extract nama ikan dari format "Granmaja [3]"
+							local cleanFishName = fishName:match("^(.+) %[%d+%]$") or fishName
+							-- Skip jika "None Fish"
+							if cleanFishName ~= "None Fish" and data.Data.Name == cleanFishName then
+								pass = true
+								break
+							end
+						end
+					else
+
+						pass = GameData.isTierMatch(
+							data.Data.Tier,
+							GameData.state.selectedTiers
+						)
+					end
+					
+					if pass then
+						table.insert(list, item.UUID)
+					end
 				end
 			end
 		end
@@ -4513,7 +4836,7 @@ function GameData.workerTrade()
 		if #list == 0 then
 			WindUI:Notify({
 				Title = "Trade",
-				Content = "No more fish for selected tier",
+				Content = "No more fish for selected filter",
 				Duration = 4,
 				Icon = "fish"
 			})
@@ -4534,7 +4857,6 @@ function GameData.workerTrade()
 	end
 end
 
--- Notification handler for trade completion
 GameData.notifGui = GameData.player.PlayerGui:WaitForChild("Text Notifications")
 GameData.notifFrame = GameData.notifGui:WaitForChild("Frame")
 
@@ -4581,9 +4903,6 @@ GameData.notifFrame.ChildAdded:Connect(function(child)
 	end
 end)
 
----------------------------------------------------------
--- UI SETUP
----------------------------------------------------------
 
 GameData.PlayerMap = {}
 
@@ -4609,11 +4928,10 @@ end
 
 GameData.PlayerDropdown = Sec.Trading1:Dropdown({
 	Title = "Select Target Player",
-    Flag = "SelectTargetPlayer",
-
-    SearchBarEnabled = true,
+	Flag = "SelectTargetPlayer",
+	SearchBarEnabled = true,
 	Desc = "Choose a player to trade with",
-	Values = {}, -- will refresh later
+	Values = {},
 	Value = nil,
 	Multi = false,
 	AllowNone = false,
@@ -4630,7 +4948,6 @@ GameData.PlayerDropdown = Sec.Trading1:Dropdown({
 	end
 })
 
--- Refresh player list on load
 GameData.RefreshPlayers(GameData.PlayerDropdown)
 
 Sec.Trading1:Button({
@@ -4643,7 +4960,7 @@ Sec.Trading1:Button({
 
 Sec.Trading1:Input({
 	Title = "Fish Amount Trade",
-    Flag = "FishAmountTrade",
+	Flag = "FishAmountTrade",
 	Desc = "Enter the number of fish to trade",
 	Value = tostring(GameData.state.fishTarget or ""),
 	Placeholder = "Example: 10",
@@ -4670,9 +4987,10 @@ Sec.Trading1:Input({
 	end
 })
 
+-- Tier selection dropdown
 Sec.Trading1:Dropdown({
 	Title = "Select Tier(s)",
-    Flag = "SelectTiers(s)",
+	Flag = "SelectTiers",
 	Desc = "Choose one or more tiers",
 	Values = GameData.TierList001,
 	Value = { "Common" },
@@ -4680,6 +4998,7 @@ Sec.Trading1:Dropdown({
 	AllowNone = true,
 	Callback = function(selectedTiers)
 		GameData.state.selectedTiers = GameData.normalize(selectedTiers)
+		GameData.state.useFishFilter = false -- Nonaktifkan fish filter saat tier dipilih
 		WindUI:Notify({
 			Title = "Tier Selected",
 			Content = table.concat(GameData.state.selectedTiers, ", "),
@@ -4689,9 +5008,98 @@ Sec.Trading1:Dropdown({
 	end
 })
 
+local FishDropdown
+local fishListData = {} 
+
+local function refreshFishDropdown()
+	local fishList, fishCount = GameData.getFishList()
+	local displayValues = {}
+	fishListData = {}
+
+	table.insert(displayValues, "None Fish")
+	fishListData["None Fish"] = "None Fish"
+	
+	for _, fishData in ipairs(fishList) do
+		table.insert(displayValues, fishData.display)
+		fishListData[fishData.display] = fishData.name
+	end
+	
+	FishDropdown:Refresh(displayValues)
+	
+	FishDropdown:Select({"None Fish"})
+	
+	local totalFish = 0
+	for _, count in pairs(fishCount) do
+		totalFish = totalFish + count
+	end
+	
+	return #fishList, totalFish
+end
+
+FishDropdown = Sec.Trading1:Dropdown({
+	Title = "Select Fish",
+	Flag = "SelectFish",
+    SearchBarEnabled = true,
+	Values = {},
+	Value = {},
+	Multi = true,
+	AllowNone = true,
+	Callback = function(selectedFish)
+
+		local cleanSelected = {}
+		for _, displayName in ipairs(GameData.normalize(selectedFish)) do
+			local cleanName = fishListData[displayName] or displayName:match("^(.+) %[%d+%]$") or displayName
+			table.insert(cleanSelected, cleanName)
+		end
+		
+		GameData.state.selectedFish = cleanSelected
+		GameData.state.useFishFilter = false
+		
+		for _, fishName in ipairs(cleanSelected) do
+			if fishName ~= "None Fish" then
+				GameData.state.useFishFilter = true
+				break
+			end
+		end
+		
+		if not GameData.state.useFishFilter then
+			GameData.state.selectedFish = {}
+		end
+		
+		WindUI:Notify({
+			Title = "Fish Filter",
+			Content = GameData.state.useFishFilter and 
+				("Selected " .. (#cleanSelected - (cleanSelected[1] == "None Fish" and 1 or 0)) .. " fish types") or 
+				"Fish filter disabled (None Fish selected)",
+			Duration = 3,
+			Icon = "fish"
+		})
+	end
+})
+
+-- Refresh fish list button
+Sec.Trading1:Button({
+	Title = "Refresh Fish List",
+	Desc = "Update available fish from inventory (auto-selects None Fish)",
+	Callback = function()
+		local fishTypes, totalFish = refreshFishDropdown()
+		
+		GameData.state.selectedFish = {}
+		GameData.state.useFishFilter = false
+		
+		WindUI:Notify({
+			Title = "Fish List",
+			Content = fishTypes .. " fish types (" .. totalFish .. " total fish)\nAuto-selected: None Fish",
+			Duration = 4,
+			Icon = "refresh"
+		})
+	end
+})
+
+-- Auto trade toggle
 Sec.Trading1:Toggle({
 	Title = "Auto Trade",
-    Flag = "AutoTrade",
+	Flag = "AutoTrade",
 	Desc = "Enable or disable auto trading",
 	Value = false,
 	Callback = function(state)
@@ -4710,6 +5118,8 @@ Sec.Trading1:Toggle({
 		})
 	end
 })
+
+refreshFishDropdown()
 
 Sec.Shop1 = Tabs.Shop:Section({
     Title = "Rod Shop",
