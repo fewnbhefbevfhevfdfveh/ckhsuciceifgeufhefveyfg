@@ -3497,6 +3497,8 @@ Sec.Main7 = Tabs.Main:Section({
 Sec.Main7:Paragraph({
     Title = "Note:",
     Desc = "Enchant Stone Place in Slot 5 Hotbar",
+    Thumbnail = "https://i.imgur.com/6RexUmw.png",
+    ThumbnailSize = 40,
 })
 
 GameData.RollEnchantREv18 = GameData.Netv18:RemoteEvent("RollEnchant")
