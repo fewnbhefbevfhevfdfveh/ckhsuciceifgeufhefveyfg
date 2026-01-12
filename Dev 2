@@ -387,6 +387,8 @@ local GameData = {
     ["Iron Cavern"] = CFrame.new(-8802.55762, -583.800049, 94.9271545, 0.539917707, 4.95349006e-08, -0.84171778, 2.88506321e-08, 1, 7.7355935e-08, 0.84171778, -6.60499282e-08, 0.539917707),
     ["Iron Cafe"] = CFrame.new(-8641.91016, -547.400183, 161.963455, -0.0101819877, -4.55452422e-08, -0.999948144, 1.64972356e-08, 1, -4.57155878e-08, 0.999948144, -1.69618559e-08, -0.0101819877),
     ["Christmas Island"] = CFrame.new(843.041687, 26.0803814, 1566.52734, 0.00453743944, -9.89134179e-08, -0.999989688, -5.82183262e-08, 1, -9.91785996e-08, 0.999989688, 5.86677444e-08, 0.00453743944),
+    ["Pirate Treasure Room"] = CFrame.new(3302.10229, -293.803467, 3017.49951, -0.965538323, 3.13014077e-08, -0.26026091, 6.58369759e-09, 1, 9.58445767e-08, 0.26026091, 9.08281308e-08, -0.965538323),
+    ["Pirate Cove"] = CFrame.new(3321.96069, 10.2510681, 3539.07275, 0.606894374, 7.27147054e-08, -0.794782519, -6.14758875e-08, 1, 4.45472033e-08, 0.794782519, 2.18245155e-08, 0.606894374),
     },
 
     -- ==================[Save Posisi] ==================
@@ -423,24 +425,35 @@ local GameData = {
         "Sacred Guardian Squid"
     },
 
-    -- ================== [Auto Unlock Iron Cafe] ==================
-    AutoIronCafe = false,
-    TaskIronCafe = nil,
+    -- ================== [Auto Open Mysterious Cave Wall] ==================
+    AutoOpenWallv20 = false,
+    Connectionv20 = nil,
 
-    GuppyList = {
-        "Builderman Guppy",
-        "Shedletsky Guppy",
-        "BFulleyes Guppy",
-        "Guest Guppy"
-    },
+    ReplicatedStoragev20 = game:GetService("ReplicatedStorage"),
+    RunServicev20 = game:GetService("RunService"),
 
-    connection = nil, -- connection event
+    NetFolderv20 = nil,
+    RE_DialogueEndedv20 = nil,
+    RE_SearchItemPickedUpv20 = nil,
+    RE_GainAccessToMazev20 = nil,
 
-    Services = {
-        TweenService = game:GetService("TweenService"),
-        UIS = game:GetService("UserInputService"),
-        CoreGui = game:GetService("CoreGui")
-    },
+    DialogueArgsv20 = { "Carpenter", 2, 1 },
+    SearchItemArgsv20 = { "TNT" },
+
+    ExecuteStepsv20 = function()
+        GameData.RE_DialogueEndedv20:FireServer(unpack(GameData.DialogueArgsv20))
+
+        task.wait(1)
+
+        for i = 1, 4 do
+            GameData.RE_SearchItemPickedUpv20:FireServer(unpack(GameData.SearchItemArgsv20))
+            task.wait(0.5)
+        end
+
+        task.wait(1)
+
+        GameData.RE_GainAccessToMazev20:FireServer()
+    end,
 
     -- ================== [Accses All Boat] ==================
 
@@ -582,7 +595,8 @@ local GameData = {
     ReplicatedStoragev19 = game:GetService("ReplicatedStorage"),
     Playersv19 = game:GetService("Players"),
 
-    netFolderv19 = nil,
+    NetFolderv19 = nil,
+
     RF_ChargeFishingRodv19 = nil,
     RF_RequestMinigamev19 = nil,
     RF_CancelFishingInputsv19 = nil,
@@ -590,13 +604,19 @@ local GameData = {
     RE_FishingCompletedv19 = nil,
     RE_MinigameChangedv19 = nil,
 
-    BlatantV2Activev19 = false,
+    Activev19 = false,
 
     Settingsv19 = {
         ChargeDelay = 0.007,
         CompleteDelay = 0.685,
-        CancelDelay = 0.3,
+        CancelDelay = 0.3
     },
+
+    safeFirev19 = function(func)
+        task.spawn(function()
+            pcall(func)
+        end)
+    end,
     -- ================== [SKip Rraity] ==================
 
     Players = game:GetService("Players"),
@@ -1183,6 +1203,49 @@ local GameData = {
     FishNameList = {},
     FishMap = {},
     ItemsFolderv17 = nil,
+
+	--================ Auto Open Pirate Chests ===============
+
+    AutoOpenPirateChestsv21 = false,
+
+    ReplicatedStoragev21 = game:GetService("ReplicatedStorage"),
+
+    NetPathv21 = nil,
+
+    ChestArgsv21 = {},
+
+    SetupNetPathv21 = function()
+        GameData.NetPathv21 = GameData.ReplicatedStoragev21
+            :WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("sleitnick_net@0.2.0")
+            :WaitForChild("net")
+            :WaitForChild("RE/ClaimPirateChest")
+    end,
+
+    ClaimChestsLoopv21 = function()
+        while GameData.AutoOpenPirateChestsv21 do
+            table.clear(GameData.ChestArgsv21)
+
+            for _, child in pairs(workspace.PirateChestStorage:GetChildren()) do
+                if child:IsA("Model") then
+                    table.insert(GameData.ChestArgsv21, child.Name)
+                end
+            end
+
+            if #GameData.ChestArgsv21 > 0 then
+                if GameData.NetPathv21 then
+                    pcall(function()
+                        GameData.NetPathv21:FireServer(unpack(GameData.ChestArgsv21))
+                    end)
+                else
+                    GameData.SetupNetPathv21()
+                end
+            end
+
+            task.wait(0.5)
+        end
+    end,
 }
 
 local Window = WindUI:CreateWindow({
@@ -1215,7 +1278,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.1.0",
+    Title = "v0.1.1",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1261,11 +1324,7 @@ Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
 Tab Main:
- [+] Added Blatant V2
- [+] Added Auto Enchant
- [+] Added Auto Favorite Fish
-Tab Trade:
-[/] Improve Auto Trade
+ [+] Added Blatant V3
 ]],
     Locked = false
 })
@@ -2320,9 +2379,6 @@ GameData.REFishingCompleted = GameData.package["RE/FishingCompleted"]
 GameData.REFishCaught = GameData.package["RE/FishCaught"]
 GameData.CancelFishingInputs = GameData.package["RF/CancelFishingInputs"]
 
--- ==========================================================
--- SAFE WAIT
--- ==========================================================
 local function SafeWait(t)
     local start = os.clock()
     while os.clock() - start < t do
@@ -2332,9 +2388,6 @@ local function SafeWait(t)
     return true
 end
 
--- ==========================================================
--- MAIN FISHING CYCLE
--- ==========================================================
 local function StartFishingCycle()
     if not GameData.autoFishingEnabled or GameData.isFishing then return end
 
@@ -2347,9 +2400,6 @@ local function StartFishingCycle()
     GameData.RequestFishingMinigameStarted:InvokeServer(unpack(GameData.miniggameArgs))
 end
 
--- ==========================================================
--- ANTI-STUCK CHECKER (AUTO RESTART)
--- ==========================================================
 task.spawn(function()
     while true do
         task.wait(0.1)
@@ -2372,9 +2422,6 @@ task.spawn(function()
     end
 end)
 
--- ==========================================================
--- REPLICATE TEXT EFFECT
--- ==========================================================
 GameData.REReplicateTextEffect.OnClientEvent:Connect(function(data)
     if not GameData.autoFishingEnabled or not data or not data.TextData then return end
 
@@ -2390,9 +2437,6 @@ GameData.REReplicateTextEffect.OnClientEvent:Connect(function(data)
     end)
 end)
 
--- ==========================================================
--- FISH CAUGHT = RESTART
--- ==========================================================
 GameData.REFishCaught.OnClientEvent:Connect(function(fishName, data)
     if not GameData.autoFishingEnabled then return end
 
@@ -2671,23 +2715,9 @@ GameData.startBlatantV2 = function()
     end)
 end
 
-Sec.Main4:Toggle({
-    Title = "Blatant",
-    Flag = "BlatantV1",
-    Value = _G.BlatantV2,
-
-    Callback = function(value)
-        _G.BlatantV2 = value
-        if value then
-            GameData.startBlatantV2()
-        end
-    end
-})
-
 Sec.Main4:Input({
-    Title = "Delay Cast",
+    Title = "Delay Cast V1",
     Flag = "DelayCast",
-    Desc = "Set delay before casting (seconds)",
     Value = "1.78",
     InputIcon = "clock",
     Type = "Input",
@@ -2702,9 +2732,8 @@ Sec.Main4:Input({
 })
 
 Sec.Main4:Input({
-    Title = "Delay Complete",
+    Title = "Delay Complete V1",
     Flag = "DelayComplete",
-    Desc = "Set delay after fishing completes (seconds)",
     Value = "0.7",
     InputIcon = "clock",
     Type = "Input",
@@ -2718,56 +2747,16 @@ Sec.Main4:Input({
     end
 })
 
-local stopAnimConnections = {}
-
-local function setGameAnimationsEnabled(state)
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not humanoid then
-        return
-    end
-
-    for _, conn in ipairs(stopAnimConnections) do
-        conn:Disconnect()
-    end
-    stopAnimConnections = {}
-
-    if state then
-        local animator = humanoid:FindFirstChildOfClass("Animator")
-        if animator then
-            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-                track:Stop(0)
-            end
-
-            local conn = animator.AnimationPlayed:Connect(function(track)
-                task.defer(function()
-                    track:Stop(0)
-                end)
-            end)
-            table.insert(stopAnimConnections, conn)
-        end
-    else
-        for _, conn in ipairs(stopAnimConnections) do
-            conn:Disconnect()
-        end
-        stopAnimConnections = {}
-    end
-
-    WindUI:Notify({
-        Title = "No Animation",
-        Content = state and "No Animation Enabled" or "No Animation Disabled",
-        Duration = 3,
-        Icon = "ban",
-    })
-end
-
 Sec.Main4:Toggle({
-    Title = "No Animation",
-    Desc = "Disable fishing animations",
-    Flag = "NoAnimation",
-    Value = false,
-    Callback = function(state)
-        setGameAnimationsEnabled(state)
+    Title = "Blatant V1",
+    Flag = "BlatantV1",
+    Value = _G.BlatantV2,
+
+    Callback = function(value)
+        _G.BlatantV2 = value
+        if value then
+            GameData.startBlatantV2()
+        end
     end
 })
 
@@ -2949,149 +2938,136 @@ Sec.Main4:Toggle({
 
 Sec.Main4:Space()
 
-GameData.netFolderv19 = GameData.ReplicatedStoragev19
+GameData.NetFolderv19 = GameData.ReplicatedStoragev19
     :WaitForChild("Packages")
     :WaitForChild("_Index")
     :WaitForChild("sleitnick_net@0.2.0")
     :WaitForChild("net")
 
-GameData.RF_ChargeFishingRodv19 = GameData.netFolderv19:WaitForChild("RF/ChargeFishingRod")
-GameData.RF_RequestMinigamev19 = GameData.netFolderv19:WaitForChild("RF/RequestFishingMinigameStarted")
-GameData.RF_CancelFishingInputsv19 = GameData.netFolderv19:WaitForChild("RF/CancelFishingInputs")
-GameData.RF_UpdateAutoFishingStatev19 = GameData.netFolderv19:WaitForChild("RF/UpdateAutoFishingState")
-GameData.RE_FishingCompletedv19 = GameData.netFolderv19:WaitForChild("RE/FishingCompleted")
-GameData.RE_MinigameChangedv19 = GameData.netFolderv19:WaitForChild("RE/FishingMinigameChanged")
+GameData.RF_ChargeFishingRodv19 = GameData.NetFolderv19:WaitForChild("RF/ChargeFishingRod")
+GameData.RF_RequestMinigamev19 = GameData.NetFolderv19:WaitForChild("RF/RequestFishingMinigameStarted")
+GameData.RF_CancelFishingInputsv19 = GameData.NetFolderv19:WaitForChild("RF/CancelFishingInputs")
+GameData.RF_UpdateAutoFishingStatev19 = GameData.NetFolderv19:WaitForChild("RF/UpdateAutoFishingState")
+GameData.RE_FishingCompletedv19 = GameData.NetFolderv19:WaitForChild("RE/FishingCompleted")
+GameData.RE_MinigameChangedv19 = GameData.NetFolderv19:WaitForChild("RE/FishingMinigameChanged")
 
-local BlatantV2v19 = {}
-BlatantV2v19.Active = false
-
-local function safeFirev19(func)
-    task.spawn(function()
-        pcall(func)
-    end)
-end
-
-local function ultraSpamLoopv19()
-    while GameData.BlatantV2Activev19 do
+function GameData.ultraSpamLoopv19()
+    while GameData.Activev19 do
         local startTime = tick()
 
-        safeFirev19(function()
+        GameData.safeFirev19(function()
             GameData.RF_ChargeFishingRodv19:InvokeServer({ [1] = startTime })
         end)
 
         task.wait(GameData.Settingsv19.ChargeDelay)
 
         local releaseTime = tick()
-        safeFirev19(function()
+        GameData.safeFirev19(function()
             GameData.RF_RequestMinigamev19:InvokeServer(1, 0, releaseTime)
         end)
 
         task.wait(GameData.Settingsv19.CompleteDelay)
 
-        safeFirev19(function()
+        GameData.safeFirev19(function()
             GameData.RE_FishingCompletedv19:FireServer()
         end)
 
         task.wait(GameData.Settingsv19.CancelDelay)
 
-        safeFirev19(function()
+        GameData.safeFirev19(function()
             GameData.RF_CancelFishingInputsv19:InvokeServer()
         end)
     end
 end
 
 GameData.RE_MinigameChangedv19.OnClientEvent:Connect(function()
-    if not GameData.BlatantV2Activev19 then return end
+    if not GameData.Activev19 then return end
 
     task.spawn(function()
         task.wait(GameData.Settingsv19.CompleteDelay)
 
-        safeFirev19(function()
+        GameData.safeFirev19(function()
             GameData.RE_FishingCompletedv19:FireServer()
         end)
 
         task.wait(GameData.Settingsv19.CancelDelay)
 
-        safeFirev19(function()
+        GameData.safeFirev19(function()
             GameData.RF_CancelFishingInputsv19:InvokeServer()
         end)
     end)
 end)
 
-function BlatantV2v19.UpdateSettings(completeDelay, cancelDelay)
+function GameData.UpdateSettingsv19(completeDelay, cancelDelay)
     if completeDelay ~= nil then
-        if type(completeDelay) == "string" then
-            completeDelay = tonumber(completeDelay) or GameData.Settingsv19.CompleteDelay
-        end
-        GameData.Settingsv19.CompleteDelay = completeDelay
+        GameData.Settingsv19.CompleteDelay = math.max(0, completeDelay)
     end
-
     if cancelDelay ~= nil then
-        if type(cancelDelay) == "string" then
-            cancelDelay = tonumber(cancelDelay) or GameData.Settingsv19.CancelDelay
-        end
-        GameData.Settingsv19.CancelDelay = cancelDelay
+        GameData.Settingsv19.CancelDelay = math.max(0, cancelDelay)
     end
 end
 
-function BlatantV2v19.Start()
-    if GameData.BlatantV2Activev19 then return end
-
-    GameData.BlatantV2Activev19 = true
-    BlatantV2v19.Active = true
-    task.spawn(ultraSpamLoopv19)
+function GameData.Startv19()
+    if GameData.Activev19 then return end
+    GameData.Activev19 = true
+    task.spawn(GameData.ultraSpamLoopv19)
 end
 
-function BlatantV2v19.Stop()
-    if not GameData.BlatantV2Activev19 then return end
+function GameData.Stopv19()
+    if not GameData.Activev19 then return end
+    GameData.Activev19 = false
 
-    GameData.BlatantV2Activev19 = false
-    BlatantV2v19.Active = false
-
-    safeFirev19(function()
+    GameData.safeFirev19(function()
         GameData.RF_UpdateAutoFishingStatev19:InvokeServer(true)
     end)
 
     task.wait(0.2)
 
-    safeFirev19(function()
+    GameData.safeFirev19(function()
         GameData.RF_CancelFishingInputsv19:InvokeServer()
     end)
 end
 
 Sec.Main4:Input({
-    Title = "CompleteDelay V3",
-    Value = "0.685",
-    InputIcon = "bird",
-    Placeholder = "Enter delay",
+    Title = "Complete Delay v3",
+    Flag = "CompleteDelayv3",
+    Value = tostring(GameData.Settingsv19.CompleteDelay),
+    InputIcon = "clock",
+    Placeholder = "0.685",
     Callback = function(input)
-        BlatantV2v19.UpdateSettings(input, nil)
+        local value = tonumber(input)
+        if value then
+            GameData.UpdateSettingsv19(value, nil)
+        end
     end
 })
 
 Sec.Main4:Input({
-    Title = "Cancel Delay V3",
-    Value = "0.3",
-    InputIcon = "bird",
-    Placeholder = "Enter delay",
+    Title = "Cancel Delay v3",
+    Flag = "CancelDelayv3",
+    Value = tostring(GameData.Settingsv19.CancelDelay),
+    InputIcon = "clock",
+    Placeholder = "0.3",
     Callback = function(input)
-        BlatantV2v19.UpdateSettings(nil, input)
+        local value = tonumber(input)
+        if value then
+            GameData.UpdateSettingsv19(nil, value)
+        end
     end
 })
 
 Sec.Main4:Toggle({
     Title = "Blatant V3",
+    Flag = "BlatantV3",
     Value = false,
     Callback = function(state)
         if state then
-            BlatantV2v19.Start()
+            GameData.Startv19()
         else
-            BlatantV2v19.Stop()
+            GameData.Stopv19()
         end
     end
 })
-
-return BlatantV2v19
 
 Sec.Main5 = Tabs.Main:Section({
     Title = "Webhook Notification",
@@ -3762,6 +3738,31 @@ Sec.Main7:Toggle({
 
                     task.wait(1.5)
                 end
+            end)
+        end
+    end
+})
+
+Sec.Main8 = Tabs.Main:Section({
+    Title = "Pirate",
+    Box = true,
+    BoxBorder = true,
+    Opened = false,
+})
+
+task.spawn(function()
+    GameData.SetupNetPathv21()
+end)
+
+Sec.Main8:Toggle({
+    Title = "Auto Open Pirate Chests",
+    Value = false,
+    Callback = function(state)
+        GameData.AutoOpenPirateChestsv21 = state
+
+        if state then
+            task.spawn(function()
+                GameData.ClaimChestsLoopv21()
             end)
         end
     end
@@ -4647,6 +4648,35 @@ Sec.Quest3:Toggle({
                     task.wait(10)
                 end
             end)
+        end
+    end
+})
+
+GameData.NetFolderv20 = GameData.ReplicatedStoragev20
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+
+GameData.RE_DialogueEndedv20 = GameData.NetFolderv20:WaitForChild("RE/DialogueEnded")
+GameData.RE_SearchItemPickedUpv20 = GameData.NetFolderv20:WaitForChild("RE/SearchItemPickedUp")
+GameData.RE_GainAccessToMazev20 = GameData.NetFolderv20:WaitForChild("RE/GainAccessToMaze")
+
+Sec.Quest3:Toggle({
+    Title = "Auto Open Mysterious Cave Wall",
+    Value = false,
+    Callback = function(state)
+        GameData.AutoOpenWallv20 = state
+
+        if GameData.AutoOpenWallv20 then
+            GameData.Connectionv20 = GameData.RunServicev20.Heartbeat:Connect(function()
+                GameData.ExecuteStepsv20()
+            end)
+        else
+            if GameData.Connectionv20 then
+                GameData.Connectionv20:Disconnect()
+                GameData.Connectionv20 = nil
+            end
         end
     end
 })
@@ -7359,9 +7389,6 @@ GameData.ScreenGui.IgnoreGuiInset = true
 GameData.ScreenGui.ResetOnSpawn = false
 GameData.ScreenGui.Parent = GameData.CoreGui
 
--------------------------------------------------------------
--- FRAME
--------------------------------------------------------------
 GameData.ToggleFrame = Instance.new("Frame")
 GameData.ToggleFrame.Parent = GameData.ScreenGui
 GameData.ToggleFrame.Size = UDim2.new(0, 50, 0, 50)
@@ -7409,15 +7436,19 @@ GameData.ToggleBtn.Position = UDim2.new(0.5, -20, 0.5, -20)
 GameData.ToggleBtn.BackgroundTransparency = 1
 GameData.ToggleBtn.Image = "rbxassetid://123906607434048"
 GameData.ToggleBtn.AutoButtonColor = false
+GameData.ToggleBtn.Active = true
+GameData.ToggleBtn.Selectable = true
 
 -------------------------------------------------------------
--- DRAG SYSTEM (PC + MOBILE FIXED)
+-- DRAG SYSTEM UNTUK SEMUA DEVICE (FRAME + BUTTON)
 -------------------------------------------------------------
 local dragInput
 local dragStart
 local startPos
+local isDragging = false
 
-local function update(input)
+local function updatePosition(input)
+    if not dragStart or not startPos then return end
     local delta = input.Position - dragStart
     GameData.ToggleFrame.Position = UDim2.new(
         startPos.X.Scale,
@@ -7427,35 +7458,66 @@ local function update(input)
     )
 end
 
-GameData.ToggleFrame.InputBegan:Connect(function(input)
+local function startDrag(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
     or input.UserInputType == Enum.UserInputType.Touch then
-
         GameData.Dragging = true
+        isDragging = true
         dragStart = input.Position
         startPos = GameData.ToggleFrame.Position
         dragInput = input
+        
+        input:Capture()
     end
-end)
+end
 
-GameData.ToggleFrame.InputChanged:Connect(function(input)
-    if input == dragInput and GameData.Dragging then
-        update(input)
-    end
-end)
-
-GameData.ToggleFrame.InputEnded:Connect(function(input)
-    if input == dragInput then
+local function endDrag(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
         GameData.Dragging = false
+        isDragging = false
         dragInput = nil
+        dragStart = nil
+        startPos = nil
+    end
+end
+
+GameData.ToggleFrame.InputBegan:Connect(startDrag)
+GameData.ToggleFrame.InputEnded:Connect(endDrag)
+
+GameData.ToggleBtn.InputBegan:Connect(startDrag)
+GameData.ToggleBtn.InputEnded:Connect(endDrag)
+
+GameData.UIS.InputChanged:Connect(function(input)
+    if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement 
+        or input.UserInputType == Enum.UserInputType.Touch) then
+        updatePosition(input)
+    end
+end)
+
+GameData.UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        GameData.Dragging = false
+        isDragging = false
+        dragInput = nil
+        dragStart = nil
+        startPos = nil
     end
 end)
 
 -------------------------------------------------------------
 -- BUTTON CLICK → TOGGLE WINDOW
 -------------------------------------------------------------
-GameData.ToggleBtn.MouseButton1Click:Connect(function()
+local clickDebounce = false
+local CLICK_DELAY = 0.2
 
+GameData.ToggleBtn.MouseButton1Click:Connect(function()
+    if isDragging or GameData.Dragging then return end
+    
+    if clickDebounce then return end
+    clickDebounce = true
+    
     GameData.TweenService:Create(GameData.ToggleBtn, TweenInfo.new(0.08), {
         Size = UDim2.new(0, 35, 0, 35)
     }):Play()
@@ -7469,18 +7531,42 @@ GameData.ToggleBtn.MouseButton1Click:Connect(function()
     if Window and Window.Toggle then
         Window:Toggle()
     end
+    
+    task.wait(CLICK_DELAY)
+    clickDebounce = false
 end)
 
--------------------------------------------------------------
--- WINDOW EVENTS (API)
--------------------------------------------------------------
+GameData.ToggleBtn.TouchTap:Connect(function()
+    if isDragging or GameData.Dragging then return end
+    
+    if clickDebounce then return end
+    clickDebounce = true
+    
+    GameData.TweenService:Create(GameData.ToggleBtn, TweenInfo.new(0.08), {
+        Size = UDim2.new(0, 35, 0, 35)
+    }):Play()
+
+    task.wait(0.08)
+
+    GameData.TweenService:Create(GameData.ToggleBtn, TweenInfo.new(0.12), {
+        Size = UDim2.new(0, 40, 0, 40)
+    }):Play()
+
+    if Window and Window.Toggle then
+        Window:Toggle()
+    end
+    
+    task.wait(CLICK_DELAY)
+    clickDebounce = false
+end)
+
 if Window then
     Window:OnOpen(function()
-        -- on open
+
     end)
 
     Window:OnClose(function()
-        -- on close
+
     end)
 
     Window:OnDestroy(function()
