@@ -784,30 +784,35 @@ local GameData = {
 
     -- ================== [FishCaught Animation] ==================
 
-    Services099 = {
-        ReplicatedStorage099 = game:GetService("ReplicatedStorage"),
-        Players099 = game:GetService("Players"),
+    Services = {
+        ReplicatedStorage = game:GetService("ReplicatedStorage"),
+        Players = game:GetService("Players"),
     },
 
-    Player099 = nil,
-    REFishCaught099 = nil,
+    Player = nil,
+    REFishCaught = nil,
 
-    AnimationController099 = nil,
-    OldPlayAnimation099 = nil,
+    AnimationController = nil,
+    OldPlayAnimation = nil,
 
-    AnimationsFolder099 = nil,
-    AnimationList099 = {},
-    AnimationMap099 = {},
-    SelectedAnimationId099 = nil,
+    AnimationsFolder = nil,
 
-    AnimationEnabled099 = false,
-    AnimDisabled099 = false,
-    CurrentTrack099 = nil,
+    FishCaughtList = {},
+    EquipIdleList = {},
 
-    Character099 = nil,
-    Humanoid099 = nil,
-    Animator099 = nil,
-    AnimationInstance099 = nil,
+    FishCaughtMap = {},
+    EquipIdleMap = {},
+
+    SelectedFishCaughtId = nil,
+    SelectedEquipIdleId = nil,
+
+    FishCaughtEnabled = false,
+    EquipIdleEnabled = false,
+
+    BlockGameAnim = false,
+
+    FishCaughtTrack = nil,
+    EquipIdleTrack = nil,
 
     -- ================== [Auto Reconnect] ==================             
 
@@ -1246,6 +1251,17 @@ local GameData = {
             task.wait(0.5)
         end
     end,
+
+	--================ No Animation ===============
+
+    ReplicatedStoragev22 = game:GetService("ReplicatedStorage"),
+
+    AnimationControllerv22 = nil,
+
+    AnimDisabledv22 = false,
+
+    OldPlayAnimationv22 = nil,
+    OldStopAnimationv22 = nil,
 }
 
 local Window = WindUI:CreateWindow({
@@ -1278,7 +1294,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.1.1",
+    Title = "v0.1.2",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1324,7 +1340,13 @@ Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
 Tab Main:
- [+] Added Blatant V3
+ [+] Added Auto Open Pirate Chest
+Tab Quest:
+ [+] Added Auto Open Mysterious Cave Wall
+Tab Telpeort:
+ [+] Added Teleport to Pirate Cove
+ [+] Added Teleport to Pirate Treasure Room
+[!] Fixed ImageBotton Drag Issue
 ]],
     Locked = false
 })
@@ -2518,109 +2540,177 @@ Sec.Main3 = Tabs.Main:Section({
     Opened = false,
 })
 
-GameData.Player099 = GameData.Services099.Players099.LocalPlayer
+GameData.Player = GameData.Services.Players.LocalPlayer
 
--- Reference remote event
-GameData.REFishCaught099 =
-    GameData.Services099.ReplicatedStorage099
+GameData.REFishCaught =
+    GameData.Services.ReplicatedStorage
         .Packages._Index["sleitnick_net@0.2.0"]
         .net["RE/FishCaught"]
 
--- Animations folder
-GameData.AnimationsFolder099 = GameData.Services099.ReplicatedStorage099
-    :WaitForChild("Modules")
-    :WaitForChild("Animations")
+GameData.AnimationsFolder =
+    GameData.Services.ReplicatedStorage
+        :WaitForChild("Modules")
+        :WaitForChild("Animations")
 
--- AnimationController
-GameData.AnimationController099 =
-    require(GameData.Services099.ReplicatedStorage099.Controllers.AnimationController)
+GameData.AnimationController =
+    require(GameData.Services.ReplicatedStorage.Controllers.AnimationController)
 
--- Override PlayAnimation
-GameData.OldPlayAnimation099 = GameData.AnimationController099.PlayAnimation
-GameData.AnimationController099.PlayAnimation = function(self, animName, ...)
-    if GameData.AnimDisabled099 then
+GameData.OldPlayAnimation = GameData.AnimationController.PlayAnimation
+GameData.AnimationController.PlayAnimation = function(self, animName, ...)
+    if GameData.BlockGameAnim then
         return
     end
-    return GameData.OldPlayAnimation099(self, animName, ...)
+    return GameData.OldPlayAnimation(self, animName, ...)
 end
 
--- Load animations
-for _, anim in ipairs(GameData.AnimationsFolder099:GetChildren()) do
-    if anim:IsA("Animation") and anim.Name:find("FishCaught") then
-        table.insert(GameData.AnimationList099, anim.Name)
-        GameData.AnimationMap099[anim.Name] = anim.AnimationId
+for _, anim in ipairs(GameData.AnimationsFolder:GetChildren()) do
+    if anim:IsA("Animation") then
+        if anim.Name:find("FishCaught") then
+            table.insert(GameData.FishCaughtList, anim.Name)
+            GameData.FishCaughtMap[anim.Name] = anim.AnimationId
+        elseif anim.Name:find("EquipIdle") then
+            table.insert(GameData.EquipIdleList, anim.Name)
+            GameData.EquipIdleMap[anim.Name] = anim.AnimationId
+        end
     end
 end
 
--- Function play fish caught animation
-function GameData:PlayFishCaught099()
-    if not self.AnimationEnabled099 then return end
-    if not self.SelectedAnimationId099 then return end
+function GameData:GetAnimator()
+    local char = self.Player.Character or self.Player.CharacterAdded:Wait()
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
 
-    self.Character099 = self.Player099.Character or self.Player099.CharacterAdded:Wait()
-    if not self.Character099 then return end
-
-    self.Humanoid099 = self.Character099:FindFirstChildOfClass("Humanoid")
-    if not self.Humanoid099 then return end
-
-    self.Animator099 = self.Humanoid099:FindFirstChildOfClass("Animator")
-    if not self.Animator099 then
-        self.Animator099 = Instance.new("Animator")
-        self.Animator099.Parent = self.Humanoid099
+    local animator = hum:FindFirstChildOfClass("Animator")
+    if not animator then
+        animator = Instance.new("Animator", hum)
     end
-
-    if self.CurrentTrack099 then
-        self.CurrentTrack099:Stop()
-        self.CurrentTrack099:Destroy()
-        self.CurrentTrack099 = nil
-    end
-
-    self.AnimationInstance099 = Instance.new("Animation")
-    self.AnimationInstance099.AnimationId = self.SelectedAnimationId099
-
-    self.CurrentTrack099 = self.Animator099:LoadAnimation(self.AnimationInstance099)
-    self.CurrentTrack099:Play()
+    return animator
 end
 
--- Connect remote event
-GameData.REFishCaught099.OnClientEvent:Connect(function()
-    GameData:PlayFishCaught099()
+function GameData:PlayEquipIdle()
+    if not self.EquipIdleEnabled then return end
+    if not self.SelectedEquipIdleId then return end
+
+    local animator = self:GetAnimator()
+    if not animator then return end
+
+    if self.EquipIdleTrack then
+        self.EquipIdleTrack:Stop()
+        self.EquipIdleTrack:Destroy()
+    end
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = self.SelectedEquipIdleId
+
+    local track = animator:LoadAnimation(anim)
+    track.Looped = true
+    track.Priority = Enum.AnimationPriority.Idle
+    track:Play()
+
+    self.EquipIdleTrack = track
+end
+
+function GameData:StopEquipIdleTemp()
+    if self.EquipIdleTrack then
+        self.EquipIdleTrack:Stop()
+    end
+end
+
+function GameData:PlayFishCaught()
+    if not self.FishCaughtEnabled then return end
+    if not self.SelectedFishCaughtId then return end
+
+    local animator = self:GetAnimator()
+    if not animator then return end
+
+    -- Stop EquipIdle sementara
+    self:StopEquipIdleTemp()
+
+    if self.FishCaughtTrack then
+        self.FishCaughtTrack:Stop()
+        self.FishCaughtTrack:Destroy()
+    end
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = self.SelectedFishCaughtId
+
+    local track = animator:LoadAnimation(anim)
+    track.Priority = Enum.AnimationPriority.Action
+    track:Play()
+
+    self.FishCaughtTrack = track
+
+    -- Setelah selesai → hidupkan EquipIdle lagi (kalau toggle ON)
+    track.Stopped:Once(function()
+        task.delay(0.1, function()
+            GameData:PlayEquipIdle()
+        end)
+    end)
+end
+
+GameData.REFishCaught.OnClientEvent:Connect(function()
+    GameData:PlayFishCaught()
 end)
 
 Sec.Main3:Dropdown({
-    Title = "Select Animation",
-    Flag = "SelectAnimation",
-    Desc = "Choose animation to load",
-    Values = GameData.AnimationList099,
-    Value = "",
-    Multi = false,
+    Title = "FishCaught Animation",
+    Flag = "FishCaughtAnim",
+    SearchBarEnabled = true,
+    Values = GameData.FishCaughtList,
     AllowNone = true,
 
     Callback = function(value)
-        GameData.SelectedAnimationId099 = GameData.AnimationMap099[value]
+        GameData.SelectedFishCaughtId = GameData.FishCaughtMap[value]
+    end
+})
+
+Sec.Main3:Dropdown({
+    Title = "EquipIdle Animation",
+    Flag = "EquipIdleAnim",
+    SearchBarEnabled = true,
+    Values = GameData.EquipIdleList,
+    AllowNone = true,
+
+    Callback = function(value)
+        GameData.SelectedEquipIdleId = GameData.EquipIdleMap[value]
+        GameData:PlayEquipIdle()
     end
 })
 
 Sec.Main3:Toggle({
-    Title = "Enable Animation",
-    Flag = "EnableAnimation",
-    Desc = "Enable / disable custom animation",
+    Title = "Enable FishCaught",
+    Flag = "EnableFishCaught",
     Value = false,
 
     Callback = function(value)
-        GameData.AnimationEnabled099 = value
-        GameData.AnimDisabled099 = value
-
-        if not value and GameData.CurrentTrack099 then
-            GameData.CurrentTrack099:Stop()
-            GameData.CurrentTrack099:Destroy()
-            GameData.CurrentTrack099 = nil
-        end
+        GameData.FishCaughtEnabled = value
+        GameData.BlockGameAnim = value
 
         if value then
             pcall(function()
-                GameData.AnimationController099:DestroyActiveAnimationTracks()
+                GameData.AnimationController:DestroyActiveAnimationTracks()
             end)
+        end
+    end
+})
+
+Sec.Main3:Toggle({
+    Title = "Enable EquipIdle",
+    Flag = "EnableEquipIdle",
+    Value = false,
+
+    Callback = function(value)
+        GameData.EquipIdleEnabled = value
+        GameData.BlockGameAnim = value
+
+        if not value and GameData.EquipIdleTrack then
+            GameData.EquipIdleTrack:Stop()
+            GameData.EquipIdleTrack:Destroy()
+            GameData.EquipIdleTrack = nil
+        end
+
+        if value then
+            GameData:PlayEquipIdle()
         end
     end
 })
@@ -2630,6 +2720,35 @@ Sec.Main4 = Tabs.Main:Section({
     Box = true,
     BoxBorder = true,
     Opened = true,
+})
+
+GameData.AnimationControllerv22 =
+    require(GameData.ReplicatedStoragev22.Controllers.AnimationController)
+
+GameData.OldPlayAnimationv22 = GameData.AnimationControllerv22.PlayAnimation
+GameData.OldStopAnimationv22 = GameData.AnimationControllerv22.StopAnimation
+
+GameData.AnimationControllerv22.PlayAnimation = function(self, animName, ...)
+    if GameData.AnimDisabledv22 then
+        return
+    end
+    return GameData.OldPlayAnimationv22(self, animName, ...)
+end
+
+Sec.Main4:Toggle({
+    Title = "No Animation",
+    Value = false,
+    Callback = function(state)
+        GameData.AnimDisabledv22 = state
+
+        if state then
+            pcall(function()
+                if GameData.AnimationControllerv22.DestroyActiveAnimationTracks then
+                    GameData.AnimationControllerv22:DestroyActiveAnimationTracks()
+                end
+            end)
+        end
+    end
 })
 
 -- SETUP NET
@@ -7507,10 +7626,9 @@ GameData.UIS.InputEnded:Connect(function(input)
 end)
 
 -------------------------------------------------------------
--- BUTTON CLICK → TOGGLE WINDOW
+-- BUTTON CLICK → TOGGLE WINDOW (TANPA CLICK DELAY)
 -------------------------------------------------------------
 local clickDebounce = false
-local CLICK_DELAY = 0.2
 
 GameData.ToggleBtn.MouseButton1Click:Connect(function()
     if isDragging or GameData.Dragging then return end
@@ -7518,6 +7636,7 @@ GameData.ToggleBtn.MouseButton1Click:Connect(function()
     if clickDebounce then return end
     clickDebounce = true
     
+    -- Animasi klik tanpa delay
     GameData.TweenService:Create(GameData.ToggleBtn, TweenInfo.new(0.08), {
         Size = UDim2.new(0, 35, 0, 35)
     }):Play()
@@ -7528,11 +7647,12 @@ GameData.ToggleBtn.MouseButton1Click:Connect(function()
         Size = UDim2.new(0, 40, 0, 40)
     }):Play()
 
+    -- Langsung toggle window tanpa delay tambahan
     if Window and Window.Toggle then
         Window:Toggle()
     end
     
-    task.wait(CLICK_DELAY)
+    -- Reset debounce tanpa delay
     clickDebounce = false
 end)
 
@@ -7542,6 +7662,7 @@ GameData.ToggleBtn.TouchTap:Connect(function()
     if clickDebounce then return end
     clickDebounce = true
     
+    -- Animasi klik tanpa delay
     GameData.TweenService:Create(GameData.ToggleBtn, TweenInfo.new(0.08), {
         Size = UDim2.new(0, 35, 0, 35)
     }):Play()
@@ -7552,21 +7673,22 @@ GameData.ToggleBtn.TouchTap:Connect(function()
         Size = UDim2.new(0, 40, 0, 40)
     }):Play()
 
+    -- Langsung toggle window tanpa delay tambahan
     if Window and Window.Toggle then
         Window:Toggle()
     end
     
-    task.wait(CLICK_DELAY)
+    -- Reset debounce tanpa delay
     clickDebounce = false
 end)
 
 if Window then
     Window:OnOpen(function()
-
+        -- Handler window terbuka
     end)
 
     Window:OnClose(function()
-
+        -- Handler window tertutup
     end)
 
     Window:OnDestroy(function()
