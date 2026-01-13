@@ -1844,82 +1844,229 @@ function GameData:CreateGuiv7()
     if self.Guiv7 then return end
 
     self.Guiv7 = Instance.new("ScreenGui")
-    self.Guiv7.Name = "NetworkStatsGuiv7"
+    self.Guiv7.Name = "NexaNetworkStatsV7"
     self.Guiv7.ResetOnSpawn = false
+    self.Guiv7.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     self.Guiv7.Parent = self.Playerv7:WaitForChild("PlayerGui")
 
+    -- Main Container
     self.MainFramev7 = Instance.new("Frame")
-    self.MainFramev7.Size = UDim2.new(0, 200, 0, 90)
+    self.MainFramev7.Size = UDim2.new(0, 240, 0, 150)
     self.MainFramev7.Position = UDim2.new(0, 20, 0, 20)
-    self.MainFramev7.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    self.MainFramev7.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    self.MainFramev7.BackgroundTransparency = 0.1
     self.MainFramev7.BorderSizePixel = 0
     self.MainFramev7.Active = true
+    self.MainFramev7.Selectable = true
     self.MainFramev7.Parent = self.Guiv7
 
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 14)
-    corner.Parent = self.MainFramev7
+    -- Outer Corner
+    local outerCorner = Instance.new("UICorner")
+    outerCorner.CornerRadius = UDim.new(0, 16)
+    outerCorner.Parent = self.MainFramev7
 
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(60, 60, 60)
-    stroke.Thickness = 1
-    stroke.Parent = self.MainFramev7
+    -- Main Stroke
+    local mainStroke = Instance.new("UIStroke")
+    mainStroke.Color = Color3.fromRGB(60, 100, 200)
+    mainStroke.Thickness = 1.5
+    mainStroke.Transparency = 0.3
+    mainStroke.Parent = self.MainFramev7
 
+    -- Gradient Background
     local gradient = Instance.new("UIGradient")
     gradient.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 40)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 15))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 35)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(20, 20, 30)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 25))
     }
-    gradient.Rotation = 90
+    gradient.Rotation = 45
     gradient.Parent = self.MainFramev7
 
-    -- Title
+    -- Glass Effect
+    local glassFrame = Instance.new("Frame")
+    glassFrame.Size = UDim2.new(1, 0, 1, 0)
+    glassFrame.BackgroundTransparency = 0.95
+    glassFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    glassFrame.BorderSizePixel = 0
+    glassFrame.Parent = self.MainFramev7
+
+    local glassCorner = Instance.new("UICorner")
+    glassCorner.CornerRadius = UDim.new(0, 16)
+    glassCorner.Parent = glassFrame
+
+    -- Inner Container
+    local innerFrame = Instance.new("Frame")
+    innerFrame.Size = UDim2.new(1, -20, 1, -20)
+    innerFrame.Position = UDim2.new(0, 10, 0, 10)
+    innerFrame.BackgroundTransparency = 1
+    innerFrame.Parent = self.MainFramev7
+
+    -- Title Bar
+    local titleBar = Instance.new("Frame")
+    titleBar.Size = UDim2.new(1, 0, 0, 36)
+    titleBar.BackgroundTransparency = 1
+    titleBar.Parent = innerFrame
+
+    -- Logo/Icon Owner di kiri (tanpa glow) - GANTI ASSET ID DENGAN LOGO ANDA
+    local ownerLogo = Instance.new("ImageLabel")
+    ownerLogo.Size = UDim2.new(0, 35, 0, 35)
+    ownerLogo.Position = UDim2.new(0, 3, 0.5, -19)
+    ownerLogo.BackgroundTransparency = 1
+    ownerLogo.Image = "rbxassetid://118079068036615" -- GANTI DENGAN ASSET ID LOGO OWNER ANDA
+    ownerLogo.ImageColor3 = Color3.fromRGB(255, 255, 255) -- Warna putih bersih
+    ownerLogo.ImageTransparency = 0 -- Tidak transparan
+    ownerLogo.ScaleType = Enum.ScaleType.Fit
+    ownerLogo.Parent = titleBar
+
+    -- Stroke halus untuk logo
+    local logoStroke = Instance.new("UIStroke")
+    logoStroke.Color = Color3.fromRGB(200, 200, 200)
+    logoStroke.Thickness = 0.8
+    logoStroke.Transparency = 0.2
+    logoStroke.Parent = ownerLogo
+
+    -- Icon Nexa Network (dipindah ke kanan sedikit)
+    local titleIcon = Instance.new("ImageLabel")
+    titleIcon.Size = UDim2.new(0, 20, 0, 20)
+    titleIcon.Position = UDim2.new(0, 25, 0.5, -10) -- Posisi X diubah dari 0 ke 25
+    titleIcon.BackgroundTransparency = 1
+    titleIcon.Image = "rbxassetid://12171505282"
+    titleIcon.ImageColor3 = Color3.fromRGB(100, 180, 255)
+    titleIcon.ImageTransparency = 0.2
+    titleIcon.Parent = titleBar
+
+    -- Title Text
     local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, -12, 0, 20)
-    title.Position = UDim2.new(0, 6, 0, 4)
+    title.Size = UDim2.new(1, -55, 1, 0) -- Lebar dikurangi dari 30 ke 55
+    title.Position = UDim2.new(0, 40, 0, 0) -- Posisi X diubah dari 28 ke 53
     title.BackgroundTransparency = 1
-    title.Text = "NEXA X NETWORK PANEL"
+    title.Text = "NEXA NETWORK PANEL V7"
     title.Font = Enum.Font.GothamBold
-    title.TextSize = 12
+    title.TextSize = 14
     title.TextXAlignment = Enum.TextXAlignment.Left
-    title.TextColor3 = Color3.fromRGB(170, 170, 170)
-    title.Parent = self.MainFramev7
+    title.TextColor3 = Color3.fromRGB(200, 220, 255)
+    title.Parent = titleBar
 
-    -- Ping Text
-    self.PingTextv7 = Instance.new("TextLabel")
-    self.PingTextv7.Size = UDim2.new(1, -12, 0, 20)
-    self.PingTextv7.Position = UDim2.new(0, 6, 0, 28)
-    self.PingTextv7.BackgroundTransparency = 1
-    self.PingTextv7.Text = "Ping: -- ms"
-    self.PingTextv7.Font = Enum.Font.Gotham
-    self.PingTextv7.TextSize = 15
-    self.PingTextv7.TextXAlignment = Enum.TextXAlignment.Left
-    self.PingTextv7.TextColor3 = Color3.fromRGB(255, 255, 255)
-    self.PingTextv7.Parent = self.MainFramev7
+    -- Subtitle
+    local subtitle = Instance.new("TextLabel")
+    subtitle.Size = UDim2.new(1, -55, 0, 12) -- Lebar dikurangi dari 30 ke 55
+    subtitle.Position = UDim2.new(0, 56, 0, 20) -- Posisi X diubah dari 28 ke 53
+    subtitle.BackgroundTransparency = 1
+    subtitle.Text = "Real-time Performance Metrics"
+    subtitle.Font = Enum.Font.Gotham
+    subtitle.TextSize = 10
+    subtitle.TextXAlignment = Enum.TextXAlignment.Left
+    subtitle.TextColor3 = Color3.fromRGB(150, 170, 200)
+    subtitle.Parent = titleBar
 
-    -- CPU Text (ms)
-    self.CpuTextv7 = Instance.new("TextLabel")
-    self.CpuTextv7.Size = UDim2.new(1, -12, 0, 20)
-    self.CpuTextv7.Position = UDim2.new(0, 6, 0, 50)
-    self.CpuTextv7.BackgroundTransparency = 1
-    self.CpuTextv7.Text = "CPU: -- ms"
-    self.CpuTextv7.Font = Enum.Font.Gotham
-    self.CpuTextv7.TextSize = 15
-    self.CpuTextv7.TextXAlignment = Enum.TextXAlignment.Left
-    self.CpuTextv7.TextColor3 = Color3.fromRGB(255, 255, 255)
-    self.CpuTextv7.Parent = self.MainFramev7
+    -- Separator
+    local separator = Instance.new("Frame")
+    separator.Size = UDim2.new(1, 0, 0, 1)
+    separator.Position = UDim2.new(0, 0, 0, 38)
+    separator.BackgroundColor3 = Color3.fromRGB(60, 100, 200)
+    separator.BackgroundTransparency = 0.7
+    separator.BorderSizePixel = 0
+    separator.Parent = innerFrame
 
-    -- FPS Text
-    self.FpsTextv7 = Instance.new("TextLabel")
-    self.FpsTextv7.Size = UDim2.new(1, -12, 0, 20)
-    self.FpsTextv7.Position = UDim2.new(0, 6, 0, 72)
-    self.FpsTextv7.BackgroundTransparency = 1
-    self.FpsTextv7.Text = "FPS: --"
-    self.FpsTextv7.Font = Enum.Font.Gotham
-    self.FpsTextv7.TextSize = 15
-    self.FpsTextv7.TextXAlignment = Enum.TextXAlignment.Left
-    self.FpsTextv7.TextColor3 = Color3.fromRGB(255, 255, 255)
-    self.FpsTextv7.Parent = self.MainFramev7
+    -- Stats Container
+    local statsContainer = Instance.new("Frame")
+    statsContainer.Size = UDim2.new(1, 0, 1, -45)
+    statsContainer.Position = UDim2.new(0, 0, 0, 45)
+    statsContainer.BackgroundTransparency = 1
+    statsContainer.Parent = innerFrame
+
+    -- Stat Item Template Function (DIPERBAIKI)
+    local function createStatItem(name, iconId, positionY)
+        local container = Instance.new("Frame")
+        container.Size = UDim2.new(1, 0, 0, 28)
+        container.Position = UDim2.new(0, 0, 0, positionY)
+        container.BackgroundTransparency = 1
+        container.Parent = statsContainer
+
+        local icon = Instance.new("ImageLabel")
+        icon.Size = UDim2.new(0, 20, 0, 20)
+        icon.Position = UDim2.new(0, 0, 0.5, -10)
+        icon.BackgroundTransparency = 1
+        icon.Image = "rbxassetid://" .. iconId
+        icon.ImageColor3 = Color3.fromRGB(180, 200, 255)
+        icon.Parent = container
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0, 60, 1, 0)
+        label.Position = UDim2.new(0, 28, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Text = name .. ":"
+        label.Font = Enum.Font.GothamSemibold
+        label.TextSize = 12
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.TextColor3 = Color3.fromRGB(180, 200, 220)
+        label.Parent = container
+
+        -- PERBAIKAN: Lebar valueFrame diperbesar
+        local valueFrame = Instance.new("Frame")
+        valueFrame.Size = UDim2.new(0, 135, 0, 24) -- DARI 120 KE 135
+        valueFrame.Position = UDim2.new(1, -139, 0.5, -12) -- SESUAIKAN POSISI
+        valueFrame.BackgroundColor3 = Color3.fromRGB(10, 15, 25)
+        valueFrame.BackgroundTransparency = 0.8
+        valueFrame.BorderSizePixel = 0
+        valueFrame.Parent = container
+
+        local valueCorner = Instance.new("UICorner")
+        valueCorner.CornerRadius = UDim.new(0, 8)
+        valueCorner.Parent = valueFrame
+
+        local valueStroke = Instance.new("UIStroke")
+        valueStroke.Color = Color3.fromRGB(40, 80, 160)
+        valueStroke.Thickness = 1
+        valueStroke.Transparency = 0.5
+        valueStroke.Parent = valueFrame
+
+        -- PERBAIKAN: Padding teks disesuaikan
+        local valueText = Instance.new("TextLabel")
+        valueText.Size = UDim2.new(1, -12, 1, 0) -- DARI -8 KE -12
+        valueText.Position = UDim2.new(0, 6, 0, 0) -- DARI 4 KE 6
+        valueText.BackgroundTransparency = 1
+        valueText.Text = "--"
+        valueText.Font = Enum.Font.GothamBold
+        valueText.TextSize = 13
+        valueText.TextXAlignment = Enum.TextXAlignment.Left
+        valueText.TextColor3 = Color3.fromRGB(255, 255, 255)
+        valueText.TextTruncate = Enum.TextTruncate.AtEnd -- Tambah truncate
+        valueText.Parent = valueFrame
+
+        return valueText
+    end
+
+    -- Create Stat Items
+    self.PingTextv7 = createStatItem("PING", "140088536295002", 0) -- Network icon
+    self.CpuTextv7 = createStatItem("CPU", "104660079852389", 32) -- CPU icon
+    self.FpsTextv7 = createStatItem("FPS", "133224545848420", 64) -- Speedometer icon
+
+    -- Status Indicator
+    local statusBar = Instance.new("Frame")
+    statusBar.Size = UDim2.new(0, 6, 1, -10)
+    statusBar.Position = UDim2.new(1, -8, 0, 5)
+    statusBar.BackgroundColor3 = Color3.fromRGB(0, 220, 120)
+    statusBar.BorderSizePixel = 0
+    statusBar.Parent = statsContainer
+
+    local statusCorner = Instance.new("UICorner")
+    statusCorner.CornerRadius = UDim.new(0, 3)
+    statusCorner.Parent = statusBar
+
+    self.StatusBar = statusBar
+
+    -- Glow Effect (untuk panel utama, bukan untuk logo)
+    local glow = Instance.new("ImageLabel")
+    glow.Size = UDim2.new(1.5, 0, 1.5, 0)
+    glow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    glow.AnchorPoint = Vector2.new(0.5, 0.5)
+    glow.BackgroundTransparency = 1
+    glow.Image = "rbxassetid://12171505282"
+    glow.ImageColor3 = Color3.fromRGB(0, 100, 255)
+    glow.ImageTransparency = 0.9
+    glow.ZIndex = 0
+    glow.Parent = self.MainFramev7
 
     -- Drag support for mouse & touch
     self.MainFramev7.InputBegan:Connect(function(input)
@@ -1930,11 +2077,24 @@ function GameData:CreateGuiv7()
             self.DragStartv7 = input.Position
             self.StartPosv7 = self.MainFramev7.Position
 
+            -- Animation feedback
+            self.Servicesv7.TweenServicev7:Create(
+                self.MainFramev7,
+                TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                {BackgroundTransparency = 0.2}
+            ):Play()
+
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     if self.DragInputv7 == input then
                         self.Draggingv7 = false
                         self.DragInputv7 = nil
+                        
+                        self.Servicesv7.TweenServicev7:Create(
+                            self.MainFramev7,
+                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                            {BackgroundTransparency = 0.1}
+                        ):Play()
                     end
                 end
             end)
@@ -1971,26 +2131,33 @@ function GameData:CreateGuiv7()
                 pingValue = math.floor(ping:GetValue())
             end
         end
-        self.PingTextv7.Text = "Ping: "..pingValue.." ms"
-
-        local pingColorv7
-        if pingValue <= 80 then
-            pingColorv7 = Color3.fromRGB(0,220,120)
-        elseif pingValue <= 150 then
-            pingColorv7 = Color3.fromRGB(255,190,60)
+        
+        -- PERBAIKAN: Gunakan singkatan untuk menghemat ruang
+        local pingColor, pingStatus
+        if pingValue <= 50 then
+            pingColor = Color3.fromRGB(0, 220, 120)
+            pingStatus = "🟢" -- EXCELLENT -> EXC
+        elseif pingValue <= 100 then
+            pingColor = Color3.fromRGB(100, 220, 255)
+            pingStatus = "🟢"
+        elseif pingValue <= 200 then
+            pingColor = Color3.fromRGB(255, 190, 60)
+            pingStatus = "🟡"
         else
-            pingColorv7 = Color3.fromRGB(255,80,80)
+            pingColor = Color3.fromRGB(255, 80, 80)
+            pingStatus = "🔴"
         end
-
+        
+        self.PingTextv7.Text = string.format("%d ms • %s", pingValue, pingStatus)
         self.Servicesv7.TweenServicev7:Create(
             self.PingTextv7,
             TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {TextColor3 = pingColorv7}
+            {TextColor3 = pingColor}
         ):Play()
 
         -- CPU ms
         local perf = self.Servicesv7.Statsv7:FindFirstChild("PerformanceStats")
-        local cpuMs = 0
+        local cpuMs = self.CPU_MSv7
         if perf then
             local cpu = perf:FindFirstChild("CPU")
             if cpu then
@@ -1998,46 +2165,69 @@ function GameData:CreateGuiv7()
                 self.CPU_MSv7 = cpuMs
             end
         end
-        self.CpuTextv7.Text = string.format("CPU: %.2f ms", cpuMs)
-
-        local cpuColorv7
+        
+        -- PERBAIKAN: Gunakan singkatan untuk menghemat ruang
+        local cpuColor, cpuStatus
         if cpuMs <= 5 then
-            cpuColorv7 = Color3.fromRGB(0,220,120)
+            cpuColor = Color3.fromRGB(0, 220, 120)
+            cpuStatus = "🟢" -- OPTIMAL -> OPT
         elseif cpuMs <= 10 then
-            cpuColorv7 = Color3.fromRGB(255,190,60)
+            cpuColor = Color3.fromRGB(100, 220, 255)
+            cpuStatus = "🟢"
+        elseif cpuMs <= 20 then
+            cpuColor = Color3.fromRGB(255, 190, 60)
+            cpuStatus = "🟡" -- MODERATE -> MOD
         else
-            cpuColorv7 = Color3.fromRGB(255,80,80)
+            cpuColor = Color3.fromRGB(255, 80, 80)
+            cpuStatus = "🔴" -- HIGH LOAD -> HIGH
         end
-
+        
+        self.CpuTextv7.Text = string.format("%.1f ms • %s", cpuMs, cpuStatus)
         self.Servicesv7.TweenServicev7:Create(
             self.CpuTextv7,
             TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {TextColor3 = cpuColorv7}
+            {TextColor3 = cpuColor}
         ):Play()
 
         -- FPS
         self._frameCountv7 = self._frameCountv7 + 1
         local currentTick = tick()
-        if currentTick - self._lastTickv7 >= 1 then
-            self._fpsv7 = self._frameCountv7
+        if currentTick - self._lastTickv7 >= 0.5 then
+            self._fpsv7 = math.floor(self._frameCountv7 * 2)
             self._frameCountv7 = 0
             self._lastTickv7 = currentTick
 
-            self.FpsTextv7.Text = "FPS: "..self._fpsv7
-
-            local fpsColorv7
-            if self._fpsv7 >= 60 then
-                fpsColorv7 = Color3.fromRGB(0,220,120)
+            -- PERBAIKAN: Gunakan singkatan untuk menghemat ruang
+            local fpsColor, fpsStatus
+            if self._fpsv7 >= 120 then
+                fpsColor = Color3.fromRGB(0, 220, 120)
+                fpsStatus = "🟢" -- SMOOTH -> SMT
+            elseif self._fpsv7 >= 60 then
+                fpsColor = Color3.fromRGB(100, 220, 255)
+                fpsStatus = "🟢"
             elseif self._fpsv7 >= 30 then
-                fpsColorv7 = Color3.fromRGB(255,190,60)
+                fpsColor = Color3.fromRGB(255, 190, 60)
+                fpsStatus = "🟡" -- PLAYABLE -> PLY
             else
-                fpsColorv7 = Color3.fromRGB(255,80,80)
+                fpsColor = Color3.fromRGB(255, 80, 80)
+                fpsStatus = "🔴" -- LAGGY -> LAG
             end
-
+            
+            self.FpsTextv7.Text = string.format("%d • %s", self._fpsv7, fpsStatus)
             self.Servicesv7.TweenServicev7:Create(
                 self.FpsTextv7,
                 TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                {TextColor3 = fpsColorv7}
+                {TextColor3 = fpsColor}
+            ):Play()
+            
+            -- Update status bar based on overall performance
+            local overallStatus = math.min(pingValue / 300, cpuMs / 20, (120 - math.min(self._fpsv7, 120)) / 120)
+            local statusColor = Color3.new(2 - overallStatus * 2, overallStatus * 2, 0)
+            
+            self.Servicesv7.TweenServicev7:Create(
+                self.StatusBar,
+                TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                {BackgroundColor3 = statusColor}
             ):Play()
         end
     end)
@@ -2056,14 +2246,14 @@ function GameData:RemoveGuiv7()
         self.PingTextv7 = nil
         self.CpuTextv7 = nil
         self.FpsTextv7 = nil
+        self.StatusBar = nil
     end
 end
 
--- Toggle (sesuaikan dengan sistem toggle mu)
-Sec.Main1:Toggle({
-    Title = "Show Network Stats",
-    Flag = "Show Network Stats",
-    Desc = "Display ping, CPU (ms), and FPS panel",
+Sec.Main3:Toggle({
+    Title = "Show Network Stats V7",
+    Flag = "Show Network Stats V7",
+    Desc = "Display advanced network panel with real-time metrics",
     Value = false,
 
     Callback = function(value)
@@ -2073,13 +2263,41 @@ Sec.Main1:Toggle({
             GameData:RemoveGuiv7()
         end
 
-        WindUI:Notify({
-            Title = "Network Stats v7",
-            Content = value and "Enabled" or "Disabled",
-            Duration = 3,
-            Icon = "activity"
-        })
+        -- Notifikasi jika library Anda mendukung
+        if WindUI and WindUI.Notify then
+            WindUI:Notify({
+                Title = "Network Stats V7",
+                Content = value and "Panel Enabled • Monitoring Active" or "Panel Disabled",
+                Duration = 3,
+                Icon = "activity"
+            })
+        end
     end
+})
+
+GameData.CancelFishingv9 =
+	GameData.Servicesv9.ReplicatedStoragev9
+		:WaitForChild("Packages")
+		:WaitForChild("_Index")
+		:WaitForChild("sleitnick_net@0.2.0")
+		:WaitForChild("net")
+		:WaitForChild("RF/CancelFishingInputs")
+
+Sec.Main1:Button({
+	Title = "Cancel Fishing",
+	Locked = false,
+	Callback = function()
+		pcall(function()
+			GameData.CancelFishingv9:InvokeServer()
+		end)
+	end
+})
+
+Sec.Main9 = Tabs.Main:Section({
+    Title = "Skip Rarity",
+    Box = true,
+    BoxBorder = true,
+    Opened = false,
 })
 
 _G.RarityFilterEnabled = false
@@ -2093,7 +2311,7 @@ GameData.RE_TextEffect = GameData.net:WaitForChild("RE/ReplicateTextEffect")
 
 _G.BlacklistedRarity = _G.BlacklistedRarity or {}
 
-Sec.Main1:Dropdown({
+Sec.Main9:Dropdown({
     Title = "Skip Rarity List",
     Flag = "Skip Rarity List",
     Desc = "Select rarities to skip",
@@ -2113,7 +2331,7 @@ Sec.Main1:Dropdown({
     end
 })
 
-Sec.Main1:Toggle({
+Sec.Main9:Toggle({
     Title = "Skip Rarity",
     Flag = "Skip Rarity",
     Desc = "Skip selected fish rarities",
@@ -2179,24 +2397,6 @@ GameData.RE_TextEffect.OnClientEvent:Connect(function(data)
         end
     end
 end)
-
-GameData.CancelFishingv9 =
-	GameData.Servicesv9.ReplicatedStoragev9
-		:WaitForChild("Packages")
-		:WaitForChild("_Index")
-		:WaitForChild("sleitnick_net@0.2.0")
-		:WaitForChild("net")
-		:WaitForChild("RF/CancelFishingInputs")
-
-Sec.Main1:Button({
-	Title = "Cancel Fishing",
-	Locked = false,
-	Callback = function()
-		pcall(function()
-			GameData.CancelFishingv9:InvokeServer()
-		end)
-	end
-})
 
 Sec.Main7 = Tabs.Main:Section({
     Title = "Perfect Fishing",
@@ -2653,6 +2853,7 @@ end)
 Sec.Main3:Dropdown({
     Title = "FishCaught Animation",
     Flag = "FishCaughtAnimv23",
+    SearchBarEnabled = true,
     Values = GameData.FishCaughtListv23,
     Callback = function(value)
         GameData.SelectedFishCaughtIdv23 = GameData.FishCaughtMapv23[value]
@@ -2662,6 +2863,7 @@ Sec.Main3:Dropdown({
 Sec.Main3:Dropdown({
     Title = "EquipIdle Animation",
     Flag = "EquipIdleAnimv23",
+    SearchBarEnabled = true,
     Values = GameData.EquipIdleListv23,
     Callback = function(value)
         GameData.SelectedEquipIdleIdv23 = GameData.EquipIdleMapv23[value]
