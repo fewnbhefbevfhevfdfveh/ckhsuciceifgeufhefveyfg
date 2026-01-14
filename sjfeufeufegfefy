@@ -570,28 +570,6 @@ local GameData = {
 
     -- ================== [Blatant V2] ==================
 
-    ReplicatedStoragev16 = game:GetService("ReplicatedStorage"),
-
-    Netv16 = {},
-
-    UltraBlatant = {
-        Active = false,
-        Settings = {
-            CompleteDelay = 0.73,
-            CancelDelay = 0.3,
-            ReCastDelay = 0.001
-        }
-    },
-
-    FishingState = {
-        lastCompleteTime = 0,
-        completeCooldown = 0.4
-    },
-
-    LastEventTime = 0,
-
-    -- ================== [Blatant V3] ==================
-
     ReplicatedStoragev19 = game:GetService("ReplicatedStorage"),
     Playersv19 = game:GetService("Players"),
 
@@ -3021,7 +2999,7 @@ end
 
 Sec.Main4:Input({
     Title = "Delay Cast V1",
-    Flag = "DelayCast",
+    Flag = "DelayCastV1",
     Value = "1.78",
     InputIcon = "clock",
     Type = "Input",
@@ -3037,7 +3015,7 @@ Sec.Main4:Input({
 
 Sec.Main4:Input({
     Title = "Delay Complete V1",
-    Flag = "DelayComplete",
+    Flag = "DelayCompleteV1",
     Value = "0.7",
     InputIcon = "clock",
     Type = "Input",
@@ -3064,181 +3042,6 @@ Sec.Main4:Toggle({
     end
 })
 
-Sec.Main4:Space()
-
-GameData.Netv16.Folder = GameData.ReplicatedStoragev16
-    :WaitForChild("Packages")
-    :WaitForChild("_Index")
-    :WaitForChild("sleitnick_net@0.2.0")
-    :WaitForChild("net")
-
-GameData.Netv16.RF_ChargeFishingRod =
-    GameData.Netv16.Folder:WaitForChild("RF/ChargeFishingRod")
-
-GameData.Netv16.RF_RequestMinigame =
-    GameData.Netv16.Folder:WaitForChild("RF/RequestFishingMinigameStarted")
-
-GameData.Netv16.RF_CancelFishingInputs =
-    GameData.Netv16.Folder:WaitForChild("RF/CancelFishingInputs")
-
-GameData.Netv16.RE_FishingCompleted =
-    GameData.Netv16.Folder:WaitForChild("RE/FishingCompleted")
-
-GameData.Netv16.RE_MinigameChanged =
-    GameData.Netv16.Folder:WaitForChild("RE/FishingMinigameChanged")
-
-GameData.SafeFire = function(func)
-    task.spawn(function()
-        pcall(func)
-    end)
-end
-
-GameData.ProtectedComplete = function()
-    local now = tick()
-
-    if now - GameData.FishingState.lastCompleteTime
-        < GameData.FishingState.completeCooldown then
-        return false
-    end
-
-    GameData.FishingState.lastCompleteTime = now
-
-    GameData.SafeFire(function()
-        GameData.Netv16.RE_FishingCompleted:FireServer()
-    end)
-
-    return true
-end
-
-GameData.PerformCast = function()
-    local now = tick()
-
-    GameData.SafeFire(function()
-        GameData.Netv16.RF_ChargeFishingRod:InvokeServer({ [1] = now })
-    end)
-
-    GameData.SafeFire(function()
-        GameData.Netv16.RF_RequestMinigame:InvokeServer(1, 0, now)
-    end)
-end
-
-GameData.FishingLoop = function()
-    while GameData.UltraBlatant.Active do
-        GameData.PerformCast()
-
-        task.wait(GameData.UltraBlatant.Settings.CompleteDelay)
-        if GameData.UltraBlatant.Active then
-            GameData.ProtectedComplete()
-        end
-
-        task.wait(GameData.UltraBlatant.Settings.CancelDelay)
-        if GameData.UltraBlatant.Active then
-            GameData.SafeFire(function()
-                GameData.Netv16.RF_CancelFishingInputs:InvokeServer()
-            end)
-        end
-
-        task.wait(GameData.UltraBlatant.Settings.ReCastDelay)
-    end
-end
-
-GameData.Netv16.RE_MinigameChanged.OnClientEvent:Connect(function()
-    if not GameData.UltraBlatant.Active then return end
-
-    local now = tick()
-
-    if now - GameData.LastEventTime < 0.2 then return end
-    if now - GameData.FishingState.lastCompleteTime < 0.3 then return end
-
-    GameData.LastEventTime = now
-
-    task.spawn(function()
-        task.wait(GameData.UltraBlatant.Settings.CompleteDelay)
-        if GameData.ProtectedComplete() then
-            task.wait(GameData.UltraBlatant.Settings.CancelDelay)
-            GameData.SafeFire(function()
-                GameData.Netv16.RF_CancelFishingInputs:InvokeServer()
-            end)
-        end
-    end)
-end)
-
-GameData.UltraBlatant.UpdateSettings = function(completeDelay, cancelDelay, recastDelay)
-    if completeDelay then
-        GameData.UltraBlatant.Settings.CompleteDelay = completeDelay
-    end
-    if cancelDelay then
-        GameData.UltraBlatant.Settings.CancelDelay = cancelDelay
-    end
-    if recastDelay then
-        GameData.UltraBlatant.Settings.ReCastDelay = recastDelay
-    end
-end
-
-GameData.UltraBlatant.Start = function()
-    if GameData.UltraBlatant.Active then return end
-
-    GameData.UltraBlatant.Active = true
-    GameData.FishingState.lastCompleteTime = 0
-
-    task.spawn(GameData.FishingLoop)
-end
-
-GameData.UltraBlatant.Stop = function()
-    if not GameData.UltraBlatant.Active then return end
-
-    GameData.UltraBlatant.Active = false
-
-    task.wait(0.1)
-    GameData.SafeFire(function()
-        GameData.Netv16.RF_CancelFishingInputs:InvokeServer()
-    end)
-end
-
-Sec.Main4:Input({
-    Title = "Complete Delay V2",
-    Flag = "CompleteDelayV2",
-    Locked = false,
-    Value = tostring(GameData.UltraBlatant.Settings.CompleteDelay),
-    InputIcon = "clock",
-    Placeholder = "Enter Delay...",
-    Callback = function(input)
-        local num = tonumber(input)
-        if num then
-            GameData.UltraBlatant.UpdateSettings(num, nil, nil)
-        end
-    end
-})
-
-Sec.Main4:Input({
-    Title = "Cancel Delay V2",
-    Flag = "CancelDelayV2",
-    Locked = false,
-    Value = tostring(GameData.UltraBlatant.Settings.CancelDelay),
-    InputIcon = "clock",
-    Placeholder = "Enter Delay...",
-    Callback = function(input)
-        local num = tonumber(input)
-        if num then
-            GameData.UltraBlatant.UpdateSettings(nil, num, nil)
-        end
-    end
-})
-
-Sec.Main4:Toggle({
-    Title = "Blatant V2",
-    Desc = "Beta Testing Blatant V2",
-    Flag = "BlatantV2",
-    Locked = false,
-    Value = false,
-    Callback = function(state)
-        if state then
-            GameData.UltraBlatant.Start()
-        else
-            GameData.UltraBlatant.Stop()
-        end
-    end
-})
 
 Sec.Main4:Space()
 
@@ -3333,8 +3136,8 @@ function GameData.Stopv19()
 end
 
 Sec.Main4:Input({
-    Title = "Complete Delay v3",
-    Flag = "CompleteDelayv3",
+    Title = "Complete Delay v2",
+    Flag = "CompleteDelayv2",
     Value = tostring(GameData.Settingsv19.CompleteDelay),
     InputIcon = "clock",
     Placeholder = "0.685",
@@ -3347,8 +3150,8 @@ Sec.Main4:Input({
 })
 
 Sec.Main4:Input({
-    Title = "Cancel Delay v3",
-    Flag = "CancelDelayv3",
+    Title = "Cancel Delay v2",
+    Flag = "CancelDelayv2",
     Value = tostring(GameData.Settingsv19.CancelDelay),
     InputIcon = "clock",
     Placeholder = "0.3",
@@ -3361,8 +3164,8 @@ Sec.Main4:Input({
 })
 
 Sec.Main4:Toggle({
-    Title = "Blatant V3",
-    Flag = "BlatantV3",
+    Title = "Blatant V2",
+    Flag = "BlatantV2",
     Value = false,
     Callback = function(state)
         if state then
