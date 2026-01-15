@@ -956,10 +956,10 @@ local GameData = {
     Playerv28 = game:GetService("Players").LocalPlayer,
 
     HuntListv28 = {
-        "Shark Hunt",
         "Ghost Shark Hunt",
         "Megalodon Hunt",
         "Worm Hunt",
+        "Shark Hunt",
     },
 
     SelectedHuntsv28 = {},
@@ -6618,93 +6618,126 @@ function GameData.getHRPv28()
 end
 
 function GameData.freezev28()
-    if not GameData.getHRPv28() then return end
+    local hrp = GameData.getHRPv28()
+    if not hrp then return end
+
+    GameData.unfreezev28()
 
     GameData.BVv28 = Instance.new("BodyVelocity")
     GameData.BVv28.MaxForce = Vector3.new(1e9, 1e9, 1e9)
     GameData.BVv28.Velocity = Vector3.zero
-    GameData.BVv28.Parent = GameData.getHRPv28()
+    GameData.BVv28.Parent = hrp
 
     GameData.BGv28 = Instance.new("BodyGyro")
     GameData.BGv28.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
-    GameData.BGv28.CFrame = GameData.getHRPv28().CFrame
-    GameData.BGv28.Parent = GameData.getHRPv28()
+    GameData.BGv28.CFrame = hrp.CFrame
+    GameData.BGv28.Parent = hrp
 end
 
 function GameData.unfreezev28()
+    local hrp = GameData.getHRPv28()
+    if not hrp then return end
+
     if GameData.BVv28 then GameData.BVv28:Destroy() GameData.BVv28 = nil end
     if GameData.BGv28 then GameData.BGv28:Destroy() GameData.BGv28 = nil end
-end
 
-function GameData.getTargetPartv28(model, huntName)
-    if not model then return nil end
-
-    if huntName == "Worm Hunt" then
-        return model:FindFirstChild("Part")
-    end
-
-    local rp = model:FindFirstChild("RotationPoint", true)
-    if rp and rp:IsA("BasePart") then
-        return rp
-    end
-
-    local p = model:FindFirstChild("Part", true)
-    if p and p:IsA("BasePart") then
-        return p
-    end
-
-    if model.PrimaryPart then return model.PrimaryPart end
-
-    local parts = {}
-    for _, v in ipairs(model:GetDescendants()) do
-        if v:IsA("BasePart") then
-            table.insert(parts, v)
+    for _, obj in ipairs(hrp:GetChildren()) do
+        if obj:IsA("BodyVelocity")
+        or obj:IsA("BodyGyro")
+        or obj:IsA("BodyPosition")
+        or obj:IsA("BodyAngularVelocity") then
+            obj:Destroy()
         end
     end
+end
 
-    if #parts > 0 then
-        local pivot = model:GetPivot().Position
-        table.sort(parts, function(a, b)
-            return (a.Position - pivot).Magnitude <
-                   (b.Position - pivot).Magnitude
-        end)
-        return parts[1]
+GameData.Playerv28.CharacterAdded:Connect(function()
+    task.wait(0.2)
+    GameData.unfreezev28()
+end)
+
+function GameData.getModelv28(hunt)
+    local Props = workspace:FindFirstChild("Props")
+
+    if hunt == "Shark Hunt" then
+        for _, v in ipairs(workspace:GetChildren()) do
+            if v:FindFirstChild("Shark Hunt") then
+                return v:FindFirstChild("Shark Hunt")
+            end
+        end
+        return nil
+    end
+
+    if hunt == "Worm Hunt" and Props then
+        return Props:FindFirstChild("Model")
+    end
+
+    if Props then
+        return Props:FindFirstChild(hunt)
     end
 
     return nil
 end
 
-function GameData.getModelv28(hunt)
-    if not workspace:FindFirstChild("Props") then return nil end
-    if hunt == "Worm Hunt" then
-        return workspace.Props:FindFirstChild("Model")
+function GameData.getTargetv28(hunt)
+    local model = GameData.getModelv28(hunt)
+    if not model then return nil end
+
+    if hunt == "Shark Hunt" then
+        local p = model:FindFirstChild("Part")
+        if p and p:IsA("BasePart") then
+            return { Type = "Part", Object = p }
+        end
     end
-    return workspace.Props:FindFirstChild(hunt)
+
+    if hunt == "Worm Hunt" then
+        local p = model:FindFirstChildWhichIsA("BasePart", true)
+        if p then
+            return { Type = "Part", Object = p }
+        end
+    end
+
+    local ok, cf = pcall(function()
+        return model:GetPivot()
+    end)
+    if ok and cf then
+        return { Type = "Pivot", CFrame = cf }
+    end
+
+    local p = model:FindFirstChildWhichIsA("BasePart", true)
+    if p then
+        return { Type = "Part", Object = p }
+    end
+
+    return nil
 end
 
 function GameData.teleportTov28(hunt)
-    if not GameData.getHRPv28() then return end
+    local hrp = GameData.getHRPv28()
+    if not hrp then return end
 
-    local model = GameData.getModelv28(hunt)
-    if not model then return end
-
-    local part = GameData.getTargetPartv28(model, hunt)
-    if not part then return end
+    local target = GameData.getTargetv28(hunt)
+    if not target then return end
 
     if not GameData.SavedCFramev28 then
-        GameData.SavedCFramev28 = GameData.getHRPv28().CFrame
+        GameData.SavedCFramev28 = hrp.CFrame
     end
 
-    GameData.getHRPv28().CFrame = part.CFrame + Vector3.new(0, 6, 0)
+    local cf = target.Type == "Pivot"
+        and (target.CFrame + Vector3.new(0, 6, 0))
+        or  (target.Object.CFrame + Vector3.new(0, 6, 0))
 
-    task.wait(0.1)
+    for _ = 1, 6 do
+        hrp.CFrame = cf
+        task.wait(0.05)
+    end
+
     GameData.freezev28()
-
     GameData.CurrentHuntv28 = hunt
 end
 
 task.spawn(function()
-    while task.wait(3) do
+    while task.wait(2) do
         if not GameData.Activev28 then continue end
 
         if GameData.CurrentHuntv28 then
@@ -6713,6 +6746,7 @@ task.spawn(function()
                 continue
             else
                 GameData.CurrentHuntv28 = nil
+                GameData.unfreezev28()
             end
         end
 
@@ -6729,11 +6763,18 @@ end)
 Sec.Tp4:Dropdown({
     Title = "Select Event",
     Flag = "SelectEventv28",
+    Desc = "Choose events to join",
     Values = GameData.HuntListv28,
     Multi = true,
     AllowNone = true,
     Callback = function(option)
-        GameData.SelectedHuntsv28 = option
+        if typeof(option) == "table" then
+            GameData.SelectedHuntsv28 = option
+        elseif typeof(option) == "string" then
+            GameData.SelectedHuntsv28 = { option }
+        else
+            GameData.SelectedHuntsv28 = {}
+        end
     end
 })
 
@@ -6744,11 +6785,22 @@ Sec.Tp4:Toggle({
     Callback = function(state)
         GameData.Activev28 = state
 
-        if not state then
-            GameData.unfreezev28()
-            if GameData.getHRPv28() and GameData.SavedCFramev28 then
-                GameData.getHRPv28().CFrame = GameData.SavedCFramev28
+        if state then
+            for _, hunt in ipairs(GameData.SelectedHuntsv28) do
+                local m = GameData.getModelv28(hunt)
+                if m and m.Parent then
+                    GameData.teleportTov28(hunt)
+                    break
+                end
             end
+        else
+            GameData.unfreezev28()
+
+            local hrp = GameData.getHRPv28()
+            if hrp and GameData.SavedCFramev28 then
+                hrp.CFrame = GameData.SavedCFramev28
+            end
+
             GameData.SavedCFramev28 = nil
             GameData.CurrentHuntv28 = nil
         end
