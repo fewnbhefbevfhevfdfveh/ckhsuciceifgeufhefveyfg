@@ -7705,20 +7705,7 @@ Sec.Config1:Button({
 local function AutoLoadConfig()
     if not AutoFeatureEnabled then return end
     Window.CurrentConfig = ConfigManager:CreateConfig(AutoConfigName)
-    if Window.CurrentConfig:Load() then
-        WindUI:Notify({
-            Title = "AutoLoad",
-            Content = "Config '" .. AutoConfigName .. "' loaded successfully!",
-            Duration = 3,
-            Icon = "refresh-cw"
-        })
-    else
-        WindUI:Notify({
-            Title = "AutoLoad",
-            Content = "Config '" .. AutoConfigName .. "' not found, creating new one.",
-            Duration = 3,
-            Icon = "alert-circle"
-        })
+    if not Window.CurrentConfig:Load() then
         Window.CurrentConfig:Save()
     end
 end
@@ -7726,27 +7713,12 @@ end
 local function AutoSaveConfig()
     if not AutoFeatureEnabled then return end
     if Window.CurrentConfig then
-        if Window.CurrentConfig:Save() then
-            WindUI:Notify({
-                Title = "AutoSave",
-                Content = "Config '" .. AutoConfigName .. "' saved successfully!",
-                Duration = 3,
-                Icon = "check"
-            })
-        else
-            WindUI:Notify({
-                Title = "AutoSave",
-                Content = "Failed to save config '" .. AutoConfigName .. "'!",
-                Duration = 3,
-                Icon = "alert-circle"
-            })
-        end
+        Window.CurrentConfig:Save()
     end
 end
 
 Sec.Config1:Toggle({
     Title = "Auto Save & Load",
-    Flag = "AutoSaveLoad",
     Desc = "Automatically save and load config",
     Value = false,
     Callback = function(state)
@@ -7759,7 +7731,7 @@ Sec.Config1:Toggle({
 
 spawn(function()
     while true do
-        wait(20)
+        wait(40)
         AutoSaveConfig()
     end
 end)
