@@ -950,62 +950,50 @@ local GameData = {
 
    -- ================== [Auto Join Event] ==================
 
-    -- SERVICES
-    Services = {
-        Players = game:GetService("Players"),
-        RunService = game:GetService("RunService"),
+    Playersv28 = game:GetService("Players"),
+    RunServicev28 = game:GetService("RunService"),
+
+    Playerv28 = game:GetService("Players").LocalPlayer,
+
+    HuntListv28 = {
+        "Shark Hunt",
+        "Ghost Shark Hunt",
+        "Megalodon Hunt",
+        "Worm Hunt",
     },
 
-    -- PLAYER / CHARACTER
-    Player = game:GetService("Players").LocalPlayer,
-    Character = nil,
-    HRP = nil,
+    SelectedHuntsv28 = {},
+    Activev28 = false,
+    CurrentHuntv28 = nil,
+    SavedCFramev28 = nil,
 
-    -- EVENT HUB
-    EventHub = {
-        ["Megalodon Hunt"] = "Megalodon Hunt",
-        ["Worm Hunt"] = "Model",
-        ["Shark Hunt"] = "Shark Hunt",
-        ["Ghost Shark Hunt"] = "Ghost Shark Hunt"
-    },
-
-    -- STATE
-    AutoJoinEvent = false,
-    SelectedEvents = {},
-
-    WatchingEvent = nil,
-    SavedCFrame = CFrame.new(),
-    CurrentPlatform = nil,
-    PlatformCFrame = CFrame.new(),
-    ProtectConnection = nil,
-
-    -- UI CACHE
-    EventOptions = {},
+    BVv28 = nil,
+    BGv28 = nil,
 
    -- ================== [Drone Camera] ==================
 
-	Services = {
+	Servicesv28 = {
 		Players = game:GetService("Players"),
 		UIS = game:GetService("UserInputService"),
 		RunService = game:GetService("RunService"),
 	},
 
-	Player = game:GetService("Players").LocalPlayer,
-	Camera = workspace.CurrentCamera,
+	Playerv28 = game:GetService("Players").LocalPlayer,
+	Camerasv28 = workspace.CurrentCamera,
 
-	Drone = false,
-	Speed = 1.4,
-	Sensitivity = 0.3,
+	Dronev28 = false,
+	Speedv28 = 1.4,
+	Sensitivityv28 = 0.3,
 
-	Yaw = 0,
-	Pitch = 0,
-	MoveForward = 0,
-	MoveRight = 0,
+	Yawv28 = 0,
+	Pitchv28 = 0,
+	MoveForwardv28 = 0,
+	MoveRightv28 = 0,
 
-	GUI = nil,
-	LeftFrame = nil,
+	GUIsv28 = nil,
+	LeftFramev28 = nil,
 
-	Buttons = {
+	Buttonsv28 = {
 		Forward = nil,
 		Back = nil,
 		Left = nil,
@@ -1240,6 +1228,44 @@ local GameData = {
 
     OldPlayAnimationv22 = nil,
     OldStopAnimationv22 = nil,
+
+	--================ Boost Cpu ===============
+
+    Playersv25 = game:GetService("Players"),
+    Lightingv25 = game:GetService("Lighting"),
+
+    Playerv25 = nil,
+    BoostRunningv25 = false,
+
+	--================ Anti Staf ===============
+
+
+	--================ Freeze Character ===============
+
+    Playersv26 = game:GetService("Players"),
+    UISv26 = game:GetService("UserInputService"),
+
+    Playerv26 = game:GetService("Players").LocalPlayer,
+
+    Freezev26 = false,
+
+    Characterv26 = nil,
+    Rootv26 = nil,
+
+    BVv26 = nil,
+    BGv26 = nil,
+
+    FreezeTogglev26 = nil,
+
+	--================ Black Screen ===============
+
+    Playersv27 = game:GetService("Players"),
+
+    Playerv27 = game:GetService("Players").LocalPlayer,
+
+    BlackGuiv27 = nil,
+    BlackFramev27 = nil,
+    AFKTextv27 = nil
 }
 
 local Window = WindUI:CreateWindow({
@@ -1317,8 +1343,13 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-Tab Main:
- [/] Rework Show Network Stats
+Tab Teleport
+ [+] Auto Join Event Megalodon,Etc
+Tab Player:
+ [+] Added Black Screen
+ [+] Added Boost Cpu
+[/] Move Freecam Drone to the Main Tab
+
 ]],
     Locked = false
 })
@@ -3875,6 +3906,197 @@ Sec.Main8:Toggle({
     end
 })
 
+Sec.Main10 = Tabs.Main:Section({
+    Title = "Freecamera Drone",
+    Box = true,
+    BoxBorder = true,
+    Opened = false,
+})
+
+function GameData:ResetCameraToPlayerv28()
+	local charv28 = self.Playerv28.Character
+	if not charv28 then return end
+	local headv28 = charv28:FindFirstChild("Head") or charv28:FindFirstChild("HumanoidRootPart")
+	if headv28 then
+		self.Camerasv28.CFrame = headv28.CFrame
+	end
+end
+
+function GameData:SetCharacterMovev28(enabledv28)
+	local charv28 = self.Playerv28.Character
+	if not charv28 then return end
+	local humv28 = charv28:FindFirstChildOfClass("Humanoid")
+	if not humv28 then return end
+	if enabledv28 then
+		humv28.WalkSpeed = 16
+		humv28.JumpPower = 50
+	else
+		humv28.WalkSpeed = 0
+		humv28.JumpPower = 50
+	end
+end
+
+GameData.GUIsv28 = Instance.new("ScreenGui")
+GameData.GUIsv28.Name = "DroneCameraGUIv28"
+GameData.GUIsv28.ResetOnSpawn = false
+GameData.GUIsv28.Enabled = false
+GameData.GUIsv28.Parent = GameData.Playerv28.PlayerGui
+
+GameData.LeftFramev28 = Instance.new("Frame")
+GameData.LeftFramev28.Size = UDim2.fromScale(0.28, 0.35)
+GameData.LeftFramev28.Position = UDim2.fromScale(0.03, 0.55)
+GameData.LeftFramev28.AnchorPoint = Vector2.new(0, 1)
+GameData.LeftFramev28.BackgroundTransparency = 1
+GameData.LeftFramev28.Parent = GameData.GUIsv28
+
+function GameData:CreateButtonv28(textv28, posv28)
+	local bv28 = Instance.new("TextButton")
+	bv28.Size = UDim2.fromScale(0.32, 0.32)
+	bv28.Position = posv28
+	bv28.Text = textv28
+	bv28.Font = Enum.Font.GothamBold
+	bv28.TextScaled = true
+	bv28.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	bv28.TextColor3 = Color3.new(1,1,1)
+	bv28.Parent = self.LeftFramev28
+	local cv28 = Instance.new("UICorner")
+	cv28.CornerRadius = UDim.new(0.25,0)
+	cv28.Parent = bv28
+	return bv28
+end
+
+GameData.Buttonsv28.Forward = GameData:CreateButtonv28("▲", UDim2.fromScale(0.34, 0))
+GameData.Buttonsv28.Back    = GameData:CreateButtonv28("▼", UDim2.fromScale(0.34, 0.68))
+GameData.Buttonsv28.Left    = GameData:CreateButtonv28("◀", UDim2.fromScale(0, 0.34))
+GameData.Buttonsv28.Right   = GameData:CreateButtonv28("▶", UDim2.fromScale(0.68, 0.34))
+
+function GameData:EnableDronev28()
+	self.Dronev28 = true
+	self.Yawv28 = 0
+	self.Pitchv28 = 0
+	self:SetCharacterMovev28(false)
+	self.Camerasv28.CameraType = Enum.CameraType.Scriptable
+	self:ResetCameraToPlayerv28()
+	self.GUIsv28.Enabled = true
+end
+
+function GameData:DisableDronev28()
+	self.Dronev28 = false
+	self:SetCharacterMovev28(true)
+	self.Camerasv28.CameraType = Enum.CameraType.Custom
+	self:ResetCameraToPlayerv28()
+	self.GUIsv28.Enabled = false
+end
+
+GameData.Buttonsv28.Forward.MouseButton1Down:Connect(function()
+	GameData.MoveForwardv28 = 1
+end)
+GameData.Buttonsv28.Forward.MouseButton1Up:Connect(function()
+	GameData.MoveForwardv28 = 0
+end)
+
+GameData.Buttonsv28.Back.MouseButton1Down:Connect(function()
+	GameData.MoveForwardv28 = -1
+end)
+GameData.Buttonsv28.Back.MouseButton1Up:Connect(function()
+	GameData.MoveForwardv28 = 0
+end)
+
+GameData.Buttonsv28.Left.MouseButton1Down:Connect(function()
+	GameData.MoveRightv28 = -1
+end)
+GameData.Buttonsv28.Left.MouseButton1Up:Connect(function()
+	GameData.MoveRightv28 = 0
+end)
+
+GameData.Buttonsv28.Right.MouseButton1Down:Connect(function()
+	GameData.MoveRightv28 = 1
+end)
+GameData.Buttonsv28.Right.MouseButton1Up:Connect(function()
+	GameData.MoveRightv28 = 0
+end)
+
+GameData.Servicesv28.UIS.TouchMoved:Connect(function(inputv28, gpev28)
+	if not GameData.Dronev28 or gpev28 then return end
+	GameData.Yawv28 -= inputv28.Delta.X * GameData.Sensitivityv28
+	GameData.Pitchv28 -= inputv28.Delta.Y * GameData.Sensitivityv28
+	GameData.Pitchv28 = math.clamp(GameData.Pitchv28, -80, 80)
+end)
+
+GameData.Servicesv28.UIS.InputBegan:Connect(function(inputv28, gpev28)
+	if gpev28 or not GameData.Dronev28 then return end
+	if inputv28.KeyCode == Enum.KeyCode.W then
+		GameData.MoveForwardv28 = 1
+	elseif inputv28.KeyCode == Enum.KeyCode.S then
+		GameData.MoveForwardv28 = -1
+	elseif inputv28.KeyCode == Enum.KeyCode.A then
+		GameData.MoveRightv28 = -1
+	elseif inputv28.KeyCode == Enum.KeyCode.D then
+		GameData.MoveRightv28 = 1
+	end
+end)
+
+GameData.Servicesv28.UIS.InputEnded:Connect(function(inputv28)
+	if not GameData.Dronev28 then return end
+	if inputv28.KeyCode == Enum.KeyCode.W or inputv28.KeyCode == Enum.KeyCode.S then
+		GameData.MoveForwardv28 = 0
+	elseif inputv28.KeyCode == Enum.KeyCode.A or inputv28.KeyCode == Enum.KeyCode.D then
+		GameData.MoveRightv28 = 0
+	end
+end)
+
+GameData.Servicesv28.UIS.InputChanged:Connect(function(inputv28, gpev28)
+	if not GameData.Dronev28 or gpev28 then return end
+	if inputv28.UserInputType == Enum.UserInputType.MouseMovement then
+		GameData.Yawv28 -= inputv28.Delta.X * GameData.Sensitivityv28
+		GameData.Pitchv28 -= inputv28.Delta.Y * GameData.Sensitivityv28
+	end
+	if inputv28.KeyCode == Enum.KeyCode.Thumbstick1 then
+		GameData.MoveRightv28 = inputv28.Position.X
+		GameData.MoveForwardv28 = -inputv28.Position.Y
+	end
+	if inputv28.KeyCode == Enum.KeyCode.Thumbstick2 then
+		GameData.Yawv28 -= inputv28.Position.X * GameData.Sensitivityv28 * 5
+		GameData.Pitchv28 -= inputv28.Position.Y * GameData.Sensitivityv28 * 5
+	end
+	GameData.Pitchv28 = math.clamp(GameData.Pitchv28, -80, 80)
+end)
+
+GameData.Servicesv28.RunService.RenderStepped:Connect(function()
+	if not GameData.Dronev28 then return end
+	local cfv28 =
+		CFrame.new(GameData.Camerasv28.CFrame.Position) *
+		CFrame.Angles(0, math.rad(GameData.Yawv28), 0) *
+		CFrame.Angles(math.rad(GameData.Pitchv28), 0, 0)
+	local movev28 =
+		(cfv28.LookVector * GameData.MoveForwardv28) +
+		(cfv28.RightVector * GameData.MoveRightv28)
+	GameData.Camerasv28.CFrame = cfv28 + (movev28 * GameData.Speedv28)
+end)
+
+Sec.Main10:Toggle({
+    Title = "Drone Camera",
+    Flag = "DroneCamera",
+    Default = false,
+    Callback = function(valuev28)
+        if valuev28 then
+            GameData:EnableDronev28()
+        else
+            GameData:DisableDronev28()
+        end
+    end
+})
+
+Sec.Main10:Toggle({
+    Title = "Hide Gui Drone",
+    Flag = "HideGuiDrone",
+    Default = false,
+    Callback = function(value)
+        local gui = game.Players.LocalPlayer.PlayerGui:WaitForChild("DroneCameraGUI")
+        gui.Enabled = not value
+    end
+})
+
 Sec.Backpack1 = Tabs.Backpack:Section({
     Title = "Equipment Feature",
     Box = true,
@@ -4377,14 +4599,14 @@ GameData.QuestList = GetQuestList()
 
 GameData.ElementParagraph = Sec.Quest1:Paragraph({
     Title = "Element Quest",
-    Desc = "Waiting quest...",
+    Desc = "No Progress Data",
     Locked = false,
     Buttons = {}
 })
 
 GameData.DeepSeaParagraph = Sec.Quest1:Paragraph({
     Title = "Deep Sea Quest",
-    Desc = "Waiting quest...",
+    Desc = "No Progress Data",
     Locked = false,
     Buttons = {}
 })
@@ -4828,25 +5050,25 @@ end)
 
 GameData.ProgresDiamondRod = Sec.Quest4:Paragraph({
     Title = "Progres Quest Diamond Rod",
-    Desc = "Loading..."
+    Desc = "No Progress Data",
 })
 
 function GameData.UpdateDiamondQuestDesc()
     local pg = GameData.player:FindFirstChild("PlayerGui")
     if not pg then
-        GameData.ProgresDiamondRod:SetDesc("Loading...")
+        GameData.ProgresDiamondRod:SetDesc("Loading... Progress Data")
         return
     end
 
     local questGui = pg:FindFirstChild("Quest")
     if not questGui or not questGui:FindFirstChild("List") then
-        GameData.ProgresDiamondRod:SetDesc("Loading...")
+        GameData.ProgresDiamondRod:SetDesc("Loading... Progress Data")
         return
     end
 
     GameData.inside = questGui.List:FindFirstChild("Inside")
     if not GameData.inside then
-        GameData.ProgresDiamondRod:SetDesc("Loading...")
+        GameData.ProgresDiamondRod:SetDesc("No Progress Data")
         return
     end
 
@@ -6306,6 +6528,224 @@ Sec.Tp3:Toggle({
     end
 })
 
+function GameData:GetRootv26()
+    self.Characterv26 = self.Playerv26.Character
+    if self.Characterv26 then
+        self.Rootv26 = self.Characterv26:FindFirstChild("HumanoidRootPart")
+        return self.Rootv26
+    end
+end
+
+function GameData:FreezeCharacterv26()
+    self.Rootv26 = self:GetRootv26()
+    if not self.Rootv26 then return end
+
+    self.BVv26 = Instance.new("BodyVelocity")
+    self.BVv26.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    self.BVv26.Velocity = Vector3.zero
+    self.BVv26.Parent = self.Rootv26
+
+    self.BGv26 = Instance.new("BodyGyro")
+    self.BGv26.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    self.BGv26.CFrame = self.Rootv26.CFrame
+    self.BGv26.P = 10000
+    self.BGv26.Parent = self.Rootv26
+end
+
+function GameData:UnfreezeCharacterv26()
+    if self.BVv26 then
+        self.BVv26:Destroy()
+        self.BVv26 = nil
+    end
+    if self.BGv26 then
+        self.BGv26:Destroy()
+        self.BGv26 = nil
+    end
+end
+
+function GameData:ApplyFreezerv26(state)
+    self.Freezev26 = state
+    if state then
+        self:FreezeCharacterv26()
+    else
+        self:UnfreezeCharacterv26()
+    end
+end
+
+GameData.FreezeTogglev26 = Sec.Tp3:Toggle({
+    Title = "Freeze Character",
+    Value = false,
+    Callback = function(state)
+        GameData:ApplyFreezerv26(state)
+    end
+})
+
+GameData.UISv26.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.F then
+        GameData:ApplyFreezerv26(not GameData.Freezev26)
+        if GameData.FreezeTogglev26 and GameData.FreezeTogglev26.SetValue then
+            GameData.FreezeTogglev26:SetValue(GameData.Freezev26)
+        end
+    end
+end)
+
+GameData.Playerv26.CharacterAdded:Connect(function()
+    if GameData.Freezev26 then
+        task.wait(0.3)
+        GameData:FreezeCharacterv26()
+    end
+end)
+
+Sec.Tp4 = Tabs.Tp:Section({
+    Title = "Join Event",
+    Box = true,
+    BoxBorder = true,
+    Opened = true,
+})
+
+function GameData.getHRPv28()
+    return GameData.Playerv28.Character
+        and GameData.Playerv28.Character:FindFirstChild("HumanoidRootPart")
+end
+
+function GameData.freezev28()
+    if not GameData.getHRPv28() then return end
+
+    GameData.BVv28 = Instance.new("BodyVelocity")
+    GameData.BVv28.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+    GameData.BVv28.Velocity = Vector3.zero
+    GameData.BVv28.Parent = GameData.getHRPv28()
+
+    GameData.BGv28 = Instance.new("BodyGyro")
+    GameData.BGv28.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+    GameData.BGv28.CFrame = GameData.getHRPv28().CFrame
+    GameData.BGv28.Parent = GameData.getHRPv28()
+end
+
+function GameData.unfreezev28()
+    if GameData.BVv28 then GameData.BVv28:Destroy() GameData.BVv28 = nil end
+    if GameData.BGv28 then GameData.BGv28:Destroy() GameData.BGv28 = nil end
+end
+
+function GameData.getTargetPartv28(model, huntName)
+    if not model then return nil end
+
+    if huntName == "Worm Hunt" then
+        return model:FindFirstChild("Part")
+    end
+
+    local rp = model:FindFirstChild("RotationPoint", true)
+    if rp and rp:IsA("BasePart") then
+        return rp
+    end
+
+    local p = model:FindFirstChild("Part", true)
+    if p and p:IsA("BasePart") then
+        return p
+    end
+
+    if model.PrimaryPart then return model.PrimaryPart end
+
+    local parts = {}
+    for _, v in ipairs(model:GetDescendants()) do
+        if v:IsA("BasePart") then
+            table.insert(parts, v)
+        end
+    end
+
+    if #parts > 0 then
+        local pivot = model:GetPivot().Position
+        table.sort(parts, function(a, b)
+            return (a.Position - pivot).Magnitude <
+                   (b.Position - pivot).Magnitude
+        end)
+        return parts[1]
+    end
+
+    return nil
+end
+
+function GameData.getModelv28(hunt)
+    if not workspace:FindFirstChild("Props") then return nil end
+    if hunt == "Worm Hunt" then
+        return workspace.Props:FindFirstChild("Model")
+    end
+    return workspace.Props:FindFirstChild(hunt)
+end
+
+function GameData.teleportTov28(hunt)
+    if not GameData.getHRPv28() then return end
+
+    local model = GameData.getModelv28(hunt)
+    if not model then return end
+
+    local part = GameData.getTargetPartv28(model, hunt)
+    if not part then return end
+
+    if not GameData.SavedCFramev28 then
+        GameData.SavedCFramev28 = GameData.getHRPv28().CFrame
+    end
+
+    GameData.getHRPv28().CFrame = part.CFrame + Vector3.new(0, 6, 0)
+
+    task.wait(0.1)
+    GameData.freezev28()
+
+    GameData.CurrentHuntv28 = hunt
+end
+
+task.spawn(function()
+    while task.wait(3) do
+        if not GameData.Activev28 then continue end
+
+        if GameData.CurrentHuntv28 then
+            local m = GameData.getModelv28(GameData.CurrentHuntv28)
+            if m and m.Parent then
+                continue
+            else
+                GameData.CurrentHuntv28 = nil
+            end
+        end
+
+        for _, hunt in ipairs(GameData.SelectedHuntsv28) do
+            local m = GameData.getModelv28(hunt)
+            if m and m.Parent then
+                GameData.teleportTov28(hunt)
+                break
+            end
+        end
+    end
+end)
+
+Sec.Tp4:Dropdown({
+    Title = "Select Event",
+    Values = GameData.HuntListv28,
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option)
+        GameData.SelectedHuntsv28 = option
+    end
+})
+
+Sec.Tp4:Toggle({
+    Title = "Join Event",
+    Value = false,
+    Callback = function(state)
+        GameData.Activev28 = state
+
+        if not state then
+            GameData.unfreezev28()
+            if GameData.getHRPv28() and GameData.SavedCFramev28 then
+                GameData.getHRPv28().CFrame = GameData.SavedCFramev28
+            end
+            GameData.SavedCFramev28 = nil
+            GameData.CurrentHuntv28 = nil
+        end
+    end
+})
+
+
 Sec.Player1 = Tabs.Player:Section({
     Title = "Player Identity",
     Box = true,
@@ -6395,191 +6835,6 @@ Sec.Player = Tabs.Player:Section({
     Box = true,
     BoxBorder = true,
     Opened = true,
-})
-
-function GameData:ResetCameraToPlayer()
-	local char = self.Player.Character
-	if not char then return end
-	local head = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
-	if head then
-		self.Camera.CFrame = head.CFrame
-	end
-end
-
-function GameData:SetCharacterMove(enabled)
-	local char = self.Player.Character
-	if not char then return end
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if not hum then return end
-	if enabled then
-		hum.WalkSpeed = 16
-		hum.JumpPower = 50
-	else
-		hum.WalkSpeed = 0
-		hum.JumpPower = 50
-	end
-end
-
-GameData.GUI = Instance.new("ScreenGui")
-GameData.GUI.Name = "DroneCameraGUI"
-GameData.GUI.ResetOnSpawn = false
-GameData.GUI.Enabled = false
-GameData.GUI.Parent = GameData.Player.PlayerGui
-
-GameData.LeftFrame = Instance.new("Frame")
-GameData.LeftFrame.Size = UDim2.fromScale(0.28, 0.35)
-GameData.LeftFrame.Position = UDim2.fromScale(0.03, 0.55)
-GameData.LeftFrame.AnchorPoint = Vector2.new(0, 1)
-GameData.LeftFrame.BackgroundTransparency = 1
-GameData.LeftFrame.Parent = GameData.GUI
-
-function GameData:CreateButton(text, pos)
-	local b = Instance.new("TextButton")
-	b.Size = UDim2.fromScale(0.32, 0.32)
-	b.Position = pos
-	b.Text = text
-	b.Font = Enum.Font.GothamBold
-	b.TextScaled = true
-	b.BackgroundColor3 = Color3.fromRGB(30,30,30)
-	b.TextColor3 = Color3.new(1,1,1)
-	b.Parent = self.LeftFrame
-	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0.25,0)
-	c.Parent = b
-	return b
-end
-
-GameData.Buttons.Forward = GameData:CreateButton("▲", UDim2.fromScale(0.34, 0))
-GameData.Buttons.Back    = GameData:CreateButton("▼", UDim2.fromScale(0.34, 0.68))
-GameData.Buttons.Left    = GameData:CreateButton("◀", UDim2.fromScale(0, 0.34))
-GameData.Buttons.Right   = GameData:CreateButton("▶", UDim2.fromScale(0.68, 0.34))
-
-function GameData:EnableDrone()
-	self.Drone = true
-	self.Yaw = 0
-	self.Pitch = 0
-	self:SetCharacterMove(false)
-	self.Camera.CameraType = Enum.CameraType.Scriptable
-	self:ResetCameraToPlayer()
-	self.GUI.Enabled = true
-end
-
-function GameData:DisableDrone()
-	self.Drone = false
-	self:SetCharacterMove(true)
-	self.Camera.CameraType = Enum.CameraType.Custom
-	self:ResetCameraToPlayer()
-	self.GUI.Enabled = false
-end
-
-GameData.Buttons.Forward.MouseButton1Down:Connect(function()
-	GameData.MoveForward = 1
-end)
-GameData.Buttons.Forward.MouseButton1Up:Connect(function()
-	GameData.MoveForward = 0
-end)
-
-GameData.Buttons.Back.MouseButton1Down:Connect(function()
-	GameData.MoveForward = -1
-end)
-GameData.Buttons.Back.MouseButton1Up:Connect(function()
-	GameData.MoveForward = 0
-end)
-
-GameData.Buttons.Left.MouseButton1Down:Connect(function()
-	GameData.MoveRight = -1
-end)
-GameData.Buttons.Left.MouseButton1Up:Connect(function()
-	GameData.MoveRight = 0
-end)
-
-GameData.Buttons.Right.MouseButton1Down:Connect(function()
-	GameData.MoveRight = 1
-end)
-GameData.Buttons.Right.MouseButton1Up:Connect(function()
-	GameData.MoveRight = 0
-end)
-
-GameData.Services.UIS.TouchMoved:Connect(function(input, gpe)
-	if not GameData.Drone or gpe then return end
-	GameData.Yaw -= input.Delta.X * GameData.Sensitivity
-	GameData.Pitch -= input.Delta.Y * GameData.Sensitivity
-	GameData.Pitch = math.clamp(GameData.Pitch, -80, 80)
-end)
-
-GameData.Services.UIS.InputBegan:Connect(function(input, gpe)
-	if gpe or not GameData.Drone then return end
-	if input.KeyCode == Enum.KeyCode.W then
-		GameData.MoveForward = 1
-	elseif input.KeyCode == Enum.KeyCode.S then
-		GameData.MoveForward = -1
-	elseif input.KeyCode == Enum.KeyCode.A then
-		GameData.MoveRight = -1
-	elseif input.KeyCode == Enum.KeyCode.D then
-		GameData.MoveRight = 1
-	end
-end)
-
-GameData.Services.UIS.InputEnded:Connect(function(input)
-	if not GameData.Drone then return end
-	if input.KeyCode == Enum.KeyCode.W or input.KeyCode == Enum.KeyCode.S then
-		GameData.MoveForward = 0
-	elseif input.KeyCode == Enum.KeyCode.A or input.KeyCode == Enum.KeyCode.D then
-		GameData.MoveRight = 0
-	end
-end)
-
-GameData.Services.UIS.InputChanged:Connect(function(input, gpe)
-	if not GameData.Drone or gpe then return end
-	if input.UserInputType == Enum.UserInputType.MouseMovement then
-		GameData.Yaw -= input.Delta.X * GameData.Sensitivity
-		GameData.Pitch -= input.Delta.Y * GameData.Sensitivity
-	end
-	if input.KeyCode == Enum.KeyCode.Thumbstick1 then
-		GameData.MoveRight = input.Position.X
-		GameData.MoveForward = -input.Position.Y
-	end
-	if input.KeyCode == Enum.KeyCode.Thumbstick2 then
-		GameData.Yaw -= input.Position.X * GameData.Sensitivity * 5
-		GameData.Pitch -= input.Position.Y * GameData.Sensitivity * 5
-	end
-	GameData.Pitch = math.clamp(GameData.Pitch, -80, 80)
-end)
-
-GameData.Services.RunService.RenderStepped:Connect(function()
-	if not GameData.Drone then return end
-	local cf =
-		CFrame.new(GameData.Camera.CFrame.Position) *
-		CFrame.Angles(0, math.rad(GameData.Yaw), 0) *
-		CFrame.Angles(math.rad(GameData.Pitch), 0, 0)
-	local move =
-		(cf.LookVector * GameData.MoveForward) +
-		(cf.RightVector * GameData.MoveRight)
-	GameData.Camera.CFrame = cf + (move * GameData.Speed)
-end)
-
-Sec.Player:Toggle({
-    Title = "Drone Camera",
-    Flag = "DroneCamera",
-    Default = false,
-    Callback = function(value)
-        if value then
-            GameData:EnableDrone()
-        else
-            GameData:DisableDrone()
-        end
-    end
-})
-
-
-Sec.Player:Toggle({
-    Title = "Hide Gui Drone",
-    Flag = "HideGuiDrone",
-    Default = false,
-    Callback = function(value)
-        local gui = game.Players.LocalPlayer.PlayerGui:WaitForChild("DroneCameraGUI")
-        gui.Enabled = not value
-    end
 })
 
 local AntiDrown_Enabled = false
@@ -6879,6 +7134,138 @@ Sec.Player:Toggle({
     end
 })
 
+Sec.Player2 = Tabs.Player:Section({
+    Title = "Anti Afk",
+    Box = true,
+    BoxBorder = true,
+    Opened = true,
+})
+
+GameData.AntiAFKParagraph = Sec.Player2:Paragraph({
+    Title = "Anti AFK Time",
+    Flag = "AntiAFK",
+    Desc = "AFK: 0 Min 0 Sec"
+})
+
+function GameData.resetAFK()
+    GameData.lastInput = tick()
+end
+
+GameData.connections.began =
+    GameData.UserInputService.InputBegan:Connect(GameData.resetAFK)
+
+GameData.connections.changed =
+    GameData.UserInputService.InputChanged:Connect(GameData.resetAFK)
+
+GameData.connections.ended =
+    GameData.UserInputService.InputEnded:Connect(GameData.resetAFK)
+
+task.spawn(function()
+    while true do
+        task.wait(1)
+
+        GameData.runtime.totalSeconds = math.floor(tick() - GameData.lastInput)
+        GameData.runtime.minutes = math.floor(GameData.runtime.totalSeconds / 60)
+        GameData.runtime.seconds = GameData.runtime.totalSeconds % 60
+
+        GameData.AntiAFKParagraph:SetDesc(
+            "AFK: " .. GameData.runtime.minutes .. " Min " .. GameData.runtime.seconds .. " Sec"
+        )
+
+        if GameData.runtime.totalSeconds >= GameData.intervalMinutes * 60 then
+            GameData.UserInputService.MouseIconEnabled = true
+            task.wait(GameData.showSeconds)
+            GameData.UserInputService.MouseIconEnabled = false
+            GameData.lastInput = tick()
+        end
+    end
+end)
+
+function GameData:StartAntiAfk()
+    if self.AntiAfkThread then return end
+
+    self.AntiAfkThread = task.spawn(function()
+        while GameData.AntiAfkRunning do
+
+            GameData.VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
+            task.wait(0.05)
+            GameData.VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
+
+            task.wait(0.15)
+
+            GameData.VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
+            task.wait(0.05)
+            GameData.VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
+
+            task.wait(600)
+        end
+
+        GameData.AntiAfkThread = nil
+    end)
+end
+
+Sec.Player2:Toggle({
+    Title = "Anti AFK",
+    Desc = "Prevent kick when idle",
+    Flag = "AntiAFK",
+    Value = false,
+    Callback = function(value)
+        GameData.AntiAfkRunning = value
+
+        if value then
+            GameData:StartAntiAfk()
+        end
+    end
+})
+
+Sec.Player5 = Tabs.Player:Section({
+    Title = "Anti Staff (Coming Soon)",
+    Box = true,
+    BoxBorder = true,
+    Opened = true,
+})
+
+Sec.Player4 = Tabs.Player:Section({
+    Title = "Boost",
+    Box = true,
+    BoxBorder = true,
+    Opened = true,
+})
+
+GameData.BlackGuiv27 = Instance.new("ScreenGui")
+GameData.BlackGuiv27.Name = "BlackScreenGuiv27"
+GameData.BlackGuiv27.IgnoreGuiInset = true
+GameData.BlackGuiv27.ResetOnSpawn = false
+GameData.BlackGuiv27.Parent = GameData.Playerv27:WaitForChild("PlayerGui")
+
+GameData.BlackFramev27 = Instance.new("Frame")
+GameData.BlackFramev27.Size = UDim2.new(1, 0, 1, 0)
+GameData.BlackFramev27.Position = UDim2.new(0, 0, 0, 0)
+GameData.BlackFramev27.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+GameData.BlackFramev27.BorderSizePixel = 0
+GameData.BlackFramev27.Visible = false
+GameData.BlackFramev27.ZIndex = 999999
+GameData.BlackFramev27.Parent = GameData.BlackGuiv27
+
+GameData.AFKTextv27 = Instance.new("TextLabel")
+GameData.AFKTextv27.Size = UDim2.new(1, 0, 0, 60)
+GameData.AFKTextv27.Position = UDim2.new(0, 0, 0.5, -30)
+GameData.AFKTextv27.BackgroundTransparency = 1
+GameData.AFKTextv27.Text = "AFK MODE"
+GameData.AFKTextv27.TextColor3 = Color3.fromRGB(255, 255, 255)
+GameData.AFKTextv27.TextScaled = true
+GameData.AFKTextv27.Font = Enum.Font.GothamBold
+GameData.AFKTextv27.ZIndex = 1000000
+GameData.AFKTextv27.Parent = GameData.BlackFramev27
+
+Sec.Player4:Toggle({
+    Title = "Black Screen",
+    Value = false,
+    Callback = function(state)
+        GameData.BlackFramev27.Visible = state
+    end
+})
+
 function GameData:LowObjectv8(obj)
 	if not self.BoostEnabledv8 then return end
 
@@ -7005,7 +7392,7 @@ function GameData:StopBoostv8()
 	table.clear(self.Connectionsv8)
 end
 
-Sec.Player:Toggle({
+Sec.Player4:Toggle({
     Title = "Boost Fps",
     Flag = "BoostFps",
     Default = false,
@@ -7018,90 +7405,65 @@ Sec.Player:Toggle({
     end
 })
 
-Sec.Player2 = Tabs.Player:Section({
-    Title = "Anti Afk",
-    Box = true,
-    BoxBorder = true,
-    Opened = true,
-})
+GameData.Playerv25 = GameData.Playersv25.LocalPlayer
 
-GameData.AntiAFKParagraph = Sec.Player2:Paragraph({
-    Title = "Anti AFK Time",
-    Flag = "AntiAFK",
-    Desc = "AFK: 0 Min 0 Sec"
-})
+Sec.Player4:Button({
+    Title = "Boost CPU",
+    Locked = false,
+    Callback = function()
+        if GameData.BoostRunningv25 then return end
+        GameData.BoostRunningv25 = true
 
-function GameData.resetAFK()
-    GameData.lastInput = tick()
-end
+        pcall(function()
+            GameData.Lightingv25.GlobalShadows = false
+            GameData.Lightingv25.FogEnd = 9e9
+            GameData.Lightingv25.Brightness = 1
+            GameData.Lightingv25.EnvironmentDiffuseScale = 0
+            GameData.Lightingv25.EnvironmentSpecularScale = 0
 
-GameData.connections.began =
-    GameData.UserInputService.InputBegan:Connect(GameData.resetAFK)
+            for _, v in pairs(GameData.Lightingv25:GetChildren()) do
+                if v:IsA("PostEffect") then
+                    v.Enabled = false
+                end
+            end
+        end)
 
-GameData.connections.changed =
-    GameData.UserInputService.InputChanged:Connect(GameData.resetAFK)
-
-GameData.connections.ended =
-    GameData.UserInputService.InputEnded:Connect(GameData.resetAFK)
-
-task.spawn(function()
-    while true do
-        task.wait(1)
-
-        GameData.runtime.totalSeconds = math.floor(tick() - GameData.lastInput)
-        GameData.runtime.minutes = math.floor(GameData.runtime.totalSeconds / 60)
-        GameData.runtime.seconds = GameData.runtime.totalSeconds % 60
-
-        GameData.AntiAFKParagraph:SetDesc(
-            "AFK: " .. GameData.runtime.minutes .. " Min " .. GameData.runtime.seconds .. " Sec"
-        )
-
-        if GameData.runtime.totalSeconds >= GameData.intervalMinutes * 60 then
-            GameData.UserInputService.MouseIconEnabled = true
-            task.wait(GameData.showSeconds)
-            GameData.UserInputService.MouseIconEnabled = false
-            GameData.lastInput = tick()
-        end
-    end
-end)
-
-function GameData:StartAntiAfk()
-    if self.AntiAfkThread then return end
-
-    self.AntiAfkThread = task.spawn(function()
-        while GameData.AntiAfkRunning do
-
-            GameData.VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
-            task.wait(0.05)
-            GameData.VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
-
-            task.wait(0.15)
-
-            GameData.VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
-            task.wait(0.05)
-            GameData.VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
-
-            task.wait(600)
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("ParticleEmitter")
+            or v:IsA("Trail")
+            or v:IsA("Smoke")
+            or v:IsA("Fire")
+            or v:IsA("Sparkles") then
+                v.Enabled = false
+            elseif v:IsA("Decal") or v:IsA("Texture") then
+                v.Transparency = 1
+            elseif v:IsA("BasePart") then
+                v.CastShadow = false
+                v.Material = Enum.Material.Plastic
+                v.Reflectance = 0
+            end
         end
 
-        GameData.AntiAfkThread = nil
-    end)
-end
+        if GameData.Playerv25.Character then
+            for _, v in pairs(GameData.Playerv25.Character:GetChildren()) do
+                if v:IsA("Accessory") or v:IsA("Hat") then
+                    v:Destroy()
+                end
+            end
 
-Sec.Player2:Toggle({
-    Title = "Anti AFK",
-    Desc = "Prevent kick when idle",
-    Flag = "AntiAFK",
-    Value = false,
-    Callback = function(value)
-        GameData.AntiAfkRunning = value
+            local head = GameData.Playerv25.Character:FindFirstChild("Head")
+            if head then
+                head.Transparency = 1
+                head.CanCollide = false
 
-        if value then
-            GameData:StartAntiAfk()
+                local face = head:FindFirstChildWhichIsA("Decal")
+                if face then
+                    face:Destroy()
+                end
+            end
         end
     end
 })
-
 
 Sec.Player3 = Tabs.Player:Section({
     Title = "User Settings",
