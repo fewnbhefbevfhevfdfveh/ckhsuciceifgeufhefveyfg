@@ -1298,7 +1298,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.1.3",
+    Title = "v0.1.4",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1329,7 +1329,8 @@ local Tabs = {
 local Sec = {}
 
 local ConfigManager = Window.ConfigManager
-local ConfigName = "default"
+local AutoConfigName = "default"
+local AutoFeatureEnabled = false
 
 Sec.Home1 = Tabs.Home:Section({
     Title = "Update Log",
@@ -1343,9 +1344,11 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-Tab Teleport
- [+] Auto Join Event Megalodon,Etc
-Tab
+[+] Auto Join Event Megalodon,Etc
+[+] Added Black Screen
+[+] Added Boost Cpu
+[/] Move Freecam Drone to the Main Tab
+
 ]],
     Locked = false
 })
@@ -4595,14 +4598,14 @@ GameData.QuestList = GetQuestList()
 
 GameData.ElementParagraph = Sec.Quest1:Paragraph({
     Title = "Element Quest",
-    Desc = "Waiting quest...",
+    Desc = "No Progress Data",
     Locked = false,
     Buttons = {}
 })
 
 GameData.DeepSeaParagraph = Sec.Quest1:Paragraph({
     Title = "Deep Sea Quest",
-    Desc = "Waiting quest...",
+    Desc = "No Progress Data",
     Locked = false,
     Buttons = {}
 })
@@ -5046,25 +5049,25 @@ end)
 
 GameData.ProgresDiamondRod = Sec.Quest4:Paragraph({
     Title = "Progres Quest Diamond Rod",
-    Desc = "Loading..."
+    Desc = "No Progress Data",
 })
 
 function GameData.UpdateDiamondQuestDesc()
     local pg = GameData.player:FindFirstChild("PlayerGui")
     if not pg then
-        GameData.ProgresDiamondRod:SetDesc("Loading...")
+        GameData.ProgresDiamondRod:SetDesc("Loading... Progress Data")
         return
     end
 
     local questGui = pg:FindFirstChild("Quest")
     if not questGui or not questGui:FindFirstChild("List") then
-        GameData.ProgresDiamondRod:SetDesc("Loading...")
+        GameData.ProgresDiamondRod:SetDesc("Loading... Progress Data")
         return
     end
 
     GameData.inside = questGui.List:FindFirstChild("Inside")
     if not GameData.inside then
-        GameData.ProgresDiamondRod:SetDesc("Loading...")
+        GameData.ProgresDiamondRod:SetDesc("No Progress Data")
         return
     end
 
@@ -7215,7 +7218,7 @@ Sec.Player2:Toggle({
 })
 
 Sec.Player5 = Tabs.Player:Section({
-    Title = "Anti Staff",
+    Title = "Anti Staff (Coming Soon)",
     Box = true,
     BoxBorder = true,
     Opened = true,
@@ -7686,6 +7689,68 @@ Sec.Config1:Button({
         print(HttpService:JSONDecode(ConfigManager:GetAutoLoadConfigs()))
     end
 })
+
+local function AutoLoadConfig()
+    if not AutoFeatureEnabled then return end
+    Window.CurrentConfig = ConfigManager:CreateConfig(AutoConfigName)
+    if Window.CurrentConfig:Load() then
+        WindUI:Notify({
+            Title = "AutoLoad",
+            Content = "Config '" .. AutoConfigName .. "' loaded successfully!",
+            Duration = 3,
+            Icon = "refresh-cw"
+        })
+    else
+        WindUI:Notify({
+            Title = "AutoLoad",
+            Content = "Config '" .. AutoConfigName .. "' not found, creating new one.",
+            Duration = 3,
+            Icon = "alert-circle"
+        })
+        Window.CurrentConfig:Save()
+    end
+end
+
+local function AutoSaveConfig()
+    if not AutoFeatureEnabled then return end
+    if Window.CurrentConfig then
+        if Window.CurrentConfig:Save() then
+            WindUI:Notify({
+                Title = "AutoSave",
+                Content = "Config '" .. AutoConfigName .. "' saved successfully!",
+                Duration = 3,
+                Icon = "check"
+            })
+        else
+            WindUI:Notify({
+                Title = "AutoSave",
+                Content = "Failed to save config '" .. AutoConfigName .. "'!",
+                Duration = 3,
+                Icon = "alert-circle"
+            })
+        end
+    end
+end
+
+Sec.Config1:Toggle({
+    Title = "Auto Save & Load",
+    Flag = "AutoSaveLoad",
+    Desc = "Automatically save and load config",
+    Value = false,
+    Callback = function(state)
+        AutoFeatureEnabled = state
+        if state then
+            AutoLoadConfig()
+        end
+    end
+})
+
+spawn(function()
+    while true do
+        wait(20)
+        AutoSaveConfig()
+    end
+end)
 
 Sec.Config2 = Tabs.Config:Section({
     Title = "Bug Reporter",
