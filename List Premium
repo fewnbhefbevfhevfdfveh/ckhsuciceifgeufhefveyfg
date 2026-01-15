@@ -46,50 +46,132 @@ end
 local KEY = tostring(script_key)
 
 --// ================================
---// NOTIFICATION UI
+--// MINIMALIST NOTIFICATION UI
 --// ================================
-local function ShowNotification(text)
+local function ShowNotification(text, isError)
     local playerGui = player:WaitForChild("PlayerGui")
-
-    if playerGui:FindFirstChild("NexaNotify") then
-        playerGui.NexaNotify:Destroy()
+    
+    -- Cleanup existing notifications
+    for _, gui in pairs(playerGui:GetChildren()) do
+        if gui.Name == "NexaNotify" then
+            gui:Destroy()
+        end
     end
-
+    
+    -- Create GUI
     local gui = Instance.new("ScreenGui")
     gui.Name = "NexaNotify"
     gui.ResetOnSpawn = false
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     gui.Parent = playerGui
-
+    
+    -- Main Frame
     local frame = Instance.new("Frame")
     frame.Parent = gui
-    frame.Size = UDim2.new(0, 330, 0, 60)
-    frame.Position = UDim2.new(0.5, 0, 0, -80)
-    frame.AnchorPoint = Vector2.new(0.5, 0)
-    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    frame.BorderColor3 = Color3.fromRGB(60, 60, 60)
-    Instance.new("UICorner", frame)
-
+    frame.Size = UDim2.new(0, 280, 0, 50)
+    frame.Position = UDim2.new(1, -300, 0.1, 0)
+    frame.AnchorPoint = Vector2.new(1, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    frame.BorderSizePixel = 0
+    
+    -- Corner
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = frame
+    
+    -- Accent Border (Left side)
+    local accent = Instance.new("Frame")
+    accent.Parent = frame
+    accent.Size = UDim2.new(0, 3, 1, 0)
+    accent.Position = UDim2.new(0, 0, 0, 0)
+    accent.BackgroundColor3 = isError and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 200, 100)
+    accent.BorderSizePixel = 0
+    
+    local accentCorner = Instance.new("UICorner")
+    accentCorner.CornerRadius = UDim.new(0, 6)
+    accentCorner.Parent = accent
+    
+    -- Shadow
+    local shadow = Instance.new("ImageLabel")
+    shadow.Parent = frame
+    shadow.Size = UDim2.new(1, 10, 1, 10)
+    shadow.Position = UDim2.new(0, -5, 0, -5)
+    shadow.BackgroundTransparency = 1
+    shadow.Image = "rbxassetid://5554237731"
+    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    shadow.ImageTransparency = 0.5
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(23, 23, 277, 277)
+    shadow.SliceScale = 1
+    shadow.ZIndex = -1
+    
+    -- Icon
+    local icon = Instance.new("TextLabel")
+    icon.Parent = frame
+    icon.Size = UDim2.new(0, 30, 0, 30)
+    icon.Position = UDim2.new(0, 15, 0.5, -15)
+    icon.BackgroundTransparency = 1
+    icon.Text = isError and "⚠" or "✓"
+    icon.Font = Enum.Font.GothamSemibold
+    icon.TextSize = 18
+    icon.TextColor3 = isError and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 200, 100)
+    
+    -- Text Label
     local label = Instance.new("TextLabel")
     label.Parent = frame
-    label.Size = UDim2.new(1, -20, 1, 0)
-    label.Position = UDim2.new(0, 10, 0, 0)
+    label.Size = UDim2.new(1, -60, 1, -10)
+    label.Position = UDim2.new(0, 45, 0, 5)
     label.BackgroundTransparency = 1
     label.TextWrapped = true
-    label.Font = Enum.Font.Code
-    label.TextSize = 14
-    label.TextColor3 = Color3.fromRGB(255, 140, 0)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 13
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.TextXAlignment = Enum.TextXAlignment.Left
     label.Text = text
-
-    TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
-        Position = UDim2.new(0.5, 0, 0, 40)
-    }):Play()
-
-    task.delay(2.5, function()
-        TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
-            Position = UDim2.new(0.5, 0, 0, -80)
+    
+    -- Close button (X)
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Parent = frame
+    closeBtn.Size = UDim2.new(0, 20, 0, 20)
+    closeBtn.Position = UDim2.new(1, -25, 0, 8)
+    closeBtn.BackgroundTransparency = 1
+    closeBtn.Text = "×"
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.TextSize = 16
+    closeBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+    closeBtn.TextTransparency = 0.3
+    
+    closeBtn.MouseEnter:Connect(function()
+        closeBtn.TextTransparency = 0
+    end)
+    
+    closeBtn.MouseLeave:Connect(function()
+        closeBtn.TextTransparency = 0.3
+    end)
+    
+    closeBtn.MouseButton1Click:Connect(function()
+        TweenService:Create(frame, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            Position = UDim2.new(1, 50, 0.1, 0)
         }):Play()
-        task.wait(0.3)
+        task.wait(0.2)
         gui:Destroy()
+    end)
+    
+    -- Animation
+    frame.Position = UDim2.new(1, 50, 0.1, 0)
+    TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+        Position = UDim2.new(1, -300, 0.1, 0)
+    }):Play()
+    
+    -- Auto-hide after 5 seconds
+    task.delay(5, function()
+        if gui.Parent then
+            TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+                Position = UDim2.new(1, 50, 0.1, 0)
+            }):Play()
+            task.wait(0.3)
+            gui:Destroy()
+        end
     end)
 end
 
@@ -107,7 +189,7 @@ local response = Request({
 })
 
 if not response or not response.Body then
-    ShowNotification("❌ Gagal terhubung ke server")
+    ShowNotification("❌ Gagal terhubung ke server", true)
     task.wait(2)
     player:Kick("❌ Failed to connect server")
     return
@@ -122,7 +204,7 @@ local success = pcall(function()
 end)
 
 if not success or typeof(data) ~= "table" then
-    ShowNotification("❌ Response server tidak valid")
+    ShowNotification("❌ Response server tidak valid", true)
     task.wait(2)
     player:Kick("❌ Invalid server response")
     return
@@ -135,15 +217,15 @@ if not data.allowed then
     local reason = data.reason or "unknown"
 
     if reason == "missing_key" then
-        ShowNotification("❌ Key tidak terdeteksi")
+        ShowNotification("❌ Key tidak terdeteksi", true)
     elseif reason == "invalid_key" then
-        ShowNotification("❌ Key tidak valid")
+        ShowNotification("❌ Key tidak valid", true)
     elseif reason == "device_mismatch" then
-        ShowNotification("❌ Key sudah dipakai di device lain")
+        ShowNotification("❌ Key sudah dipakai di device lain", true)
     elseif reason == "expired" then
-        ShowNotification("⏳ Key sudah expired")
+        ShowNotification("⏳ Key sudah expired", true)
     else
-        ShowNotification("❌ Akses ditolak")
+        ShowNotification("❌ Akses ditolak", true)
     end
 
     task.wait(2)
@@ -155,11 +237,11 @@ end
 --// SUCCESS
 --// ================================
 if data.type == "lifetime" then
-    ShowNotification("💎 Lifetime Premium Activated")
+    ShowNotification("💎 Lifetime Premium Activated", false)
 elseif data.type == "30d" then
-    ShowNotification("⏳ Premium Active\nExpired: " .. tostring(data.expires))
+    ShowNotification("⏳ Premium Active\nExpired: " .. tostring(data.expires), false)
 else
-    ShowNotification("✅ Premium Access Granted")
+    ShowNotification("✅ Premium Access Granted", false)
 end
 
 task.wait(1)
