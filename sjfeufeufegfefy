@@ -1329,7 +1329,7 @@ local Tabs = {
 local Sec = {}
 
 local ConfigManager = Window.ConfigManager
-local AutoConfigName = "default"
+local AutoConfigName = "NexaHub_FishIt_Auto"
 local AutoFeatureEnabled = false
 
 Sec.Home1 = Tabs.Home:Section({
@@ -7771,6 +7771,7 @@ end
 
 Sec.Config1:Toggle({
     Title = "Auto Save & Load",
+    Flag = "AutoSaveLoad",
     Desc = "Automatically save and load config",
     Value = false,
     Callback = function(state)
@@ -7783,7 +7784,7 @@ Sec.Config1:Toggle({
 
 spawn(function()
     while true do
-        wait(40)
+        wait(10)
         AutoSaveConfig()
     end
 end)
