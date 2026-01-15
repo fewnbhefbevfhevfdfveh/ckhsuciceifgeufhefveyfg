@@ -1329,7 +1329,8 @@ local Tabs = {
 local Sec = {}
 
 local ConfigManager = Window.ConfigManager
-local ConfigName = "default"
+local AutoConfigName = "default"
+local AutoFeatureEnabled = false
 
 Sec.Home1 = Tabs.Home:Section({
     Title = "Update Log",
@@ -1343,11 +1344,9 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-Tab Teleport
- [+] Auto Join Event Megalodon,Etc
-Tab Player:
- [+] Added Black Screen
- [+] Added Boost Cpu
+[+] Auto Join Event Megalodon,Etc
+[+] Added Black Screen
+[+] Added Boost Cpu
 [/] Move Freecam Drone to the Main Tab
 
 ]],
@@ -3725,6 +3724,7 @@ end
 
 Sec.Main6:Dropdown({
     Title = "Select Fish",
+    Flag = "SelectFish",
     Desc = "Favorite / Unfavorite Based on Fish Name",
     SearchBarEnabled = true,
     Values = GameData.FishNameList,
@@ -3738,6 +3738,7 @@ Sec.Main6:Dropdown({
 
 Sec.Main6:Toggle({
     Title = "Favorite Fish",
+    Flag = "FavoriteFish",
     Value = false,
     Callback = function(b)
         GameData.state.autoFavorite = b
@@ -3753,6 +3754,7 @@ Sec.Main6:Toggle({
 
 Sec.Main6:Toggle({
     Title = "Unfavorite Fish",
+    Flag = "UnfavoriteFish",
     Value = false,
     Callback = function(b)
         GameData.state.autoUnfavorite = b
@@ -3832,6 +3834,7 @@ end)
 
 Sec.Main7:Dropdown({
     Title = "Target Enchant",
+    Flag = "TargetEnchant",
     Desc = "Automatically stop if this enchantment is obtained",
     SearchBarEnabled = true,
     Values = GameData.ALL_ENCHANT_NAMESv18,
@@ -3848,6 +3851,7 @@ Sec.Main7:Dropdown({
 
 Sec.Main7:Toggle({
     Title = "Auto Enchant",
+    Flag = "AutoEnchant",
     Value = false,
     Callback = function(state)
         GameData.AUTO_ENCHANTv18 = state
@@ -3859,6 +3863,7 @@ local args = {5}
 
 Sec.Main7:Toggle({
     Title = "Auto Equip Hotbar 5",
+    Flag = "AutoEquipHotbar5",
     Value = false,
     Callback = function(state)
         EquipLoop = state
@@ -3894,6 +3899,7 @@ end)
 
 Sec.Main8:Toggle({
     Title = "Auto Open Pirate Chests",
+    Flag = "AutoOpenPirateChests",
     Value = false,
     Callback = function(state)
         GameData.AutoOpenPirateChestsv21 = state
@@ -4993,6 +4999,7 @@ GameData.RE_GainAccessToMazev20 = GameData.NetFolderv20:WaitForChild("RE/GainAcc
 
 Sec.Quest3:Toggle({
     Title = "Auto Open Mysterious Cave Wall",
+    Flag = "AutoOpenWallv20",
     Value = false,
     Callback = function(state)
         GameData.AutoOpenWallv20 = state
@@ -6574,6 +6581,7 @@ end
 
 GameData.FreezeTogglev26 = Sec.Tp3:Toggle({
     Title = "Freeze Character",
+    Flag = "FreezeCharacterv26",
     Value = false,
     Callback = function(state)
         GameData:ApplyFreezerv26(state)
@@ -6720,6 +6728,7 @@ end)
 
 Sec.Tp4:Dropdown({
     Title = "Select Event",
+    Flag = "SelectEventv28",
     Values = GameData.HuntListv28,
     Multi = true,
     AllowNone = true,
@@ -6730,6 +6739,7 @@ Sec.Tp4:Dropdown({
 
 Sec.Tp4:Toggle({
     Title = "Join Event",
+    Flag = "JoinEventv28",
     Value = false,
     Callback = function(state)
         GameData.Activev28 = state
@@ -7260,6 +7270,7 @@ GameData.AFKTextv27.Parent = GameData.BlackFramev27
 
 Sec.Player4:Toggle({
     Title = "Black Screen",
+    Flag = "BlackScreen",
     Value = false,
     Callback = function(state)
         GameData.BlackFramev27.Visible = state
@@ -7690,6 +7701,68 @@ Sec.Config1:Button({
         print(HttpService:JSONDecode(ConfigManager:GetAutoLoadConfigs()))
     end
 })
+
+local function AutoLoadConfig()
+    if not AutoFeatureEnabled then return end
+    Window.CurrentConfig = ConfigManager:CreateConfig(AutoConfigName)
+    if Window.CurrentConfig:Load() then
+        WindUI:Notify({
+            Title = "AutoLoad",
+            Content = "Config '" .. AutoConfigName .. "' loaded successfully!",
+            Duration = 3,
+            Icon = "refresh-cw"
+        })
+    else
+        WindUI:Notify({
+            Title = "AutoLoad",
+            Content = "Config '" .. AutoConfigName .. "' not found, creating new one.",
+            Duration = 3,
+            Icon = "alert-circle"
+        })
+        Window.CurrentConfig:Save()
+    end
+end
+
+local function AutoSaveConfig()
+    if not AutoFeatureEnabled then return end
+    if Window.CurrentConfig then
+        if Window.CurrentConfig:Save() then
+            WindUI:Notify({
+                Title = "AutoSave",
+                Content = "Config '" .. AutoConfigName .. "' saved successfully!",
+                Duration = 3,
+                Icon = "check"
+            })
+        else
+            WindUI:Notify({
+                Title = "AutoSave",
+                Content = "Failed to save config '" .. AutoConfigName .. "'!",
+                Duration = 3,
+                Icon = "alert-circle"
+            })
+        end
+    end
+end
+
+Sec.Config1:Toggle({
+    Title = "Auto Save & Load",
+    Flag = "AutoSaveLoad",
+    Desc = "Automatically save and load config",
+    Value = false,
+    Callback = function(state)
+        AutoFeatureEnabled = state
+        if state then
+            AutoLoadConfig()
+        end
+    end
+})
+
+spawn(function()
+    while true do
+        wait(20)
+        AutoSaveConfig()
+    end
+end)
 
 Sec.Config2 = Tabs.Config:Section({
     Title = "Bug Reporter",
