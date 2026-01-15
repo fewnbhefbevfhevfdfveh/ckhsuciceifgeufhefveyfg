@@ -6652,7 +6652,7 @@ function GameData.unfreezev28()
 end
 
 GameData.Playerv28.CharacterAdded:Connect(function()
-    task.wait(0.2)
+    task.wait(0.5)
     GameData.unfreezev28()
 end)
 
@@ -6729,7 +6729,7 @@ function GameData.teleportTov28(hunt)
 
     for _ = 1, 6 do
         hrp.CFrame = cf
-        task.wait(0.05)
+        task.wait(0.5)
     end
 
     GameData.freezev28()
@@ -6737,7 +6737,7 @@ function GameData.teleportTov28(hunt)
 end
 
 task.spawn(function()
-    while task.wait(2) do
+    while task.wait(5) do
         if not GameData.Activev28 then continue end
 
         if GameData.CurrentHuntv28 then
