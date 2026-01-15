@@ -953,7 +953,7 @@ local GameData = {
     Playersv28 = game:GetService("Players"),
     RunServicev28 = game:GetService("RunService"),
 
-    Playerv28 = nil,
+    Playerv28 = game:GetService("Players").LocalPlayer,
 
     HuntListv28 = {
         "Shark Hunt",
@@ -969,100 +969,6 @@ local GameData = {
 
     BVv28 = nil,
     BGv28 = nil,
-
-    GetHRPv28 = function()
-        return GameData.Playerv28.Character
-            and GameData.Playerv28.Character:FindFirstChild("HumanoidRootPart")
-    end,
-
-    Freezev28 = function()
-        GameData.BVv28 = nil
-        GameData.BGv28 = nil
-
-        if not GameData.GetHRPv28() then return end
-
-        GameData.BVv28 = Instance.new("BodyVelocity")
-        GameData.BVv28.MaxForce = Vector3.new(1e9,1e9,1e9)
-        GameData.BVv28.Velocity = Vector3.zero
-        GameData.BVv28.Parent = GameData.GetHRPv28()
-
-        GameData.BGv28 = Instance.new("BodyGyro")
-        GameData.BGv28.MaxTorque = Vector3.new(1e9,1e9,1e9)
-        GameData.BGv28.CFrame = GameData.GetHRPv28().CFrame
-        GameData.BGv28.Parent = GameData.GetHRPv28()
-    end,
-
-    Unfreezev28 = function()
-        if GameData.BVv28 then GameData.BVv28:Destroy() GameData.BVv28 = nil end
-        if GameData.BGv28 then GameData.BGv28:Destroy() GameData.BGv28 = nil end
-    end,
-
-    GetTargetPartv28 = function(model, huntName)
-        if not model then return nil end
-
-        if huntName == "Worm Hunt" then
-            return model:FindFirstChild("Part")
-        end
-
-        local rp = model:FindFirstChild("RotationPoint", true)
-        if rp and rp:IsA("BasePart") then
-            return rp
-        end
-
-        local part = model:FindFirstChild("Part", true)
-        if part and part:IsA("BasePart") then
-            return part
-        end
-
-        if model.PrimaryPart then
-            return model.PrimaryPart
-        end
-
-        local parts = {}
-        for _, v in ipairs(model:GetDescendants()) do
-            if v:IsA("BasePart") then
-                table.insert(parts, v)
-            end
-        end
-
-        if #parts > 0 then
-            local pivot = model:GetPivot().Position
-            table.sort(parts, function(a, b)
-                return (a.Position - pivot).Magnitude < (b.Position - pivot).Magnitude
-            end)
-            return parts[1]
-        end
-
-        return nil
-    end,
-
-    GetModelv28 = function(hunt)
-        if not workspace:FindFirstChild("Props") then return nil end
-        if hunt == "Worm Hunt" then
-            return workspace.Props:FindFirstChild("Model")
-        end
-        return workspace.Props:FindFirstChild(hunt)
-    end,
-
-    TeleportTov28 = function(hunt)
-        if not GameData.GetHRPv28() then return end
-
-        local model = GameData.GetModelv28(hunt)
-        if not model then return end
-
-        local part = GameData.GetTargetPartv28(model, hunt)
-        if not part then return end
-
-        if not GameData.SavedCFramev28 then
-            GameData.SavedCFramev28 = GameData.GetHRPv28().CFrame
-        end
-
-        GameData.GetHRPv28().CFrame = part.CFrame + Vector3.new(0,6,0)
-        task.wait(0.1)
-        GameData.Freezev28()
-
-        GameData.CurrentHuntv28 = hunt
-    end,
 
    -- ================== [Drone Camera] ==================
 
@@ -1392,7 +1298,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.1.3",
+    Title = "v0.1.4",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1423,7 +1329,8 @@ local Tabs = {
 local Sec = {}
 
 local ConfigManager = Window.ConfigManager
-local ConfigName = "default"
+local AutoConfigName = "default"
+local AutoFeatureEnabled = false
 
 Sec.Home1 = Tabs.Home:Section({
     Title = "Update Log",
@@ -1437,9 +1344,11 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-Tab Teleport
- [+] Auto Join Event Megalodon,Etc
-Tab
+[+] Auto Join Event Megalodon,Etc
+[+] Added Black Screen
+[+] Added Boost Cpu
+[/] Move Freecam Drone to the Main Tab
+
 ]],
     Locked = false
 })
@@ -4689,14 +4598,14 @@ GameData.QuestList = GetQuestList()
 
 GameData.ElementParagraph = Sec.Quest1:Paragraph({
     Title = "Element Quest",
-    Desc = "Waiting quest...",
+    Desc = "No Progress Data",
     Locked = false,
     Buttons = {}
 })
 
 GameData.DeepSeaParagraph = Sec.Quest1:Paragraph({
     Title = "Deep Sea Quest",
-    Desc = "Waiting quest...",
+    Desc = "No Progress Data",
     Locked = false,
     Buttons = {}
 })
@@ -5140,25 +5049,25 @@ end)
 
 GameData.ProgresDiamondRod = Sec.Quest4:Paragraph({
     Title = "Progres Quest Diamond Rod",
-    Desc = "Loading..."
+    Desc = "No Progress Data",
 })
 
 function GameData.UpdateDiamondQuestDesc()
     local pg = GameData.player:FindFirstChild("PlayerGui")
     if not pg then
-        GameData.ProgresDiamondRod:SetDesc("Loading...")
+        GameData.ProgresDiamondRod:SetDesc("Loading... Progress Data")
         return
     end
 
     local questGui = pg:FindFirstChild("Quest")
     if not questGui or not questGui:FindFirstChild("List") then
-        GameData.ProgresDiamondRod:SetDesc("Loading...")
+        GameData.ProgresDiamondRod:SetDesc("Loading... Progress Data")
         return
     end
 
     GameData.inside = questGui.List:FindFirstChild("Inside")
     if not GameData.inside then
-        GameData.ProgresDiamondRod:SetDesc("Loading...")
+        GameData.ProgresDiamondRod:SetDesc("No Progress Data")
         return
     end
 
@@ -6694,15 +6603,104 @@ Sec.Tp4 = Tabs.Tp:Section({
     Opened = true,
 })
 
-GameData.Playerv28 = GameData.Playersv28.LocalPlayer
+function GameData.getHRPv28()
+    return GameData.Playerv28.Character
+        and GameData.Playerv28.Character:FindFirstChild("HumanoidRootPart")
+end
+
+function GameData.freezev28()
+    if not GameData.getHRPv28() then return end
+
+    GameData.BVv28 = Instance.new("BodyVelocity")
+    GameData.BVv28.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+    GameData.BVv28.Velocity = Vector3.zero
+    GameData.BVv28.Parent = GameData.getHRPv28()
+
+    GameData.BGv28 = Instance.new("BodyGyro")
+    GameData.BGv28.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+    GameData.BGv28.CFrame = GameData.getHRPv28().CFrame
+    GameData.BGv28.Parent = GameData.getHRPv28()
+end
+
+function GameData.unfreezev28()
+    if GameData.BVv28 then GameData.BVv28:Destroy() GameData.BVv28 = nil end
+    if GameData.BGv28 then GameData.BGv28:Destroy() GameData.BGv28 = nil end
+end
+
+function GameData.getTargetPartv28(model, huntName)
+    if not model then return nil end
+
+    if huntName == "Worm Hunt" then
+        return model:FindFirstChild("Part")
+    end
+
+    local rp = model:FindFirstChild("RotationPoint", true)
+    if rp and rp:IsA("BasePart") then
+        return rp
+    end
+
+    local p = model:FindFirstChild("Part", true)
+    if p and p:IsA("BasePart") then
+        return p
+    end
+
+    if model.PrimaryPart then return model.PrimaryPart end
+
+    local parts = {}
+    for _, v in ipairs(model:GetDescendants()) do
+        if v:IsA("BasePart") then
+            table.insert(parts, v)
+        end
+    end
+
+    if #parts > 0 then
+        local pivot = model:GetPivot().Position
+        table.sort(parts, function(a, b)
+            return (a.Position - pivot).Magnitude <
+                   (b.Position - pivot).Magnitude
+        end)
+        return parts[1]
+    end
+
+    return nil
+end
+
+function GameData.getModelv28(hunt)
+    if not workspace:FindFirstChild("Props") then return nil end
+    if hunt == "Worm Hunt" then
+        return workspace.Props:FindFirstChild("Model")
+    end
+    return workspace.Props:FindFirstChild(hunt)
+end
+
+function GameData.teleportTov28(hunt)
+    if not GameData.getHRPv28() then return end
+
+    local model = GameData.getModelv28(hunt)
+    if not model then return end
+
+    local part = GameData.getTargetPartv28(model, hunt)
+    if not part then return end
+
+    if not GameData.SavedCFramev28 then
+        GameData.SavedCFramev28 = GameData.getHRPv28().CFrame
+    end
+
+    GameData.getHRPv28().CFrame = part.CFrame + Vector3.new(0, 6, 0)
+
+    task.wait(0.1)
+    GameData.freezev28()
+
+    GameData.CurrentHuntv28 = hunt
+end
 
 task.spawn(function()
-    while task.wait(1) do
+    while task.wait(3) do
         if not GameData.Activev28 then continue end
 
         if GameData.CurrentHuntv28 then
-            local model = GameData.GetModelv28(GameData.CurrentHuntv28)
-            if model and model.Parent then
+            local m = GameData.getModelv28(GameData.CurrentHuntv28)
+            if m and m.Parent then
                 continue
             else
                 GameData.CurrentHuntv28 = nil
@@ -6710,9 +6708,9 @@ task.spawn(function()
         end
 
         for _, hunt in ipairs(GameData.SelectedHuntsv28) do
-            local model = GameData.GetModelv28(hunt)
-            if model and model.Parent then
-                GameData.TeleportTov28(hunt)
+            local m = GameData.getModelv28(hunt)
+            if m and m.Parent then
+                GameData.teleportTov28(hunt)
                 break
             end
         end
@@ -6736,9 +6734,9 @@ Sec.Tp4:Toggle({
         GameData.Activev28 = state
 
         if not state then
-            GameData.Unfreezev28()
-            if GameData.GetHRPv28() and GameData.SavedCFramev28 then
-                GameData.GetHRPv28().CFrame = GameData.SavedCFramev28
+            GameData.unfreezev28()
+            if GameData.getHRPv28() and GameData.SavedCFramev28 then
+                GameData.getHRPv28().CFrame = GameData.SavedCFramev28
             end
             GameData.SavedCFramev28 = nil
             GameData.CurrentHuntv28 = nil
@@ -7220,7 +7218,7 @@ Sec.Player2:Toggle({
 })
 
 Sec.Player5 = Tabs.Player:Section({
-    Title = "Anti Staff",
+    Title = "Anti Staff (Coming Soon)",
     Box = true,
     BoxBorder = true,
     Opened = true,
@@ -7691,6 +7689,67 @@ Sec.Config1:Button({
         print(HttpService:JSONDecode(ConfigManager:GetAutoLoadConfigs()))
     end
 })
+
+local function AutoLoadConfig()
+    if not AutoFeatureEnabled then return end
+    Window.CurrentConfig = ConfigManager:CreateConfig(AutoConfigName)
+    if Window.CurrentConfig:Load() then
+        WindUI:Notify({
+            Title = "AutoLoad",
+            Content = "Config '" .. AutoConfigName .. "' loaded successfully!",
+            Duration = 3,
+            Icon = "refresh-cw"
+        })
+    else
+        WindUI:Notify({
+            Title = "AutoLoad",
+            Content = "Config '" .. AutoConfigName .. "' not found, creating new one.",
+            Duration = 3,
+            Icon = "alert-circle"
+        })
+        Window.CurrentConfig:Save()
+    end
+end
+
+local function AutoSaveConfig()
+    if not AutoFeatureEnabled then return end
+    if Window.CurrentConfig then
+        if Window.CurrentConfig:Save() then
+            WindUI:Notify({
+                Title = "AutoSave",
+                Content = "Config '" .. AutoConfigName .. "' saved successfully!",
+                Duration = 3,
+                Icon = "check"
+            })
+        else
+            WindUI:Notify({
+                Title = "AutoSave",
+                Content = "Failed to save config '" .. AutoConfigName .. "'!",
+                Duration = 3,
+                Icon = "alert-circle"
+            })
+        end
+    end
+end
+
+Sec.Config1:Toggle({
+    Title = "Auto Save & Load",
+    Desc = "Automatically save and load config",
+    Value = false,
+    Callback = function(state)
+        AutoFeatureEnabled = state
+        if state then
+            AutoLoadConfig()
+        end
+    end
+})
+
+spawn(function()
+    while true do
+        wait(20)
+        AutoSaveConfig()
+    end
+end)
 
 Sec.Config2 = Tabs.Config:Section({
     Title = "Bug Reporter",
