@@ -7966,7 +7966,7 @@ Sec.Config1:Button({
 
 spawn(function()
     while true do
-        task.wait(5) -- setiap 5 detik
+        task.wait(40) -- setiap 5 detik
         AutoSaveConfig()
     end
 end)
