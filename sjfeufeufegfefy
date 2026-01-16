@@ -1346,8 +1346,8 @@ local Tabs = {
 local Sec = {}
 
 local ConfigManager = Window.ConfigManager
-local AutoConfigName = "NexaHub_FishIt_Auto"
-local AutoFeatureEnabled = false
+local AutoConfigName = "NexaHub_FishIt_Auto_V1"
+local AutoFeatureEnabled = true
 
 Sec.Home1 = Tabs.Home:Section({
     Title = "Update Log",
@@ -7933,15 +7933,22 @@ local function AutoSaveConfig()
     end
 end
 
+-- Langsung load config saat script jalan
+AutoLoadConfig()
+
 Sec.Config1:Toggle({
     Title = "Auto Save & Load",
     Flag = "AutoSaveLoad",
     Desc = "Automatically save and load config every 40 seconds",
-    Value = false,
+    Value = true, -- langsung nyala
     Callback = function(state)
         AutoFeatureEnabled = state
         if state then
-            AutoLoadConfig()
+            AutoLoadConfig() -- load config kalau ON
+        end
+        -- langsung save config saat toggle berubah
+        if Window.CurrentConfig then
+            Window.CurrentConfig:Save()
         end
     end
 })
@@ -7959,7 +7966,7 @@ Sec.Config1:Button({
 
 spawn(function()
     while true do
-        task.wait(40)
+        task.wait(5) -- setiap 5 detik
         AutoSaveConfig()
     end
 end)
