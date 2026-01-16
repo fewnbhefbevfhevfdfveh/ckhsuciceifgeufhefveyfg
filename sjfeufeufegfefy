@@ -1283,7 +1283,82 @@ local GameData = {
 
     HistoryMissingCountv30 = 0,
     HistoryMissingValuev30 = 0,
+
+    --================ Auto Save Posisi Player ===============
+
+    Playerv31 = game.Players.LocalPlayer,
+
+    FileNamev31 = "saveposition.txt",
+
+    Characterv31 = nil,
+    HRPv31 = nil,
+    Positionv31 = nil,
+
+    --================ Auto Tp To Save Position ===============
+
+    Playerv32 = game.Players.LocalPlayer,
+
+    FileNamev32 = "saveposition.txt",
+
+    RawDatav32 = nil,
+    Xv32 = nil,
+    Yv32 = nil,
+    Zv32 = nil,
+
+    Characterv32 = nil,
+    HRPv32 = nil,
 }
+
+    --================ Auto Save Posisi Player ===============
+
+if writefile and not isfile(GameData.FileNamev31) then
+    writefile(GameData.FileNamev31, "")
+end
+
+task.spawn(function()
+    while true do
+        task.wait(10)
+
+        GameData.Characterv31 = GameData.Playerv31.Character
+        GameData.HRPv31 = GameData.Characterv31
+            and GameData.Characterv31:FindFirstChild("HumanoidRootPart")
+
+        if GameData.HRPv31 then
+            GameData.Positionv31 = GameData.HRPv31.Position
+            writefile(
+                GameData.FileNamev31,
+                GameData.Positionv31.X .. "," ..
+                GameData.Positionv31.Y .. "," ..
+                GameData.Positionv31.Z
+            )
+        end
+    end
+end)
+
+    --================ Auto Tp To Save Position ===============
+
+if isfile(GameData.FileNamev32) then
+    GameData.RawDatav32 = readfile(GameData.FileNamev32)
+
+    GameData.Xv32, GameData.Yv32, GameData.Zv32 =
+        GameData.RawDatav32:match("([%-%d%.]+),([%-%d%.]+),([%-%d%.]+)")
+
+    if GameData.Xv32 and GameData.Yv32 and GameData.Zv32 then
+        GameData.Characterv32 = GameData.Playerv32.Character
+        GameData.HRPv32 = GameData.Characterv32
+            and GameData.Characterv32:FindFirstChild("HumanoidRootPart")
+
+        if GameData.HRPv32 then
+            GameData.HRPv32.CFrame = CFrame.new(
+                tonumber(GameData.Xv32),
+                tonumber(GameData.Yv32),
+                tonumber(GameData.Zv32)
+            )
+        end
+    end
+end
+
+--================ Wind Ui ===============
 
 local Window = WindUI:CreateWindow({
     Title = "NexaHub | Fish It!",
@@ -1347,7 +1422,7 @@ local Sec = {}
 
 local ConfigManager = Window.ConfigManager
 local AutoConfigName = "NexaHub_FishIt_Auto_V1"
-local AutoFeatureEnabled = true
+local AutoFeatureEnabled = false
 
 Sec.Home1 = Tabs.Home:Section({
     Title = "Update Log",
@@ -7933,20 +8008,19 @@ local function AutoSaveConfig()
     end
 end
 
--- Langsung load config saat script jalan
-AutoLoadConfig()
-
 Sec.Config1:Toggle({
     Title = "Auto Save & Load",
     Flag = "AutoSaveLoad",
-    Desc = "Automatically save and load config every 40 seconds",
-    Value = true, -- langsung nyala
+    Desc = "Automatically save and load config",
+    Value = false, -- DEFAULT OFF
     Callback = function(state)
         AutoFeatureEnabled = state
+
         if state then
-            AutoLoadConfig() -- load config kalau ON
+            AutoLoadConfig() -- load saat ON
         end
-        -- langsung save config saat toggle berubah
+
+        -- save config setiap toggle berubah
         if Window.CurrentConfig then
             Window.CurrentConfig:Save()
         end
@@ -7966,7 +8040,7 @@ Sec.Config1:Button({
 
 spawn(function()
     while true do
-        task.wait(40) -- setiap 5 detik
+        task.wait(5)
         AutoSaveConfig()
     end
 end)
