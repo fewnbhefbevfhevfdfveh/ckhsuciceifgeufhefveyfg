@@ -178,17 +178,15 @@ end
 --// ================================
 --// REQUEST TO SERVER
 --// ================================
--- Menggunakan format dari kode kedua
-local hwid = DEVICE_ID
-local key = KEY
-
 local response = Request({
-    Url = API_URL .. "?key=" .. key .. "&device=" .. hwid,
-    Method = "GET"
+    Url = API_URL
+        .. "?key=" .. HttpService:UrlEncode(KEY)
+        .. "&device=" .. HttpService:UrlEncode(DEVICE_ID),
+    Method = "GET",
+    Headers = {
+        ["Content-Type"] = "application/json"
+    }
 })
-
---// Debug print response (opsional)
-print(response.Body)
 
 if not response or not response.Body then
     ShowNotification("❌ Gagal terhubung ke server", true)
