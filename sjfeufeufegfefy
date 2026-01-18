@@ -391,6 +391,10 @@ local GameData = {
     ["Christmas Island"] = CFrame.new(843.041687, 26.0803814, 1566.52734, 0.00453743944, -9.89134179e-08, -0.999989688, -5.82183262e-08, 1, -9.91785996e-08, 0.999989688, 5.86677444e-08, 0.00453743944),
     ["Pirate Treasure Room"] = CFrame.new(3302.10229, -293.803467, 3017.49951, -0.965538323, 3.13014077e-08, -0.26026091, 6.58369759e-09, 1, 9.58445767e-08, 0.26026091, 9.08281308e-08, -0.965538323),
     ["Pirate Cove"] = CFrame.new(3321.96069, 10.2510681, 3539.07275, 0.606894374, 7.27147054e-08, -0.794782519, -6.14758875e-08, 1, 4.45472033e-08, 0.794782519, 2.18245155e-08, 0.606894374),
+    ["Crystal Depths"] = CFrame.new(5749.24365, -904.818481, 15403.3418, 0.748294473, 6.75499212e-09, 0.663366735, -9.15655163e-10, 1, -9.15001053e-09, -0.663366735, 6.23948715e-09, 0.748294473),
+    ["Secret Passage"] = CFrame.new(3446.85132, -287.844818, 3397.55054, 0.929098547, 4.31005631e-08, 0.369832247, -3.45148621e-08, 1, -2.9832055e-08, -0.369832247, 1.49522119e-08, 0.929098547),
+    ["Leviathan Room"] = CFrame.new(3474.32983, -287.843231, 3473.8208, -0.891127229, 2.03121733e-08, -0.453753531, 3.47882008e-08, 1, -2.35558275e-08, 0.453753531, -3.67765089e-08, -0.891127229),
+--  [""] = CFrame.new(),
     },
 
     -- ==================[Save Posisi] ==================
@@ -1390,7 +1394,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.1.5",
+    Title = "v0.1.6",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1436,9 +1440,9 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-[+] Added Fish Quantity and Value Status (Melihat Harga Semua Ikan Di Inventory)
-[+] Added Freeze Character 
-[+] Added Trade Select Items (Select Fish & Enchant Stone)
+[+] Added Teleport to Leviathan Room
+[+] Added Teleport to Crystal Depths
+[+] Added Teleport to Secret Passage
 ]],
     Locked = false
 })
