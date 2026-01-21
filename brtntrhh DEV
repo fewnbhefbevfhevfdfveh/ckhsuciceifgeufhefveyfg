@@ -9,7 +9,6 @@ local hrp = character:WaitForChild("HumanoidRootPart")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local LocalPlayer = player -- alias supaya sama dengan LocalPlayer
-local MenuRings = workspace["!!! MENU RINGS"]
 local PlayerGui = player:WaitForChild("PlayerGui")
 
 local GameData = {
@@ -686,15 +685,9 @@ local GameData = {
     -- ================== [Remove VFX] ==================
 
     RS = game:GetService("ReplicatedStorage"),
-    RunService = game:GetService("RunService"),
 
-    -- VFX Folder
     waterVFXFolder = nil,
-
-    -- Stored VFX Clones
     storedVFX = {},
-
-    -- Connections
     childAddedConn = nil,
 
     -- ================== [Anti AFK Time] ==================
@@ -766,7 +759,7 @@ local GameData = {
     AntiAfkThread = nil,
 
 
-    -- ================== [FishCaught Animation] ==================
+    -- ================== [Fishing Animation V1] ==================
 
     Servicesv23 = {
         ReplicatedStoragev23 = game:GetService("ReplicatedStorage"),
@@ -797,6 +790,157 @@ local GameData = {
 
     FishCaughtTrackv23 = nil,
     EquipIdleTrackv23 = nil,
+
+        -- ================== [Fishing Animation V2] ==================
+
+    CustomAnimationEnabledv34 = false,
+    SelectedAnimationWeaponv34 = "Holy Trident",
+
+    Animationsv34 = require(game:GetService("ReplicatedStorage").Modules.Animations),
+
+    AnimationBackupv34 = {},
+
+    AnimationPresetsv34 = {
+        ["The Vanquisher"] = {
+            StartRodCharge = "The Vanquisher - StartRodCharge",
+            RodThrow = "The Vanquisher - RodThrow",
+            ReelStart = "The Vanquisher - ReelStart",
+            ReelingIdle = "The Vanquisher - ReelingIdle",
+            ReelIntermission = "The Vanquisher - ReelIntermission",
+            FishCaught = "The Vanquisher - FishCaught",
+            EquipIdle = "The Vanquisher - EquipIdle",
+        },
+
+        ["Soul Scythe"] = {
+            StartRodCharge = "Soul Scythe - StartRodCharge",
+            RodThrow = "Soul Scythe - RodThrow",
+            ReelStart = "Soul Scythe - ReelStart",
+            ReelingIdle = "Soul Scythe - ReelingIdle",
+            ReelIntermission = "Soul Scythe - ReelIntermission",
+            FishCaught = "Soul Scythe - FishCaught",
+            EquipIdle = "Soul Scythe - EquipIdle",
+        },
+
+        ["Princess Parasol"] = {
+            StartRodCharge = "Princess Parasol - StartRodCharge",
+            RodThrow = "Princess Parasol - RodThrow",
+            ReelStart = "Princess Parasol - ReelStart",
+            ReelingIdle = "Princess Parasol - ReelingIdle",
+            ReelIntermission = "Princess Parasol - ReelIntermission",
+            FishCaught = "Princess Parasol - FishCaught",
+            EquipIdle = "Princess Parasol - EquipIdle",
+        },
+
+        ["Oceanic Harpoon"] = {
+            StartRodCharge = "Oceanic Harpoon - StartRodCharge",
+            RodThrow = "Oceanic Harpoon - RodThrow",
+            ReelStart = "Oceanic Harpoon - ReelStart",
+            ReelingIdle = "Oceanic Harpoon - ReelingIdle",
+            ReelIntermission = "Oceanic Harpoon - ReelIntermission",
+            FishCaught = "Oceanic Harpoon - FishCaught",
+            EquipIdle = "Oceanic Harpoon - EquipIdle",
+        },
+
+        ["Holy Trident"] = {
+            StartRodCharge = "Holy Trident - StartRodCharge",
+            RodThrow = "Holy Trident - RodThrow",
+            ReelStart = "Holy Trident - ReelStart",
+            ReelingIdle = "Holy Trident - ReelingIdle",
+            ReelIntermission = "Holy Trident - ReelIntermission",
+            FishCaught = "Holy Trident - FishCaught",
+            EquipIdle = "Holy Trident - EquipIdle",
+        },
+
+        ["Gingerbread Katana"] = {
+            StartRodCharge = "Gingerbread Katana - StartRodCharge",
+            RodThrow = "Gingerbread Katana - RodThrow",
+            ReelStart = "Gingerbread Katana - ReelStart",
+            ReelingIdle = "Gingerbread Katana - ReelingIdle",
+            ReelIntermission = "Gingerbread Katana - ReelIntermission",
+            FishCaught = "Gingerbread Katana - FishCaught",
+            EquipIdle = "Gingerbread Katana - EquipIdle",
+        },
+
+        ["Frozen Krampus Scythe"] = {
+            StartRodCharge = "Frozen Krampus Scythe - StartRodCharge",
+            RodThrow = "Frozen Krampus Scythe - RodThrow",
+            ReelStart = "Frozen Krampus Scythe - ReelStart",
+            ReelingIdle = "Frozen Krampus Scythe - ReelingIdle",
+            ReelIntermission = "Frozen Krampus Scythe - ReelIntermission",
+            FishCaught = "Frozen Krampus Scythe - FishCaught",
+            EquipIdle = "Frozen Krampus Scythe - EquipIdle",
+        },
+
+        ["Eclipse Katana"] = {
+            StartRodCharge = "Eclipse Katana - StartRodCharge",
+            RodThrow = "Eclipse Katana - RodThrow",
+            ReelStart = "Eclipse Katana - ReelStart",
+            ReelingIdle = "Eclipse Katana - ReelingIdle",
+            ReelIntermission = "Eclipse Katana - ReelIntermission",
+            FishCaught = "Eclipse Katana - FishCaught",
+            EquipIdle = "Eclipse Katana - EquipIdle",
+        },
+
+        ["Corruption Edge"] = {
+            StartRodCharge = "Corruption Edge - StartRodCharge",
+            RodThrow = "Corruption Edge - RodThrow",
+            ReelStart = "Corruption Edge - ReelStart",
+            ReelingIdle = "Corruption Edge - ReelingIdle",
+            ReelIntermission = "Corruption Edge - ReelIntermission",
+            FishCaught = "Corruption Edge - FishCaught",
+            EquipIdle = "Corruption Edge - EquipIdle",
+        },
+
+        ["Christmas Parasol"] = {
+            StartRodCharge = "Christmas Parasol - StartRodCharge",
+            RodThrow = "Christmas Parasol - RodThrow",
+            ReelStart = "Christmas Parasol - ReelStart",
+            ReelingIdle = "Christmas Parasol - ReelingIdle",
+            ReelIntermission = "Christmas Parasol - ReelIntermission",
+            FishCaught = "Christmas Parasol - FishCaught",
+            EquipIdle = "Christmas Parasol - EquipIdle",
+        },
+
+        ["Blackhole Sword"] = {
+            StartRodCharge = "Blackhole Sword - StartRodCharge",
+            RodThrow = "Blackhole Sword - RodThrow",
+            ReelStart = "Blackhole Sword - ReelStart",
+            ReelingIdle = "Blackhole Sword - ReelingIdle",
+            ReelIntermission = "Blackhole Sword - ReelIntermission",
+            FishCaught = "Blackhole Sword - FishCaught",
+            EquipIdle = "Blackhole Sword - EquipIdle",
+        },
+
+        ["Eternal Flower"] = {
+            StartRodCharge = "Eternal Flower - StartRodCharge",
+            RodThrow = "Eternal Flower - RodThrow",
+            ReelStart = "Eternal Flower - ReelStart",
+            ReelingIdle = "Eternal Flower - ReelingIdle",
+            ReelIntermission = "Eternal Flower - ReelIntermission",
+            FishCaught = "Eternal Flower - FishCaught",
+            EquipIdle = "Eternal Flower - EquipIdle",
+        },
+
+        ["Binary Edge"] = {
+            StartRodCharge = "Binary Edge - StartRodCharge",
+            RodThrow = "Binary Edge - RodThrow",
+            ReelStart = "Binary Edge - ReelStart",
+            ReelingIdle = "Binary Edge - ReelingIdle",
+            ReelIntermission = "Binary Edge - ReelIntermission",
+            FishCaught = "Binary Edge - FishCaught",
+            EquipIdle = "Binary Edge - EquipIdle",
+        },
+
+        ["1x1x1x1 Ban Hammer"] = {
+            StartRodCharge = "1x1x1x1 Ban Hammer - StartRodCharge",
+            RodThrow = "1x1x1x1 Ban Hammer - RodThrow",
+            ReelStart = "1x1x1x1 Ban Hammer - ReelStart",
+            ReelingIdle = "1x1x1x1 Ban Hammer - ReelingIdle",
+            ReelIntermission = "1x1x1x1 Ban Hammer - ReelIntermission",
+            FishCaught = "1x1x1x1 Ban Hammer - FishCaught",
+            EquipIdle = "1x1x1x1 Ban Hammer - EquipIdle",
+        },
+    },
 
     -- ================== [Auto Reconnect] ==================             
 
@@ -1183,46 +1327,9 @@ local GameData = {
 
 	--================ Auto Open Pirate Chests ===============
 
-    AutoOpenPirateChestsv21 = false,
+    PromptDelayv33 = 0.15,
 
-    ReplicatedStoragev21 = game:GetService("ReplicatedStorage"),
-
-    NetPathv21 = nil,
-
-    ChestArgsv21 = {},
-
-    SetupNetPathv21 = function()
-        GameData.NetPathv21 = GameData.ReplicatedStoragev21
-            :WaitForChild("Packages")
-            :WaitForChild("_Index")
-            :WaitForChild("sleitnick_net@0.2.0")
-            :WaitForChild("net")
-            :WaitForChild("RE/ClaimPirateChest")
-    end,
-
-    ClaimChestsLoopv21 = function()
-        while GameData.AutoOpenPirateChestsv21 do
-            table.clear(GameData.ChestArgsv21)
-
-            for _, child in pairs(workspace.PirateChestStorage:GetChildren()) do
-                if child:IsA("Model") then
-                    table.insert(GameData.ChestArgsv21, child.Name)
-                end
-            end
-
-            if #GameData.ChestArgsv21 > 0 then
-                if GameData.NetPathv21 then
-                    pcall(function()
-                        GameData.NetPathv21:FireServer(unpack(GameData.ChestArgsv21))
-                    end)
-                else
-                    GameData.SetupNetPathv21()
-                end
-            end
-
-            task.wait(0.5)
-        end
-    end,
+    PirateChestStoragev33 = workspace:FindFirstChild("PirateChestStorage"),
 
 	--================ No Animation ===============
 
@@ -1394,7 +1501,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.1.5",
+    Title = "v0.1.6",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1440,9 +1547,9 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-[+] Added Fish Quantity and Value Status (Melihat Harga Semua Ikan Di Inventory)
-[+] Added Freeze Character 
-[+] Added Trade Select Items (Select Fish & Enchant Stone)
+[+] Added Teleport to Leviathan Room
+[+] Added Teleport to Crystal Depths
+[+] Added Teleport to Secret Passage
 ]],
     Locked = false
 })
@@ -2947,8 +3054,8 @@ GameData.REFishCaughtv23.OnClientEvent:Connect(function()
 end)
 
 Sec.Main3:Dropdown({
-    Title = "FishCaught Animation",
-    Flag = "FishCaughtAnimv23",
+    Title = "FishCaught Animation V1",
+    Flag = "FishCaughtAnimV1",
     SearchBarEnabled = true,
     Values = GameData.FishCaughtListv23,
     Callback = function(value)
@@ -2957,8 +3064,8 @@ Sec.Main3:Dropdown({
 })
 
 Sec.Main3:Dropdown({
-    Title = "EquipIdle Animation",
-    Flag = "EquipIdleAnimv23",
+    Title = "EquipIdle Animation V1",
+    Flag = "EquipIdleAnimV1",
     SearchBarEnabled = true,
     Values = GameData.EquipIdleListv23,
     Callback = function(value)
@@ -2968,8 +3075,8 @@ Sec.Main3:Dropdown({
 })
 
 Sec.Main3:Toggle({
-    Title = "Enable FishCaught",
-    Flag = "EnableFishCaughtv23",
+    Title = "Enable FishCaught V1",
+    Flag = "EnableFishCaughtV1",
     Value = false,
     Callback = function(value)
         GameData.FishCaughtEnabledv23 = value
@@ -2984,8 +3091,8 @@ Sec.Main3:Toggle({
 })
 
 Sec.Main3:Toggle({
-    Title = "Enable EquipIdle",
-    Flag = "EnableEquipIdlev23",
+    Title = "Enable EquipIdle V1",
+    Flag = "EnableEquipIdleV1",
     Value = false,
     Callback = function(value)
         GameData.EquipIdleEnabledv23 = value
@@ -3002,6 +3109,85 @@ Sec.Main3:Toggle({
         end
     end
 })
+
+Sec.Main3:Space()
+
+for namev34, animv34 in pairs(GameData.Animationsv34) do
+    if typeof(animv34) == "Instance" then
+        GameData.AnimationBackupv34[namev34] = animv34
+    end
+end
+
+GameData.ApplyAnimationPresetv34 = function()
+    for namev34, animv34 in pairs(GameData.AnimationBackupv34) do
+        GameData.Animationsv34[namev34] = animv34
+    end
+
+    if not GameData.CustomAnimationEnabledv34 then
+        return
+    end
+
+    local presetv34 =
+        GameData.AnimationPresetsv34[GameData.SelectedAnimationWeaponv34]
+    if not presetv34 then return end
+
+    for defaultNamev34, overrideNamev34 in pairs(presetv34) do
+        if GameData.Animationsv34[overrideNamev34] then
+            GameData.Animationsv34[defaultNamev34] =
+                GameData.Animationsv34[overrideNamev34]
+        end
+    end
+end
+
+if typeof(GameData.Animationsv34.GetAnimation) == "function" then
+    GameData.Animationsv34.GetAnimation = function(_, namev34)
+        if not GameData.CustomAnimationEnabledv34 then
+            return GameData.Animationsv34[namev34]
+        end
+
+        local presetv34 =
+            GameData.AnimationPresetsv34[GameData.SelectedAnimationWeaponv34]
+
+        if presetv34 and presetv34[namev34]
+            and GameData.Animationsv34[presetv34[namev34]] then
+            return GameData.Animationsv34[presetv34[namev34]]
+        end
+
+        return GameData.Animationsv34[namev34]
+    end
+end
+
+ProtectCallback = _G.ProtectCallback
+
+Sec.Main3:Dropdown({
+    Title = "Custom Animation Weapon V2",
+    Flag = "CustomAnimationWeaponV2",
+    Values = {
+        "The Vanquisher","Soul Scythe","Princess Parasol","Oceanic Harpoon",
+        "Holy Trident","Gingerbread Katana","Frozen Krampus Scythe",
+        "Eternal Flower","Eclipse Katana","Corruption Edge","Christmas Parasol",
+        "Blackhole Sword","Binary Edge","1x1x1x1 Ban Hammer",
+    },
+    Value = "Holy Trident",
+    Callback = ProtectCallback and ProtectCallback(function(optionv34)
+        GameData.SelectedAnimationWeaponv34 = optionv34
+        GameData.ApplyAnimationPresetv34()
+    end) or function(optionv34)
+        GameData.SelectedAnimationWeaponv34 = optionv34
+        GameData.ApplyAnimationPresetv34()
+    end
+})
+
+Sec.Main3:Toggle({
+    Title = "Enable Custom Animations V2",
+    Flag = "EnableCustomAnimationsV2",
+    Value = false,
+    Callback = function(statev34)
+        GameData.CustomAnimationEnabledv34 = statev34
+        GameData.ApplyAnimationPresetv34()
+    end
+})
+
 Sec.Main4 = Tabs.Main:Section({
     Title = "Blatant",
     Box = true,
@@ -3987,25 +4173,50 @@ Sec.Main8 = Tabs.Main:Section({
     Opened = false,
 })
 
-task.spawn(function()
-    GameData.SetupNetPathv21()
-end)
+GameData.FirePromptv33 = function(prompt)
+    if prompt and prompt:IsA("ProximityPrompt") then
+        pcall(function()
+            fireproximityprompt(prompt)
+        end)
+        task.wait(GameData.PromptDelayv33)
+    end
+end
 
-Sec.Main8:Toggle({
-    Title = "Auto Open Pirate Chests",
-    Flag = "AutoOpenPirateChests",
-    Value = false,
-    Callback = function(state)
-        GameData.AutoOpenPirateChestsv21 = state
-
-        if state then
-            task.spawn(function()
-                GameData.ClaimChestsLoopv21()
-            end)
+GameData.OpenAllPirateChestsv33 = function()
+    if not GameData.PirateChestStoragev33 then
+        GameData.PirateChestStoragev33 = workspace:FindFirstChild("PirateChestStorage")
+        if not GameData.PirateChestStoragev33 then
+            return
         end
     end
-})
 
+    local Openedv33 = 0
+
+    for _, modelv33 in ipairs(GameData.PirateChestStoragev33:GetChildren()) do
+        if modelv33:IsA("Model") then
+            local Coverv33 = modelv33:FindFirstChild("Cover")
+
+            if Coverv33 then
+                local Promptv33 =
+                    Coverv33:FindFirstChildWhichIsA("ProximityPrompt", true)
+
+                if Promptv33 then
+                    GameData.FirePromptv33(Promptv33)
+                    Openedv33 += 1
+                end
+            end
+        end
+    end
+end
+
+Sec.Main10:Button({
+    Title = "Open All Pirate Chest",
+    Callback = function()
+        task.spawn(function()
+            GameData.OpenAllPirateChestsv33()
+        end)
+    end
+})
 Sec.Main10 = Tabs.Main:Section({
     Title = "Freecamera Drone",
     Box = true,
@@ -7308,15 +7519,15 @@ Sec.Player:Toggle({
     end
 })
 
--- Initialize folder
 GameData.waterVFXFolder = GameData.RS:WaitForChild("VFX")
 
 Sec.Player:Toggle({
     Title = "Remove Skin Effect",
     Flag = "RemoveVFX",
     Default = false,
-    Callback = function(value)
-        if value then
+    Callback = function(enabled)
+
+        if enabled then
             for _, obj in ipairs(GameData.waterVFXFolder:GetChildren()) do
                 if not GameData.storedVFX[obj.Name] then
                     GameData.storedVFX[obj.Name] = obj:Clone()
@@ -7326,8 +7537,10 @@ Sec.Player:Toggle({
 
             if not GameData.childAddedConn then
                 GameData.childAddedConn = GameData.waterVFXFolder.ChildAdded:Connect(function(obj)
-                    task.wait(0.05)
-                    if obj and Sec.Player:Get("RemoveVFX") then
+                    if not Sec.Player:Get("RemoveVFX") then return end
+
+                    task.wait()
+                    if obj and obj.Parent then
                         if not GameData.storedVFX[obj.Name] then
                             GameData.storedVFX[obj.Name] = obj:Clone()
                         end
@@ -7335,6 +7548,7 @@ Sec.Player:Toggle({
                     end
                 end)
             end
+
         else
             if GameData.childAddedConn then
                 GameData.childAddedConn:Disconnect()
@@ -7351,7 +7565,6 @@ Sec.Player:Toggle({
         end
     end
 })
-
 
 -- Character Handler
 GameData.character = GameData.player.Character or GameData.player.CharacterAdded:Wait()
