@@ -940,7 +940,7 @@ local GameData = {
             FishCaught = "1x1x1x1 Ban Hammer - FishCaught",
             EquipIdle = "1x1x1x1 Ban Hammer - EquipIdle",
         },
-    }
+    },
 
     -- ================== [Auto Reconnect] ==================             
 
@@ -4209,7 +4209,7 @@ GameData.OpenAllPirateChestsv33 = function()
     end
 end
 
-Sec.Main10:Button({
+Sec.Main8:Button({
     Title = "Open All Pirate Chest",
     Callback = function()
         task.spawn(function()
