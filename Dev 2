@@ -1312,24 +1312,34 @@ local GameData = {
 
     ReplicatedStoragev17 = game:GetService("ReplicatedStorage"),
     HttpServicev17 = game:GetService("HttpService"),
+
     Netv17 = nil,
     ReplionClientv17 = nil,
     ItemUtilityv17 = nil,
     DataReplionv17 = nil,
     FavoriteRemotev17 = nil,
+
     RATE = 0.06,
     LOOP_DELAY = 1,
+
     state = {
         selectedFish = {},
+        selectedMutations = {},
+
         autoFavorite = false,
         autoUnfavorite = false,
         stopFavorite = false,
         stopUnfavorite = false,
     },
+
     FishNameList = {},
     FishMap = {},
-    ItemsFolderv17 = nil,
 
+    MutationNameList = {},
+    MutationMap = {},
+
+    ItemsFolderv17 = nil,
+    VariantsFolderv17 = nil,
 	--================ Auto Open Pirate Chests ===============
 
     PromptDelayv33 = 0.15,
@@ -1506,7 +1516,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.1.6",
+    Title = "v0.1.7",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1552,9 +1562,11 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-[+] Added Teleport to Leviathan Room
-[+] Added Teleport to Crystal Depths
-[+] Added Teleport to Secret Passage
+[+] Added Animation Fishing V2
+[!] Fixed Cutscene Delete
+[!] Fixed Join Event Tp
+[/] Join Event Move To Tab Event
+[/] 
 ]],
     Locked = false
 })
@@ -3911,9 +3923,16 @@ Sec.Main6:Toggle({
 GameData.Netv17 = require(GameData.ReplicatedStoragev17.Packages.Net)
 GameData.ReplionClientv17 = require(GameData.ReplicatedStoragev17.Packages.Replion).Client
 GameData.ItemUtilityv17 = require(GameData.ReplicatedStoragev17.Shared.ItemUtility)
+
 GameData.DataReplionv17 = GameData.ReplionClientv17:WaitReplion("Data")
 GameData.FavoriteRemotev17 = GameData.Netv17:RemoteEvent("FavoriteItem")
+
 GameData.ItemsFolderv17 = GameData.ReplicatedStoragev17:WaitForChild("Items")
+GameData.VariantsFolderv17 = GameData.ReplicatedStoragev17:WaitForChild("Variants")
+
+local function isEmpty(t)
+    return not t or #t == 0
+end
 
 for _, module in ipairs(GameData.ItemsFolderv17:GetChildren()) do
     if module:IsA("ModuleScript") then
@@ -3927,8 +3946,58 @@ for _, module in ipairs(GameData.ItemsFolderv17:GetChildren()) do
         end
     end
 end
-
 table.sort(GameData.FishNameList)
+
+for _, module in ipairs(GameData.VariantsFolderv17:GetChildren()) do
+    if module:IsA("ModuleScript") then
+        local ok, data = pcall(require, module)
+        if ok and data and data.Data and data.Data.Name then
+            local name = data.Data.Name
+            if not GameData.MutationMap[name] then
+                GameData.MutationMap[name] = true
+                table.insert(GameData.MutationNameList, name)
+            end
+        end
+    end
+end
+table.sort(GameData.MutationNameList)
+
+local function matchFishAndMutation(item, fishName)
+    local fishEmpty = isEmpty(GameData.state.selectedFish)
+    local mutEmpty  = isEmpty(GameData.state.selectedMutations)
+
+    -- SAFETY: kalau dua-duanya kosong → jangan apa-apa
+    if fishEmpty and mutEmpty then
+        return false
+    end
+
+    -- FILTER FISH
+    if not fishEmpty and not table.find(GameData.state.selectedFish, fishName) then
+        return false
+    end
+
+    -- FILTER MUTATION
+    if not mutEmpty then
+        if not (item.Metadata and item.Metadata.VariantId) then
+            return false
+        end
+
+        local variantModule =
+            GameData.VariantsFolderv17:FindFirstChild(item.Metadata.VariantId)
+        if not variantModule then return false end
+
+        local okVar, varData = pcall(require, variantModule)
+        if not (okVar and varData and varData.Data) then
+            return false
+        end
+
+        if not table.find(GameData.state.selectedMutations, varData.Data.Name) then
+            return false
+        end
+    end
+
+    return true
+end
 
 local function workerFavorite()
     while GameData.state.autoFavorite do
@@ -3944,13 +4013,13 @@ local function workerFavorite()
                 local ok, data = pcall(function()
                     return GameData.ItemUtilityv17.GetItemDataFromItemType("Items", item.Id)
                 end)
+                if not (ok and data and data.Data and data.Data.Type == "Fish") then
+                    continue
+                end
 
-                if ok and data and data.Data and data.Data.Type == "Fish" then
-                    local fishName = data.Data.Name
-                    if table.find(GameData.state.selectedFish, fishName) then
-                        GameData.FavoriteRemotev17:FireServer(item.UUID)
-                        task.wait(GameData.RATE)
-                    end
+                if matchFishAndMutation(item, data.Data.Name) then
+                    GameData.FavoriteRemotev17:FireServer(item.UUID)
+                    task.wait(GameData.RATE)
                 end
             end
         end
@@ -3973,13 +4042,13 @@ local function workerUnfavorite()
                 local ok, data = pcall(function()
                     return GameData.ItemUtilityv17.GetItemDataFromItemType("Items", item.Id)
                 end)
+                if not (ok and data and data.Data and data.Data.Type == "Fish") then
+                    continue
+                end
 
-                if ok and data and data.Data and data.Data.Type == "Fish" then
-                    local fishName = data.Data.Name
-                    if table.find(GameData.state.selectedFish, fishName) then
-                        GameData.FavoriteRemotev17:FireServer(item.UUID)
-                        task.wait(GameData.RATE)
-                    end
+                if matchFishAndMutation(item, data.Data.Name) then
+                    GameData.FavoriteRemotev17:FireServer(item.UUID)
+                    task.wait(GameData.RATE)
                 end
             end
         end
@@ -3990,22 +4059,28 @@ end
 
 Sec.Main6:Dropdown({
     Title = "Select Fish",
-    Flag = "SelectFish",
-    Desc = "Favorite / Unfavorite Based on Fish Name",
     SearchBarEnabled = true,
     Values = GameData.FishNameList,
-    Value = {},
+    AllowNone = true,
     Multi = true,
-    AllowNone = false,
-    Callback = function(option)
-        GameData.state.selectedFish = option or {}
+    Callback = function(v)
+        GameData.state.selectedFish = v or {}
+    end
+})
+
+Sec.Main6:Dropdown({
+    Title = "Select Mutation",
+    SearchBarEnabled = true,
+    Values = GameData.MutationNameList,
+    AllowNone = true,
+    Multi = true,
+    Callback = function(v)
+        GameData.state.selectedMutations = v or {}
     end
 })
 
 Sec.Main6:Toggle({
     Title = "Favorite Fish",
-    Flag = "FavoriteFish",
-    Value = false,
     Callback = function(b)
         GameData.state.autoFavorite = b
         GameData.state.stopFavorite = not b
@@ -4020,8 +4095,6 @@ Sec.Main6:Toggle({
 
 Sec.Main6:Toggle({
     Title = "Unfavorite Fish",
-    Flag = "UnfavoriteFish",
-    Value = false,
     Callback = function(b)
         GameData.state.autoUnfavorite = b
         GameData.state.stopUnfavorite = not b
@@ -4033,6 +4106,7 @@ Sec.Main6:Toggle({
         end
     end
 })
+
 
 Sec.Main7 = Tabs.Main:Section({
     Title = "Enchant",
