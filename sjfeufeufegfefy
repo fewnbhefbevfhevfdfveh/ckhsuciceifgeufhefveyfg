@@ -1560,7 +1560,6 @@ local Tabs = {
 do
     local DefaultConfig = {
         TextXAlignment = "Center",
-        TextSize = 14,
     }
 
     for name, tab in pairs(Tabs) do
