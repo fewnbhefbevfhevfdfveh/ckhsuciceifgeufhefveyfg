@@ -1556,6 +1556,30 @@ local Tabs = {
     Config = Window:Tab({ Title = "Config", Icon = "folder" }),
 }
 
+-- AUTO DEFAULT SECTION CONFIG (ALL TABS)
+do
+    local DefaultConfig = {
+        TextXAlignment = "Center",
+        TextSize = 14,
+    }
+
+    for name, tab in pairs(Tabs) do
+        if tab and type(tab.Section) == "function" then
+            local OldSection = tab.Section
+
+            function tab:Section(config)
+                for k, v in pairs(DefaultConfig) do
+                    if config[k] == nil then
+                        config[k] = v
+                    end
+                end
+
+                return OldSection(self, config)
+            end
+        end
+    end
+end
+
 local Sec = {}
 
 local ConfigManager = Window.ConfigManager
@@ -8813,4 +8837,3 @@ task.spawn(function()
         ApplyGradient()
     end
 end)
-
