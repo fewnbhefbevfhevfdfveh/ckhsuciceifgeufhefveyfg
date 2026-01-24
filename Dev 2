@@ -568,8 +568,10 @@ local GameData = {
 
     -- ================== [Blatant V2] ==================
 
-    ReplicatedStoragev19 = game:GetService("ReplicatedStorage"),
     Playersv19 = game:GetService("Players"),
+    ReplicatedStoragev19 = game:GetService("ReplicatedStorage"),
+
+    LocalPlayerv19 = nil,
 
     NetFolderv19 = nil,
 
@@ -577,15 +579,16 @@ local GameData = {
     RF_RequestMinigamev19 = nil,
     RF_CancelFishingInputsv19 = nil,
     RF_UpdateAutoFishingStatev19 = nil,
+
     RE_FishingCompletedv19 = nil,
     RE_MinigameChangedv19 = nil,
 
     Activev19 = false,
 
     Settingsv19 = {
-        ChargeDelay = 0.007,
-        CompleteDelay = 0.685,
-        CancelDelay = 0.3
+        ChargeDelayv19 = 0.007,
+        CompleteDelayv19 = 0.685,
+        CancelDelayv19 = 0.3
     },
 
     safeFirev19 = function(func)
@@ -593,6 +596,7 @@ local GameData = {
             pcall(func)
         end)
     end,
+    
     -- ================== [SKip Rraity] ==================
 
     Players = game:GetService("Players"),
@@ -3242,18 +3246,31 @@ Sec.Main4:Toggle({
 
 Sec.Main4:Space()
 
+GameData.LocalPlayerv19 = GameData.Playersv19.LocalPlayer
+
 GameData.NetFolderv19 = GameData.ReplicatedStoragev19
     :WaitForChild("Packages")
     :WaitForChild("_Index")
     :WaitForChild("sleitnick_net@0.2.0")
     :WaitForChild("net")
 
-GameData.RF_ChargeFishingRodv19 = GameData.NetFolderv19:WaitForChild("RF/ChargeFishingRod")
-GameData.RF_RequestMinigamev19 = GameData.NetFolderv19:WaitForChild("RF/RequestFishingMinigameStarted")
-GameData.RF_CancelFishingInputsv19 = GameData.NetFolderv19:WaitForChild("RF/CancelFishingInputs")
-GameData.RF_UpdateAutoFishingStatev19 = GameData.NetFolderv19:WaitForChild("RF/UpdateAutoFishingState")
-GameData.RE_FishingCompletedv19 = GameData.NetFolderv19:WaitForChild("RE/FishingCompleted")
-GameData.RE_MinigameChangedv19 = GameData.NetFolderv19:WaitForChild("RE/FishingMinigameChanged")
+GameData.RF_ChargeFishingRodv19 =
+    GameData.NetFolderv19:WaitForChild("RF/ChargeFishingRod")
+
+GameData.RF_RequestMinigamev19 =
+    GameData.NetFolderv19:WaitForChild("RF/RequestFishingMinigameStarted")
+
+GameData.RF_CancelFishingInputsv19 =
+    GameData.NetFolderv19:WaitForChild("RF/CancelFishingInputs")
+
+GameData.RF_UpdateAutoFishingStatev19 =
+    GameData.NetFolderv19:WaitForChild("RF/UpdateAutoFishingState")
+
+GameData.RE_FishingCompletedv19 =
+    GameData.NetFolderv19:WaitForChild("RE/FishingCompleted")
+
+GameData.RE_MinigameChangedv19 =
+    GameData.NetFolderv19:WaitForChild("RE/FishingMinigameChanged")
 
 function GameData.ultraSpamLoopv19()
     while GameData.Activev19 do
@@ -3263,20 +3280,20 @@ function GameData.ultraSpamLoopv19()
             GameData.RF_ChargeFishingRodv19:InvokeServer({ [1] = startTime })
         end)
 
-        task.wait(GameData.Settingsv19.ChargeDelay)
+        task.wait(GameData.Settingsv19.ChargeDelayv19)
 
         local releaseTime = tick()
         GameData.safeFirev19(function()
             GameData.RF_RequestMinigamev19:InvokeServer(1, 0, releaseTime)
         end)
 
-        task.wait(GameData.Settingsv19.CompleteDelay)
+        task.wait(GameData.Settingsv19.CompleteDelayv19)
 
         GameData.safeFirev19(function()
             GameData.RE_FishingCompletedv19:FireServer()
         end)
 
-        task.wait(GameData.Settingsv19.CancelDelay)
+        task.wait(GameData.Settingsv19.CancelDelayv19)
 
         GameData.safeFirev19(function()
             GameData.RF_CancelFishingInputsv19:InvokeServer()
@@ -3288,13 +3305,13 @@ GameData.RE_MinigameChangedv19.OnClientEvent:Connect(function()
     if not GameData.Activev19 then return end
 
     task.spawn(function()
-        task.wait(GameData.Settingsv19.CompleteDelay)
+        task.wait(GameData.Settingsv19.CompleteDelayv19)
 
         GameData.safeFirev19(function()
             GameData.RE_FishingCompletedv19:FireServer()
         end)
 
-        task.wait(GameData.Settingsv19.CancelDelay)
+        task.wait(GameData.Settingsv19.CancelDelayv19)
 
         GameData.safeFirev19(function()
             GameData.RF_CancelFishingInputsv19:InvokeServer()
@@ -3304,16 +3321,23 @@ end)
 
 function GameData.UpdateSettingsv19(completeDelay, cancelDelay)
     if completeDelay ~= nil then
-        GameData.Settingsv19.CompleteDelay = math.max(0, completeDelay)
+        GameData.Settingsv19.CompleteDelayv19 = math.max(0, completeDelay)
     end
     if cancelDelay ~= nil then
-        GameData.Settingsv19.CancelDelay = math.max(0, cancelDelay)
+        GameData.Settingsv19.CancelDelayv19 = math.max(0, cancelDelay)
     end
 end
 
 function GameData.Startv19()
     if GameData.Activev19 then return end
     GameData.Activev19 = true
+
+    GameData.LocalPlayerv19:SetAttribute("Loading", nil)
+
+    GameData.safeFirev19(function()
+        GameData.RF_UpdateAutoFishingStatev19:InvokeServer(true)
+    end)
+
     task.spawn(GameData.ultraSpamLoopv19)
 end
 
@@ -3322,8 +3346,10 @@ function GameData.Stopv19()
     GameData.Activev19 = false
 
     GameData.safeFirev19(function()
-        GameData.RF_UpdateAutoFishingStatev19:InvokeServer(true)
+        GameData.RF_UpdateAutoFishingStatev19:InvokeServer(false)
     end)
+
+    GameData.LocalPlayerv19:SetAttribute("Loading", true)
 
     task.wait(0.2)
 
@@ -3334,35 +3360,31 @@ end
 
 Sec.Main4:Input({
     Title = "Complete Delay v2",
-    Flag = "CompleteDelayv2",
-    Value = tostring(GameData.Settingsv19.CompleteDelay),
-    InputIcon = "clock",
-    Placeholder = "0.685",
-    Callback = function(input)
-        local value = tonumber(input)
-        if value then
-            GameData.UpdateSettingsv19(value, nil)
+    Flag = "Complete_Delay_v2",
+    Value = tostring(GameData.Settingsv19.CompleteDelayv19),
+    Callback = function(v)
+        local n = tonumber(v)
+        if n then
+            GameData.UpdateSettingsv19(n, nil)
         end
     end
 })
 
 Sec.Main4:Input({
     Title = "Cancel Delay v2",
-    Flag = "CancelDelayv2",
-    Value = tostring(GameData.Settingsv19.CancelDelay),
-    InputIcon = "clock",
-    Placeholder = "0.3",
-    Callback = function(input)
-        local value = tonumber(input)
-        if value then
-            GameData.UpdateSettingsv19(nil, value)
+    Flag = "Cancel_Delay_v2",
+    Value = tostring(GameData.Settingsv19.CancelDelayv19),
+    Callback = function(v)
+        local n = tonumber(v)
+        if n then
+            GameData.UpdateSettingsv19(nil, n)
         end
     end
 })
 
 Sec.Main4:Toggle({
-    Title = "Blatant V2",
-    Flag = "BlatantV2",
+    Title = "Blatant v2",
+    Flag = "Blatant_v2",
     Value = false,
     Callback = function(state)
         if state then
