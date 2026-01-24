@@ -384,10 +384,8 @@ local GameData = {
     ["Sacred Temple"] = CFrame.new(1478.09546, 0.0774269104, -612.817993, 0.993017375, 0, 0.117968373, 0, 1, 0, -0.117968373, 0, 0.993017375),
     ["Crystalline Passage"] = CFrame.new(6053.09717, -538.900085, 4391.29102, -0.993590963, -1.39414302e-08, 0.10982503, 1.7823354e-10, 1, -7.10982503, 1.27797193e-07, -0.10982503, -0.993590963),
     ["Ancient Ruin"] = CFrame.new(6130.33203, -584.05603, 4632.95166, -0.171970293, -9.77156915e-08, 0.985102117, -7.319955083e-08, 1, 8.64156533e-08, -0.985102117, -5.722441259e-08, -0.171970293),
-    ["Christmas Cave"] = CFrame.new(395.304199, -580.135071, 8901.16113, -0.0874395818, -1.4548089e-08, -0.996169806, 3.18401732e-08, 1, -1.73988202e-08, 0.996169806, -3.32395658e-08, -0.0874395818),
     ["Iron Cavern"] = CFrame.new(-8802.55762, -583.800049, 94.9271545, 0.539917707, 4.95349006e-08, -0.84171778, 2.88506321e-08, 1, 7.7355935e-08, 0.84171778, -6.60499282e-08, 0.539917707),
     ["Iron Cafe"] = CFrame.new(-8641.91016, -547.400183, 161.963455, -0.0101819877, -4.55452422e-08, -0.999948144, 1.64972356e-08, 1, -4.57155878e-08, 0.999948144, -1.69618559e-08, -0.0101819877),
-    ["Christmas Island"] = CFrame.new(843.041687, 26.0803814, 1566.52734, 0.00453743944, -9.89134179e-08, -0.999989688, -5.82183262e-08, 1, -9.91785996e-08, 0.999989688, 5.86677444e-08, 0.00453743944),
     ["Pirate Treasure Room"] = CFrame.new(3302.10229, -293.803467, 3017.49951, -0.965538323, 3.13014077e-08, -0.26026091, 6.58369759e-09, 1, 9.58445767e-08, 0.26026091, 9.08281308e-08, -0.965538323),
     ["Pirate Cove"] = CFrame.new(3321.96069, 10.2510681, 3539.07275, 0.606894374, 7.27147054e-08, -0.794782519, -6.14758875e-08, 1, 4.45472033e-08, 0.794782519, 2.18245155e-08, 0.606894374),
     ["Crystal Depths"] = CFrame.new(5749.24365, -904.818481, 15403.3418, 0.748294473, 6.75499212e-09, 0.663366735, -9.15655163e-10, 1, -9.15001053e-09, -0.663366735, 6.23948715e-09, 0.748294473),
@@ -951,40 +949,6 @@ local GameData = {
 
     Connections = {},
 
-    -- ================== [Christmas Presents] ==================
-
-    Servicesv2 = {
-        ReplicatedStoragev2 = game:GetService("ReplicatedStorage"),
-    },
-
-    Packagesv2 = nil,
-    Indexv2 = nil,
-    NetPackagev2 = nil,
-    Netv2 = nil,
-    Remotev2 = nil,
-    NpcFolderv2 = nil,
-
-    AutoChristmasv2 = false,
-    AutoThreadv2 = nil,
-
-    -- ================== [Christmas Doors] ==================
-
-    Servicesv1 = {
-        ReplicatedStoragev1 = game:GetService("ReplicatedStorage"),
-        Workspacev1 = game:GetService("Workspace"),
-    },
-
-    ChristmasDoorsv1 = nil,
-
-    Packagesv1 = nil,
-    Indexv1 = nil,
-    NetPackagev1 = nil,
-    Netv1 = nil,
-    NetEventv1 = nil,
-
-    AutoPresentChristmasDoorv1 = false,
-    AutoThreadv1 = nil,
-
     -- ================== [Costumisasi Player] ==================
 
     Servicesv3 = {
@@ -1058,39 +1022,6 @@ local GameData = {
         "fuck","shit","bitch","asshole","dick","pussy"
     },
 
-    -- ================== [Auto Event Christmas Cave] ==================
-
-    Servicesv6 = {
-        Playersv6 = game:GetService("Players"),
-    },
-
-    Playerv6 = game:GetService("Players").LocalPlayer,
-    Characterv6 = nil,
-    HRPv6 = nil,
-    NewCharacterv6 = nil,
-    NewHRPv6 = nil,
-
-    EventHoursv6 = {
-        [1]=true,[3]=true,[5]=true,[7]=true,[9]=true,
-        [11]=true,[13]=true,[15]=true,[17]=true,
-        [19]=true,[21]=true,[23]=true
-    },
-
-    EventCFramev6 = CFrame.new(
-        565.414368, -503.543457, 8881.04492,
-        0.997363448, -1.51150346e-08, 0.0725680739,
-        1.49435646e-08, 1, 2.90581958e-09,
-        -0.0725680739, -1.81373261e-09, 0.997363448
-    ),
-
-    AutoEventEnabledv6 = false,
-    Teleportedv6 = false,
-    KeepTeleportingv6 = false,
-    EventEndTimev6 = 0,
-    OriginalCFramev6 = CFrame.new(),
-
-    TimeNowv6 = 0,
-    TimeTablev6 = {},
 
    -- ================== [Auto Join Event] ==================
 
@@ -1528,7 +1459,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.1.8",
+    Title = "v0.1.9",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1543,23 +1474,105 @@ Window:Tag({
 
 
 local Tabs = {
-    Home = Window:Tab({ Title = "Home", Icon = "circle-fading-plus" }),
-    Main = Window:Tab({ Title = "Main", Icon = "house" }),
-    Backpack = Window:Tab({ Title = "Backpack", Icon = "backpack" }),
-    Event = Window:Tab({ Title = "Event", Icon = "calendar" }),
-    Quest = Window:Tab({ Title = "Quest", Icon = "scroll-text" }),
-    Trading = Window:Tab({ Title = "Trading", Icon = "handshake" }),
-    Shop = Window:Tab({ Title = "Shop", Icon = "shopping-cart" }),
-    Boat = Window:Tab({ Title = "Boat", Icon = "sailboat" }),
-    Tp = Window:Tab({ Title = "Teleport", Icon = "map-pin" }),
-    Player = Window:Tab({ Title = "Player", Icon = "user" }),
-    Config = Window:Tab({ Title = "Config", Icon = "folder" }),
+    Home = Window:Tab({
+        Title = "Home",
+        Icon = "solar:home-2-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Main = Window:Tab({
+        Title = "Main",
+        Icon = "solar:home-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Backpack = Window:Tab({
+        Title = "Backpack",
+        Icon = "solar:backpack-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Event = Window:Tab({
+        Title = "Event",
+        Icon = "solar:calendar-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Quest = Window:Tab({
+        Title = "Quest",
+        Icon = "solar:document-text-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Trading = Window:Tab({
+        Title = "Trading",
+        Icon = "solar:hand-money-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Shop = Window:Tab({
+        Title = "Shop",
+        Icon = "solar:cart-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Boat = Window:Tab({
+        Title = "Boat",
+        Icon = "ship",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Tp = Window:Tab({
+        Title = "Teleport",
+        Icon = "solar:map-point-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Player = Window:Tab({
+        Title = "Player",
+        Icon = "solar:user-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Config = Window:Tab({
+        Title = "Config",
+        Icon = "solar:settings-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
 }
 
--- AUTO DEFAULT SECTION CONFIG (ALL TABS)
+Tabs.Home:Select()
+
 do
     local DefaultConfig = {
         TextXAlignment = "Center",
+
+        -- tambahan
+        TextTransparency = 0.05, -- title transparency (optional)
+        FontWeight = Enum.FontWeight.SemiBold, -- title font weight (optional)
+        DescFontWeight = Enum.FontWeight.Medium, -- description font weight (optional)
     }
 
     for name, tab in pairs(Tabs) do
@@ -1567,6 +1580,8 @@ do
             local OldSection = tab.Section
 
             function tab:Section(config)
+                config = config or {}
+
                 for k, v in pairs(DefaultConfig) do
                     if config[k] == nil then
                         config[k] = v
@@ -1578,6 +1593,7 @@ do
         end
     end
 end
+
 
 local Sec = {}
 
@@ -1597,8 +1613,13 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-[+] Added Disabled Cutscene
-[+] Added Favorite Mutations
+[-] Delete Tp To Christmas Island
+[-] Delete Tp To Christmas Cave
+[-] Delete Tp To Iron Cavern
+[-] Delete Tp To Iron Cafe
+[-] Delete Auto Christmas Presents
+[-] Delete Auto Present Christmas Door
+[/] Improve UI
 ]],
     Locked = false
 })
@@ -1691,171 +1712,6 @@ Sec.Home2:Button({
             Duration = 3,
             Icon = "gift"
         })
-    end
-})
-
-function GameData:GetRemotev2()
-    self.Packagesv2 = self.Servicesv2.ReplicatedStoragev2:FindFirstChild("Packages")
-    if not self.Packagesv2 then return end
-
-    self.Indexv2 = self.Packagesv2:FindFirstChild("_Index")
-    if not self.Indexv2 then return end
-
-    self.NetPackagev2 = self.Indexv2:FindFirstChild("sleitnick_net@0.2.0")
-    if not self.NetPackagev2 then return end
-
-    self.Netv2 = self.NetPackagev2:FindFirstChild("net")
-    if not self.Netv2 then return end
-
-    self.Remotev2 = self.Netv2:FindFirstChild("RF/SpecialDialogueEvent")
-    return self.Remotev2
-end
-
-function GameData:GetNpcFolderv2()
-    self.NpcFolderv2 = self.Servicesv2.ReplicatedStoragev2:FindFirstChild("NPC")
-    return self.NpcFolderv2
-end
-
-function GameData:StartAutoChristmassv2()
-    if self.AutoThreadv2 then return end
-
-    self.AutoThreadv2 = task.spawn(function()
-        while self.AutoChristmasv2 do
-
-            self:GetNpcFolderv2()
-            self:GetRemotev2()
-
-            if not self.NpcFolderv2 or not self.Remotev2 then
-                task.wait(1)
-            else
-                for _, npc in ipairs(self.NpcFolderv2:GetChildren()) do
-                    if not self.AutoChristmasv2 then break end
-
-                    if npc:IsA("Folder") or npc:IsA("Model") then
-                        pcall(function()
-                            self.Remotev2:InvokeServer(npc.Name, "ChristmasPresents")
-                        end)
-                        task.wait(0.3)
-                    end
-                end
-            end
-
-            task.wait(1)
-        end
-
-        self.AutoThreadv2 = nil
-    end)
-end
-
-function GameData:StopAutoChristmassv2()
-    self.AutoChristmasv2 = false
-    self.AutoThreadv2 = nil
-end
-
-Sec.Home2:Toggle({
-    Title = "Auto Christmas Presents",
-    Desc = "Automatically claim Christmas presents from NPC",
-    Value = false,
-
-    Callback = function(value)
-        GameData.AutoChristmasv2 = value
-
-        WindUI:Notify({
-            Title = "Christmas Presents",
-            Content = (value and "Enabled " or "Disabled ") .. "Auto Christmas Presents",
-            Duration = 3,
-            Icon = value and "gift" or "x"
-        })
-
-        if value then
-            GameData:StartAutoChristmassv2()
-        else
-            GameData:StopAutoChristmassv2()
-        end
-    end
-})
-
-function GameData:InitNetv1()
-    local success, err = pcall(function()
-        self.Packagesv1 = self.Servicesv1.ReplicatedStoragev1:FindFirstChild("Packages")
-        if not self.Packagesv1 then return end
-
-        self.Indexv1 = self.Packagesv1:FindFirstChild("_Index")
-        if not self.Indexv1 then return end
-
-        self.NetPackagev1 = self.Indexv1:FindFirstChild("sleitnick_net@0.2.0")
-        if not self.NetPackagev1 then return end
-
-        self.Netv1 = self.NetPackagev1:FindFirstChild("net")
-        if not self.Netv1 then return end
-
-        self.NetEventv1 = self.Netv1:FindFirstChild("RF/SpecialDialogueEvent")
-    end)
-    return success
-end
-
-function GameData:InitDoorsv1()
-    local success, err = pcall(function()
-        self.ChristmasDoorsv1 = self.Servicesv1.Workspacev1:FindFirstChild("ChristmasDoors")
-    end)
-    return success
-end
-
-function GameData:StartAutoPresentv1()
-    if self.AutoThreadv1 then return end
-
-    self:InitNetv1()
-    self:InitDoorsv1()
-
-    self.AutoThreadv1 = task.spawn(function()
-        while self.AutoPresentChristmasDoorv1 do
-            if not self.ChristmasDoorsv1 or not self.NetEventv1 then
-                task.wait(1)
-                continue
-            end
-
-            for _, door in pairs(self.ChristmasDoorsv1:GetChildren()) do
-                if not self.AutoPresentChristmasDoorv1 then break end
-
-                pcall(function()
-                    self.NetEventv1:InvokeServer(door.Name, "PresentChristmasDoor")
-                end)
-
-                task.wait(0.5)
-            end
-
-            task.wait(1)
-        end
-
-        self.AutoThreadv1 = nil
-    end)
-end
-
-function GameData:StopAutoPresentv1()
-    self.AutoPresentChristmasDoorv1 = false
-    self.AutoThreadv1 = nil
-end
-
-Sec.Home2:Toggle({
-    Title = "Auto Present Christmas Door",
-    Desc = "Automatically claim Christmas door presents",
-    Value = false,
-
-    Callback = function(value)
-        GameData.AutoPresentChristmasDoorv1 = value
-
-        WindUI:Notify({
-            Title = "Christmas Door",
-            Content = (value and "Enabled " or "Disabled ") .. "Auto Present Christmas Door",
-            Duration = 3,
-            Icon = value and "gift" or "x"
-        })
-
-        if value then
-            GameData:StartAutoPresentv1()
-        else
-            GameData:StopAutoPresentv1()
-        end
     end
 })
 
