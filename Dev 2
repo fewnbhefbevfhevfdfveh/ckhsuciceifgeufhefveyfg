@@ -1433,6 +1433,18 @@ local GameData = {
 
     Characterv32 = nil,
     HRPv32 = nil,
+
+    --================ Hide Cutscene ===============
+
+    ReplicatedStoragev35 = game:GetService("ReplicatedStorage"),
+
+    Netv35 = nil,
+
+    StopCutsceneRemotev35 = nil,
+    PlayCutsceneRemotev35 = nil,
+
+    HideCutsceneEnabledv35 = false,
+    CutsceneConnectionv35 = nil,
 }
 
     --================ Auto Save Posisi Player ===============
@@ -1516,7 +1528,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.1.7",
+    Title = "v0.1.8",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1531,18 +1543,126 @@ Window:Tag({
 
 
 local Tabs = {
-    Home = Window:Tab({ Title = "Home", Icon = "circle-fading-plus" }),
-    Main = Window:Tab({ Title = "Main", Icon = "house" }),
-    Backpack = Window:Tab({ Title = "Backpack", Icon = "backpack" }),
-    Event = Window:Tab({ Title = "Event", Icon = "calendar" }),
-    Quest = Window:Tab({ Title = "Quest", Icon = "scroll-text" }),
-    Trading = Window:Tab({ Title = "Trading", Icon = "handshake" }),
-    Shop = Window:Tab({ Title = "Shop", Icon = "shopping-cart" }),
-    Boat = Window:Tab({ Title = "Boat", Icon = "sailboat" }),
-    Tp = Window:Tab({ Title = "Teleport", Icon = "map-pin" }),
-    Player = Window:Tab({ Title = "Player", Icon = "user" }),
-    Config = Window:Tab({ Title = "Config", Icon = "folder" }),
+    Home = Window:Tab({
+        Title = "Home",
+        Icon = "solar:home-2-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Main = Window:Tab({
+        Title = "Main",
+        Icon = "solar:home-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Backpack = Window:Tab({
+        Title = "Backpack",
+        Icon = "solar:backpack-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Event = Window:Tab({
+        Title = "Event",
+        Icon = "solar:calendar-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Quest = Window:Tab({
+        Title = "Quest",
+        Icon = "solar:document-text-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Trading = Window:Tab({
+        Title = "Trading",
+        Icon = "solar:hand-money-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Shop = Window:Tab({
+        Title = "Shop",
+        Icon = "solar:cart-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Boat = Window:Tab({
+        Title = "Boat",
+        Icon = "ship",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Tp = Window:Tab({
+        Title = "Teleport",
+        Icon = "solar:map-point-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Player = Window:Tab({
+        Title = "Player",
+        Icon = "solar:user-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
+
+    Config = Window:Tab({
+        Title = "Config",
+        Icon = "solar:settings-bold",
+        Locked = false,
+        ShowTabTitle = true,
+        Border = true,
+    }),
 }
+
+Tabs.Home:Select()
+
+do
+    local DefaultConfig = {
+        TextXAlignment = "Center",
+
+        -- tambahan
+        TextTransparency = 0.05, -- title transparency (optional)
+        FontWeight = Enum.FontWeight.SemiBold, -- title font weight (optional)
+        DescFontWeight = Enum.FontWeight.Medium, -- description font weight (optional)
+    }
+
+    for name, tab in pairs(Tabs) do
+        if tab and type(tab.Section) == "function" then
+            local OldSection = tab.Section
+
+            function tab:Section(config)
+                config = config or {}
+
+                for k, v in pairs(DefaultConfig) do
+                    if config[k] == nil then
+                        config[k] = v
+                    end
+                end
+
+                return OldSection(self, config)
+            end
+        end
+    end
+end
+
 
 local Sec = {}
 
@@ -1562,11 +1682,8 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-[+] Added Animation Fishing V2
-[!] Fixed Cutscene Delete
-[!] Fixed Join Event Tp
-[/] Join Event Move To Tab Event
-[/] 
+[+] Added Disabled Cutscene
+[+] Added Favorite Mutations
 ]],
     Locked = false
 })
@@ -7588,6 +7705,45 @@ Sec.Player:Toggle({
     end
 })
 
+GameData.Netv35 = require(GameData.ReplicatedStoragev35.Packages.Net)
+
+GameData.StopCutsceneRemotev35 =
+    GameData.Netv35:RemoteEvent("StopCutscene")
+
+GameData.PlayCutsceneRemotev35 =
+    GameData.Netv35:RemoteEvent("ReplicateCutscene")
+
+function GameData.enableHideCutscenev35()
+    GameData.StopCutsceneRemotev35:FireServer()
+
+    GameData.CutsceneConnectionv35 =
+        GameData.PlayCutsceneRemotev35.OnClientEvent:Connect(function()
+            task.wait()
+            GameData.StopCutsceneRemotev35:FireServer()
+        end)
+end
+
+function GameData.disableHideCutscenev35()
+    if GameData.CutsceneConnectionv35 then
+        GameData.CutsceneConnectionv35:Disconnect()
+        GameData.CutsceneConnectionv35 = nil
+    end
+end
+
+Sec.Player:Toggle({
+    Title = "Disabled Cutscene",
+    Value = false,
+    Callback = function(statev35)
+        GameData.HideCutsceneEnabledv35 = statev35
+
+        if statev35 then
+            GameData.enableHideCutscenev35()
+        else
+            GameData.disableHideCutscenev35()
+        end
+    end
+})
+
 GameData.waterVFXFolder = GameData.RS:WaitForChild("VFX")
 
 Sec.Player:Toggle({
@@ -8765,4 +8921,3 @@ task.spawn(function()
         ApplyGradient()
     end
 end)
-
