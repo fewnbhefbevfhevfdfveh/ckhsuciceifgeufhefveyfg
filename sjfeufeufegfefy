@@ -3360,7 +3360,7 @@ end
 
 Sec.Main4:Input({
     Title = "Complete Delay v2",
-    Flag = "Complete_Delay_v2"
+    Flag = "Complete_Delay_v2",
     Value = tostring(GameData.Settingsv19.CompleteDelayv19),
     Callback = function(v)
         local n = tonumber(v)
@@ -3372,7 +3372,7 @@ Sec.Main4:Input({
 
 Sec.Main4:Input({
     Title = "Cancel Delay v2",
-    Flag = "Cancel_Delay_v2"
+    Flag = "Cancel_Delay_v2",
     Value = tostring(GameData.Settingsv19.CancelDelayv19),
     Callback = function(v)
         local n = tonumber(v)
@@ -3384,7 +3384,7 @@ Sec.Main4:Input({
 
 Sec.Main4:Toggle({
     Title = "Blatant v2",
-    Flag = "Blatant_v2"
+    Flag = "Blatant_v2",
     Value = false,
     Callback = function(state)
         if state then
