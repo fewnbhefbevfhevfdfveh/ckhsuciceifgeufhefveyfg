@@ -201,7 +201,7 @@ local GameData = {
         ["Angler Rod"] = 168, ["Ares Rod"] = 126, ["Bamboo Rod"] = 258,
         ["Toy Rod"] = 84, ["Lava Rod"] = 2, ["Hazmat Rod"] = 256,
         ["Ghostfinn Rod"] = 169, ["Element Rod"] = 257, ["Angelic Rod"] = 124,
-        ["Gold Rod"] = 8, ["Hyper Rod"] = 9
+        ["Gold Rod"] = 8, ["Hyper Rod"] = 9,["Eclipse Rod"] = 656, ["Seabreeze Rod"] = 657,
     },
 
     -- ================== [Bait] ==================
@@ -210,7 +210,7 @@ local GameData = {
         ["Gold Bait"] = 4, ["Hyper Bait"] = 5, ["Chroma Bait"] = 6,
         ["Dark Matter Bait"] = 8, ["Beach Ball Bait"] = 9, ["Topwater Bait"] = 10,
         ["Corrupt Bait"] = 15, ["Aether Bait"] = 16, ["Nature Bait"] = 17,
-        ["Singularity Bait"] = 18, ["Royal Bait"] = 19, ["Floral Bait"] = 20
+        ["Singularity Bait"] = 18, ["Royal Bait"] = 19, ["Floral Bait"] = 20,
     },
 
     -- ================== [Boat] ==================
@@ -219,7 +219,46 @@ local GameData = {
         ["Speed Boat"] = 5, ["Fishing Boat"] = 6, ["Mini Yacht"] = 14,
         ["Mini Hoverboat"] = 15, ["Hyper Boat"] = 7, ["Dinky Fishing Boat"] = 20,
         ["Aura Boat"] = 17, ["Burger Boat"] = 18, ["Mega Hovercraft"] = 19,
-        ["Froen Boat"] = 11, ["Cruiser Boat"] = 13, ["Rubber Ducky"] = 16
+        ["Froen Boat"] = 11, ["Cruiser Boat"] = 13, ["Rubber Ducky"] = 16,
+    },
+
+        -- ================== [Rod Shop] ==================
+    RodIDsShop = {
+    ["Starter Rod | 0"] = 1,
+    ["Luck Rod | 225"] = 79,
+    ["Carbon Rod | 750"] = 76,
+    ["Grass Rod | 1.50k"] = 85,
+    ["Demascus Rod | 3K"] = 77,
+    ["Ice Rod | 5K"] = 78,
+    ["Lucky Rod | 15K"] = 4,
+    ["Midnight Rod | 50K"] = 80,
+    ["Seabreeze Rod | 95k"] = 657,
+    ["Eclipse Rod 150K"] = 656,
+    ["Steampunk Rod | 215K"] = 6,
+    ["Chrome Rod | 437K"] = 7,
+    ["Fluorescent Rod | 715k"] = 255,
+    ["Astral Rod 1M"] = 5,
+    ["Angler Rod | 8M"] = 168,
+    ["Ares Rod | 3M"] = 126,
+    ["Bamboo Rod | 12M"] = 258,
+    ["Hazmat Rod | 1.3M"] = 256,
+},
+    -- ================== [Bait Shop] ==================
+    BaitIDsShop = {
+        ["Starter Bait"] = 1, ["Luck Bait"] = 2, ["Midnight Bait"] = 3,
+        ["Gold Bait"] = 4, ["Hyper Bait"] = 5, ["Chroma Bait"] = 6,
+        ["Dark Matter Bait"] = 8, ["Beach Ball Bait"] = 9, ["Topwater Bait"] = 10,
+        ["Corrupt Bait"] = 15, ["Aether Bait"] = 16, ["Nature Bait"] = 17,
+        ["Singularity Bait"] = 18, ["Royal Bait"] = 19, ["Floral Bait"] = 20,
+    },
+
+    -- ================== [Boat Shop] ==================
+    BoatListShop = {
+        ["Small Boat"] = 1, ["Kayak"] = 2, ["Jetski"] = 3, ["Highfield Boat"] = 4,
+        ["Speed Boat"] = 5, ["Fishing Boat"] = 6, ["Mini Yacht"] = 14,
+        ["Mini Hoverboat"] = 15, ["Hyper Boat"] = 7, ["Dinky Fishing Boat"] = 20,
+        ["Aura Boat"] = 17, ["Burger Boat"] = 18, ["Mega Hovercraft"] = 19,
+        ["Froen Boat"] = 11, ["Cruiser Boat"] = 13, ["Rubber Ducky"] = 16,
     },
 
     -- ================== [Traveling Merchant] ==================
@@ -568,8 +607,10 @@ local GameData = {
 
     -- ================== [Blatant V2] ==================
 
-    ReplicatedStoragev19 = game:GetService("ReplicatedStorage"),
     Playersv19 = game:GetService("Players"),
+    ReplicatedStoragev19 = game:GetService("ReplicatedStorage"),
+
+    LocalPlayerv19 = nil,
 
     NetFolderv19 = nil,
 
@@ -577,15 +618,16 @@ local GameData = {
     RF_RequestMinigamev19 = nil,
     RF_CancelFishingInputsv19 = nil,
     RF_UpdateAutoFishingStatev19 = nil,
+
     RE_FishingCompletedv19 = nil,
     RE_MinigameChangedv19 = nil,
 
     Activev19 = false,
 
     Settingsv19 = {
-        ChargeDelay = 0.007,
-        CompleteDelay = 0.685,
-        CancelDelay = 0.3
+        ChargeDelayv19 = 0.007,
+        CompleteDelayv19 = 0.685,
+        CancelDelayv19 = 0.3
     },
 
     safeFirev19 = function(func)
@@ -593,6 +635,7 @@ local GameData = {
             pcall(func)
         end)
     end,
+    
     -- ================== [SKip Rraity] ==================
 
     Players = game:GetService("Players"),
@@ -826,10 +869,11 @@ local GameData = {
         ["Oceanic Harpoon"] = {
             StartRodCharge = "Oceanic Harpoon - StartRodCharge",
             RodThrow = "Oceanic Harpoon - RodThrow",
-            ReelStart = "Oceanic Harpoon - ReelStart",
+            ReelStart = "ReelStart",
             ReelingIdle = "Oceanic Harpoon - ReelingIdle",
-            ReelIntermission = "Oceanic Harpoon - ReelIntermission",
-            FishCaught = "Oceanic Harpoon - FishCaught",
+            ReelIntermission = "ReelIntermission",
+            LoopedRodCharge = "Oceanic Harpoon - LoopedRodCharge",
+            FishCaught = "FishCaught",
             EquipIdle = "Oceanic Harpoon - EquipIdle",
         },
 
@@ -931,6 +975,15 @@ local GameData = {
             ReelIntermission = "1x1x1x1 Ban Hammer - ReelIntermission",
             FishCaught = "1x1x1x1 Ban Hammer - FishCaught",
             EquipIdle = "1x1x1x1 Ban Hammer - EquipIdle",
+        },
+        ["Ethereal Sword"] = {
+            StartRodCharge = "Ethereal Sword - StartRodCharge",
+            RodThrow = "Ethereal Sword - RodThrow",
+            ReelStart = "Ethereal Sword - ReelStart",
+            ReelingIdle = "Ethereal Sword - ReelingIdle",
+            ReelIntermission = "Ethereal Sword - ReelIntermission",
+            FishCaught = "Ethereal Sword - FishCaught",
+            EquipIdle = "Ethereal Sword - EquipIdle",
         },
     },
 
@@ -3241,18 +3294,31 @@ Sec.Main4:Toggle({
 
 Sec.Main4:Space()
 
+GameData.LocalPlayerv19 = GameData.Playersv19.LocalPlayer
+
 GameData.NetFolderv19 = GameData.ReplicatedStoragev19
     :WaitForChild("Packages")
     :WaitForChild("_Index")
     :WaitForChild("sleitnick_net@0.2.0")
     :WaitForChild("net")
 
-GameData.RF_ChargeFishingRodv19 = GameData.NetFolderv19:WaitForChild("RF/ChargeFishingRod")
-GameData.RF_RequestMinigamev19 = GameData.NetFolderv19:WaitForChild("RF/RequestFishingMinigameStarted")
-GameData.RF_CancelFishingInputsv19 = GameData.NetFolderv19:WaitForChild("RF/CancelFishingInputs")
-GameData.RF_UpdateAutoFishingStatev19 = GameData.NetFolderv19:WaitForChild("RF/UpdateAutoFishingState")
-GameData.RE_FishingCompletedv19 = GameData.NetFolderv19:WaitForChild("RE/FishingCompleted")
-GameData.RE_MinigameChangedv19 = GameData.NetFolderv19:WaitForChild("RE/FishingMinigameChanged")
+GameData.RF_ChargeFishingRodv19 =
+    GameData.NetFolderv19:WaitForChild("RF/ChargeFishingRod")
+
+GameData.RF_RequestMinigamev19 =
+    GameData.NetFolderv19:WaitForChild("RF/RequestFishingMinigameStarted")
+
+GameData.RF_CancelFishingInputsv19 =
+    GameData.NetFolderv19:WaitForChild("RF/CancelFishingInputs")
+
+GameData.RF_UpdateAutoFishingStatev19 =
+    GameData.NetFolderv19:WaitForChild("RF/UpdateAutoFishingState")
+
+GameData.RE_FishingCompletedv19 =
+    GameData.NetFolderv19:WaitForChild("RE/FishingCompleted")
+
+GameData.RE_MinigameChangedv19 =
+    GameData.NetFolderv19:WaitForChild("RE/FishingMinigameChanged")
 
 function GameData.ultraSpamLoopv19()
     while GameData.Activev19 do
@@ -3262,20 +3328,20 @@ function GameData.ultraSpamLoopv19()
             GameData.RF_ChargeFishingRodv19:InvokeServer({ [1] = startTime })
         end)
 
-        task.wait(GameData.Settingsv19.ChargeDelay)
+        task.wait(GameData.Settingsv19.ChargeDelayv19)
 
         local releaseTime = tick()
         GameData.safeFirev19(function()
             GameData.RF_RequestMinigamev19:InvokeServer(1, 0, releaseTime)
         end)
 
-        task.wait(GameData.Settingsv19.CompleteDelay)
+        task.wait(GameData.Settingsv19.CompleteDelayv19)
 
         GameData.safeFirev19(function()
             GameData.RE_FishingCompletedv19:FireServer()
         end)
 
-        task.wait(GameData.Settingsv19.CancelDelay)
+        task.wait(GameData.Settingsv19.CancelDelayv19)
 
         GameData.safeFirev19(function()
             GameData.RF_CancelFishingInputsv19:InvokeServer()
@@ -3287,13 +3353,13 @@ GameData.RE_MinigameChangedv19.OnClientEvent:Connect(function()
     if not GameData.Activev19 then return end
 
     task.spawn(function()
-        task.wait(GameData.Settingsv19.CompleteDelay)
+        task.wait(GameData.Settingsv19.CompleteDelayv19)
 
         GameData.safeFirev19(function()
             GameData.RE_FishingCompletedv19:FireServer()
         end)
 
-        task.wait(GameData.Settingsv19.CancelDelay)
+        task.wait(GameData.Settingsv19.CancelDelayv19)
 
         GameData.safeFirev19(function()
             GameData.RF_CancelFishingInputsv19:InvokeServer()
@@ -3303,16 +3369,23 @@ end)
 
 function GameData.UpdateSettingsv19(completeDelay, cancelDelay)
     if completeDelay ~= nil then
-        GameData.Settingsv19.CompleteDelay = math.max(0, completeDelay)
+        GameData.Settingsv19.CompleteDelayv19 = math.max(0, completeDelay)
     end
     if cancelDelay ~= nil then
-        GameData.Settingsv19.CancelDelay = math.max(0, cancelDelay)
+        GameData.Settingsv19.CancelDelayv19 = math.max(0, cancelDelay)
     end
 end
 
 function GameData.Startv19()
     if GameData.Activev19 then return end
     GameData.Activev19 = true
+
+    GameData.LocalPlayerv19:SetAttribute("Loading", nil)
+
+    GameData.safeFirev19(function()
+        GameData.RF_UpdateAutoFishingStatev19:InvokeServer(true)
+    end)
+
     task.spawn(GameData.ultraSpamLoopv19)
 end
 
@@ -3321,8 +3394,10 @@ function GameData.Stopv19()
     GameData.Activev19 = false
 
     GameData.safeFirev19(function()
-        GameData.RF_UpdateAutoFishingStatev19:InvokeServer(true)
+        GameData.RF_UpdateAutoFishingStatev19:InvokeServer(false)
     end)
+
+    GameData.LocalPlayerv19:SetAttribute("Loading", true)
 
     task.wait(0.2)
 
@@ -3333,35 +3408,31 @@ end
 
 Sec.Main4:Input({
     Title = "Complete Delay v2",
-    Flag = "CompleteDelayv2",
-    Value = tostring(GameData.Settingsv19.CompleteDelay),
-    InputIcon = "clock",
-    Placeholder = "0.685",
-    Callback = function(input)
-        local value = tonumber(input)
-        if value then
-            GameData.UpdateSettingsv19(value, nil)
+    Flag = "Complete_Delay_v2",
+    Value = tostring(GameData.Settingsv19.CompleteDelayv19),
+    Callback = function(v)
+        local n = tonumber(v)
+        if n then
+            GameData.UpdateSettingsv19(n, nil)
         end
     end
 })
 
 Sec.Main4:Input({
     Title = "Cancel Delay v2",
-    Flag = "CancelDelayv2",
-    Value = tostring(GameData.Settingsv19.CancelDelay),
-    InputIcon = "clock",
-    Placeholder = "0.3",
-    Callback = function(input)
-        local value = tonumber(input)
-        if value then
-            GameData.UpdateSettingsv19(nil, value)
+    Flag = "Cancel_Delay_v2",
+    Value = tostring(GameData.Settingsv19.CancelDelayv19),
+    Callback = function(v)
+        local n = tonumber(v)
+        if n then
+            GameData.UpdateSettingsv19(nil, n)
         end
     end
 })
 
 Sec.Main4:Toggle({
-    Title = "Blatant V2",
-    Flag = "BlatantV2",
+    Title = "Blatant v2",
+    Flag = "Blatant_v2",
     Value = false,
     Callback = function(state)
         if state then
@@ -6275,8 +6346,8 @@ Sec.Shop1 = Tabs.Shop:Section({
     Opened = true,
 })
 
-local selectedRods = {}
-local autoBuyRods = false
+local selectedRods1 = {}
+local autoBuyRods1 = false
 
 Sec.Shop1:Dropdown({
     Title = "Select Rods",
@@ -6287,11 +6358,11 @@ Sec.Shop1:Dropdown({
     Multi = true,
     AllowNone = true,
     Callback = function(val)
-        table.clear(selectedRods)
+        table.clear(selectedRods1)
         for _, rodName in ipairs(val) do
-            local id = RodIDs[rodName]
+            local id = RodIDsShop[rodName]
             if id then
-                table.insert(selectedRods, id)
+                table.insert(selectedRods1, id)
             end
         end
     end
@@ -6302,7 +6373,7 @@ Sec.Shop1:Toggle({
     Flag = "AutoPurchaseRods",
     Value = false,
     Callback = function(state)
-        autoBuyRods = state
+        autoBuyRods1 = state
         if not state then return end
 
         task.spawn(function()
@@ -6313,9 +6384,9 @@ Sec.Shop1:Toggle({
                 :WaitForChild("net")
                 :WaitForChild("RF/PurchaseFishingRod")
 
-            while autoBuyRods do
-                if #selectedRods > 0 then
-                    for _, id in ipairs(selectedRods) do
+            while autoBuyRods1 do
+                if #selectedRods1 > 0 then
+                    for _, id in ipairs(selectedRods1) do
                         pcall(function()
                             remote:InvokeServer(id)
                         end)
@@ -6334,8 +6405,8 @@ Sec.Shop2 = Tabs.Shop:Section({
     Opened = true,
 })
 
-local selectedBaits = {}
-local autoBuyBait = false
+local selectedBaits2 = {}
+local autoBuyBait2 = false
 
 Sec.Shop2:Dropdown({
     Title = "Select Baits",
@@ -6346,11 +6417,11 @@ Sec.Shop2:Dropdown({
     Multi = true,
     AllowNone = true,
     Callback = function(val)
-        table.clear(selectedBaits)
+        table.clear(selectedBaits2)
         for _, baitName in ipairs(val) do
-            local id = BaitIDs[baitName]
+            local id = BaitIDsShop[baitName]
             if id then
-                table.insert(selectedBaits, id)
+                table.insert(selectedBaits2, id)
             end
         end
     end
@@ -6361,7 +6432,7 @@ Sec.Shop2:Toggle({
     Flag = "AutoPurchaseBait",
     Value = false,
     Callback = function(state)
-        autoBuyBait = state
+        autoBuyBait2 = state
         if not state then return end
 
         task.spawn(function()
@@ -6372,9 +6443,9 @@ Sec.Shop2:Toggle({
                 :WaitForChild("net")
                 :WaitForChild("RF/PurchaseBait")
 
-            while autoBuyBait do
-                if #selectedBaits > 0 then
-                    for _, id in ipairs(selectedBaits) do
+            while autoBuyBait2 do
+                if #selectedBaits2 > 0 then
+                    for _, id in ipairs(selectedBaits2) do
                         pcall(function()
                             purchaseRemote:InvokeServer(id)
                         end)
@@ -6458,7 +6529,7 @@ GameData.PurchaseBoatv11 =
 
 table.clear(GameData.PurchaseBoatOptionsv11)
 
-for boatName in pairs(GameData.BoatList) do
+for boatName in pairs(GameData.BoatListShop) do
     table.insert(GameData.PurchaseBoatOptionsv11, boatName)
 end
 
@@ -6473,7 +6544,7 @@ Sec.Shop4:Dropdown({
     Multi = false,
     AllowNone = true,
     Callback = function(option)
-        selectedBoatID = GameData.BoatList[option]
+        selectedBoatID = GameData.BoatListShop[option]
     end
 })
 
@@ -8502,9 +8573,6 @@ local function startDrag(input)
         isDragging = true
         dragStart = input.Position
         startPos = GameData.ToggleFrame.Position
-        dragInput = input
-        
-        input:Capture()
     end
 end
 
@@ -8513,7 +8581,6 @@ local function endDrag(input)
     or input.UserInputType == Enum.UserInputType.Touch then
         GameData.Dragging = false
         isDragging = false
-        dragInput = nil
         dragStart = nil
         startPos = nil
     end
@@ -8529,17 +8596,6 @@ GameData.UIS.InputChanged:Connect(function(input)
     if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement 
         or input.UserInputType == Enum.UserInputType.Touch) then
         updatePosition(input)
-    end
-end)
-
-GameData.UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-        GameData.Dragging = false
-        isDragging = false
-        dragInput = nil
-        dragStart = nil
-        startPos = nil
     end
 end)
 
@@ -8600,21 +8656,29 @@ GameData.ToggleBtn.TouchTap:Connect(function()
     clickDebounce = false
 end)
 
+-- Hanya jalankan kode Window jika Window didefinisikan
 if Window then
-    Window:OnOpen(function()
-        -- Handler window terbuka
-    end)
-
-    Window:OnClose(function()
-        -- Handler window tertutup
-    end)
-
-    Window:OnDestroy(function()
-        if GameData.ScreenGui then
-            GameData.ScreenGui:Destroy()
-            GameData.ScreenGui = nil
-        end
-    end)
+    -- Gunakan if statements untuk memeriksa apakah metode tersedia
+    if type(Window.OnOpen) == "function" then
+        Window:OnOpen(function()
+            -- Handler window terbuka
+        end)
+    end
+    
+    if type(Window.OnClose) == "function" then
+        Window:OnClose(function()
+            -- Handler window tertutup
+        end)
+    end
+    
+    if type(Window.OnDestroy) == "function" then
+        Window:OnDestroy(function()
+            if GameData.ScreenGui then
+                GameData.ScreenGui:Destroy()
+                GameData.ScreenGui = nil
+            end
+        end)
+    end
 end
 
 	--================ Wind Ui Title Gradiant ===============
