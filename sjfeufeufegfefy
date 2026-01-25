@@ -201,7 +201,7 @@ local GameData = {
         ["Angler Rod"] = 168, ["Ares Rod"] = 126, ["Bamboo Rod"] = 258,
         ["Toy Rod"] = 84, ["Lava Rod"] = 2, ["Hazmat Rod"] = 256,
         ["Ghostfinn Rod"] = 169, ["Element Rod"] = 257, ["Angelic Rod"] = 124,
-        ["Gold Rod"] = 8, ["Hyper Rod"] = 9
+        ["Gold Rod"] = 8, ["Hyper Rod"] = 9,["Eclipse Rod"] = 656, ["Seabreeze Rod"] = 657,
     },
 
     -- ================== [Bait] ==================
@@ -210,7 +210,7 @@ local GameData = {
         ["Gold Bait"] = 4, ["Hyper Bait"] = 5, ["Chroma Bait"] = 6,
         ["Dark Matter Bait"] = 8, ["Beach Ball Bait"] = 9, ["Topwater Bait"] = 10,
         ["Corrupt Bait"] = 15, ["Aether Bait"] = 16, ["Nature Bait"] = 17,
-        ["Singularity Bait"] = 18, ["Royal Bait"] = 19, ["Floral Bait"] = 20
+        ["Singularity Bait"] = 18, ["Royal Bait"] = 19, ["Floral Bait"] = 20,
     },
 
     -- ================== [Boat] ==================
@@ -219,8 +219,58 @@ local GameData = {
         ["Speed Boat"] = 5, ["Fishing Boat"] = 6, ["Mini Yacht"] = 14,
         ["Mini Hoverboat"] = 15, ["Hyper Boat"] = 7, ["Dinky Fishing Boat"] = 20,
         ["Aura Boat"] = 17, ["Burger Boat"] = 18, ["Mega Hovercraft"] = 19,
-        ["Froen Boat"] = 11, ["Cruiser Boat"] = 13, ["Rubber Ducky"] = 16
+        ["Froen Boat"] = 11, ["Cruiser Boat"] = 13, ["Rubber Ducky"] = 16,
     },
+
+        -- ================== [Rod Shop] ==================
+    ReplicatedStoragev36 = game:GetService("ReplicatedStorage"),
+
+    RodIDsShopv36 = {
+        ["Luck Rod | 225"] = 79,
+        ["Carbon Rod | 750"] = 76,
+        ["Grass Rod | 1.5K"] = 85,
+        ["Demascus Rod | 3K"] = 77,
+        ["Ice Rod | 5K"] = 78,
+        ["Lucky Rod | 15K"] = 4,
+        ["Midnight Rod | 50K"] = 80,
+        ["Seabreeze Rod | 95K"] = 657,
+        ["Eclipse Rod | 150K"] = 656,
+        ["Steampunk Rod | 215K"] = 6,
+        ["Chrome Rod | 437K"] = 7,
+        ["Fluorescent Rod | 715K"] = 255,
+        ["Astral Rod | 1M"] = 5,
+        ["Angler Rod | 8M"] = 168,
+        ["Ares Rod | 3M"] = 126,
+        ["Bamboo Rod | 12M"] = 258,
+        ["Hazmat Rod | 1.3M"] = 256,
+    },
+
+    RodNamesv36 = {},
+    SelectedRodIDsv36 = {},
+    AutoBuyEnabledv36 = false,
+
+    PurchaseRodRemotev36 = nil,
+    -- ================== [Bait Shop] ==================
+    ReplicatedStoragev37 = game:GetService("ReplicatedStorage"),
+
+    BaitIDsShopv37 = {
+        ["Topwater Bait | 100"] = 10,
+        ["Luck Bait | 1K"] = 2,
+        ["Midnight Bait | 3K"] = 3,
+        ["Nature Bait | 83.5K"] = 17,
+        ["Chroma Bait | 290K"] = 6,
+        ["Dark Matter Bait | 630K"] = 8,
+        ["Corrupt Bait | 1.15M"] = 15,
+        ["Aether Bait | 3.7M"] = 16,
+        ["Floral Bait | 4M"] = 20,
+        ["Singularity Bait | 8.2M"] = 18,
+    },
+
+    BaitNamesv37 = {},
+    SelectedBaitIDsv37 = {},
+    AutoBuyBaitEnabledv37 = false,
+
+    PurchaseBaitRemotev37 = nil,
 
     -- ================== [Traveling Merchant] ==================
 
@@ -936,6 +986,15 @@ local GameData = {
             ReelIntermission = "1x1x1x1 Ban Hammer - ReelIntermission",
             FishCaught = "1x1x1x1 Ban Hammer - FishCaught",
             EquipIdle = "1x1x1x1 Ban Hammer - EquipIdle",
+        },
+        ["Ethereal Sword"] = {
+            StartRodCharge = "Ethereal Sword - StartRodCharge",
+            RodThrow = "Ethereal Sword - RodThrow",
+            ReelStart = "Ethereal Sword - ReelStart",
+            ReelingIdle = "Ethereal Sword - ReelingIdle",
+            ReelIntermission = "Ethereal Sword - ReelIntermission",
+            FishCaught = "Ethereal Sword - FishCaught",
+            EquipIdle = "Ethereal Sword - EquipIdle",
         },
     },
 
@@ -6298,23 +6357,43 @@ Sec.Shop1 = Tabs.Shop:Section({
     Opened = true,
 })
 
-local selectedRods = {}
-local autoBuyRods = false
+for name, _ in pairs(GameData.RodIDsShopv36) do
+    table.insert(GameData.RodNamesv36, name)
+end
+
+GameData.PurchaseRodRemotev36 = GameData.ReplicatedStoragev36
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/PurchaseFishingRod")
+
+function GameData.AutoBuyLoopv36()
+    while GameData.AutoBuyEnabledv36 do
+        if #GameData.SelectedRodIDsv36 > 0 then
+            for _, id in ipairs(GameData.SelectedRodIDsv36) do
+                pcall(function()
+                    GameData.PurchaseRodRemotev36:InvokeServer(id)
+                end)
+            end
+        end
+        task.wait(5)
+    end
+end
 
 Sec.Shop1:Dropdown({
     Title = "Select Rods",
     Flag = "SelectRods",
     SearchBarEnabled = true,
-    Values = RodNames,
-    Value = {},
+    Values = GameData.RodNamesv36,
     Multi = true,
     AllowNone = true,
-    Callback = function(val)
-        table.clear(selectedRods)
-        for _, rodName in ipairs(val) do
-            local id = RodIDs[rodName]
+    Callback = function(values)
+        table.clear(GameData.SelectedRodIDsv36)
+        for _, rodName in ipairs(values or {}) do
+            local id = GameData.RodIDsShopv36[rodName]
             if id then
-                table.insert(selectedRods, id)
+                table.insert(GameData.SelectedRodIDsv36, id)
             end
         end
     end
@@ -6325,28 +6404,10 @@ Sec.Shop1:Toggle({
     Flag = "AutoPurchaseRods",
     Value = false,
     Callback = function(state)
-        autoBuyRods = state
-        if not state then return end
-
-        task.spawn(function()
-            local remote = ReplicatedStorage
-                :WaitForChild("Packages")
-                :WaitForChild("_Index")
-                :WaitForChild("sleitnick_net@0.2.0")
-                :WaitForChild("net")
-                :WaitForChild("RF/PurchaseFishingRod")
-
-            while autoBuyRods do
-                if #selectedRods > 0 then
-                    for _, id in ipairs(selectedRods) do
-                        pcall(function()
-                            remote:InvokeServer(id)
-                        end)
-                    end
-                end
-                task.wait(5)
-            end
-        end)
+        GameData.AutoBuyEnabledv36 = state
+        if state then
+            task.spawn(GameData.AutoBuyLoopv36)
+        end
     end
 })
 
@@ -6357,55 +6418,57 @@ Sec.Shop2 = Tabs.Shop:Section({
     Opened = true,
 })
 
-local selectedBaits = {}
-local autoBuyBait = false
+for name, _ in pairs(GameData.BaitIDsShopv37) do
+    table.insert(GameData.BaitNamesv37, name)
+end
+
+GameData.PurchaseBaitRemotev37 = GameData.ReplicatedStoragev37
+    :WaitForChild("Packages")
+    :WaitForChild("_Index")
+    :WaitForChild("sleitnick_net@0.2.0")
+    :WaitForChild("net")
+    :WaitForChild("RF/PurchaseBait")
+
+function GameData.AutoBuyBaitLoopv37()
+    while GameData.AutoBuyBaitEnabledv37 do
+        if #GameData.SelectedBaitIDsv37 > 0 then
+            for _, id in ipairs(GameData.SelectedBaitIDsv37) do
+                pcall(function()
+                    GameData.PurchaseBaitRemotev37:InvokeServer(id)
+                end)
+            end
+        end
+        task.wait(5)
+    end
+end
 
 Sec.Shop2:Dropdown({
     Title = "Select Baits",
     Flag = "SelectBaits",
     SearchBarEnabled = true,
-    Values = baitNames,
-    Value = {},
+    Values = GameData.BaitNamesv37,
     Multi = true,
     AllowNone = true,
-    Callback = function(val)
-        table.clear(selectedBaits)
-        for _, baitName in ipairs(val) do
-            local id = BaitIDs[baitName]
+    Callback = function(values)
+        table.clear(GameData.SelectedBaitIDsv37)
+        for _, baitName in ipairs(values or {}) do
+            local id = GameData.BaitIDsShopv37[baitName]
             if id then
-                table.insert(selectedBaits, id)
+                table.insert(GameData.SelectedBaitIDsv37, id)
             end
         end
     end
 })
 
 Sec.Shop2:Toggle({
-    Title = "Auto Purchase Loop",
+    Title = "Auto Purchase Baits",
     Flag = "AutoPurchaseBait",
     Value = false,
     Callback = function(state)
-        autoBuyBait = state
-        if not state then return end
-
-        task.spawn(function()
-            local purchaseRemote = ReplicatedStorage
-                :WaitForChild("Packages")
-                :WaitForChild("_Index")
-                :WaitForChild("sleitnick_net@0.2.0")
-                :WaitForChild("net")
-                :WaitForChild("RF/PurchaseBait")
-
-            while autoBuyBait do
-                if #selectedBaits > 0 then
-                    for _, id in ipairs(selectedBaits) do
-                        pcall(function()
-                            purchaseRemote:InvokeServer(id)
-                        end)
-                    end
-                end
-                task.wait(5)
-            end
-        end)
+        GameData.AutoBuyBaitEnabledv37 = state
+        if state then
+            task.spawn(GameData.AutoBuyBaitLoopv37)
+        end
     end
 })
 
@@ -6488,7 +6551,7 @@ end
 table.sort(GameData.PurchaseBoatOptionsv11)
 
 Sec.Shop4:Dropdown({
-    Title = "Select Boat to Purchase",
+    Title = "Select Boat",
     Flag = "SelectBoatv11",
     SearchBarEnabled = true,
     Values = GameData.PurchaseBoatOptionsv11,
@@ -8525,9 +8588,6 @@ local function startDrag(input)
         isDragging = true
         dragStart = input.Position
         startPos = GameData.ToggleFrame.Position
-        dragInput = input
-        
-        input:Capture()
     end
 end
 
@@ -8536,7 +8596,6 @@ local function endDrag(input)
     or input.UserInputType == Enum.UserInputType.Touch then
         GameData.Dragging = false
         isDragging = false
-        dragInput = nil
         dragStart = nil
         startPos = nil
     end
@@ -8552,17 +8611,6 @@ GameData.UIS.InputChanged:Connect(function(input)
     if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement 
         or input.UserInputType == Enum.UserInputType.Touch) then
         updatePosition(input)
-    end
-end)
-
-GameData.UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-        GameData.Dragging = false
-        isDragging = false
-        dragInput = nil
-        dragStart = nil
-        startPos = nil
     end
 end)
 
@@ -8623,21 +8671,29 @@ GameData.ToggleBtn.TouchTap:Connect(function()
     clickDebounce = false
 end)
 
+-- Hanya jalankan kode Window jika Window didefinisikan
 if Window then
-    Window:OnOpen(function()
-        -- Handler window terbuka
-    end)
-
-    Window:OnClose(function()
-        -- Handler window tertutup
-    end)
-
-    Window:OnDestroy(function()
-        if GameData.ScreenGui then
-            GameData.ScreenGui:Destroy()
-            GameData.ScreenGui = nil
-        end
-    end)
+    -- Gunakan if statements untuk memeriksa apakah metode tersedia
+    if type(Window.OnOpen) == "function" then
+        Window:OnOpen(function()
+            -- Handler window terbuka
+        end)
+    end
+    
+    if type(Window.OnClose) == "function" then
+        Window:OnClose(function()
+            -- Handler window tertutup
+        end)
+    end
+    
+    if type(Window.OnDestroy) == "function" then
+        Window:OnDestroy(function()
+            if GameData.ScreenGui then
+                GameData.ScreenGui:Destroy()
+                GameData.ScreenGui = nil
+            end
+        end)
+    end
 end
 
 	--================ Wind Ui Title Gradiant ===============
