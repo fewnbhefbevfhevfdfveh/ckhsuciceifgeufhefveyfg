@@ -410,7 +410,6 @@ local GameData = {
     -- ================== [Island] ==================
     Islands = {
     ["Kohana"] = CFrame.new(-642.243561, 16.0354481, 624.918884, 0.999580681, 0, -0.0289562326, 0, 1, 0, 0.0289562326, 0, 0.999580681),
-    ["Winter Fest"] = CFrame.new(1687.93079, 6.8625145, 3309.67725, 0.96799022, -3.6394315e-08, -0.250987828, 1.06909646e-08, 1, -1.0377223e-07, 0.250987828, 9.77672059e-08, 0.96799022),
     ["Lost Isle"] = CFrame.new(-3660.07031, 26.1918774, -933.131897, -0.77232331, -7.22959044e-08, -0.635229647, -1.90984206e-08, 1, -9.05904614e-08, 0.635229647, -5.7833244e-08, -0.77232331),
     ["Isoteric Island"] = CFrame.new(2029.47913, 27.3972206, 1393.52319, 0.438848287, -3.30229497e-08, -0.89856118, 8.09404801e-08, 1, 2.55982613e-09, 0.89856118, -7.34489944e-08, 0.438848287),
     ["Crater Island"] = CFrame.new(973.268372, 7.36203814, 4879.09277, 0.99999994, -1.67766032e-08, -0.000279307278, 1.67553038e-08, 1, -7.62482344e-08, 0.000279307278, 7.62435519e-08, 0.99999994),
@@ -1523,7 +1522,7 @@ local Window = WindUI:CreateWindow({
 
 
 Window:Tag({
-    Title = "v0.1.9",
+    Title = "v0.2.0",
     Icon = "rocket",
     Color = Color3.fromHex("#1c1c1c"),
     Border = true,
@@ -1677,13 +1676,9 @@ Sec.Home1 = Tabs.Home:Section({
 Sec.Home1:Paragraph({
     Title = "Update List",
     Desc = [[
-[-] Delete Tp To Christmas Island
-[-] Delete Tp To Christmas Cave
-[-] Delete Tp To Iron Cavern
-[-] Delete Tp To Iron Cafe
-[-] Delete Auto Christmas Presents
-[-] Delete Auto Present Christmas Door
-[/] Improve UI
+[+] Added Purchase Eclipse Rod & Seabreeze Rod
+[+] Added Bait & Rod now has a price list in the dropdown.
+[+] Added Custom Animation Ethereal Sword
 ]],
     Locked = false
 })
@@ -3135,7 +3130,7 @@ Sec.Main3:Dropdown({
         "The Vanquisher","Soul Scythe","Princess Parasol","Oceanic Harpoon",
         "Holy Trident","Gingerbread Katana","Frozen Krampus Scythe",
         "Eternal Flower","Eclipse Katana","Corruption Edge","Christmas Parasol",
-        "Blackhole Sword","Binary Edge","1x1x1x1 Ban Hammer",
+        "Blackhole Sword","Binary Edge","1x1x1x1 Ban Hammer", "Ethereal Sword",
     },
     Value = "Holy Trident",
     Callback = ProtectCallback and ProtectCallback(function(optionv34)
