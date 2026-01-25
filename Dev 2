@@ -6544,14 +6544,14 @@ GameData.PurchaseBoatv11 =
 
 table.clear(GameData.PurchaseBoatOptionsv11)
 
-for boatName in pairs(GameData.BoatListShop) do
+for boatName in pairs(GameData.BoatList) do
     table.insert(GameData.PurchaseBoatOptionsv11, boatName)
 end
 
 table.sort(GameData.PurchaseBoatOptionsv11)
 
 Sec.Shop4:Dropdown({
-    Title = "Select Boat to Purchase",
+    Title = "Select Boat",
     Flag = "SelectBoatv11",
     SearchBarEnabled = true,
     Values = GameData.PurchaseBoatOptionsv11,
@@ -6559,7 +6559,7 @@ Sec.Shop4:Dropdown({
     Multi = false,
     AllowNone = true,
     Callback = function(option)
-        selectedBoatID = GameData.BoatListShop[option]
+        selectedBoatID = GameData.BoatList[option]
     end
 })
 
