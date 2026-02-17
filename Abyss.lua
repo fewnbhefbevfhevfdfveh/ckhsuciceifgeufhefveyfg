@@ -17,7 +17,7 @@ local GameData = {
     CurrentTargetModelv1 = nil,
 
     SAFE_DISTANCEv1 = 1,
-    COLLECT_DISTANCEv1 = 1,
+    COLLECT_DISTANCEv1 = 4,
 
     FishFolderv1 = nil,
     Fishv1 = {},
