@@ -130,7 +130,7 @@ Sec.Main1 = Tabs.Main:AddSection({
 })
 
 -- // Auto Shoot Fish
-GGameData.Playerv1 = GameData.Playersv1.LocalPlayer
+GameData.Playerv1 = GameData.Playersv1.LocalPlayer
 GameData.Characterv1 = GameData.Playerv1.Character or GameData.Playerv1.CharacterAdded:Wait()
 
 GameData.Playerv1.CharacterAdded:Connect(function(char)
@@ -469,10 +469,6 @@ task.spawn(function()
     end
 end)
 
--- ============================================================
--- UI
--- ============================================================
-
 Sec.Main1:AddDropdown({
     Title = "Fish List",
     Content = "Select Fish (Multi)",
@@ -602,4 +598,3 @@ Sec.Main1:AddDropdown({
         GameData.CastModev2 = value
     end
 })
-
