@@ -12,12 +12,12 @@ local GameData = {
 
     AutoShootv1 = false,
     AutoSellv1 = false,
-    AutoSafeZonev1 = false, -- // Toggle Auto Safe Zone
+    AutoSafeZonev1 = false,
     SelectedFishv1 = {},
     CurrentTargetModelv1 = nil,
 
     SAFE_DISTANCEv1 = 1,
-    COLLECT_DISTANCEv1 = 4,
+    COLLECT_DISTANCEv1 = 1,
 
     FishFolderv1 = nil,
     Fishv1 = {},
@@ -32,10 +32,17 @@ local GameData = {
     lastShootv1 = 0,
     lastCatchv1 = 0,
 
+    -- // Oxygen
     isTweeningOxygenV1 = false,
     OxygenThresholdV1 = 20,
 
+    -- // Auto Sell
     isSellingSellV1 = false,
+
+    -- // Whitelist Safe Zone (isi nama zona yang boleh dikunjungi)
+    WHITELIST_ZONESv1 = {
+        ["The Forgotten Dome"] = true,
+    },
 
 	-- // Cast Mode
 
@@ -123,7 +130,7 @@ Sec.Main1 = Tabs.Main:AddSection({
 })
 
 -- // Auto Shoot Fish
-GameData.Playerv1 = GameData.Playersv1.LocalPlayer
+GGameData.Playerv1 = GameData.Playersv1.LocalPlayer
 GameData.Characterv1 = GameData.Playerv1.Character or GameData.Playerv1.CharacterAdded:Wait()
 
 GameData.Playerv1.CharacterAdded:Connect(function(char)
@@ -172,8 +179,8 @@ local oxygenLabel = GameData.Playerv1.PlayerGui
     :WaitForChild("Oxygen")
 
 local weightGui = GameData.Playerv1.PlayerGui.Main.Oxygen.RightStats.Frame.Weight
-local maxLabel = weightGui.Max    -- TextLabel Max
-local wghtLabel = weightGui.Wght  -- TextLabel Wght
+local maxLabel = weightGui.Max
+local wghtLabel = weightGui.Wght
 
 -- ============================================================
 -- FUNCTIONS
@@ -267,23 +274,18 @@ function GameData:TweenToSafeDistancev1(model)
     ):Play()
 end
 
--- // Oxygen: Cari zona aman terdekat
+-- // Cari zona aman terdekat (pakai WHITELIST)
 function GameData:GetNearestSafeZonev1()
     if not self.Characterv1 then return nil, nil end
     local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
     if not hrp then return nil, nil end
-
-    local BLACKLIST_ZONES = {
-        ["Bob's Room"] = true,
-        ["Morveth's Cave"] = true,
-    }
 
     local nearestZone = nil
     local nearestPart = nil
     local shortestDistance = math.huge
 
     for _, zone in pairs(workspace.Game.Regions.Locations:GetChildren()) do
-        if zone:GetAttribute("breathable") and not BLACKLIST_ZONES[zone.Name] then
+        if zone:GetAttribute("breathable") and self.WHITELIST_ZONESv1[zone.Name] then
             for _, part in ipairs(zone:GetDescendants()) do
                 if part:IsA("BasePart") then
                     local distance = (hrp.Position - part.Position).Magnitude
@@ -307,7 +309,7 @@ function GameData:TweenToSafeZoneAndWaitV1()
 
     local zone, part = self:GetNearestSafeZonev1()
     if not zone then
-        warn("Zona aman tidak ditemukan")
+        warn("Zona aman tidak ditemukan / tidak ada zona di whitelist")
         return false
     end
 
@@ -323,6 +325,9 @@ function GameData:TweenToSafeZoneAndWaitV1()
     tween:Play()
     tween.Completed:Wait()
 
+    -- ✅ Diam di safe zone selama 2 detik sebelum lanjut
+    task.wait(2)
+
     hrp.Anchored = false
     return true, zone.Name
 end
@@ -332,7 +337,6 @@ function GameData:TweenToSafeZoneOxygenV1()
     if self.isTweeningOxygenV1 then return end
     self.isTweeningOxygenV1 = true
 
-    -- Reset target ikan saat oxygen sekarat
     self.CurrentTargetModelv1 = nil
 
     local success, zoneName = self:TweenToSafeZoneAndWaitV1()
@@ -348,7 +352,6 @@ function GameData:AutoSellV1()
     if self.isSellingSellV1 then return end
     self.isSellingSellV1 = true
 
-    -- Pause auto shoot selama proses sell
     self.CurrentTargetModelv1 = nil
 
     local success, zoneName = self:TweenToSafeZoneAndWaitV1()
@@ -371,7 +374,7 @@ end
 -- // Loop Oxygen Check
 task.spawn(function()
     while task.wait(1) do
-        if not GameData.AutoSafeZonev1 then continue end -- // Cek toggle Auto Safe Zone
+        if not GameData.AutoSafeZonev1 then continue end
         local oxygenValue = tonumber(oxygenLabel.Text)
         if oxygenValue and oxygenValue <= GameData.OxygenThresholdV1 then
             GameData:TweenToSafeZoneOxygenV1()
@@ -401,7 +404,6 @@ end)
 task.spawn(function()
     while task.wait(0.05) do
 
-        -- Skip kalau lagi tween ke zona aman (oxygen / sell)
         if GameData.isTweeningOxygenV1 or GameData.isSellingSellV1 then continue end
 
         if not GameData.AutoShootv1 then
@@ -517,7 +519,6 @@ Sec.Main1:AddToggle({
         GameData.AutoSellv1 = value
     end
 })
-
 
 -- // Auto Respawn
 GameData.Remotesv3.Respawnv3 = GameData.Servicesv3.ReplicatedStoragev3
