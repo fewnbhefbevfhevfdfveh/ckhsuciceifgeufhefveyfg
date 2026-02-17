@@ -32,18 +32,21 @@ local GameData = {
     lastShootv1 = 0,
     lastCatchv1 = 0,
 
-    -- // Oxygen
     isTweeningOxygenV1 = false,
     OxygenThresholdV1 = 20,
 
-    -- // Auto Sell
     isSellingSellV1 = false,
 
-    -- // Whitelist Safe Zone (isi nama zona yang boleh dikunjungi)
+    cancelSafeZoneTweenV1 = false,
+    activeSafeZoneTweenV1 = nil,
+
     WHITELIST_ZONESv1 = {
         ["The Forgotten Dome"] = true,
     },
 
+    TweenSpeedToFishV1     = 0.4,
+    TweenSpeedToSafeDistV1 = 0.4,
+    TweenSpeedToSafeZoneV1 = 2.0,
 	-- // Cast Mode
 
     Servicesv2 = {
@@ -122,7 +125,6 @@ Sec.Home1:AddParagraph({
 [+] Added Auto Respawn
 	]]
 })
-
 
 Sec.Main1 = Tabs.Main:AddSection({
     Title = "Fish Farm",
@@ -245,6 +247,7 @@ function GameData:GetNearestTargetv1()
     return nearest
 end
 
+-- // Tween ke posisi ikan (collect) — pakai TweenSpeedToFishV1
 function GameData:TweenToPositionv1(position)
     if not self.Characterv1 then return end
     local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
@@ -252,11 +255,12 @@ function GameData:TweenToPositionv1(position)
 
     self.TweenServicev1:Create(
         hrp,
-        TweenInfo.new(0.4, Enum.EasingStyle.Linear),
+        TweenInfo.new(self.TweenSpeedToFishV1, Enum.EasingStyle.Linear),
         {CFrame = CFrame.new(position)}
     ):Play()
 end
 
+-- // Tween safe distance dari ikan (saat shoot) — pakai TweenSpeedToSafeDistV1
 function GameData:TweenToSafeDistancev1(model)
     if not self.Characterv1 then return end
     local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
@@ -269,7 +273,7 @@ function GameData:TweenToSafeDistancev1(model)
 
     self.TweenServicev1:Create(
         hrp,
-        TweenInfo.new(0.4, Enum.EasingStyle.Linear),
+        TweenInfo.new(self.TweenSpeedToSafeDistV1, Enum.EasingStyle.Linear),
         {CFrame = CFrame.new(safePosition, torso.Position)}
     ):Play()
 end
@@ -302,7 +306,7 @@ function GameData:GetNearestSafeZonev1()
     return nearestZone, nearestPart
 end
 
--- // Tween ke safe zone (dipakai oleh oxygen maupun auto sell)
+-- // Tween ke safe zone (oxygen & sell) — TANPA ANCHOR (MODIFIED)
 function GameData:TweenToSafeZoneAndWaitV1()
     local hrp = self.Characterv1 and self.Characterv1:FindFirstChild("HumanoidRootPart")
     if not hrp then return false end
@@ -314,22 +318,66 @@ function GameData:TweenToSafeZoneAndWaitV1()
     end
 
     local targetPosition = part.Position + Vector3.new(0, 5, 0)
-    hrp.Anchored = true
+    
+    -- ANCHOR TIDAK DIGUNAKAN (baris ini dihapus)
+    -- hrp.Anchored = true
+
+    -- Reset cancel flag sebelum mulai
+    self.cancelSafeZoneTweenV1 = false
 
     local tween = self.TweenServicev1:Create(
         hrp,
-        TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+        TweenInfo.new(self.TweenSpeedToSafeZoneV1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
         {CFrame = CFrame.new(targetPosition)}
     )
+
+    -- Simpan referensi tween aktif
+    self.activeSafeZoneTweenV1 = tween
 
     tween:Play()
     tween.Completed:Wait()
 
-    -- ✅ Diam di safe zone selama 2 detik sebelum lanjut
-    task.wait(2)
+    -- Cek apakah di-cancel selama tween berlangsung
+    if self.cancelSafeZoneTweenV1 then
+        -- ANCHOR TIDAK DIGUNAKAN (baris ini dihapus)
+        -- hrp.Anchored = false
+        self.activeSafeZoneTweenV1 = nil
+        return false
+    end
 
-    hrp.Anchored = false
+    -- Diam di safe zone selama 2 detik, dicek tiap 0.1s agar bisa di-cancel
+    for i = 1, 20 do
+        task.wait(0.1)
+        if self.cancelSafeZoneTweenV1 then
+            -- ANCHOR TIDAK DIGUNAKAN (baris ini dihapus)
+            -- hrp.Anchored = false
+            self.activeSafeZoneTweenV1 = nil
+            return false
+        end
+    end
+
+    -- ANCHOR TIDAK DIGUNAKAN (baris ini dihapus)
+    -- hrp.Anchored = false
+    self.activeSafeZoneTweenV1 = nil
     return true, zone.Name
+end
+
+-- // Helper: Cancel tween safe zone yang sedang aktif (TANPA ANCHOR)
+function GameData:CancelSafeZoneTweenV1()
+    self.cancelSafeZoneTweenV1 = true
+    if self.activeSafeZoneTweenV1 then
+        self.activeSafeZoneTweenV1:Cancel()
+        self.activeSafeZoneTweenV1 = nil
+    end
+    -- ANCHOR TIDAK DIGUNAKAN (bagian ini dihapus)
+    -- local hrp = self.Characterv1 and self.Characterv1:FindFirstChild("HumanoidRootPart")
+    -- if hrp then
+    --     hrp.Anchored = false
+    -- end
+    
+    -- Reset semua flag
+    self.isTweeningOxygenV1 = false
+    self.isSellingSellV1 = false
 end
 
 -- // Oxygen: Tween ke zona aman, reset target ikan
@@ -469,6 +517,19 @@ task.spawn(function()
     end
 end)
 
+
+Sec.Main1:AddInput({
+    Title = "Tween Speed ",
+    Content = "Set Speed tween",
+    Default = tostring(GameData.TweenSpeedToFishV1),
+    Callback = function(value)
+        local num = tonumber(value)
+        if num and num > 0 then
+            GameData.TweenSpeedToFishV1 = num
+        end
+    end
+})
+
 Sec.Main1:AddDropdown({
     Title = "Fish List",
     Content = "Select Fish (Multi)",
@@ -505,14 +566,20 @@ Sec.Main1:AddToggle({
     Default = false,
     Callback = function(value)
         GameData.AutoSafeZonev1 = value
+        if not value then
+            GameData:CancelSafeZoneTweenV1()
+        end
     end
 })
 
 Sec.Main1:AddToggle({
-    Title = "Auto Sell Fish",
+    Title = "Auto Sell",
     Default = false,
     Callback = function(value)
         GameData.AutoSellv1 = value
+        if not value then
+            GameData:CancelSafeZoneTweenV1()
+        end
     end
 })
 
