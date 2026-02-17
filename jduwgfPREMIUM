@@ -27,9 +27,9 @@ local games = {
         placeIds = {126509999114328},
         url = "https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/fwfewfefef99%20Nig"
     },
-    ["Fisch"] = {
-        placeIds = {16732694052, 131716211654599},
-        url = "https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/wjdgydfwydwyFISCH"
+    ["Abyss"] = {
+        placeIds = {127794225497302},
+        url = "https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Abyss.lua"
     }
 }
 
