@@ -102,18 +102,14 @@ local GameData = {
 
     Servicesv4 = {
         ReplicatedStoragev4 = game:GetService("ReplicatedStorage"),
-        Workspacev4 = workspace,
     },
 
-    AutoEquipv4 = false,
-
-    Remotesv4 = {
-        Equipv4 = nil,
-    },
+    Remotesv4 = {},
+    AutoEquipv4 = false
 }
 local Window = Chloex:Window({
-    Title = "Nexa | v0.0.0 |",
-    Footer = "[Beta]",
+    Title = "Nexa | v1.0.0 |",
+    Footer = "Beta",
     Content = "Abyss",
     Color = "Default",
     Version = 1.0,
@@ -150,16 +146,7 @@ Sec.Home1 = Tabs.Home:AddSection({
 Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
-[+] Added Shoot Fish
-[+] Added Shoot Fish Mutations
-[+] Added Shoot Fish Rarity
-[+] Added Cast Mode (Normal, Blatant)
-[+] Added Auto Respawn
-[+] Added Auto Sell
-[+] Added Select Mode Auto Sell (Sell Delay, Backpack Full)
-[+] Added Input Sell Delay (only for Sell Delay mode)
-[+] Added Auto Safe Zone
-[+] Added Equip Guns
+[/] Fixed Equip Guns
 	]]
 })
 
@@ -747,6 +734,51 @@ Sec.Main2:AddToggle({
     end
 })
 
+-- // Equip Guns
+
+GameData.Remotesv4.BackpackRFv4 = GameData.Servicesv4.ReplicatedStoragev4
+    :WaitForChild("common")
+    :WaitForChild("packages")
+    :WaitForChild("Knit")
+    :WaitForChild("Services")
+    :WaitForChild("BackpackService")
+    :WaitForChild("RF")
+
+----------------------------------------------------
+
+Sec.Main2:AddToggle({
+    Title = "Auto Equip Gun",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoEquipv4 = value
+
+        if value then
+            Notify("Auto Equip Enabled!", 2)
+
+            task.spawn(function()
+                while GameData.AutoEquipv4 do
+                    local args = {"1"}
+
+                    GameData.Remotesv4.BackpackRFv4
+                        :WaitForChild("Equip")
+                        :InvokeServer(unpack(args))
+
+                    task.wait(1)
+                end
+            end)
+
+        else
+            Notify("Auto Equip Disabled!", 2)
+
+            local args = {"1"}
+
+            GameData.Remotesv4.BackpackRFv4
+                :WaitForChild("Unequip")
+                :InvokeServer(unpack(args))
+        end
+    end
+})
+
 Sec.Main2:AddSubSection("SAFE ZONE SETTINGS")
 
 Sec.Main2:AddInput({
@@ -811,49 +843,6 @@ Sec.Main2:AddToggle({
     end
 })
 
--- // Equip Guns
-
-GameData.Remotesv4.Equipv4 = GameData.Servicesv4.ReplicatedStoragev4
-    :WaitForChild("common")
-    :WaitForChild("packages")
-    :WaitForChild("Knit")
-    :WaitForChild("Services")
-    :WaitForChild("BackpackService")
-    :WaitForChild("RF")
-    :WaitForChild("Equip")
-
-Sec.Main2:AddToggle({
-    Title = "Auto Equip Gun",
-    Default = false,
-    Callback = function(v)
-        GameData.AutoEquipv4 = v
-        print("Auto Equip:", v)
-
-        if v then
-            Notify("Auto Equip Enabled!", 2)
-
-            task.spawn(function()
-                while GameData.AutoEquipv4 do
-
-                    local debris = GameData.Servicesv4.Workspacev4:FindFirstChild("debris")
-
-                    if debris then
-                        local advanced = debris:FindFirstChild("Advanced")
-
-                        if not (advanced and advanced:IsA("Model")) then
-                            GameData.Remotesv4.Equipv4:InvokeServer("1")
-                        end
-                    end
-
-                    task.wait(1)
-                end
-            end)
-
-        else
-            Notify("Auto Equip Disabled!", 2)
-        end
-    end
-})
 
 Sec.Main2:AddSubSection("CAST MODE SETTINGS")
 
