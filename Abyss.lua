@@ -102,10 +102,12 @@ local GameData = {
 
     Servicesv4 = {
         ReplicatedStoragev4 = game:GetService("ReplicatedStorage"),
+        Workspacev4 = workspace
     },
 
     Remotesv4 = {},
-    AutoEquipv4 = false
+    AutoEquipv4 = false,
+    Connectionsv4 = {}
 }
 local Window = Chloex:Window({
     Title = "Nexa | v1.0.0 |",
@@ -744,7 +746,36 @@ GameData.Remotesv4.BackpackRFv4 = GameData.Servicesv4.ReplicatedStoragev4
     :WaitForChild("BackpackService")
     :WaitForChild("RF")
 
-----------------------------------------------------
+function GameData:StartAutoEquipv4()
+    task.spawn(function()
+        while self.AutoEquipv4 do
+
+            local debris = self.Servicesv4.Workspacev4:FindFirstChild("debris")
+            local advanced = debris and debris:FindFirstChild("Advanced")
+
+            if not (advanced and advanced:IsA("Model")) then
+                local args = {"1"}
+
+                self.Remotesv4.BackpackRFv4
+                    :WaitForChild("Equip")
+                    :InvokeServer(unpack(args))
+            end
+
+            task.wait(1)
+        end
+    end)
+end
+
+function GameData:StopAutoEquipv4()
+    self.AutoEquipv4 = false
+
+    local args = {"1"}
+
+    self.Remotesv4.BackpackRFv4
+        :WaitForChild("Unequip")
+        :InvokeServer(unpack(args))
+end
+
 
 Sec.Main2:AddToggle({
     Title = "Auto Equip Gun",
@@ -753,28 +784,28 @@ Sec.Main2:AddToggle({
         GameData.AutoEquipv4 = value
 
         if value then
-            Notify("Auto Equip Enabled!", 2)
+            Chloex:MakeNotify({
+                Title = "Auto Equip",
+                Description = "Enabled",
+                Content = "Gun has been equip!",
+                Color = Color3.fromRGB(0,255,0),
+                Time = 0.5,
+                Delay = 3
+            })
 
-            task.spawn(function()
-                while GameData.AutoEquipv4 do
-                    local args = {"1"}
-
-                    GameData.Remotesv4.BackpackRFv4
-                        :WaitForChild("Equip")
-                        :InvokeServer(unpack(args))
-
-                    task.wait(1)
-                end
-            end)
+            GameData:StartAutoEquipv4()
 
         else
-            Notify("Auto Equip Disabled!", 2)
+            Chloex:MakeNotify({
+                Title = "Auto Equip",
+                Description = "Disabled",
+                Content = "Gun has been unequipped!",
+                Color = Color3.fromRGB(255,0,0),
+                Time = 0.5,
+                Delay = 3
+            })
 
-            local args = {"1"}
-
-            GameData.Remotesv4.BackpackRFv4
-                :WaitForChild("Unequip")
-                :InvokeServer(unpack(args))
+            GameData:StopAutoEquipv4()
         end
     end
 })
