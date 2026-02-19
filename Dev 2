@@ -101,12 +101,15 @@ local GameData = {
 	-- // Auto Equip Guns
 
     Servicesv4 = {
+        Players = game:GetService("Players"),
         ReplicatedStoragev4 = game:GetService("ReplicatedStorage"),
         Workspacev4 = workspace
     },
 
+    LocalPlayerv4 = game:GetService("Players").LocalPlayer,
     Remotesv4 = {},
     AutoEquipv4 = false,
+    Connectionsv4 = {},
 
 	-- // WalkSpeed
 
@@ -174,18 +177,59 @@ local GameData = {
         ["Angler Cave"] = CFrame.new(439.21, 4171.75, 155.40),
         ["Angler Cave - Shop"] = CFrame.new(735.37, 4266.42, -159.23),
         ["The Forgotten Demo"] = CFrame.new(-2.205, 4884.06, -1.224),
-		["Spirit Root Hollow"] = CFrame.new(1670.37, 4041.22, -1918.33),
-		["Morveth's Cave"] = CFrame.new(-230.59, 4307.52, -1281.05),
-		["King Cat Cave"] = CFrame.new(2172.57, 3825.56, -2929.93),
+        ["Spirit Root Hollow"] = CFrame.new(1670.37, 4041.22, -1918.33),
+        ["Morveth's Cave"] = CFrame.new(-230.59, 4307.52, -1281.05),
+        ["King Cat Cave"] = CFrame.new(2172.57, 3825.56, -2929.93),
     },
 
     LocationOptionsv9 = {},
     SelectedLocationv9 = nil,
+
+	-- // Favorite Fish
+
+    ReplicatedStoragev10 = game:GetService("ReplicatedStorage"),
+    Knitv10 = nil,
+    FavoriteRFv10 = nil,
+    rarityMapv10 = {},
+    fishFolderv10 = nil,
+    mutationListv10 = {"None"},
+    mutationsFolderv10 = nil,
+    fishListv10 = {"None"},
+    fishAssetsFolderv10 = nil,
+    selectedRarityv10 = "None",
+    selectedMutationv10 = "None",
+    selectedFishv10 = "None",
+    autoFavRunningv10 = false,
+    autoUnfavRunningv10 = false,
+
+	-- // Buy Item Guns
+
+    Servicesv11 = {
+        ReplicatedStoragev11 = game:GetService("ReplicatedStorage"),
+    },
+    GunsFolderv11 = nil,
+    GunOptionsv11 = {},
+    SelectedGunv11 = nil,
+    Remotesv11 = {
+        BuyItemv11 = nil,
+    },
+
+	-- // Buy Item Tubes
+
+    Servicesv12 = {
+        ReplicatedStoragev12 = game:GetService("ReplicatedStorage"),
+    },
+    TubesFolderv12 = nil,
+    TubeOptionsv12 = {},
+    SelectedTubev12 = nil,
+    Remotesv12 = {
+        BuyItemv12 = nil,
+    },
 }
 
 
 local Window = Chloex:Window({
-    Title = "Nexa | v1.0.0 |",
+    Title = "Nexa | v0.0.4 |",
     Footer = "Beta",
     Content = "Abyss",
     Color = "Default",
@@ -212,6 +256,11 @@ local Tabs = {
         Icon = "lucide:swords",
     }),
 
+    Shop = Window:AddTab({
+        Name = "Shop",
+        Icon = "lucide:store",
+    }),
+
     Tp = Window:AddTab({
         Name = "Teleport",
         Icon = "lucide:map",
@@ -228,8 +277,11 @@ Sec.Home1 = Tabs.Home:AddSection({
 Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
-[+] Added WalkSpeed
-[+] Added Zoom Max
+[+] Added Shop
+ - Added Dropdown Guns 
+ - Added Button Buy Guns
+ - Added Dropdown Tubes
+ - Added Button Buy Tubes
 	]]
 })
 
@@ -1046,34 +1098,20 @@ GameData.Remotesv4.BackpackRFv4 = GameData.Servicesv4.ReplicatedStoragev4
     :WaitForChild("BackpackService")
     :WaitForChild("RF")
 
+-- Fungsi untuk mulai auto equip
 function GameData:StartAutoEquipv4()
     task.spawn(function()
         while self.AutoEquipv4 do
-
             local debris = self.Servicesv4.Workspacev4:FindFirstChild("debris")
+            local playerFolder = debris and debris:FindFirstChild(self.LocalPlayerv4.Name)
+            local tool = playerFolder and playerFolder:FindFirstChild("Tool")
 
-            if debris then
-                local gunsFolder = self.Servicesv4.ReplicatedStoragev4
-                    :WaitForChild("common")
-                    :WaitForChild("assets")
-                    :WaitForChild("guns")
-
-                for _, gun in pairs(gunsFolder:GetChildren()) do
-                    local gunName = gun.Name
-                    local gunExists = debris:FindFirstChild(gunName)
-
-                    if not gunExists then
-                        self.Remotesv4.BackpackRFv4
-                            :WaitForChild("Equip")
-                            :InvokeServer(gunName)
-
-                        task.wait(0.5) 
-
-                    else
-                        self.AutoEquipv4 = false
-                        break
-                    end
-                end
+            -- Kalau Tool gak ada, baru equip
+            if not (tool and tool:IsA("Tool")) then
+                local args = {"1"}
+                self.Remotesv4.BackpackRFv4
+                    :WaitForChild("Equip")
+                    :InvokeServer(unpack(args))
             end
 
             task.wait(1)
@@ -1081,12 +1119,19 @@ function GameData:StartAutoEquipv4()
     end)
 end
 
+-- Fungsi untuk stop auto equip
 function GameData:StopAutoEquipv4()
     self.AutoEquipv4 = false
+    local args = {"1"}
+    self.Remotesv4.BackpackRFv4
+        :WaitForChild("Unequip")
+        :InvokeServer(unpack(args))
 end
 
+-- Toggle di GUI
 Sec.Main3:AddToggle({
     Title = "Auto Equip Gun",
+	Badge = "Fixed",
     Default = false,
     Callback = function(value)
         GameData.AutoEquipv4 = value
@@ -1095,7 +1140,7 @@ Sec.Main3:AddToggle({
             Chloex:MakeNotify({
                 Title = "Auto Equip",
                 Description = "Enabled",
-                Content = "Auto equip aktif!",
+                Content = "Gun has been equip!",
                 Color = Color3.fromRGB(0,255,0),
                 Time = 0.5,
                 Delay = 3
@@ -1107,7 +1152,7 @@ Sec.Main3:AddToggle({
             Chloex:MakeNotify({
                 Title = "Auto Equip",
                 Description = "Disabled",
-                Content = "Auto equip dimatikan!",
+                Content = "Gun has been unequipped!",
                 Color = Color3.fromRGB(255,0,0),
                 Time = 0.5,
                 Delay = 3
@@ -1230,6 +1275,336 @@ Sec.Main3:AddButton({
     end
 })
 
+Sec.Main4 = Tabs.Main:AddSection({
+    Title = "Favorite [Beta]",
+    Open = true
+})
+
+GameData.Knitv10 = require(GameData.ReplicatedStoragev10.common.packages.Knit)
+GameData.FavoriteRFv10 = GameData.ReplicatedStoragev10:WaitForChild("common"):WaitForChild("packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("BackpackService"):WaitForChild("RF"):WaitForChild("Favorite")
+
+GameData.fishFolderv10 = GameData.ReplicatedStoragev10.common.presets.items.fish
+for _, folder in ipairs(GameData.fishFolderv10:GetChildren()) do
+    if folder:IsA("Folder") then
+        for _, module in ipairs(folder:GetChildren()) do
+            if module:IsA("ModuleScript") then
+                local success, data = pcall(require, module)
+                if success and type(data) == "table" then
+                    GameData.rarityMapv10[module.Name] = data.rarity or "Unknown"
+                end
+            end
+        end
+    end
+end
+
+GameData.mutationsFolderv10 = GameData.ReplicatedStoragev10.common.presets.fish.mutations
+for _, mutModule in ipairs(GameData.mutationsFolderv10:GetChildren()) do
+    table.insert(GameData.mutationListv10, mutModule.Name)
+end
+table.sort(GameData.mutationListv10)
+
+GameData.fishAssetsFolderv10 = GameData.ReplicatedStoragev10.common.assets.fish
+for _, fishModel in ipairs(GameData.fishAssetsFolderv10:GetChildren()) do
+    table.insert(GameData.fishListv10, fishModel.Name)
+end
+table.sort(GameData.fishListv10)
+
+Sec.Main4:AddDropdown({
+    Title = "Filter Rarity",
+    Content = "Cannot be combined with Fish filter",
+    Options = {"None", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythical"},
+    Multi = false,
+    Default = "None",
+    Callback = function(value)
+        if value ~= "None" and GameData.selectedFishv10 ~= "None" then
+            Chloex:MakeNotify({
+                Title = "Filter Warning",
+                Description = "Filter System",
+                Content = "Cannot combine Rarity + Fish filter! Resetting Fish to None.",
+                Color = Color3.fromRGB(255, 165, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+            GameData.selectedFishv10 = "None"
+        end
+        GameData.selectedRarityv10 = value
+        Chloex:MakeNotify({
+            Title = "Rarity Filter",
+            Description = "Filter System",
+            Content = "Rarity filter set to: " .. GameData.selectedRarityv10,
+            Color = Color3.fromRGB(0, 170, 255),
+            Time = 0.5,
+            Delay = 3
+        })
+    end
+})
+
+Sec.Main4:AddDropdown({
+    Title = "Filter Fish",
+    Content = "Cannot be combined with Rarity filter",
+    Options = GameData.fishListv10,
+    Multi = false,
+    Default = "None",
+    Callback = function(value)
+        if value ~= "None" and GameData.selectedRarityv10 ~= "None" then
+            Chloex:MakeNotify({
+                Title = "Filter Warning",
+                Description = "Filter System",
+                Content = "Cannot combine Fish + Rarity filter! Resetting Rarity to None.",
+                Color = Color3.fromRGB(255, 165, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+            GameData.selectedRarityv10 = "None"
+        end
+        GameData.selectedFishv10 = value
+        Chloex:MakeNotify({
+            Title = "Fish Filter",
+            Description = "Filter System",
+            Content = "Fish filter set to: " .. GameData.selectedFishv10,
+            Color = Color3.fromRGB(0, 170, 255),
+            Time = 0.5,
+            Delay = 3
+        })
+    end
+})
+
+Sec.Main4:AddDropdown({
+    Title = "Filter Mutation",
+    Content = "Can be combined with Rarity or Fish filter",
+    Options = GameData.mutationListv10,
+    Multi = false,
+    Default = "None",
+    Callback = function(value)
+        GameData.selectedMutationv10 = value
+        Chloex:MakeNotify({
+            Title = "Mutation Filter",
+            Description = "Filter System",
+            Content = "Mutation filter set to: " .. GameData.selectedMutationv10,
+            Color = Color3.fromRGB(0, 170, 255),
+            Time = 0.5,
+            Delay = 3
+        })
+    end
+})
+
+local function matchesFilter(item)
+    local fishName = item.name
+    if item.class == "fish_loot" then
+        fishName = string.split(item.name, "_")[1]
+    end
+
+    local rarity = GameData.rarityMapv10[fishName] or GameData.rarityMapv10[item.name] or "Unknown"
+    local mutations = item.mutations or {}
+
+    local hasMutation = false
+    if GameData.selectedMutationv10 ~= "None" then
+        for _, mut in ipairs(mutations) do
+            if mut == GameData.selectedMutationv10 then
+                hasMutation = true
+                break
+            end
+        end
+    end
+
+    if GameData.selectedFishv10 ~= "None" and GameData.selectedMutationv10 ~= "None" then
+        return fishName == GameData.selectedFishv10 and hasMutation
+    elseif GameData.selectedFishv10 ~= "None" then
+        return fishName == GameData.selectedFishv10
+    elseif GameData.selectedRarityv10 ~= "None" and GameData.selectedMutationv10 ~= "None" then
+        return rarity == GameData.selectedRarityv10 and hasMutation
+    elseif GameData.selectedRarityv10 ~= "None" then
+        return rarity == GameData.selectedRarityv10
+    elseif GameData.selectedMutationv10 ~= "None" then
+        return hasMutation
+    end
+
+    return false
+end
+
+Sec.Main4:AddToggle({
+    Title = "Auto Favorite",
+    Default = false,
+    Callback = function(value)
+        GameData.autoFavRunningv10 = value
+
+        if value then
+            if GameData.selectedRarityv10 == "None" and GameData.selectedMutationv10 == "None" and GameData.selectedFishv10 == "None" then
+                Chloex:MakeNotify({
+                    Title = "Auto Favorite",
+                    Description = "Filter System",
+                    Content = "Please select at least one filter first!",
+                    Color = Color3.fromRGB(255, 0, 0),
+                    Time = 0.5,
+                    Delay = 3
+                })
+                GameData.autoFavRunningv10 = false
+                return
+            end
+
+            Chloex:MakeNotify({
+                Title = "Auto Favorite",
+                Description = "Status",
+                Content = "Auto Favorite is now ON.",
+                Color = Color3.fromRGB(0, 255, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+
+            task.spawn(function()
+                while GameData.autoFavRunningv10 do
+                    local replica = GameData.Knitv10.GetController("DataController"):GetReplica()
+                    local inventory = replica.Data.inventory or {}
+
+                    for id, item in pairs(inventory) do
+                        if not GameData.autoFavRunningv10 then break end
+
+                        if (item.class == "fish" or item.class == "fish_loot") and not item.favorited then
+                            if matchesFilter(item) then
+                                local success, err = pcall(function()
+                                    GameData.FavoriteRFv10:InvokeServer(id)
+                                end)
+                                if success then
+                                    local mutations = item.mutations or {}
+                                    Chloex:MakeNotify({
+                                        Title = "Favorited",
+                                        Description = item.name,
+                                        Content = "Mutation: " .. (table.concat(mutations, ", ") ~= "" and table.concat(mutations, ", ") or "None"),
+                                        Color = Color3.fromRGB(0, 255, 0),
+                                        Time = 0.5,
+                                        Delay = 3
+                                    })
+                                else
+                                    Chloex:MakeNotify({
+                                        Title = "Auto Favorite",
+                                        Description = "Error",
+                                        Content = "Failed to favorite: " .. tostring(err),
+                                        Color = Color3.fromRGB(255, 0, 0),
+                                        Time = 0.5,
+                                        Delay = 3
+                                    })
+                                end
+                                task.wait(0.3)
+                            end
+                        end
+                    end
+
+                    task.wait(1)
+                end
+
+                Chloex:MakeNotify({
+                    Title = "Auto Favorite",
+                    Description = "Status",
+                    Content = "Auto Favorite has stopped.",
+                    Color = Color3.fromRGB(255, 0, 0),
+                    Time = 0.5,
+                    Delay = 3
+                })
+            end)
+        else
+            Chloex:MakeNotify({
+                Title = "Auto Favorite",
+                Description = "Status",
+                Content = "Auto Favorite is now OFF.",
+                Color = Color3.fromRGB(255, 0, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+        end
+    end
+})
+
+Sec.Main4:AddToggle({
+    Title = "Auto Unfavorite",
+    Default = false,
+    Callback = function(value)
+        GameData.autoUnfavRunningv10 = value
+
+        if value then
+            if GameData.selectedRarityv10 == "None" and GameData.selectedMutationv10 == "None" and GameData.selectedFishv10 == "None" then
+                Chloex:MakeNotify({
+                    Title = "Auto Unfavorite",
+                    Description = "Filter System",
+                    Content = "Please select at least one filter first!",
+                    Color = Color3.fromRGB(255, 0, 0),
+                    Time = 0.5,
+                    Delay = 3
+                })
+                GameData.autoUnfavRunningv10 = false
+                return
+            end
+
+            Chloex:MakeNotify({
+                Title = "Auto Unfavorite",
+                Description = "Status",
+                Content = "Auto Unfavorite is now ON.",
+                Color = Color3.fromRGB(0, 255, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+
+            task.spawn(function()
+                while GameData.autoUnfavRunningv10 do
+                    local replica = GameData.Knitv10.GetController("DataController"):GetReplica()
+                    local inventory = replica.Data.inventory or {}
+
+                    for id, item in pairs(inventory) do
+                        if not GameData.autoUnfavRunningv10 then break end
+
+                        if (item.class == "fish" or item.class == "fish_loot") and item.favorited then
+                            if matchesFilter(item) then
+                                local success, err = pcall(function()
+                                    GameData.FavoriteRFv10:InvokeServer(id) -- invoke again = unfavorite
+                                end)
+                                if success then
+                                    local mutations = item.mutations or {}
+                                    Chloex:MakeNotify({
+                                        Title = "Unfavorited",
+                                        Description = item.name,
+                                        Content = "Mutation: " .. (table.concat(mutations, ", ") ~= "" and table.concat(mutations, ", ") or "None"),
+                                        Color = Color3.fromRGB(255, 100, 0),
+                                        Time = 0.5,
+                                        Delay = 3
+                                    })
+                                else
+                                    Chloex:MakeNotify({
+                                        Title = "Auto Unfavorite",
+                                        Description = "Error",
+                                        Content = "Failed to unfavorite: " .. tostring(err),
+                                        Color = Color3.fromRGB(255, 0, 0),
+                                        Time = 0.5,
+                                        Delay = 3
+                                    })
+                                end
+                                task.wait(0.3)
+                            end
+                        end
+                    end
+
+                    task.wait(1)
+                end
+
+                Chloex:MakeNotify({
+                    Title = "Auto Unfavorite",
+                    Description = "Status",
+                    Content = "Auto Unfavorite has stopped.",
+                    Color = Color3.fromRGB(255, 0, 0),
+                    Time = 0.5,
+                    Delay = 3
+                })
+            end)
+        else
+            Chloex:MakeNotify({
+                Title = "Auto Unfavorite",
+                Description = "Status",
+                Content = "Auto Unfavorite is now OFF.",
+                Color = Color3.fromRGB(255, 0, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+        end
+    end
+})
 
 Sec.Tp1 = Tabs.Tp:AddSection({
     Title = "Locations",
@@ -1238,7 +1613,7 @@ Sec.Tp1 = Tabs.Tp:AddSection({
 
 GameData.Playerv9 = GameData.Servicesv9.Playersv9.LocalPlayer
 
-for name,_ in pairs(GameData.Locationsv9) do
+for name, _ in pairs(GameData.Locationsv9) do
     table.insert(GameData.LocationOptionsv9, name)
 end
 
@@ -1250,12 +1625,16 @@ Sec.Tp1:AddDropdown({
     Multi = false,
     Default = {GameData.LocationOptionsv9[1]},
     Callback = function(tbl)
-        GameData.SelectedLocationv9 = tbl[1]
+        if type(tbl) == "table" then
+            GameData.SelectedLocationv9 = tbl[1]
+        else
+            GameData.SelectedLocationv9 = tbl
+        end
     end
 })
 
 Sec.Tp1:AddButton({
-    Title = "Tp To Locations",
+    Title = "Tween To Locations",
     Version = "V2",
     Icon = "rbxassetid://79715859717613",
     Callback = function()
@@ -1268,16 +1647,20 @@ Sec.Tp1:AddButton({
         local hrp = char:WaitForChild("HumanoidRootPart")
         local hum = char:WaitForChild("Humanoid")
 
-        local bv = Instance.new("BodyVelocity")
-        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        bv.Velocity = Vector3.zero
-        bv.Parent = hrp
+        hum.PlatformStand = true
+
+        local attachment = Instance.new("Attachment")
+        attachment.Parent = hrp
+
+        local lv = Instance.new("LinearVelocity")
+        lv.Attachment0 = attachment
+        lv.MaxForce = math.huge
+        lv.VectorVelocity = Vector3.zero
+        lv.Parent = hrp
 
         local distance = (hrp.Position - targetCFrame.Position).Magnitude
         local speed = 250
-        local duration = distance / speed
-
-        hum.PlatformStand = true
+        local duration = math.clamp(distance / speed, 0.1, 30)
 
         local tween = GameData.Servicesv9.TweenServicev9:Create(
             hrp,
@@ -1288,8 +1671,160 @@ Sec.Tp1:AddButton({
         tween:Play()
 
         tween.Completed:Connect(function()
-            bv:Destroy()
+            lv:Destroy()
+            attachment:Destroy()
             hum.PlatformStand = false
+            VelarisUI:MakeNotify({
+                Title = "Teleport",
+                Description = "Success",
+                Content = "Arrived at " .. GameData.SelectedLocationv9,
+                Color = Color3.fromRGB(0, 255, 0),
+                Time = 0.5,
+                Delay = 3
+            })
         end)
+    end
+})
+
+Sec.Shop1 = Tabs.Shop:AddSection({
+    Title = "Item Shop",
+    Open = true
+})
+
+Sec.Shop1:AddSubSection("GUNS SHOP")
+
+GameDatav11.GunsFolderv11 = GameDatav11.Servicesv11.ReplicatedStoragev11
+    :WaitForChild("common")
+    :WaitForChild("assets")
+    :WaitForChild("guns")
+for _, gunv11 in pairs(GameDatav11.GunsFolderv11:GetChildren()) do
+    table.insert(GameDatav11.GunOptionsv11, gunv11.Name)
+end
+GameDatav11.SelectedGunv11 = GameDatav11.GunOptionsv11[1]
+GameDatav11.Remotesv11.BuyItemv11 = GameDatav11.Servicesv11.ReplicatedStoragev11
+    :WaitForChild("common")
+    :WaitForChild("packages")
+    :WaitForChild("Knit")
+    :WaitForChild("Services")
+    :WaitForChild("PurchaseService")
+    :WaitForChild("RF")
+    :WaitForChild("BuyItem")
+Sec.Shop1:AddDropdown({
+    Title = "Select Gun to Buy",
+    Content = "Choose gun to purchase",
+    Options = GameDatav11.GunOptionsv11,
+    Multi = false,
+    Default = GameDatav11.GunOptionsv11[1],
+    Callback = function(v11)
+        GameDatav11.SelectedGunv11 = v11
+        VelarisUI:MakeNotify({
+            Title = "Gun Selected",
+            Description = "Selection",
+            Content = "Selected Gun to Buy: " .. tostring(v11),
+            Color = Color3.fromRGB(0, 170, 255),
+            Time = 0.5,
+            Delay = 3
+        })
+    end
+})
+Sec.Shop1:AddButton({
+    Title = "Buy Gun",
+    Version = "V11",
+    Icon = "rbxassetid://79715859717613",
+    Callback = function()
+        if not GameDatav11.SelectedGunv11 then
+            VelarisUI:MakeNotify({
+                Title = "Error",
+                Description = "Purchase Failed",
+                Content = "No gun selected!",
+                Color = Color3.fromRGB(255, 0, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+            return
+        end
+        local argsv11 = {
+            GameDatav11.SelectedGunv11,
+            1,
+            "guns"
+        }
+        GameDatav11.Remotesv11.BuyItemv11:InvokeServer(unpack(argsv11))
+        VelarisUI:MakeNotify({
+            Title = "Purchase Successful",
+            Description = "Shop",
+            Content = "Purchased Gun: " .. tostring(GameDatav11.SelectedGunv11),
+            Color = Color3.fromRGB(0, 255, 0),
+            Time = 0.5,
+            Delay = 3
+        })
+    end
+})
+
+Sec.Shop1:AddSubSection("TUBES SHOP")
+
+GameDatav12.TubesFolderv12 = GameDatav12.Servicesv12.ReplicatedStoragev12
+    :WaitForChild("common")
+    :WaitForChild("assets")
+    :WaitForChild("tubes")
+for _, tubev12 in pairs(GameDatav12.TubesFolderv12:GetChildren()) do
+    table.insert(GameDatav12.TubeOptionsv12, tubev12.Name)
+end
+GameDatav12.SelectedTubev12 = GameDatav12.TubeOptionsv12[1]
+GameDatav12.Remotesv12.BuyItemv12 = GameDatav12.Servicesv12.ReplicatedStoragev12
+    :WaitForChild("common")
+    :WaitForChild("packages")
+    :WaitForChild("Knit")
+    :WaitForChild("Services")
+    :WaitForChild("PurchaseService")
+    :WaitForChild("RF")
+    :WaitForChild("BuyItem")
+Sec.Shop1:AddDropdown({
+    Title = "Select Tube to Buy",
+    Content = "Choose tube to purchase",
+    Options = GameDatav12.TubeOptionsv12,
+    Multi = false,
+    Default = GameDatav12.TubeOptionsv12[1],
+    Callback = function(v12)
+        GameDatav12.SelectedTubev12 = v12
+        VelarisUI:MakeNotify({
+            Title = "Tube Selected",
+            Description = "Selection",
+            Content = "Selected Tube to Buy: " .. tostring(v12),
+            Color = Color3.fromRGB(0, 170, 255),
+            Time = 0.5,
+            Delay = 3
+        })
+    end
+})
+Sec.Shop1:AddButton({
+    Title = "Buy Tube",
+    Version = "V12",
+    Icon = "rbxassetid://79715859717613",
+    Callback = function()
+        if not GameDatav12.SelectedTubev12 then
+            VelarisUI:MakeNotify({
+                Title = "Error",
+                Description = "Purchase Failed",
+                Content = "No tube selected!",
+                Color = Color3.fromRGB(255, 0, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+            return
+        end
+        local argsv12 = {
+            GameDatav12.SelectedTubev12,
+            1,
+            "tubes"
+        }
+        GameDatav12.Remotesv12.BuyItemv12:InvokeServer(unpack(argsv12))
+        VelarisUI:MakeNotify({
+            Title = "Purchase Successful",
+            Description = "Shop",
+            Content = "Purchased Tube: " .. tostring(GameDatav12.SelectedTubev12),
+            Color = Color3.fromRGB(0, 255, 0),
+            Time = 0.5,
+            Delay = 3
+        })
     end
 })
