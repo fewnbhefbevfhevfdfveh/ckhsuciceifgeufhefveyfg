@@ -54,7 +54,7 @@ local GameData = {
 
     TweenSpeedToFishV1     = 20,
     TweenSpeedToSafeDistV1 = 20,
-    TweenSpeedToSafeZoneV1 = 20,
+    TweenSpeedToSafeZoneV1 = 16,
 
     MutationsFolderv1 = nil,
     MutationNamesv1   = {},
@@ -201,11 +201,35 @@ local GameData = {
     selectedFishv10 = "None",
     autoFavRunningv10 = false,
     autoUnfavRunningv10 = false,
+
+	-- // Buy Item Guns
+
+    Servicesv11 = {
+        ReplicatedStoragev11 = game:GetService("ReplicatedStorage"),
+    },
+    GunsFolderv11 = nil,
+    GunOptionsv11 = {},
+    SelectedGunv11 = nil,
+    Remotesv11 = {
+        BuyItemv11 = nil,
+    },
+
+	-- // Buy Item Tubes
+
+    Servicesv12 = {
+        ReplicatedStoragev12 = game:GetService("ReplicatedStorage"),
+    },
+    TubesFolderv12 = nil,
+    TubeOptionsv12 = {},
+    SelectedTubev12 = nil,
+    Remotesv12 = {
+        BuyItemv12 = nil,
+    },
 }
 
 
 local Window = Chloex:Window({
-    Title = "Nexa | v3.0.0 |",
+    Title = "Nexa | v0.0.4 |",
     Footer = "Beta",
     Content = "Abyss",
     Color = "Default",
@@ -236,6 +260,12 @@ local Tabs = {
         Name = "Teleport",
         Icon = "lucide:map",
     }),
+
+    Shop = Window:AddTab({
+        Name = "Shop",
+        Icon = "lucide:store",
+    }),
+
 }
 
 local Sec = {}
@@ -248,12 +278,11 @@ Sec.Home1 = Tabs.Home:AddSection({
 Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
-[+] Added Auto Favorite [Beta]
- - Added Dropdown Fish 
- - Added Dropdown Mutations
- - Added Dropdown Rarity
- - Added Auto Favorite
- - Added Auto Unfavorite
+[+] Added Shop
+ - Added Dropdown Guns 
+ - Added Button Buy Guns
+ - Added Dropdown Tubes
+ - Added Button Buy Tubes
 	]]
 })
 
@@ -874,18 +903,31 @@ end)
 
 Sec.Main2:AddSubSection("SHOOT FISH")
 
-Sec.Main2:AddInput({
+Sec.Main2:AddSlider({
     Title = "Tween Speed",
-    Content = "Set Tween Speed (20 = Normal, 50 = Fast, 100 = Very Fast)",
-    Default = tostring(GameData.TweenSpeedToFishV1),
+    Content = "Set Tween Speed to Fish",
+    Min = 1,
+    Max = 200,
+    Default = 20,
+    Increment = 1,
+    Callback = function(value)
+        GameData.TweenSpeedToFishV1 = value
+        GameData.TweenSpeedToSafeDistV1 = value
+    end
+})
+
+Sec.Main2:AddInput({
+    Title = "Safe Distance",
+    Content = "Set Safe Distance to Fish",
+    Default = tostring(GameData.SAFE_DISTANCEv1),
     Callback = function(value)
         local num = tonumber(value)
         if num and num > 0 then
-            GameData.TweenSpeedToFishV1 = num
-            GameData.TweenSpeedToSafeDistV1 = num
+            GameData.SAFE_DISTANCEv1 = num
         end
     end
 })
+
 
 Sec.Main2:AddDropdown({
     Title = "Fish List",
@@ -1655,5 +1697,148 @@ Sec.Tp1:AddButton({
                 Delay = 3
             })
         end)
+    end
+})
+
+Sec.Shop1 = Tabs.Shop:AddSection({
+    Title = "Item Shop",
+    Open = true
+})
+
+Sec.Shop1:AddSubSection("GUNS SHOP")
+
+GameData.GunsFolderv11 = GameData.Servicesv11.ReplicatedStoragev11
+    :WaitForChild("common")
+    :WaitForChild("assets")
+    :WaitForChild("guns")
+for _, gunv11 in pairs(GameData.GunsFolderv11:GetChildren()) do
+    table.insert(GameData.GunOptionsv11, gunv11.Name)
+end
+GameData.SelectedGunv11 = GameData.GunOptionsv11[1]
+GameData.Remotesv11.BuyItemv11 = GameData.Servicesv11.ReplicatedStoragev11
+    :WaitForChild("common")
+    :WaitForChild("packages")
+    :WaitForChild("Knit")
+    :WaitForChild("Services")
+    :WaitForChild("PurchaseService")
+    :WaitForChild("RF")
+    :WaitForChild("BuyItem")
+Sec.Shop1:AddDropdown({
+    Title = "Select Gun to Buy",
+    Content = "Choose gun to purchase",
+    Options = GameData.GunOptionsv11,
+    Multi = false,
+    Default = GameData.GunOptionsv11[1],
+    Callback = function(v11)
+        GameData.SelectedGunv11 = v11
+        VelarisUI:MakeNotify({
+            Title = "Gun Selected",
+            Description = "Selection",
+            Content = "Selected Gun to Buy: " .. tostring(v11),
+            Color = Color3.fromRGB(0, 170, 255),
+            Time = 0.5,
+            Delay = 3
+        })
+    end
+})
+Sec.Shop1:AddButton({
+    Title = "Buy Gun",
+    Version = "V2",
+    Icon = "rbxassetid://79715859717613",
+    Callback = function()
+        if not GameData.SelectedGunv11 then
+            VelarisUI:MakeNotify({
+                Title = "Error",
+                Description = "Purchase Failed",
+                Content = "No gun selected!",
+                Color = Color3.fromRGB(255, 0, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+            return
+        end
+        local argsv11 = {
+            GameData.SelectedGunv11,
+            1,
+            "guns"
+        }
+        GameData.Remotesv11.BuyItemv11:InvokeServer(unpack(argsv11))
+        VelarisUI:MakeNotify({
+            Title = "Purchase Successful",
+            Description = "Shop",
+            Content = "Purchased Gun: " .. tostring(GameData.SelectedGunv11),
+            Color = Color3.fromRGB(0, 255, 0),
+            Time = 0.5,
+            Delay = 3
+        })
+    end
+})
+
+Sec.Shop1:AddSubSection("TUBES SHOP")
+
+GameData.TubesFolderv12 = GameData.Servicesv12.ReplicatedStoragev12
+    :WaitForChild("common")
+    :WaitForChild("assets")
+    :WaitForChild("tubes")
+for _, tubev12 in pairs(GameData.TubesFolderv12:GetChildren()) do
+    table.insert(GameData.TubeOptionsv12, tubev12.Name)
+end
+GameData.SelectedTubev12 = GameData.TubeOptionsv12[1]
+GameData.Remotesv12.BuyItemv12 = GameData.Servicesv12.ReplicatedStoragev12
+    :WaitForChild("common")
+    :WaitForChild("packages")
+    :WaitForChild("Knit")
+    :WaitForChild("Services")
+    :WaitForChild("PurchaseService")
+    :WaitForChild("RF")
+    :WaitForChild("BuyItem")
+Sec.Shop1:AddDropdown({
+    Title = "Select Tube to Buy",
+    Content = "Choose tube to purchase",
+    Options = GameData.TubeOptionsv12,
+    Multi = false,
+    Default = GameData.TubeOptionsv12[1],
+    Callback = function(v12)
+        GameData.SelectedTubev12 = v12
+        VelarisUI:MakeNotify({
+            Title = "Tube Selected",
+            Description = "Selection",
+            Content = "Selected Tube to Buy: " .. tostring(v12),
+            Color = Color3.fromRGB(0, 170, 255),
+            Time = 0.5,
+            Delay = 3
+        })
+    end
+})
+Sec.Shop1:AddButton({
+    Title = "Buy Tube",
+    Version = "V2",
+    Icon = "rbxassetid://79715859717613",
+    Callback = function()
+        if not GameData.SelectedTubev12 then
+            VelarisUI:MakeNotify({
+                Title = "Error",
+                Description = "Purchase Failed",
+                Content = "No tube selected!",
+                Color = Color3.fromRGB(255, 0, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+            return
+        end
+        local argsv12 = {
+            GameData.SelectedTubev12,
+            1,
+            "tubes"
+        }
+        GameData.Remotesv12.BuyItemv12:InvokeServer(unpack(argsv12))
+        VelarisUI:MakeNotify({
+            Title = "Purchase Successful",
+            Description = "Shop",
+            Content = "Purchased Tube: " .. tostring(GameData.SelectedTubev12),
+            Color = Color3.fromRGB(0, 255, 0),
+            Time = 0.5,
+            Delay = 3
+        })
     end
 })
