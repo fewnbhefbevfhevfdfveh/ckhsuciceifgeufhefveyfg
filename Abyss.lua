@@ -181,11 +181,28 @@ local GameData = {
 
     LocationOptionsv9 = {},
     SelectedLocationv9 = nil,
+
+	-- // Favorite Fish
+
+    ReplicatedStoragev10 = game:GetService("ReplicatedStorage"),
+    Knitv10 = nil,
+    FavoriteRFv10 = nil,
+    rarityMapv10 = {},
+    fishFolderv10 = nil,
+    mutationListv10 = {"None"},
+    mutationsFolderv10 = nil,
+    fishListv10 = {"None"},
+    fishAssetsFolderv10 = nil,
+    selectedRarityv10 = "None",
+    selectedMutationv10 = "None",
+    selectedFishv10 = "None",
+    autoFavRunningv10 = false,
+    autoUnfavRunningv10 = false,
 }
 
 
 local Window = Chloex:Window({
-    Title = "Nexa | v2.0.0 |",
+    Title = "Nexa | v3.0.0 |",
     Footer = "Beta",
     Content = "Abyss",
     Color = "Default",
@@ -228,11 +245,12 @@ Sec.Home1 = Tabs.Home:AddSection({
 Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
-[/] Fixed Equip Guns
-[+] Added WalkSpeed
-[+] Added Zoom Max
-[+] Added Equip Items Guns & Tubes
-[+] Added Telepeort Locations
+[+] Added Auto Favorite [Beta]
+ - Added Dropdown Fish 
+ - Added Dropdown Mutations
+ - Added Dropdown Rarity
+ - Added Auto Favorite
+ - Added Auto Unfavorite
 	]]
 })
 
@@ -1233,6 +1251,336 @@ Sec.Main3:AddButton({
     end
 })
 
+Sec.Main4 = Tabs.Main:AddSection({
+    Title = "Favorite [Beta]",
+    Open = true
+})
+
+GameData.Knitv10 = require(GameData.ReplicatedStoragev10.common.packages.Knit)
+GameData.FavoriteRFv10 = GameData.ReplicatedStoragev10:WaitForChild("common"):WaitForChild("packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("BackpackService"):WaitForChild("RF"):WaitForChild("Favorite")
+
+GameData.fishFolderv10 = GameData.ReplicatedStoragev10.common.presets.items.fish
+for _, folder in ipairs(GameData.fishFolderv10:GetChildren()) do
+    if folder:IsA("Folder") then
+        for _, module in ipairs(folder:GetChildren()) do
+            if module:IsA("ModuleScript") then
+                local success, data = pcall(require, module)
+                if success and type(data) == "table" then
+                    GameData.rarityMapv10[module.Name] = data.rarity or "Unknown"
+                end
+            end
+        end
+    end
+end
+
+GameData.mutationsFolderv10 = GameData.ReplicatedStoragev10.common.presets.fish.mutations
+for _, mutModule in ipairs(GameData.mutationsFolderv10:GetChildren()) do
+    table.insert(GameData.mutationListv10, mutModule.Name)
+end
+table.sort(GameData.mutationListv10)
+
+GameData.fishAssetsFolderv10 = GameData.ReplicatedStoragev10.common.assets.fish
+for _, fishModel in ipairs(GameData.fishAssetsFolderv10:GetChildren()) do
+    table.insert(GameData.fishListv10, fishModel.Name)
+end
+table.sort(GameData.fishListv10)
+
+Sec.Main4:AddDropdown({
+    Title = "Filter Rarity",
+    Content = "Cannot be combined with Fish filter",
+    Options = {"None", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythical"},
+    Multi = false,
+    Default = "None",
+    Callback = function(value)
+        if value ~= "None" and GameData.selectedFishv10 ~= "None" then
+            Chloex:MakeNotify({
+                Title = "Filter Warning",
+                Description = "Filter System",
+                Content = "Cannot combine Rarity + Fish filter! Resetting Fish to None.",
+                Color = Color3.fromRGB(255, 165, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+            GameData.selectedFishv10 = "None"
+        end
+        GameData.selectedRarityv10 = value
+        Chloex:MakeNotify({
+            Title = "Rarity Filter",
+            Description = "Filter System",
+            Content = "Rarity filter set to: " .. GameData.selectedRarityv10,
+            Color = Color3.fromRGB(0, 170, 255),
+            Time = 0.5,
+            Delay = 3
+        })
+    end
+})
+
+Sec.Main4:AddDropdown({
+    Title = "Filter Fish",
+    Content = "Cannot be combined with Rarity filter",
+    Options = GameData.fishListv10,
+    Multi = false,
+    Default = "None",
+    Callback = function(value)
+        if value ~= "None" and GameData.selectedRarityv10 ~= "None" then
+            Chloex:MakeNotify({
+                Title = "Filter Warning",
+                Description = "Filter System",
+                Content = "Cannot combine Fish + Rarity filter! Resetting Rarity to None.",
+                Color = Color3.fromRGB(255, 165, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+            GameData.selectedRarityv10 = "None"
+        end
+        GameData.selectedFishv10 = value
+        Chloex:MakeNotify({
+            Title = "Fish Filter",
+            Description = "Filter System",
+            Content = "Fish filter set to: " .. GameData.selectedFishv10,
+            Color = Color3.fromRGB(0, 170, 255),
+            Time = 0.5,
+            Delay = 3
+        })
+    end
+})
+
+Sec.Main4:AddDropdown({
+    Title = "Filter Mutation",
+    Content = "Can be combined with Rarity or Fish filter",
+    Options = GameData.mutationListv10,
+    Multi = false,
+    Default = "None",
+    Callback = function(value)
+        GameData.selectedMutationv10 = value
+        Chloex:MakeNotify({
+            Title = "Mutation Filter",
+            Description = "Filter System",
+            Content = "Mutation filter set to: " .. GameData.selectedMutationv10,
+            Color = Color3.fromRGB(0, 170, 255),
+            Time = 0.5,
+            Delay = 3
+        })
+    end
+})
+
+local function matchesFilter(item)
+    local fishName = item.name
+    if item.class == "fish_loot" then
+        fishName = string.split(item.name, "_")[1]
+    end
+
+    local rarity = GameData.rarityMapv10[fishName] or GameData.rarityMapv10[item.name] or "Unknown"
+    local mutations = item.mutations or {}
+
+    local hasMutation = false
+    if GameData.selectedMutationv10 ~= "None" then
+        for _, mut in ipairs(mutations) do
+            if mut == GameData.selectedMutationv10 then
+                hasMutation = true
+                break
+            end
+        end
+    end
+
+    if GameData.selectedFishv10 ~= "None" and GameData.selectedMutationv10 ~= "None" then
+        return fishName == GameData.selectedFishv10 and hasMutation
+    elseif GameData.selectedFishv10 ~= "None" then
+        return fishName == GameData.selectedFishv10
+    elseif GameData.selectedRarityv10 ~= "None" and GameData.selectedMutationv10 ~= "None" then
+        return rarity == GameData.selectedRarityv10 and hasMutation
+    elseif GameData.selectedRarityv10 ~= "None" then
+        return rarity == GameData.selectedRarityv10
+    elseif GameData.selectedMutationv10 ~= "None" then
+        return hasMutation
+    end
+
+    return false
+end
+
+Sec.Main4:AddToggle({
+    Title = "Auto Favorite",
+    Default = false,
+    Callback = function(value)
+        GameData.autoFavRunningv10 = value
+
+        if value then
+            if GameData.selectedRarityv10 == "None" and GameData.selectedMutationv10 == "None" and GameData.selectedFishv10 == "None" then
+                Chloex:MakeNotify({
+                    Title = "Auto Favorite",
+                    Description = "Filter System",
+                    Content = "Please select at least one filter first!",
+                    Color = Color3.fromRGB(255, 0, 0),
+                    Time = 0.5,
+                    Delay = 3
+                })
+                GameData.autoFavRunningv10 = false
+                return
+            end
+
+            Chloex:MakeNotify({
+                Title = "Auto Favorite",
+                Description = "Status",
+                Content = "Auto Favorite is now ON.",
+                Color = Color3.fromRGB(0, 255, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+
+            task.spawn(function()
+                while GameData.autoFavRunningv10 do
+                    local replica = GameData.Knitv10.GetController("DataController"):GetReplica()
+                    local inventory = replica.Data.inventory or {}
+
+                    for id, item in pairs(inventory) do
+                        if not GameData.autoFavRunningv10 then break end
+
+                        if (item.class == "fish" or item.class == "fish_loot") and not item.favorited then
+                            if matchesFilter(item) then
+                                local success, err = pcall(function()
+                                    GameData.FavoriteRFv10:InvokeServer(id)
+                                end)
+                                if success then
+                                    local mutations = item.mutations or {}
+                                    Chloex:MakeNotify({
+                                        Title = "Favorited",
+                                        Description = item.name,
+                                        Content = "Mutation: " .. (table.concat(mutations, ", ") ~= "" and table.concat(mutations, ", ") or "None"),
+                                        Color = Color3.fromRGB(0, 255, 0),
+                                        Time = 0.5,
+                                        Delay = 3
+                                    })
+                                else
+                                    Chloex:MakeNotify({
+                                        Title = "Auto Favorite",
+                                        Description = "Error",
+                                        Content = "Failed to favorite: " .. tostring(err),
+                                        Color = Color3.fromRGB(255, 0, 0),
+                                        Time = 0.5,
+                                        Delay = 3
+                                    })
+                                end
+                                task.wait(0.3)
+                            end
+                        end
+                    end
+
+                    task.wait(1)
+                end
+
+                Chloex:MakeNotify({
+                    Title = "Auto Favorite",
+                    Description = "Status",
+                    Content = "Auto Favorite has stopped.",
+                    Color = Color3.fromRGB(255, 0, 0),
+                    Time = 0.5,
+                    Delay = 3
+                })
+            end)
+        else
+            Chloex:MakeNotify({
+                Title = "Auto Favorite",
+                Description = "Status",
+                Content = "Auto Favorite is now OFF.",
+                Color = Color3.fromRGB(255, 0, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+        end
+    end
+})
+
+Sec.Main4:AddToggle({
+    Title = "Auto Unfavorite",
+    Default = false,
+    Callback = function(value)
+        GameData.autoUnfavRunningv10 = value
+
+        if value then
+            if GameData.selectedRarityv10 == "None" and GameData.selectedMutationv10 == "None" and GameData.selectedFishv10 == "None" then
+                Chloex:MakeNotify({
+                    Title = "Auto Unfavorite",
+                    Description = "Filter System",
+                    Content = "Please select at least one filter first!",
+                    Color = Color3.fromRGB(255, 0, 0),
+                    Time = 0.5,
+                    Delay = 3
+                })
+                GameData.autoUnfavRunningv10 = false
+                return
+            end
+
+            Chloex:MakeNotify({
+                Title = "Auto Unfavorite",
+                Description = "Status",
+                Content = "Auto Unfavorite is now ON.",
+                Color = Color3.fromRGB(0, 255, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+
+            task.spawn(function()
+                while GameData.autoUnfavRunningv10 do
+                    local replica = GameData.Knitv10.GetController("DataController"):GetReplica()
+                    local inventory = replica.Data.inventory or {}
+
+                    for id, item in pairs(inventory) do
+                        if not GameData.autoUnfavRunningv10 then break end
+
+                        if (item.class == "fish" or item.class == "fish_loot") and item.favorited then
+                            if matchesFilter(item) then
+                                local success, err = pcall(function()
+                                    GameData.FavoriteRFv10:InvokeServer(id) -- invoke again = unfavorite
+                                end)
+                                if success then
+                                    local mutations = item.mutations or {}
+                                    Chloex:MakeNotify({
+                                        Title = "Unfavorited",
+                                        Description = item.name,
+                                        Content = "Mutation: " .. (table.concat(mutations, ", ") ~= "" and table.concat(mutations, ", ") or "None"),
+                                        Color = Color3.fromRGB(255, 100, 0),
+                                        Time = 0.5,
+                                        Delay = 3
+                                    })
+                                else
+                                    Chloex:MakeNotify({
+                                        Title = "Auto Unfavorite",
+                                        Description = "Error",
+                                        Content = "Failed to unfavorite: " .. tostring(err),
+                                        Color = Color3.fromRGB(255, 0, 0),
+                                        Time = 0.5,
+                                        Delay = 3
+                                    })
+                                end
+                                task.wait(0.3)
+                            end
+                        end
+                    end
+
+                    task.wait(1)
+                end
+
+                Chloex:MakeNotify({
+                    Title = "Auto Unfavorite",
+                    Description = "Status",
+                    Content = "Auto Unfavorite has stopped.",
+                    Color = Color3.fromRGB(255, 0, 0),
+                    Time = 0.5,
+                    Delay = 3
+                })
+            end)
+        else
+            Chloex:MakeNotify({
+                Title = "Auto Unfavorite",
+                Description = "Status",
+                Content = "Auto Unfavorite is now OFF.",
+                Color = Color3.fromRGB(255, 0, 0),
+                Time = 0.5,
+                Delay = 3
+            })
+        end
+    end
+})
 
 Sec.Tp1 = Tabs.Tp:AddSection({
     Title = "Locations",
