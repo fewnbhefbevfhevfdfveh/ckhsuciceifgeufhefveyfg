@@ -1,4 +1,4 @@
-local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
+local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/main.lua"))()
 
 local GameData = {
 	-- // Auto Shoot Fish, Safe Oxygen, Sell Fish
@@ -107,7 +107,6 @@ local GameData = {
 
     Remotesv4 = {},
     AutoEquipv4 = false,
-    EquippedGunv4 = nil
 
 	-- // WalkSpeed
 
@@ -160,7 +159,31 @@ local GameData = {
     Remotesv8 = {
         EquipItemv8 = nil,
     },
+
+	-- // Teleport Locations
+
+    Servicesv9 = {
+        TweenServicev9 = game:GetService("TweenService"),
+        Playersv9 = game:GetService("Players"),
+    },
+
+    Playerv9 = nil,
+
+    Locationsv9 = {
+        ["Golem's Cave"] = CFrame.new(1705.53, 3956.89, -2650.63),
+        ["Angler Cave"] = CFrame.new(439.21, 4171.75, 155.40),
+        ["Angler Cave - Shop"] = CFrame.new(735.37, 4266.42, -159.23),
+        ["The Forgotten Demo"] = CFrame.new(-2.205, 4884.06, -1.224),
+		["Spirit Root Hollow"] = CFrame.new(1670.37, 4041.22, -1918.33),
+		["Morveth's Cave"] = CFrame.new(-230.59, 4307.52, -1281.05),
+		["King Cat Cave"] = CFrame.new(2172.57, 3825.56, -2929.93),
+    },
+
+    LocationOptionsv9 = {},
+    SelectedLocationv9 = nil,
 }
+
+
 local Window = Chloex:Window({
     Title = "Nexa | v1.0.0 |",
     Footer = "Beta",
@@ -214,7 +237,6 @@ Sec.Home1:AddParagraph({
     Title = "NexaHub Official Discord",
     Content = "Join the official NexaHub community to stay updated with the latest features, announcements, and exclusive news. Connect with other members and get direct support from our team!",
     Icon = "rbxassetid://94434236999817",
-    Color = Color3.fromRGB(0, 208, 255),
     ButtonText = "Copy Discord Link",
     ButtonCallback = function()
         setclipboard("discord.gg/ECxQFc97F5")
@@ -287,7 +309,6 @@ Sec.Main1:AddSlider({
 
 Sec.Main1:AddToggle({
     Title = "Enable WalkSpeed",
-	Badge = "New",
     Default = false,
     Callback = function(v)
         GameData.WalkEnabledv5 = v
@@ -307,7 +328,6 @@ GameData.Playerv6 = GameData.Servicesv6.Playersv6.LocalPlayer
 
 Sec.Main1:AddToggle({
     Title = "Zoom Max 1000",
-	Badge = "New",
     Default = false,
     Callback = function(v)
         GameData.ZoomEnabledv6 = v
@@ -1026,7 +1046,6 @@ GameData.Remotesv4.BackpackRFv4 = GameData.Servicesv4.ReplicatedStoragev4
     :WaitForChild("BackpackService")
     :WaitForChild("RF")
 
-
 function GameData:StartAutoEquipv4()
     task.spawn(function()
         while self.AutoEquipv4 do
@@ -1041,15 +1060,18 @@ function GameData:StartAutoEquipv4()
 
                 for _, gun in pairs(gunsFolder:GetChildren()) do
                     local gunName = gun.Name
+                    local gunExists = debris:FindFirstChild(gunName)
 
-                    if debris:FindFirstChild(gunName) 
-                    and self.EquippedGunv4 ~= gunName then
-
-                        self.EquippedGunv4 = gunName
-
+                    if not gunExists then
                         self.Remotesv4.BackpackRFv4
                             :WaitForChild("Equip")
                             :InvokeServer(gunName)
+
+                        task.wait(0.5) 
+
+                    else
+                        self.AutoEquipv4 = false
+                        break
                     end
                 end
             end
@@ -1059,19 +1081,9 @@ function GameData:StartAutoEquipv4()
     end)
 end
 
-
 function GameData:StopAutoEquipv4()
     self.AutoEquipv4 = false
-
-    if self.EquippedGunv4 then
-        self.Remotesv4.BackpackRFv4
-            :WaitForChild("Unequip")
-            :InvokeServer(self.EquippedGunv4)
-
-        self.EquippedGunv4 = nil
-    end
 end
-
 
 Sec.Main3:AddToggle({
     Title = "Auto Equip Gun",
@@ -1095,7 +1107,7 @@ Sec.Main3:AddToggle({
             Chloex:MakeNotify({
                 Title = "Auto Equip",
                 Description = "Disabled",
-                Content = "Gun di unequip!",
+                Content = "Auto equip dimatikan!",
                 Color = Color3.fromRGB(255,0,0),
                 Time = 0.5,
                 Delay = 3
@@ -1143,7 +1155,6 @@ Sec.Main3:AddDropdown({
 Sec.Main3:AddButton({
     Title = "Equip Items Gun",
     Version = "V2",
-	Badge = "New",
     Icon = "rbxassetid://79715859717613",
     Callback = function()
 
@@ -1200,7 +1211,6 @@ Sec.Main3:AddDropdown({
 Sec.Main3:AddButton({
     Title = "Equip Items Tubes",
     Version = "V2",
-	Badge = "New",
     Icon = "rbxassetid://79715859717613",
     Callback = function()
 
@@ -1217,5 +1227,69 @@ Sec.Main3:AddButton({
         GameData.Remotesv8.EquipItemv8:InvokeServer(unpack(args))
 
         print("Equipped:", GameData.SelectedTubev8)
+    end
+})
+
+
+Sec.Tp1 = Tabs.Tp:AddSection({
+    Title = "Locations",
+    Open = true
+})
+
+GameData.Playerv9 = GameData.Servicesv9.Playersv9.LocalPlayer
+
+for name,_ in pairs(GameData.Locationsv9) do
+    table.insert(GameData.LocationOptionsv9, name)
+end
+
+GameData.SelectedLocationv9 = GameData.LocationOptionsv9[1]
+
+Sec.Tp1:AddDropdown({
+    Title = "Select Locations",
+    Options = GameData.LocationOptionsv9,
+    Multi = false,
+    Default = {GameData.LocationOptionsv9[1]},
+    Callback = function(tbl)
+        GameData.SelectedLocationv9 = tbl[1]
+    end
+})
+
+Sec.Tp1:AddButton({
+    Title = "Tp To Locations",
+    Version = "V2",
+    Icon = "rbxassetid://79715859717613",
+    Callback = function()
+        if not GameData.SelectedLocationv9 then return end
+
+        local targetCFrame = GameData.Locationsv9[GameData.SelectedLocationv9]
+        if not targetCFrame then return end
+
+        local char = GameData.Playerv9.Character or GameData.Playerv9.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        local hum = char:WaitForChild("Humanoid")
+
+        local bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = Vector3.zero
+        bv.Parent = hrp
+
+        local distance = (hrp.Position - targetCFrame.Position).Magnitude
+        local speed = 250
+        local duration = distance / speed
+
+        hum.PlatformStand = true
+
+        local tween = GameData.Servicesv9.TweenServicev9:Create(
+            hrp,
+            TweenInfo.new(duration, Enum.EasingStyle.Linear),
+            {CFrame = targetCFrame}
+        )
+
+        tween:Play()
+
+        tween.Completed:Connect(function()
+            bv:Destroy()
+            hum.PlatformStand = false
+        end)
     end
 })
