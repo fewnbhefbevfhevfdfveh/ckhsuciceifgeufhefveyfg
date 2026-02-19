@@ -54,7 +54,7 @@ local GameData = {
 
     TweenSpeedToFishV1     = 20,
     TweenSpeedToSafeDistV1 = 20,
-    TweenSpeedToSafeZoneV1 = 16,
+    TweenSpeedToSafeZoneV1 = 10,
 
     MutationsFolderv1 = nil,
     MutationNamesv1   = {},
