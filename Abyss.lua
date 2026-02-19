@@ -101,12 +101,15 @@ local GameData = {
 	-- // Auto Equip Guns
 
     Servicesv4 = {
+        Players = game:GetService("Players"),
         ReplicatedStoragev4 = game:GetService("ReplicatedStorage"),
         Workspacev4 = workspace
     },
 
+    LocalPlayerv4 = game:GetService("Players").LocalPlayer,
     Remotesv4 = {},
     AutoEquipv4 = false,
+    Connectionsv4 = {},
 
 	-- // WalkSpeed
 
@@ -1067,34 +1070,20 @@ GameData.Remotesv4.BackpackRFv4 = GameData.Servicesv4.ReplicatedStoragev4
     :WaitForChild("BackpackService")
     :WaitForChild("RF")
 
+-- Fungsi untuk mulai auto equip
 function GameData:StartAutoEquipv4()
     task.spawn(function()
         while self.AutoEquipv4 do
-
             local debris = self.Servicesv4.Workspacev4:FindFirstChild("debris")
+            local playerFolder = debris and debris:FindFirstChild(self.LocalPlayerv4.Name)
+            local tool = playerFolder and playerFolder:FindFirstChild("Tool")
 
-            if debris then
-                local gunsFolder = self.Servicesv4.ReplicatedStoragev4
-                    :WaitForChild("common")
-                    :WaitForChild("assets")
-                    :WaitForChild("guns")
-
-                for _, gun in pairs(gunsFolder:GetChildren()) do
-                    local gunName = gun.Name
-                    local gunExists = debris:FindFirstChild(gunName)
-
-                    if not gunExists then
-                        self.Remotesv4.BackpackRFv4
-                            :WaitForChild("Equip")
-                            :InvokeServer(gunName)
-
-                        task.wait(0.5) 
-
-                    else
-                        self.AutoEquipv4 = false
-                        break
-                    end
-                end
+            -- Kalau Tool gak ada, baru equip
+            if not (tool and tool:IsA("Tool")) then
+                local args = {"1"}
+                self.Remotesv4.BackpackRFv4
+                    :WaitForChild("Equip")
+                    :InvokeServer(unpack(args))
             end
 
             task.wait(1)
@@ -1102,12 +1091,19 @@ function GameData:StartAutoEquipv4()
     end)
 end
 
+-- Fungsi untuk stop auto equip
 function GameData:StopAutoEquipv4()
     self.AutoEquipv4 = false
+    local args = {"1"}
+    self.Remotesv4.BackpackRFv4
+        :WaitForChild("Unequip")
+        :InvokeServer(unpack(args))
 end
 
+-- Toggle di GUI
 Sec.Main3:AddToggle({
     Title = "Auto Equip Gun",
+	Badge = "Fixed",
     Default = false,
     Callback = function(value)
         GameData.AutoEquipv4 = value
@@ -1116,7 +1112,7 @@ Sec.Main3:AddToggle({
             Chloex:MakeNotify({
                 Title = "Auto Equip",
                 Description = "Enabled",
-                Content = "Auto equip aktif!",
+                Content = "Gun has been equip!",
                 Color = Color3.fromRGB(0,255,0),
                 Time = 0.5,
                 Delay = 3
@@ -1128,7 +1124,7 @@ Sec.Main3:AddToggle({
             Chloex:MakeNotify({
                 Title = "Auto Equip",
                 Description = "Disabled",
-                Content = "Auto equip dimatikan!",
+                Content = "Gun has been unequipped!",
                 Color = Color3.fromRGB(255,0,0),
                 Time = 0.5,
                 Delay = 3
