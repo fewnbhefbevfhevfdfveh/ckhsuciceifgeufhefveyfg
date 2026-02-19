@@ -227,7 +227,6 @@ local GameData = {
     },
 }
 
-
 local Window = Chloex:Window({
     Title = "Nexa | v0.0.4 |",
     Footer = "Beta",
@@ -239,6 +238,7 @@ local Window = Chloex:Window({
     Configname = "Nexa",
     Uitransparent = 0.20,
     ShowUser = true,
+	Search = true,  
     Config = {
         AutoSave = true,
         AutoLoad = true, 
