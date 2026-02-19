@@ -1241,7 +1241,7 @@ Sec.Tp1 = Tabs.Tp:AddSection({
 
 GameData.Playerv9 = GameData.Servicesv9.Playersv9.LocalPlayer
 
-for name,_ in pairs(GameData.Locationsv9) do
+for name, _ in pairs(GameData.Locationsv9) do
     table.insert(GameData.LocationOptionsv9, name)
 end
 
@@ -1253,7 +1253,11 @@ Sec.Tp1:AddDropdown({
     Multi = false,
     Default = {GameData.LocationOptionsv9[1]},
     Callback = function(tbl)
-        GameData.SelectedLocationv9 = tbl[1]
+        if type(tbl) == "table" then
+            GameData.SelectedLocationv9 = tbl[1]
+        else
+            GameData.SelectedLocationv9 = tbl
+        end
     end
 })
 
@@ -1271,16 +1275,20 @@ Sec.Tp1:AddButton({
         local hrp = char:WaitForChild("HumanoidRootPart")
         local hum = char:WaitForChild("Humanoid")
 
-        local bv = Instance.new("BodyVelocity")
-        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        bv.Velocity = Vector3.zero
-        bv.Parent = hrp
+        hum.PlatformStand = true
+
+        local attachment = Instance.new("Attachment")
+        attachment.Parent = hrp
+
+        local lv = Instance.new("LinearVelocity")
+        lv.Attachment0 = attachment
+        lv.MaxForce = math.huge
+        lv.VectorVelocity = Vector3.zero
+        lv.Parent = hrp
 
         local distance = (hrp.Position - targetCFrame.Position).Magnitude
         local speed = 250
-        local duration = distance / speed
-
-        hum.PlatformStand = true
+        local duration = math.clamp(distance / speed, 0.1, 30)
 
         local tween = GameData.Servicesv9.TweenServicev9:Create(
             hrp,
@@ -1291,8 +1299,17 @@ Sec.Tp1:AddButton({
         tween:Play()
 
         tween.Completed:Connect(function()
-            bv:Destroy()
+            lv:Destroy()
+            attachment:Destroy()
             hum.PlatformStand = false
+            VelarisUI:MakeNotify({
+                Title = "Teleport",
+                Description = "Success",
+                Content = "Arrived at " .. GameData.SelectedLocationv9,
+                Color = Color3.fromRGB(0, 255, 0),
+                Time = 0.5,
+                Delay = 3
+            })
         end)
     end
 })
