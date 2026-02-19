@@ -52,9 +52,9 @@ local GameData = {
         ["The Forgotten Dome"] = true,
     },
 
-    TweenSpeedToFishV1     = 0.4,
-    TweenSpeedToSafeDistV1 = 0.4,
-    TweenSpeedToSafeZoneV1 = 2.0,
+    TweenSpeedToFishV1     = 20,
+    TweenSpeedToSafeDistV1 = 20,
+    TweenSpeedToSafeZoneV1 = 20,
 
     MutationsFolderv1 = nil,
     MutationNamesv1   = {},
@@ -107,10 +107,85 @@ local GameData = {
 
     Remotesv4 = {},
     AutoEquipv4 = false,
-    Connectionsv4 = {}
+
+	-- // WalkSpeed
+
+    Servicesv5 = {
+        Playersv5 = game:GetService("Players"),
+    },
+    Playerv5 = nil,
+    WalkEnabledv5 = false,
+    CustomSpeedv5 = 16,
+    DefaultSpeedv5 = 16,
+
+	-- // Zoom 1000
+
+    Servicesv6 = {
+        Playersv6 = game:GetService("Players"),
+    },
+
+    Playerv6 = nil,
+
+    ZoomEnabledv6 = false,
+
+    ZoomMaxv6 = 1000,
+    DefaultMaxv6 = 128,
+    MinZoomv6 = 0.5,
+
+	-- // Equip Items Guns
+
+    Servicesv7 = {
+        ReplicatedStoragev7 = game:GetService("ReplicatedStorage"),
+    },
+
+    GunsFolderv7 = nil,
+    GunOptionsv7 = {},
+    SelectedGunv7 = nil,
+
+    Remotesv7 = {
+        EquipItemv7 = nil,
+    },
+
+	-- // Equip Items Tubes
+
+    Servicesv8 = {
+        ReplicatedStoragev8 = game:GetService("ReplicatedStorage"),
+    },
+
+    TubesFolderv8 = nil,
+    TubeOptionsv8 = {},
+    SelectedTubev8 = nil,
+
+    Remotesv8 = {
+        EquipItemv8 = nil,
+    },
+
+	-- // Teleport Locations
+
+    Servicesv9 = {
+        TweenServicev9 = game:GetService("TweenService"),
+        Playersv9 = game:GetService("Players"),
+    },
+
+    Playerv9 = nil,
+
+    Locationsv9 = {
+        ["Golem's Cave"] = CFrame.new(1705.53, 3956.89, -2650.63),
+        ["Angler Cave"] = CFrame.new(439.21, 4171.75, 155.40),
+        ["Angler Cave - Shop"] = CFrame.new(735.37, 4266.42, -159.23),
+        ["The Forgotten Demo"] = CFrame.new(-2.205, 4884.06, -1.224),
+        ["Spirit Root Hollow"] = CFrame.new(1670.37, 4041.22, -1918.33),
+        ["Morveth's Cave"] = CFrame.new(-230.59, 4307.52, -1281.05),
+        ["King Cat Cave"] = CFrame.new(2172.57, 3825.56, -2929.93),
+    },
+
+    LocationOptionsv9 = {},
+    SelectedLocationv9 = nil,
 }
+
+
 local Window = Chloex:Window({
-    Title = "Nexa | v1.0.0 |",
+    Title = "Nexa | v2.0.0 |",
     Footer = "Beta",
     Content = "Abyss",
     Color = "Default",
@@ -136,6 +211,11 @@ local Tabs = {
         Name = "Main",
         Icon = "lucide:swords",
     }),
+
+    Tp = Window:AddTab({
+        Name = "Teleport",
+        Icon = "lucide:map",
+    }),
 }
 
 local Sec = {}
@@ -149,7 +229,21 @@ Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
 [/] Fixed Equip Guns
+[+] Added WalkSpeed
+[+] Added Zoom Max
+[+] Added Equip Items Guns & Tubes
+[+] Added Telepeort Locations
 	]]
+})
+
+Sec.Home1:AddParagraph({
+    Title = "NexaHub Official Discord",
+    Content = "Join the official NexaHub community to stay updated with the latest features, announcements, and exclusive news. Connect with other members and get direct support from our team!",
+    Icon = "rbxassetid://94434236999817",
+    ButtonText = "Copy Discord Link",
+    ButtonCallback = function()
+        setclipboard("discord.gg/ECxQFc97F5")
+    end,
 })
 
 Sec.Main1 = Tabs.Main:AddSection({
@@ -178,6 +272,82 @@ task.spawn(function()
         task.wait(1)
     end
 end)
+
+-- // WalkSpeed
+
+GameData.Playerv5 = GameData.Servicesv5.Playersv5.LocalPlayer
+
+function GameData:ApplySpeedv5()
+    if self.Playerv5.Character and self.Playerv5.Character:FindFirstChild("Humanoid") then
+        local humanoid = self.Playerv5.Character:FindFirstChild("Humanoid")
+
+        if self.WalkEnabledv5 then
+            humanoid.WalkSpeed = self.CustomSpeedv5
+        else
+            humanoid.WalkSpeed = self.DefaultSpeedv5
+        end
+    end
+end
+
+GameData.Playerv5.CharacterAdded:Connect(function()
+    task.wait(0.5)
+    GameData:ApplySpeedv5()
+end)
+
+Sec.Main1:AddSlider({
+    Title = "WalkSpeed",
+    Content = "Set your custom WalkSpeed",
+    Min = 0,
+    Max = 200,
+    Default = 16,
+    Increment = 1,
+    Callback = function(value)
+        GameData.CustomSpeedv5 = value
+
+        if GameData.WalkEnabledv5 then
+            GameData:ApplySpeedv5()
+        end
+    end
+})
+
+Sec.Main1:AddToggle({
+    Title = "Enable WalkSpeed",
+    Default = false,
+    Callback = function(v)
+        GameData.WalkEnabledv5 = v
+        GameData:ApplySpeedv5()
+
+        if v then
+            Notify("WalkSpeed Enabled!", 2)
+        else
+            Notify("WalkSpeed Disabled!", 2)
+        end
+    end
+})
+
+-- // Zoom 1000
+
+GameData.Playerv6 = GameData.Servicesv6.Playersv6.LocalPlayer
+
+Sec.Main1:AddToggle({
+    Title = "Zoom Max 1000",
+    Default = false,
+    Callback = function(v)
+        GameData.ZoomEnabledv6 = v
+
+        if v then
+            GameData.Playerv6.CameraMaxZoomDistance = GameData.ZoomMaxv6
+            GameData.Playerv6.CameraMinZoomDistance = GameData.MinZoomv6
+
+            Notify("Zoom 1000 Enabled!", 2)
+        else
+            GameData.Playerv6.CameraMaxZoomDistance = GameData.DefaultMaxv6
+            GameData.Playerv6.CameraMinZoomDistance = GameData.MinZoomv6
+
+            Notify("Zoom 1000 Disabled!", 2)
+        end
+    end
+})
 
 Sec.Main2 = Tabs.Main:AddSection({
     Title = "Fish Farm",
@@ -430,7 +600,7 @@ function GameData:TweenToPositionv1(position)
 
     self.TweenServicev1:Create(
         hrp,
-        TweenInfo.new(self.TweenSpeedToFishV1, Enum.EasingStyle.Linear),
+        TweenInfo.new((20 * 0.4) / self.TweenSpeedToFishV1, Enum.EasingStyle.Linear),
         {CFrame = CFrame.new(position)}
     ):Play()
 end
@@ -447,7 +617,7 @@ function GameData:TweenToSafeDistancev1(model)
 
     self.TweenServicev1:Create(
         hrp,
-        TweenInfo.new(self.TweenSpeedToSafeDistV1, Enum.EasingStyle.Linear),
+        TweenInfo.new((20 * 0.4) / self.TweenSpeedToSafeDistV1, Enum.EasingStyle.Linear),
         {CFrame = CFrame.new(safePosition, torso.Position)}
     ):Play()
 end
@@ -495,7 +665,7 @@ function GameData:TweenToSafeZoneAndWaitV1()
 
     local tween = self.TweenServicev1:Create(
         hrp,
-        TweenInfo.new(self.TweenSpeedToSafeZoneV1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+        TweenInfo.new((20 * 2.0) / self.TweenSpeedToSafeZoneV1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
         {CFrame = CFrame.new(targetPosition)}
     )
 
@@ -614,7 +784,7 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-    while task.wait(0.05) do
+    while task.wait(0.01) do
 
         if GameData.isTweeningOxygenV1 or GameData.isSellingSellV1 then continue end
 
@@ -656,7 +826,7 @@ task.spawn(function()
                     GameData.CollectEventv1:InvokeServer(GameData.CurrentTargetModelv1.Name)
                 end)
                 GameData.CurrentTargetModelv1 = nil
-                task.wait(0.2)
+                task.wait(0.01)
             end
         else
             GameData:TweenToSafeDistancev1(GameData.CurrentTargetModelv1)
@@ -685,12 +855,13 @@ Sec.Main2:AddSubSection("SHOOT FISH")
 
 Sec.Main2:AddInput({
     Title = "Tween Speed",
-    Content = "Set Tween Speed",
+    Content = "Set Tween Speed (20 = Normal, 50 = Fast, 100 = Very Fast)",
     Default = tostring(GameData.TweenSpeedToFishV1),
     Callback = function(value)
         local num = tonumber(value)
         if num and num > 0 then
             GameData.TweenSpeedToFishV1 = num
+            GameData.TweenSpeedToSafeDistV1 = num
         end
     end
 })
@@ -733,80 +904,6 @@ Sec.Main2:AddToggle({
     Default = false,
     Callback = function(value)
         GameData.AutoShootv1 = value
-    end
-})
-
--- // Equip Guns
-
-GameData.Remotesv4.BackpackRFv4 = GameData.Servicesv4.ReplicatedStoragev4
-    :WaitForChild("common")
-    :WaitForChild("packages")
-    :WaitForChild("Knit")
-    :WaitForChild("Services")
-    :WaitForChild("BackpackService")
-    :WaitForChild("RF")
-
-function GameData:StartAutoEquipv4()
-    task.spawn(function()
-        while self.AutoEquipv4 do
-
-            local debris = self.Servicesv4.Workspacev4:FindFirstChild("debris")
-            local advanced = debris and debris:FindFirstChild("Advanced")
-
-            if not (advanced and advanced:IsA("Model")) then
-                local args = {"1"}
-
-                self.Remotesv4.BackpackRFv4
-                    :WaitForChild("Equip")
-                    :InvokeServer(unpack(args))
-            end
-
-            task.wait(1)
-        end
-    end)
-end
-
-function GameData:StopAutoEquipv4()
-    self.AutoEquipv4 = false
-
-    local args = {"1"}
-
-    self.Remotesv4.BackpackRFv4
-        :WaitForChild("Unequip")
-        :InvokeServer(unpack(args))
-end
-
-
-Sec.Main2:AddToggle({
-    Title = "Auto Equip Gun",
-    Default = false,
-    Callback = function(value)
-        GameData.AutoEquipv4 = value
-
-        if value then
-            Chloex:MakeNotify({
-                Title = "Auto Equip",
-                Description = "Enabled",
-                Content = "Gun has been equip!",
-                Color = Color3.fromRGB(0,255,0),
-                Time = 0.5,
-                Delay = 3
-            })
-
-            GameData:StartAutoEquipv4()
-
-        else
-            Chloex:MakeNotify({
-                Title = "Auto Equip",
-                Description = "Disabled",
-                Content = "Gun has been unequipped!",
-                Color = Color3.fromRGB(255,0,0),
-                Time = 0.5,
-                Delay = 3
-            })
-
-            GameData:StopAutoEquipv4()
-        end
     end
 })
 
@@ -874,7 +971,6 @@ Sec.Main2:AddToggle({
     end
 })
 
-
 Sec.Main2:AddSubSection("CAST MODE SETTINGS")
 
 -- // Cast Mode
@@ -895,6 +991,17 @@ GameData.Remotesv2.CancelMinigamev2 = GameData.Servicesv2.ReplicatedStoragev2
     :WaitForChild("MinigameService")
     :WaitForChild("RF")
     :WaitForChild("CancelMinigame")
+
+Sec.Main2:AddDropdown({
+    Title = "Select Cast Mode",
+    Content = "Choose fishing cast behavior",
+    Options = {"Normal", "Blatant"},
+    Multi = false,
+    Default = "Normal",
+    Callback = function(value)
+        GameData.CastModev2 = value
+    end
+})
 
 Sec.Main2:AddToggle({
     Title = "Auto Cast",
@@ -927,13 +1034,265 @@ Sec.Main2:AddToggle({
     end
 })
 
-Sec.Main2:AddDropdown({
-    Title = "Select Cast Mode",
-    Content = "Choose fishing cast behavior",
-    Options = {"Normal", "Blatant"},
-    Multi = false,
-    Default = "Normal",
+Sec.Main3 = Tabs.Main:AddSection({
+    Title = "Support Fiture",
+    Open = true
+})
+
+-- // Equip Guns
+
+GameData.Remotesv4.BackpackRFv4 = GameData.Servicesv4.ReplicatedStoragev4
+    :WaitForChild("common")
+    :WaitForChild("packages")
+    :WaitForChild("Knit")
+    :WaitForChild("Services")
+    :WaitForChild("BackpackService")
+    :WaitForChild("RF")
+
+function GameData:StartAutoEquipv4()
+    task.spawn(function()
+        while self.AutoEquipv4 do
+
+            local debris = self.Servicesv4.Workspacev4:FindFirstChild("debris")
+
+            if debris then
+                local gunsFolder = self.Servicesv4.ReplicatedStoragev4
+                    :WaitForChild("common")
+                    :WaitForChild("assets")
+                    :WaitForChild("guns")
+
+                for _, gun in pairs(gunsFolder:GetChildren()) do
+                    local gunName = gun.Name
+                    local gunExists = debris:FindFirstChild(gunName)
+
+                    if not gunExists then
+                        self.Remotesv4.BackpackRFv4
+                            :WaitForChild("Equip")
+                            :InvokeServer(gunName)
+
+                        task.wait(0.5) 
+
+                    else
+                        self.AutoEquipv4 = false
+                        break
+                    end
+                end
+            end
+
+            task.wait(1)
+        end
+    end)
+end
+
+function GameData:StopAutoEquipv4()
+    self.AutoEquipv4 = false
+end
+
+Sec.Main3:AddToggle({
+    Title = "Auto Equip Gun",
+    Default = false,
     Callback = function(value)
-        GameData.CastModev2 = value
+        GameData.AutoEquipv4 = value
+
+        if value then
+            Chloex:MakeNotify({
+                Title = "Auto Equip",
+                Description = "Enabled",
+                Content = "Auto equip aktif!",
+                Color = Color3.fromRGB(0,255,0),
+                Time = 0.5,
+                Delay = 3
+            })
+
+            GameData:StartAutoEquipv4()
+
+        else
+            Chloex:MakeNotify({
+                Title = "Auto Equip",
+                Description = "Disabled",
+                Content = "Auto equip dimatikan!",
+                Color = Color3.fromRGB(255,0,0),
+                Time = 0.5,
+                Delay = 3
+            })
+
+            GameData:StopAutoEquipv4()
+        end
+    end
+})
+
+-- // Equip Items Guns
+
+GameData.GunsFolderv7 = GameData.Servicesv7.ReplicatedStoragev7
+    :WaitForChild("common")
+    :WaitForChild("assets")
+    :WaitForChild("guns")
+
+for _, gun in pairs(GameData.GunsFolderv7:GetChildren()) do
+    table.insert(GameData.GunOptionsv7, gun.Name)
+end
+
+GameData.SelectedGunv7 = GameData.GunOptionsv7[1]
+
+GameData.Remotesv7.EquipItemv7 = GameData.Servicesv7.ReplicatedStoragev7
+    :WaitForChild("common")
+    :WaitForChild("packages")
+    :WaitForChild("Knit")
+    :WaitForChild("Services")
+    :WaitForChild("InventoryService")
+    :WaitForChild("RF")
+    :WaitForChild("EquipItem")
+
+Sec.Main3:AddDropdown({
+    Title = "Select Guns",
+    Content = "Choose your gun",
+    Options = GameData.GunOptionsv7,
+    Multi = false,
+    Default = GameData.GunOptionsv7[1],
+    Callback = function(value)
+        GameData.SelectedGunv7 = value
+        print("Selected Gun:", value)
+    end
+})
+
+Sec.Main3:AddButton({
+    Title = "Equip Items Gun",
+    Version = "V2",
+    Icon = "rbxassetid://79715859717613",
+    Callback = function()
+
+        if not GameData.SelectedGunv7 then
+            warn("No gun selected!")
+            return
+        end
+
+        local args = {
+            "guns",
+            GameData.SelectedGunv7
+        }
+
+        GameData.Remotesv7.EquipItemv7:InvokeServer(unpack(args))
+
+        print("Equipped Gun:", GameData.SelectedGunv7)
+    end
+})
+
+-- // Equip Items Tubes
+
+GameData.TubesFolderv8 = GameData.Servicesv8.ReplicatedStoragev8
+    :WaitForChild("common")
+    :WaitForChild("assets")
+    :WaitForChild("tubes")
+
+for _, tube in pairs(GameData.TubesFolderv8:GetChildren()) do
+    table.insert(GameData.TubeOptionsv8, tube.Name)
+end
+
+GameData.SelectedTubev8 = GameData.TubeOptionsv8[1]
+
+GameData.Remotesv8.EquipItemv8 = GameData.Servicesv8.ReplicatedStoragev8
+    :WaitForChild("common")
+    :WaitForChild("packages")
+    :WaitForChild("Knit")
+    :WaitForChild("Services")
+    :WaitForChild("InventoryService")
+    :WaitForChild("RF")
+    :WaitForChild("EquipItem")
+
+Sec.Main3:AddDropdown({
+    Title = "Select Tubes",
+    Content = "Choose your tube",
+    Options = GameData.TubeOptionsv8,
+    Multi = false,
+    Default = GameData.TubeOptionsv8[1],
+    Callback = function(v)
+        GameData.SelectedTubev8 = v
+        print("Selected Tube:", v)
+    end
+})
+
+Sec.Main3:AddButton({
+    Title = "Equip Items Tubes",
+    Version = "V2",
+    Icon = "rbxassetid://79715859717613",
+    Callback = function()
+
+        if not GameData.SelectedTubev8 then
+            warn("No tube selected!")
+            return
+        end
+
+        local args = {
+            "tubes",
+            GameData.SelectedTubev8
+        }
+
+        GameData.Remotesv8.EquipItemv8:InvokeServer(unpack(args))
+
+        print("Equipped:", GameData.SelectedTubev8)
+    end
+})
+
+
+Sec.Tp1 = Tabs.Tp:AddSection({
+    Title = "Locations",
+    Open = true
+})
+
+GameData.Playerv9 = GameData.Servicesv9.Playersv9.LocalPlayer
+
+for name,_ in pairs(GameData.Locationsv9) do
+    table.insert(GameData.LocationOptionsv9, name)
+end
+
+GameData.SelectedLocationv9 = GameData.LocationOptionsv9[1]
+
+Sec.Tp1:AddDropdown({
+    Title = "Select Locations",
+    Options = GameData.LocationOptionsv9,
+    Multi = false,
+    Default = {GameData.LocationOptionsv9[1]},
+    Callback = function(tbl)
+        GameData.SelectedLocationv9 = tbl[1]
+    end
+})
+
+Sec.Tp1:AddButton({
+    Title = "Tween To Locations",
+    Version = "V2",
+    Icon = "rbxassetid://79715859717613",
+    Callback = function()
+        if not GameData.SelectedLocationv9 then return end
+
+        local targetCFrame = GameData.Locationsv9[GameData.SelectedLocationv9]
+        if not targetCFrame then return end
+
+        local char = GameData.Playerv9.Character or GameData.Playerv9.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        local hum = char:WaitForChild("Humanoid")
+
+        local bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = Vector3.zero
+        bv.Parent = hrp
+
+        local distance = (hrp.Position - targetCFrame.Position).Magnitude
+        local speed = 250
+        local duration = distance / speed
+
+        hum.PlatformStand = true
+
+        local tween = GameData.Servicesv9.TweenServicev9:Create(
+            hrp,
+            TweenInfo.new(duration, Enum.EasingStyle.Linear),
+            {CFrame = targetCFrame}
+        )
+
+        tween:Play()
+
+        tween.Completed:Connect(function()
+            bv:Destroy()
+            hum.PlatformStand = false
+        end)
     end
 })
