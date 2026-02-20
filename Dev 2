@@ -54,7 +54,7 @@ local GameData = {
 
     TweenSpeedToFishV1     = 20,
     TweenSpeedToSafeDistV1 = 20,
-    TweenSpeedToSafeZoneV1 = 20,
+    TweenSpeedToSafeZoneV1 = 10,
 
     MutationsFolderv1 = nil,
     MutationNamesv1   = {},
@@ -225,11 +225,49 @@ local GameData = {
     Remotesv12 = {
         BuyItemv12 = nil,
     },
+
+	-- // Auto Claim Bestiary
+
+    Servicesv13 = {
+        ReplicatedStoragev13 = game:GetService("ReplicatedStorage"),
+    },
+
+    FishFolderv13 = nil,
+
+    Remotesv13 = {
+        ClaimRewardv13 = nil,
+    },
+
+    AutoClaimBestiaryv13 = false,
+
+	-- // Auto Treasure Hunt
+
+    Servicesv14 = {
+        TweenServicev14 = game:GetService("TweenService"),
+        ReplicatedStoragev14 = game:GetService("ReplicatedStorage"),
+        Playersv14 = game:GetService("Players"),
+        Workspacev14 = workspace,
+    },
+
+    Playerv14 = nil,
+    Characterv14 = nil,
+    HumanoidRootPartv14 = nil,
+
+    ChestsFolderv14 = nil,
+    TierOptionsv14 = {},
+    SelectedTiersv14 = {},
+
+    AutoTreasurev14 = false,
+
+    TweenInfov14 = TweenInfo.new(25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+
+    Remotesv14 = {
+        UnlockChestv14 = nil,
+    },
 }
 
-
 local Window = Chloex:Window({
-    Title = "Nexa | v0.0.4 |",
+    Title = "Nexa | v0.0.5 |",
     Footer = "Beta",
     Content = "Abyss",
     Color = "Default",
@@ -239,6 +277,7 @@ local Window = Chloex:Window({
     Configname = "Nexa",
     Uitransparent = 0.20,
     ShowUser = true,
+	Search = true,  
     Config = {
         AutoSave = true,
         AutoLoad = true, 
@@ -254,6 +293,11 @@ local Tabs = {
     Main = Window:AddTab({
         Name = "Main",
         Icon = "lucide:swords",
+    }),
+
+    Backpack = Window:AddTab({
+        Name = "Backpack",
+        Icon = "lucide:backpack",
     }),
 
     Tp = Window:AddTab({
@@ -278,11 +322,8 @@ Sec.Home1 = Tabs.Home:AddSection({
 Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
-[+] Added Shop
- - Added Dropdown Guns 
- - Added Button Buy Guns
- - Added Dropdown Tubes
- - Added Button Buy Tubes
+[+] Added Auto Treasure Hunt
+[+] Added Auto Claim Bestiary 
 	]]
 })
 
@@ -995,45 +1036,6 @@ Sec.Main2:AddToggle({
     end
 })
 
-Sec.Main2:AddSubSection("SELL MODE SETTINGS")
-
-Sec.Main2:AddDropdown({
-    Title = "Select Mode Sell",
-    Content = "Select Sell Trigger Mode",
-    Options = {
-        "Sell Delay",
-        "Backpack Full",
-    },
-    Multi = false,
-    Default = "Sell Delay",
-    Callback = function(value)
-        GameData.SellModev1 = value
-    end
-})
-
-Sec.Main2:AddInput({
-    Title = "Sell Delay (detik)",
-    Content = "Automatic sell interval (only for Sell Delay mode)",
-    Default = tostring(GameData.SellDelayv1),
-    Callback = function(value)
-        local num = tonumber(value)
-        if num and num > 0 then
-            GameData.SellDelayv1 = num
-        end
-    end
-})
-
-Sec.Main2:AddToggle({
-    Title = "Auto Sell Fish",
-    Default = false,
-    Callback = function(value)
-        GameData.AutoSellv1 = value
-        if not value then
-            GameData:CancelSafeZoneTweenV1()
-        end
-    end
-})
-
 Sec.Main2:AddSubSection("CAST MODE SETTINGS")
 
 -- // Cast Mode
@@ -1097,9 +1099,51 @@ Sec.Main2:AddToggle({
     end
 })
 
-Sec.Main3 = Tabs.Main:AddSection({
+Sec.Main4 = Tabs.Main:AddSection({
+    Title = "Sell Fiture",
+    Open = false
+})
+
+Sec.Main3:AddDropdown({
+    Title = "Select Mode Sell",
+    Content = "Select Sell Trigger Mode",
+    Options = {
+        "Sell Delay",
+        "Backpack Full",
+    },
+    Multi = false,
+    Default = "Sell Delay",
+    Callback = function(value)
+        GameData.SellModev1 = value
+    end
+})
+
+Sec.Main3:AddInput({
+    Title = "Sell Delay (detik)",
+    Content = "Automatic sell interval (only for Sell Delay mode)",
+    Default = tostring(GameData.SellDelayv1),
+    Callback = function(value)
+        local num = tonumber(value)
+        if num and num > 0 then
+            GameData.SellDelayv1 = num
+        end
+    end
+})
+
+Sec.Main3:AddToggle({
+    Title = "Auto Sell Fish",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoSellv1 = value
+        if not value then
+            GameData:CancelSafeZoneTweenV1()
+        end
+    end
+})
+
+Sec.Main4 = Tabs.Main:AddSection({
     Title = "Support Fiture",
-    Open = true
+    Open = false
 })
 
 -- // Equip Guns
@@ -1143,7 +1187,7 @@ function GameData:StopAutoEquipv4()
 end
 
 -- Toggle di GUI
-Sec.Main3:AddToggle({
+Sec.Main4:AddToggle({
     Title = "Auto Equip Gun",
 	Badge = "Fixed",
     Default = false,
@@ -1199,7 +1243,7 @@ GameData.Remotesv7.EquipItemv7 = GameData.Servicesv7.ReplicatedStoragev7
     :WaitForChild("RF")
     :WaitForChild("EquipItem")
 
-Sec.Main3:AddDropdown({
+Sec.Main4:AddDropdown({
     Title = "Select Guns",
     Content = "Choose your gun",
     Options = GameData.GunOptionsv7,
@@ -1211,7 +1255,7 @@ Sec.Main3:AddDropdown({
     end
 })
 
-Sec.Main3:AddButton({
+Sec.Main4:AddButton({
     Title = "Equip Items Gun",
     Version = "V2",
     Icon = "rbxassetid://79715859717613",
@@ -1255,7 +1299,7 @@ GameData.Remotesv8.EquipItemv8 = GameData.Servicesv8.ReplicatedStoragev8
     :WaitForChild("RF")
     :WaitForChild("EquipItem")
 
-Sec.Main3:AddDropdown({
+Sec.Main4:AddDropdown({
     Title = "Select Tubes",
     Content = "Choose your tube",
     Options = GameData.TubeOptionsv8,
@@ -1267,7 +1311,7 @@ Sec.Main3:AddDropdown({
     end
 })
 
-Sec.Main3:AddButton({
+Sec.Main4:AddButton({
     Title = "Equip Items Tubes",
     Version = "V2",
     Icon = "rbxassetid://79715859717613",
@@ -1289,7 +1333,171 @@ Sec.Main3:AddButton({
     end
 })
 
-Sec.Main4 = Tabs.Main:AddSection({
+Sec.Main5 = Tabs.Main:AddSection({
+    Title = "Treasure",
+    Open = false
+})
+
+GameData.Playerv14 = GameData.Servicesv14.Playersv14.LocalPlayer
+GameData.Characterv14 = GameData.Playerv14.Character or GameData.Playerv14.CharacterAdded:Wait()
+GameData.HumanoidRootPartv14 = GameData.Characterv14:WaitForChild("HumanoidRootPart")
+
+GameData.Playerv14.CharacterAdded:Connect(function(charv14)
+    GameData.Characterv14 = charv14
+    GameData.HumanoidRootPartv14 = charv14:WaitForChild("HumanoidRootPart")
+end)
+
+GameData.ChestsFolderv14 = GameData.Servicesv14.Workspacev14.Game.Chests
+
+for _, tierv14 in pairs(GameData.ChestsFolderv14:GetChildren()) do
+    table.insert(GameData.TierOptionsv14, tierv14.Name)
+end
+
+GameData.Remotesv14.UnlockChestv14 = GameData.Servicesv14.ReplicatedStoragev14
+    :WaitForChild("common")
+    :WaitForChild("packages")
+    :WaitForChild("Knit")
+    :WaitForChild("Services")
+    :WaitForChild("ChestService")
+    :WaitForChild("RF")
+    :WaitForChild("UnlockChest")
+
+function GameData:InvokeChestv14(tierv14, numberv14)
+    local argsv14 = { tierv14, tostring(numberv14) }
+    self.Remotesv14.UnlockChestv14:InvokeServer(unpack(argsv14))
+end
+
+function GameData:TweenToChestv14(chestv14)
+    local cfv14 = chestv14:IsA("Model") and chestv14:GetPivot() or chestv14.CFrame
+    local targetCFramev14 = cfv14 * CFrame.new(0, 0, -5)
+
+    local tweenv14 = self.Servicesv14.TweenServicev14:Create(
+        self.HumanoidRootPartv14,
+        self.TweenInfov14,
+        { CFrame = targetCFramev14 }
+    )
+
+    tweenv14:Play()
+    tweenv14.Completed:Wait()
+end
+
+function GameData:RunTreasureHuntv14()
+    for _, tierNamev14 in pairs(self.SelectedTiersv14) do
+
+        local tierFolderv14 = self.ChestsFolderv14:FindFirstChild(tierNamev14)
+        if not tierFolderv14 then continue end
+
+        for _, chestv14 in pairs(tierFolderv14:GetChildren()) do
+            if not self.AutoTreasurev14 then return end
+
+            self:TweenToChestv14(chestv14)
+            task.wait(0.3)
+
+            self:InvokeChestv14(tierNamev14, chestv14.Name)
+            task.wait(1)
+        end
+    end
+end
+
+Sec.Main5:AddDropdown({
+    Title = "Select Tier",
+    Content = "Select the chest tier you want to hunt",
+    Options = GameData.TierOptionsv14,
+    Multi = true,
+    Default = GameData.TierOptionsv14[1],
+    Callback = function(valuev14)
+        GameData.SelectedTiersv14 = {}
+        if type(valuev14) == "table" then
+            for tierNamev14, selectedv14 in pairs(valuev14) do
+                if selectedv14 then
+                    table.insert(GameData.SelectedTiersv14, tierNamev14)
+                end
+            end
+        else
+            table.insert(GameData.SelectedTiersv14, valuev14)
+        end
+    end
+})
+
+Sec.Main5:AddToggle({
+    Title = "Auto Treasure Hunt",
+    Default = false,
+    Callback = function(v14)
+        GameData.AutoTreasurev14 = v14
+        if v14 then
+            Notify("Auto Treasure Hunt enabled!", 2)
+            task.spawn(function()
+                while GameData.AutoTreasurev14 do
+
+                    if #GameData.SelectedTiersv14 == 0 then
+                        Notify("Please select a tier first!", 2)
+                        task.wait(2)
+                    else
+                        GameData:RunTreasureHuntv14()
+                        task.wait(1)
+                    end
+                end
+            end)
+
+        else
+            Notify("Auto Treasure Hunt disabled!", 2)
+        end
+    end
+})
+
+Sec.Bestiary = Tabs.Main:AddSection({
+    Title = "Bestiary",
+    Open = false
+})
+
+GameData.FishFolderv13 = GameData.Servicesv13.ReplicatedStoragev13
+    :WaitForChild("common")
+    :WaitForChild("assets")
+    :WaitForChild("fish")
+
+GameData.Remotesv13.ClaimRewardv13 = GameData.Servicesv13.ReplicatedStoragev13
+    :WaitForChild("common")
+    :WaitForChild("packages")
+    :WaitForChild("Knit")
+    :WaitForChild("Services")
+    :WaitForChild("BestiaryService")
+    :WaitForChild("RF")
+    :WaitForChild("ClaimReward")
+
+Sec.Bestiary:AddToggle({
+    Title = "Auto Claim Bestiary",
+    Default = false,
+    Callback = function(v13)
+
+        GameData.AutoClaimBestiaryv13 = v13
+        
+        if v13 then
+            Notify("Auto Claim Bestiary Enabled!", 2)
+
+            task.spawn(function()
+                while GameData.AutoClaimBestiaryv13 do
+
+                    for _, fishv13 in ipairs(GameData.FishFolderv13:GetChildren()) do
+                        if not GameData.AutoClaimBestiaryv13 then break end
+                        
+                        pcall(function()
+                            GameData.Remotesv13.ClaimRewardv13:InvokeServer(fishv13.Name)
+                        end)
+                        
+                        task.wait(0.2)
+                    end
+                    
+                    task.wait(1)
+                end
+            end)
+
+        else
+            Notify("Auto Claim Bestiary Disabled!", 2)
+        end
+    end
+})
+
+Sec.Favorite = Tabs.Backpack:AddSection({
     Title = "Favorite [Beta]",
     Open = true
 })
@@ -1323,7 +1531,7 @@ for _, fishModel in ipairs(GameData.fishAssetsFolderv10:GetChildren()) do
 end
 table.sort(GameData.fishListv10)
 
-Sec.Main4:AddDropdown({
+Sec.Favorite:AddDropdown({
     Title = "Filter Rarity",
     Content = "Cannot be combined with Fish filter",
     Options = {"None", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythical"},
@@ -1353,7 +1561,7 @@ Sec.Main4:AddDropdown({
     end
 })
 
-Sec.Main4:AddDropdown({
+Sec.Favorite:AddDropdown({
     Title = "Filter Fish",
     Content = "Cannot be combined with Rarity filter",
     Options = GameData.fishListv10,
@@ -1383,7 +1591,7 @@ Sec.Main4:AddDropdown({
     end
 })
 
-Sec.Main4:AddDropdown({
+Sec.Favorite:AddDropdown({
     Title = "Filter Mutation",
     Content = "Can be combined with Rarity or Fish filter",
     Options = GameData.mutationListv10,
@@ -1436,7 +1644,7 @@ local function matchesFilter(item)
     return false
 end
 
-Sec.Main4:AddToggle({
+Sec.Favorite:AddToggle({
     Title = "Auto Favorite",
     Default = false,
     Callback = function(value)
@@ -1528,7 +1736,7 @@ Sec.Main4:AddToggle({
     end
 })
 
-Sec.Main4:AddToggle({
+Sec.Favorite:AddToggle({
     Title = "Auto Unfavorite",
     Default = false,
     Callback = function(value)
@@ -1673,7 +1881,7 @@ Sec.Tp1:AddButton({
         lv.Parent = hrp
 
         local distance = (hrp.Position - targetCFrame.Position).Magnitude
-        local speed = 250
+        local speed = 30
         local duration = math.clamp(distance / speed, 0.1, 30)
 
         local tween = GameData.Servicesv9.TweenServicev9:Create(
@@ -1842,3 +2050,4 @@ Sec.Shop1:AddButton({
         })
     end
 })
+
