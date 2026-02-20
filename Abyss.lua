@@ -1673,7 +1673,7 @@ Sec.Tp1:AddButton({
         lv.Parent = hrp
 
         local distance = (hrp.Position - targetCFrame.Position).Magnitude
-        local speed = 250
+        local speed = 30
         local duration = math.clamp(distance / speed, 0.1, 30)
 
         local tween = GameData.Servicesv9.TweenServicev9:Create(
