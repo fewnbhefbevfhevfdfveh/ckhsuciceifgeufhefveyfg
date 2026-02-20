@@ -1099,7 +1099,7 @@ Sec.Main2:AddToggle({
     end
 })
 
-Sec.Main4 = Tabs.Main:AddSection({
+Sec.Main3 = Tabs.Main:AddSection({
     Title = "Sell Fiture",
     Open = false
 })
@@ -1425,12 +1425,24 @@ Sec.Main5:AddToggle({
     Callback = function(v14)
         GameData.AutoTreasurev14 = v14
         if v14 then
-            Notify("Auto Treasure Hunt enabled!", 2)
+            VelarisUI:MakeNotify({
+                Title = "Auto Treasure Hunt",
+                Description = "Status",
+                Content = "Auto Treasure Hunt enabled!",
+                Color = Color3.fromRGB(0, 255, 0),
+                Delay = 2
+            })
             task.spawn(function()
                 while GameData.AutoTreasurev14 do
 
                     if #GameData.SelectedTiersv14 == 0 then
-                        Notify("Please select a tier first!", 2)
+                        VelarisUI:MakeNotify({
+                            Title = "Auto Treasure Hunt",
+                            Description = "Warning",
+                            Content = "Please select a tier first!",
+                            Color = Color3.fromRGB(255, 165, 0),
+                            Delay = 2
+                        })
                         task.wait(2)
                     else
                         GameData:RunTreasureHuntv14()
@@ -1440,7 +1452,13 @@ Sec.Main5:AddToggle({
             end)
 
         else
-            Notify("Auto Treasure Hunt disabled!", 2)
+            VelarisUI:MakeNotify({
+                Title = "Auto Treasure Hunt",
+                Description = "Status",
+                Content = "Auto Treasure Hunt disabled!",
+                Color = Color3.fromRGB(255, 0, 0),
+                Delay = 2
+            })
         end
     end
 })
@@ -1472,7 +1490,13 @@ Sec.Bestiary:AddToggle({
         GameData.AutoClaimBestiaryv13 = v13
         
         if v13 then
-            Notify("Auto Claim Bestiary Enabled!", 2)
+            VelarisUI:MakeNotify({
+                Title = "Auto Claim Bestiary",
+                Description = "Status",
+                Content = "Auto Claim Bestiary Enabled!",
+                Color = Color3.fromRGB(0, 255, 0),
+                Delay = 2
+            })
 
             task.spawn(function()
                 while GameData.AutoClaimBestiaryv13 do
@@ -1492,7 +1516,13 @@ Sec.Bestiary:AddToggle({
             end)
 
         else
-            Notify("Auto Claim Bestiary Disabled!", 2)
+            VelarisUI:MakeNotify({
+                Title = "Auto Claim Bestiary",
+                Description = "Status",
+                Content = "Auto Claim Bestiary Disabled!",
+                Color = Color3.fromRGB(255, 0, 0),
+                Delay = 2
+            })
         end
     end
 })
@@ -2050,4 +2080,3 @@ Sec.Shop1:AddButton({
         })
     end
 })
-
