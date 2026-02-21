@@ -52,13 +52,15 @@ local GameData = {
     SelectedSafeZoneV1 = "The Forgotten Dome",
 
     WHITELIST_ZONESv1 = {
-        ["The Forgotten Dome"] = true,
+        ["The Forgotten Dome"]  = true,
         ["Spirit Root Hollow"]  = true,
+		["Crazy Jeff's Store"]  = true,
     },
 
     SafeZoneCFramesV1 = {
-        ["The Forgotten Dome"] = CFrame.new(-2.205, 4884.06, -1.224),
+        ["The Forgotten Dome"]  = CFrame.new(-2.205, 4884.06, -1.224),
         ["Spirit Root Hollow"]  = CFrame.new(1655.23535, 4040.88354, -1955.32068),
+		["Crazy Jeff's Store"]  = CFrame.new(-1801.68, 4407.53, 81.07),
     },
 
     TweenSpeedToFishV1     = 20,
@@ -81,19 +83,15 @@ local GameData = {
     TweenSpeedToLocationV1   = 10,
 
     LocationCFramesV1 = {
-        ["Golem's Cave"]       = CFrame.new(1705.53,    3956.89,  -2650.63),
-        ["Angler Cave"]        = CFrame.new(439.21,     4171.75,    155.40),
-        ["Angler Cave - Shop"] = CFrame.new(735.37,     4266.42,   -159.23),
-        ["The Forgotten Dome"] = CFrame.new(-2.205,     4884.06,    -1.224),
-        ["Spirit Root Hollow"] = CFrame.new(1670.37,    4041.22,  -1918.33),
-        ["Morveth's Cave"]     = CFrame.new(-230.59,    4307.52,  -1281.05),
-        ["King Cat Cave"]      = CFrame.new(2172.57,    3825.56,  -2929.93),
+        ["Ancient Sands"]  = CFrame.new(-1790.41, 4463.66, 275.98),
+        ["Spirit Roots"]   = CFrame.new(1532.13, 4076.12, -1795.08),
+        ["Forgotten Deep"] = CFrame.new(207.66, 4864.95, 22.78),
     },
 
-    -- List nama untuk GUI dropdown (diisi saat Init)
     locationNamesV1 = {},
     safeZoneNamesV1 = {},
     raritySetV1     = {},
+
 	-- // Cast Mode
 
     Servicesv2 = {
@@ -203,13 +201,13 @@ local GameData = {
     Playerv9 = nil,
 
     Locationsv9 = {
-        ["Golem's Cave"] = CFrame.new(1705.53, 3956.89, -2650.63),
-        ["Angler Cave"] = CFrame.new(439.21, 4171.75, 155.40),
+        ["Golem's Cave"]       = CFrame.new(1705.53, 3956.89, -2650.63),
+        ["Angler Cave"]        = CFrame.new(439.21, 4171.75, 155.40),
         ["Angler Cave - Shop"] = CFrame.new(735.37, 4266.42, -159.23),
         ["The Forgotten Demo"] = CFrame.new(-2.205, 4884.06, -1.224),
         ["Spirit Root Hollow"] = CFrame.new(1670.37, 4041.22, -1918.33),
-        ["Morveth's Cave"] = CFrame.new(-230.59, 4307.52, -1281.05),
-        ["King Cat Cave"] = CFrame.new(2172.57, 3825.56, -2929.93),
+        ["Morveth's Cave"]     = CFrame.new(-230.59, 4307.52, -1281.05),
+        ["King Cat Cave"]      = CFrame.new(2172.57, 3825.56, -2929.93),
     },
 
     LocationOptionsv9 = {},
@@ -346,7 +344,7 @@ local Sec = {}
 
 Sec.Home1 = Tabs.Home:AddSection({
     Title = "Update Log",
-    Open = true
+    Open = false
 })
 
 Sec.Home1:AddParagraph({
@@ -1048,13 +1046,18 @@ end)
 
 Sec.Main2:AddSubSection("SHOOT FISH")
 
-Sec.Main2:AddSlider({
+Sec.Main2:AddInput({
     Title = "Tween Speed",
-    Content = "Set Tween Speed to Fish",
-    Min = 1, Max = 200, Default = 20, Increment = 1,
+    Content = "Set Tween Speed to Fish (1 - 200)",
+    Default = "20",
     Callback = function(value)
-        GameData.TweenSpeedToFishV1     = value
-        GameData.TweenSpeedToSafeDistV1 = value
+        local number = tonumber(value)
+        
+        if number and number >= 1 and number <= 100 then
+            GameData.TweenSpeedToFishV1     = number
+            GameData.TweenSpeedToSafeDistV1 = number
+        else
+        end
     end
 })
 
@@ -1068,15 +1071,19 @@ Sec.Main2:AddInput({
     end
 })
 
-Sec.Main2:AddSlider({
+Sec.Main2:AddInput({
     Title = "Tween Speed to Location",
-    Content = "Tween speed towards location zone",
-    Min = 1, Max = 100, Default = 10, Increment = 1,
+    Content = "Tween speed towards location zone (1 - 100)",
+    Default = "10",
     Callback = function(value)
-        GameData.TweenSpeedToLocationV1 = value
+        local number = tonumber(value)
+        
+        if number and number >= 1 and number <= 100 then
+            GameData.TweenSpeedToLocationV1 = number
+        else
+        end
     end
 })
-
 Sec.Main2:AddDropdown({
     Title = "Select Location",
     Content = "Select the target zone before shooting fish",
