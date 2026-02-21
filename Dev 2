@@ -63,10 +63,10 @@ local GameData = {
         ["Crazy Jeff's Store"]  = CFrame.new(-1790.41, 4463.66, 275.98),
     },
 
-    TweenSpeedToFishV1     = 20,
+    TweenSpeedToFishV1     = 10,
     TweenSpeedToSafeDistV1 = 20,
-    TweenSpeedToSafeZoneV1 = 10,
-    TweenSpeedToSellZoneV1 = 10,
+    TweenSpeedToSafeZoneV1 = 5,
+    TweenSpeedToSellZoneV1 = 5,
 
     MutationsFolderv1 = nil,
     MutationNamesv1   = {},
@@ -214,6 +214,8 @@ local GameData = {
         ["Morveth's Cave"]     = CFrame.new(-230.59, 4307.52, -1281.05),
         ["King Cat Cave"]      = CFrame.new(2172.57, 3825.56, -2929.93),
 		["Ancient Sands"]      = CFrame.new(-1790.41, 4463.66, 275.98),
+		["Sunken Wilds"]       = CFrame.new(3899.61, 3630.88, -1214.10),
+		["Crazy Jeff's Store"] = CFrame.new(-1790.41, 4463.66, 275.98),
     },
 
     LocationOptionsv9 = {},
@@ -563,6 +565,28 @@ end
 table.sort(GameData.safeZoneNamesV1)
 
 -- ============================================================
+--  HELPER: Pastikan CFrame selalu tegak (no roll/pitch)
+-- ============================================================
+local function MakeUprightCFrame(position, optionalLookAt)
+    if optionalLookAt then
+        -- lookAt tapi paksa upVector = Y+, cegah flip
+        local forward = (optionalLookAt - position)
+        if forward.Magnitude < 0.01 then
+            return CFrame.new(position)
+        end
+        forward = forward.Unit
+        -- Kalau forward hampir sejajar dengan Y, fallback
+        local dot = math.abs(forward:Dot(Vector3.new(0, 1, 0)))
+        if dot > 0.99 then
+            return CFrame.new(position)
+        end
+        return CFrame.lookAt(position, optionalLookAt, Vector3.new(0, 1, 0))
+    else
+        return CFrame.new(position)
+    end
+end
+
+-- ============================================================
 --  HELPER
 -- ============================================================
 function GameData:IsInZoneV1(zoneName)
@@ -718,7 +742,9 @@ function GameData:GetNearestSellZoneV1()
     return nearestZone, nearestPart
 end
 
--- Safe Zone: harus sampai CFrame, tidak stop di tengah jalan
+-- ============================================================
+--  SAFE ZONE TWEEN
+-- ============================================================
 function GameData:TweenToSafeZoneAndWaitV1()
     local hrp = self.Characterv1 and self.Characterv1:FindFirstChild("HumanoidRootPart")
     if not hrp then return false end
@@ -729,7 +755,15 @@ function GameData:TweenToSafeZoneAndWaitV1()
         return false
     end
 
+    local alreadyIn, alreadyZone = self:IsInSafeZoneV1()
+    if alreadyIn then
+        print("Sudah berada di Safe Zone:", alreadyZone)
+        return true, alreadyZone
+    end
+
     local targetPosition = part.Position + Vector3.new(0, 5, 0)
+    -- ✅ FIX: CFrame tegak tanpa rotasi aneh
+    local targetCF = MakeUprightCFrame(targetPosition)
     self.cancelSafeZoneTweenV1 = false
 
     local distance = (hrp.Position - targetPosition).Magnitude
@@ -738,11 +772,25 @@ function GameData:TweenToSafeZoneAndWaitV1()
     local tween = self.TweenServicev1:Create(
         hrp,
         TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-        {CFrame = CFrame.new(targetPosition)}
+        {CFrame = targetCF}
     )
 
     self.activeSafeZoneTweenV1 = tween
     tween:Play()
+
+    task.spawn(function()
+        while tween.PlaybackState == Enum.PlaybackState.Playing do
+            local inZone, zoneName = self:IsInSafeZoneV1()
+            if inZone then
+                tween:Cancel()
+                print("Sudah masuk Safe Zone sebelum tween selesai:", zoneName)
+                break
+            end
+            if self.cancelSafeZoneTweenV1 then break end
+            task.wait(0.2)
+        end
+    end)
+
     tween.Completed:Wait()
 
     if self.cancelSafeZoneTweenV1 then
@@ -764,7 +812,9 @@ function GameData:TweenToSafeZoneAndWaitV1()
     end
 end
 
--- Sell Zone: harus sampai CFrame, tidak stop di tengah jalan
+-- ============================================================
+--  SELL ZONE TWEEN
+-- ============================================================
 function GameData:TweenToSellZoneAndWaitV1()
     local hrp = self.Characterv1 and self.Characterv1:FindFirstChild("HumanoidRootPart")
     if not hrp then return false end
@@ -775,7 +825,15 @@ function GameData:TweenToSellZoneAndWaitV1()
         return false
     end
 
+    local alreadyIn, alreadyZone = self:IsInSellZoneV1()
+    if alreadyIn then
+        print("Sudah berada di Sell Zone:", alreadyZone)
+        return true, alreadyZone
+    end
+
     local targetPosition = part.Position + Vector3.new(0, 5, 0)
+    -- ✅ FIX: CFrame tegak tanpa rotasi aneh
+    local targetCF = MakeUprightCFrame(targetPosition)
     self.cancelSellLocationTweenV1 = false
 
     local distance = (hrp.Position - targetPosition).Magnitude
@@ -784,11 +842,25 @@ function GameData:TweenToSellZoneAndWaitV1()
     local tween = self.TweenServicev1:Create(
         hrp,
         TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-        {CFrame = CFrame.new(targetPosition)}
+        {CFrame = targetCF}
     )
 
     self.activeSellLocationTweenV1 = tween
     tween:Play()
+
+    task.spawn(function()
+        while tween.PlaybackState == Enum.PlaybackState.Playing do
+            local inZone, zoneName = self:IsInSellZoneV1()
+            if inZone then
+                tween:Cancel()
+                print("Sudah masuk Sell Zone sebelum tween selesai:", zoneName)
+                break
+            end
+            if self.cancelSellLocationTweenV1 then break end
+            task.wait(0.2)
+        end
+    end)
+
     tween.Completed:Wait()
 
     if self.cancelSellLocationTweenV1 then
@@ -875,7 +947,7 @@ function GameData:AutoSellV1()
 end
 
 -- ============================================================
---  LOCATION TWEEN (shoot fish) - stop kalau udah di zone
+--  LOCATION TWEEN (shoot fish)
 -- ============================================================
 function GameData:TweenToSelectedLocationV1()
     if self.isTweeningToLocationV1 then return end
@@ -904,10 +976,13 @@ function GameData:TweenToSelectedLocationV1()
     local distance = (hrp.Position - targetCF.Position).Magnitude
     local duration = math.max(1, distance / (self.TweenSpeedToLocationV1 * 10))
 
+    -- ✅ FIX: Paksa CFrame tegak — ambil posisi dari targetCF tapi reset rotasi ke upright
+    local uprightCF = MakeUprightCFrame(targetCF.Position)
+
     local tween = self.TweenServicev1:Create(
         hrp,
         TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-        {CFrame = targetCF}
+        {CFrame = uprightCF}
     )
 
     self.activeLocationTweenV1 = tween
@@ -1021,6 +1096,7 @@ function GameData:GetNearestTargetv1()
     return nearest
 end
 
+-- ✅ FIX: TweenToPositionv1 — pertahankan orientasi tegak
 function GameData:TweenToPositionv1(position)
     if not self.Characterv1 then return end
     local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
@@ -1029,13 +1105,18 @@ function GameData:TweenToPositionv1(position)
     local distance = (hrp.Position - position).Magnitude
     local duration = math.max(0.1, distance / (self.TweenSpeedToFishV1 * 10))
 
+    -- Ambil rotasi Y saat ini, reset X dan Z agar tidak kebalik
+    local _, currentY, _ = hrp.CFrame:ToEulerAnglesYXZ()
+    local targetCF = CFrame.new(position) * CFrame.Angles(0, currentY, 0)
+
     self.TweenServicev1:Create(
         hrp,
         TweenInfo.new(duration, Enum.EasingStyle.Linear),
-        {CFrame = CFrame.new(position)}
+        {CFrame = targetCF}
     ):Play()
 end
 
+-- ✅ FIX: TweenToSafeDistancev1 — pakai CFrame.lookAt dengan upVector eksplisit
 function GameData:TweenToSafeDistancev1(model)
     if not self.Characterv1 then return end
     local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
@@ -1049,10 +1130,13 @@ function GameData:TweenToSafeDistancev1(model)
     local distance = (hrp.Position - safePosition).Magnitude
     local duration = math.max(0.1, distance / (self.TweenSpeedToSafeDistV1 * 10))
 
+    -- ✅ Pakai MakeUprightCFrame agar noleh ke ikan tapi tidak kebalik
+    local targetCF = MakeUprightCFrame(safePosition, torso.Position)
+
     self.TweenServicev1:Create(
         hrp,
         TweenInfo.new(duration, Enum.EasingStyle.Linear),
-        {CFrame = CFrame.new(safePosition, torso.Position)}
+        {CFrame = targetCF}
     ):Play()
 end
 
@@ -1248,7 +1332,6 @@ task.spawn(function()
         local inSellZone, _ = GameData:IsInSellZoneV1()
         local inLocation    = GameData.SelectedLocationV1 and GameData:IsInZoneV1(GameData.SelectedLocationV1) or false
 
-        -- ✅ Ambil nama ikan + mutasi dari stats target
         local targetName     = "None"
         local targetMutation = "None"
         if GameData.CurrentTargetModelv1 then
@@ -1278,41 +1361,38 @@ task.spawn(function()
         end
 
         local content =
-            "Auto Shoot     : " .. statusShoot .. "\n" ..
-            "Auto Sell      : " .. statusSell .. "\n" ..
-            "Auto SafeZone  : " .. statusSafeZone .. "\n" ..
+            "Auto Shoot   : " .. statusShoot .. "\n" ..
+            "Auto Sell    : " .. statusSell .. "\n" ..
+            "Auto SafeZone: " .. statusSafeZone .. "\n" ..
             "─────────────────────\n" ..
-            "Oxygen         : " .. oxygen .. " (Threshold: " .. GameData.OxygenThresholdV1 .. ")\n" ..
-            "Weight         : " .. wghtText .. " / " .. maxText .. "\n" ..
+            "Oxygen       : " .. oxygen .. " (Threshold: " .. GameData.OxygenThresholdV1 .. ")\n" ..
+            "Weight       : " .. wghtText .. " / " .. maxText .. "\n" ..
             "─────────────────────\n" ..
-            "Location         : " .. (GameData.SelectedLocationV1 or "None") .. "\n" ..
-            "Location Status  : " .. statusTweenLoc .. "\n" ..
-            "Safe Zone        : " .. GameData.SelectedSafeZoneV1 .. "\n" ..
-            "Safe Zone Status : " .. statusTweenOxy .. "\n" ..
-            "Sell Zone        : " .. GameData.SelectedSellLocationV1 .. "\n" ..
-            "Sell Status      : " .. statusTweenSell .. "\n" ..
+            "Location     : " .. (GameData.SelectedLocationV1 or "None") .. "\n" ..
+            "Loc Status   : " .. statusTweenLoc .. "\n" ..
+            "Safe Zone    : " .. GameData.SelectedSafeZoneV1 .. "\n" ..
+            "SafeZ Status : " .. statusTweenOxy .. "\n" ..
+            "Sell Zone    : " .. GameData.SelectedSellLocationV1 .. "\n" ..
+            "Sell Status  : " .. statusTweenSell .. "\n" ..
             "─────────────────────\n" ..
-            "Target Fish    : " .. targetName .. "\n" ..
-            "Fish Mutation  : " .. targetMutation .. "\n" ..  -- ✅ BARIS BARU
-            "Next Sell      : " .. nextSell
+            "Target Fish  : " .. targetName .. "\n" ..
+            "Fish Mutation: " .. targetMutation .. "\n" ..
+            "Next Sell    : " .. nextSell
 
         monitorParagraph:SetContent(content)
     end
 end)
 
--- ============================================================
---  GUI
--- ============================================================
+
 Sec.Main2:AddSubSection("SHOOT FISH")
 
 Sec.Main2:AddInput({
     Title = "Tween Speed to Fish",
-    Content = "Makin besar = makin cepat",
     Default = tostring(GameData.TweenSpeedToFishV1),
     Callback = function(value)
         local number = tonumber(value)
         if number and number >= 1 then
-            GameData.TweenSpeedToFishV1     = number
+            GameData.TweenSpeedToFishV1     = number 
             GameData.TweenSpeedToSafeDistV1 = number
         end
     end
@@ -1330,7 +1410,6 @@ Sec.Main2:AddInput({
 
 Sec.Main2:AddInput({
     Title = "Tween Speed to Location",
-    Content = "Makin besar = makin cepat",
     Default = tostring(GameData.TweenSpeedToLocationV1),
     Callback = function(value)
         local number = tonumber(value)
@@ -1409,7 +1488,6 @@ Sec.Main2:AddSubSection("SAFE ZONE SETTINGS")
 
 Sec.Main2:AddInput({
     Title = "Tween Speed to Safe Zone",
-    Content = "Makin besar = makin cepat",
     Default = tostring(GameData.TweenSpeedToSafeZoneV1),
     Callback = function(value)
         local number = tonumber(value)
@@ -1421,7 +1499,7 @@ Sec.Main2:AddInput({
 
 Sec.Main2:AddDropdown({
     Title = "Select Safe Zone (Oxygen)",
-    Content = "Zona aman untuk auto oxygen",
+    Content = "Safe zone for auto oxygen",
     Options = GameData.safeZoneNamesV1,
     Multi = false,
     Default = GameData.SelectedSafeZoneV1,
@@ -1546,7 +1624,6 @@ Sec.Sell:AddInput({
 
 Sec.Sell:AddInput({
     Title = "Tween Speed Sell",
-    Content = "Tween Speed To Sell",
     Default = tostring(GameData.TweenSpeedToSellZoneV1),
     Callback = function(value)
         local number = tonumber(value)
@@ -2299,7 +2376,7 @@ Sec.Tp1:AddButton({
         lv.Parent = hrp
 
         local distance = (hrp.Position - targetCFrame.Position).Magnitude
-        local speed = 50
+        local speed = 40
         local duration = math.clamp(distance / speed, 0.1, 30)
 
         local tween = GameData.Servicesv9.TweenServicev9:Create(
