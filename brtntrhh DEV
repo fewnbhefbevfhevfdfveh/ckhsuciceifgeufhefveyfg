@@ -48,19 +48,19 @@ local GameData = {
     cancelSafeZoneTweenV1 = false,
     activeSafeZoneTweenV1 = nil,
 
-    -- Safe Zone
     SelectedSafeZoneV1 = "The Forgotten Dome",
+    SelectedSellLocationV1 = "The Forgotten Dome",
 
     WHITELIST_ZONESv1 = {
         ["The Forgotten Dome"]  = true,
         ["Spirit Root Hollow"]  = true,
-		["Crazy Jeff's Store"]  = true,
+        ["Ancient Sands"]       = true,
     },
 
     SafeZoneCFramesV1 = {
         ["The Forgotten Dome"]  = CFrame.new(-2.205, 4884.06, -1.224),
         ["Spirit Root Hollow"]  = CFrame.new(1655.23535, 4040.88354, -1955.32068),
-		["Crazy Jeff's Store"]  = CFrame.new(-1801.68, 4407.53, 81.07),
+        ["Ancient Sands"]       = CFrame.new(-1790.41, 4463.66, 275.98),
     },
 
     TweenSpeedToFishV1     = 20,
@@ -75,12 +75,16 @@ local GameData = {
     RarityNamesv1        = {},
     SelectedRaritiesv1   = {},
 
-    -- Location Teleport
     SelectedLocationV1       = nil,
     isTweeningToLocationV1   = false,
     cancelLocationTweenV1    = false,
     activeLocationTweenV1    = nil,
     TweenSpeedToLocationV1   = 10,
+    locationJustChangedV1    = false,
+
+    isTweeningToSellLocationV1  = false,
+    cancelSellLocationTweenV1   = false,
+    activeSellLocationTweenV1   = nil,
 
     LocationCFramesV1 = {
         ["Ancient Sands"]  = CFrame.new(-1790.41, 4463.66, 275.98),
@@ -273,24 +277,18 @@ local GameData = {
     Servicesv14 = {
         TweenServicev14 = game:GetService("TweenService"),
         ReplicatedStoragev14 = game:GetService("ReplicatedStorage"),
-        Playersv14 = game:GetService("Players"),
-        Workspacev14 = workspace,
+        Playersv14 = game:GetService("Players")
     },
 
     Playerv14 = nil,
     Characterv14 = nil,
     HumanoidRootPartv14 = nil,
 
-    ChestsFolderv14 = nil,
-    TierOptionsv14 = {},
-    SelectedTiersv14 = {},
-
-    AutoTreasurev14 = false,
-
-    TweenInfov14 = TweenInfo.new(25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-
-    Remotesv14 = {
-        UnlockChestv14 = nil,
+    Chestv14 = {
+        Runningv14 = false,
+        SelectedTiersv14 = {},
+        TierOptionsv14 = {},
+        TweenInfov14 = TweenInfo.new(25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     },
 }
 
@@ -352,6 +350,9 @@ Sec.Home1:AddParagraph({
     Content = [[
 [+] Added Auto Treasure Hunt
 [+] Added Auto Claim Bestiary 
+[+] Added Location Fish Farm
+[+] Added Location Tween Speed
+[+] Added Location Safe Zone
 	]]
 })
 
@@ -525,7 +526,7 @@ for rarityName in pairs(GameData.raritySetV1) do
     table.insert(GameData.RarityNamesv1, rarityName)
 end
 table.sort(GameData.RarityNamesv1)
-GameData.raritySetV1 = nil -- bersihkan setelah selesai dipakai
+GameData.raritySetV1 = nil
 
 GameData.CollectEventv1 = GameData.ReplicatedStoragev1
     :WaitForChild("common"):WaitForChild("packages"):WaitForChild("Knit")
@@ -546,20 +547,18 @@ GameData.weightGuiV1 = GameData.Playerv1.PlayerGui.Main.Oxygen.RightStats.Frame.
 GameData.maxLabelV1  = GameData.weightGuiV1.Max
 GameData.wghtLabelV1 = GameData.weightGuiV1.Wght
 
--- Build location name list untuk GUI
 for name in pairs(GameData.LocationCFramesV1) do
     table.insert(GameData.locationNamesV1, name)
 end
 table.sort(GameData.locationNamesV1)
 
--- Build safe zone name list untuk GUI
 for name in pairs(GameData.SafeZoneCFramesV1) do
     table.insert(GameData.safeZoneNamesV1, name)
 end
 table.sort(GameData.safeZoneNamesV1)
 
 -- ============================================================
---  HELPER: Cek apakah karakter berada dalam zona tertentu
+--  HELPER
 -- ============================================================
 function GameData:IsInZoneV1(zoneName)
     local character = self.Characterv1
@@ -567,7 +566,10 @@ function GameData:IsInZoneV1(zoneName)
     local pos = character.HumanoidRootPart.Position
 
     local zone = workspace.Game.Regions.Locations:FindFirstChild(zoneName)
-    if not zone then return false end
+    if not zone then
+        warn("[IsInZoneV1] Zona tidak ditemukan di workspace:", zoneName)
+        return false
+    end
 
     for _, part in ipairs(zone:GetDescendants()) do
         if part:IsA("BasePart") then
@@ -584,7 +586,7 @@ function GameData:IsInZoneV1(zoneName)
 end
 
 -- ============================================================
---  SAFE ZONE
+--  SAFE ZONE (Oxygen)
 -- ============================================================
 function GameData:IsInSafeZoneV1()
     local character = self.Characterv1
@@ -593,6 +595,32 @@ function GameData:IsInSafeZoneV1()
 
     for _, zone in pairs(workspace.Game.Regions.Locations:GetChildren()) do
         if zone:GetAttribute("breathable") and zone.Name == self.SelectedSafeZoneV1 then
+            for _, part in ipairs(zone:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    local relative = part.CFrame:PointToObjectSpace(pos)
+                    local size = part.Size / 2
+                    if math.abs(relative.X) <= size.X
+                    and math.abs(relative.Y) <= size.Y
+                    and math.abs(relative.Z) <= size.Z then
+                        return true, zone.Name
+                    end
+                end
+            end
+        end
+    end
+    return false, nil
+end
+
+-- ============================================================
+--  SELL ZONE
+-- ============================================================
+function GameData:IsInSellZoneV1()
+    local character = self.Characterv1
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return false, nil end
+    local pos = character.HumanoidRootPart.Position
+
+    for _, zone in pairs(workspace.Game.Regions.Locations:GetChildren()) do
+        if zone:GetAttribute("breathable") and zone.Name == self.SelectedSellLocationV1 then
             for _, part in ipairs(zone:GetDescendants()) do
                 if part:IsA("BasePart") then
                     local relative = part.CFrame:PointToObjectSpace(pos)
@@ -622,6 +650,19 @@ function GameData:WaitUntilInSafeZoneV1(timeout)
     return false, nil
 end
 
+function GameData:WaitUntilInSellZoneV1(timeout)
+    timeout = timeout or 30
+    local elapsed = 0
+    while elapsed < timeout do
+        local inZone, zoneName = self:IsInSellZoneV1()
+        if inZone then return true, zoneName end
+        task.wait(0.2)
+        elapsed = elapsed + 0.2
+        if self.cancelSellLocationTweenV1 then return false, nil end
+    end
+    return false, nil
+end
+
 function GameData:GetNearestSafeZonev1()
     if not self.Characterv1 then return nil, nil end
     local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
@@ -647,13 +688,38 @@ function GameData:GetNearestSafeZonev1()
     return nearestZone, nearestPart
 end
 
+function GameData:GetNearestSellZoneV1()
+    if not self.Characterv1 then return nil, nil end
+    local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil, nil end
+
+    local nearestZone, nearestPart, shortestDistance = nil, nil, math.huge
+
+    for _, zone in pairs(workspace.Game.Regions.Locations:GetChildren()) do
+        if zone:GetAttribute("breathable") and zone.Name == self.SelectedSellLocationV1 then
+            for _, part in ipairs(zone:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    local distance = (hrp.Position - part.Position).Magnitude
+                    if distance < shortestDistance then
+                        shortestDistance = distance
+                        nearestZone = zone
+                        nearestPart = part
+                    end
+                end
+            end
+        end
+    end
+
+    return nearestZone, nearestPart
+end
+
 function GameData:TweenToSafeZoneAndWaitV1()
     local hrp = self.Characterv1 and self.Characterv1:FindFirstChild("HumanoidRootPart")
     if not hrp then return false end
 
     local zone, part = self:GetNearestSafeZonev1()
     if not zone then
-        warn("Zona aman tidak ditemukan / tidak ada zona di whitelist")
+        warn("Zona aman (oxygen) tidak ditemukan:", self.SelectedSafeZoneV1)
         return false
     end
 
@@ -681,7 +747,46 @@ function GameData:TweenToSafeZoneAndWaitV1()
     if success then
         return true, zoneName
     else
-        warn("Timeout: Karakter tidak terdeteksi masuk zona aman")
+        warn("Timeout: Tidak sampai zona oxygen")
+        return false
+    end
+end
+
+function GameData:TweenToSellZoneAndWaitV1()
+    local hrp = self.Characterv1 and self.Characterv1:FindFirstChild("HumanoidRootPart")
+    if not hrp then return false end
+
+    local zone, part = self:GetNearestSellZoneV1()
+    if not zone then
+        warn("Zona sell tidak ditemukan:", self.SelectedSellLocationV1)
+        return false
+    end
+
+    local targetPosition = part.Position + Vector3.new(0, 5, 0)
+    self.cancelSellLocationTweenV1 = false
+
+    local tween = self.TweenServicev1:Create(
+        hrp,
+        TweenInfo.new((20 * 2.0) / self.TweenSpeedToSafeZoneV1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+        {CFrame = CFrame.new(targetPosition)}
+    )
+
+    self.activeSellLocationTweenV1 = tween
+    tween:Play()
+    tween.Completed:Wait()
+
+    if self.cancelSellLocationTweenV1 then
+        self.activeSellLocationTweenV1 = nil
+        return false
+    end
+
+    self.activeSellLocationTweenV1 = nil
+
+    local success, zoneName = self:WaitUntilInSellZoneV1(30)
+    if success then
+        return true, zoneName
+    else
+        warn("Timeout: Tidak sampai zona sell")
         return false
     end
 end
@@ -693,6 +798,14 @@ function GameData:CancelSafeZoneTweenV1()
         self.activeSafeZoneTweenV1 = nil
     end
     self.isTweeningOxygenV1 = false
+end
+
+function GameData:CancelSellLocationTweenV1()
+    self.cancelSellLocationTweenV1 = true
+    if self.activeSellLocationTweenV1 then
+        self.activeSellLocationTweenV1:Cancel()
+        self.activeSellLocationTweenV1 = nil
+    end
     self.isSellingSellV1 = false
 end
 
@@ -703,7 +816,9 @@ function GameData:TweenToSafeZoneOxygenV1()
 
     local success, zoneName = self:TweenToSafeZoneAndWaitV1()
     if success then
-        print("Auto ke zona aman (oxygen):", zoneName)
+        print("Sampai zona oxygen:", zoneName)
+    else
+        warn("Gagal sampai zona oxygen, akan dicoba lagi oleh retry loop")
     end
 
     self.isTweeningOxygenV1 = false
@@ -711,35 +826,37 @@ end
 
 function GameData:AutoSellV1()
     if self.isSellingSellV1 then return end
+
     self.isSellingSellV1 = true
     self.CurrentTargetModelv1 = nil
 
-    local tweenSuccess, zoneName = self:TweenToSafeZoneAndWaitV1()
+    local tweenSuccess, zoneName = self:TweenToSellZoneAndWaitV1()
     if not tweenSuccess then
-        warn("Gagal sampai zona aman, sell dibatalkan")
+        warn("Gagal sampai zona sell, akan dicoba lagi oleh retry loop")
         self.isSellingSellV1 = false
         return
     end
 
-    print("Tween selesai, verifikasi posisi di zona aman...")
-    local inZone, confirmedZone = self:WaitUntilInSafeZoneV1(10)
+    print("Sampai zona sell:", zoneName, "— verifikasi ulang...")
+    local inZone, confirmedZone = self:WaitUntilInSellZoneV1(10)
 
     if inZone then
-        print("Terverifikasi di zona aman:", confirmedZone, "— mulai sell!")
+        print("Terverifikasi di zona sell:", confirmedZone, "— mulai sell!")
         task.wait(0.3)
         pcall(function()
             GameData.SellEventv1:InvokeServer()
         end)
-        print("Sell inventory berhasil dipanggil!")
+        print("Sell inventory berhasil!")
+        GameData.lastSellTimev1 = tick()
     else
-        warn("Karakter tidak terdeteksi di zona aman setelah tween, sell dibatalkan")
+        warn("Tidak terdeteksi di zona sell setelah tween, sell dibatalkan")
     end
 
     self.isSellingSellV1 = false
 end
 
 -- ============================================================
---  LOCATION TWEEN
+--  LOCATION TWEEN (shoot fish)
 -- ============================================================
 function GameData:TweenToSelectedLocationV1()
     if self.isTweeningToLocationV1 then return end
@@ -784,7 +901,6 @@ function GameData:TweenToSelectedLocationV1()
         return
     end
 
-    -- Tunggu sampai terdeteksi masuk zona
     local elapsed = 0
     while elapsed < 15 do
         if self:IsInZoneV1(self.SelectedLocationV1) then
@@ -943,7 +1059,6 @@ task.spawn(function()
         if GameData.SellModev1 == "Sell Delay" then
             if currentTime - GameData.lastSellTimev1 >= GameData.SellDelayv1 then
                 print("Sell Delay tercapai (" .. GameData.SellDelayv1 .. "s), auto sell dimulai!")
-                GameData.lastSellTimev1 = currentTime
                 GameData:AutoSellV1()
             end
         elseif GameData.SellModev1 == "Backpack Full" then
@@ -957,12 +1072,13 @@ task.spawn(function()
     end
 end)
 
--- Loop: cek apakah sudah di zona lokasi, kalau belum → tween ke sana
+-- Loop cek lokasi shoot
 task.spawn(function()
     while task.wait(0.5) do
         if not GameData.AutoShootv1 then continue end
         if not GameData.SelectedLocationV1 then continue end
         if GameData.isTweeningOxygenV1 or GameData.isSellingSellV1 then continue end
+        if GameData.locationJustChangedV1 then continue end
 
         if not GameData:IsInZoneV1(GameData.SelectedLocationV1) then
             if not GameData.isTweeningToLocationV1 then
@@ -985,7 +1101,6 @@ task.spawn(function()
             continue
         end
 
-        -- Jika ada lokasi dipilih, pastikan sudah di zona tersebut
         if GameData.SelectedLocationV1 then
             if not GameData:IsInZoneV1(GameData.SelectedLocationV1) then continue end
         end
@@ -1044,15 +1159,69 @@ task.spawn(function()
     end
 end)
 
+-- Retry Loop: Oxygen
+task.spawn(function()
+    while task.wait(2) do
+        if not GameData.AutoSafeZonev1 then continue end
+        if GameData.isTweeningOxygenV1 then continue end
+
+        local oxygenValue = tonumber(GameData.oxygenLabelV1.Text)
+        if not oxygenValue or oxygenValue > GameData.OxygenThresholdV1 then continue end
+
+        local inZone = GameData:IsInSafeZoneV1()
+        if inZone then continue end
+
+        warn("[RetryLoop-Oxygen] Oxygen rendah (" .. tostring(oxygenValue) .. ") tapi belum di safe zone, retry...")
+        task.spawn(function()
+            GameData:TweenToSafeZoneOxygenV1()
+        end)
+    end
+end)
+
+-- Retry Loop: Sell
+task.spawn(function()
+    while task.wait(3) do
+        if not GameData.AutoSellv1 then continue end
+        if GameData.isSellingSellV1 or GameData.isTweeningOxygenV1 then continue end
+
+        local shouldSell = false
+
+        if GameData.SellModev1 == "Sell Delay" then
+            local overdue = (tick() - GameData.lastSellTimev1) >= (GameData.SellDelayv1 * 2)
+            if overdue then shouldSell = true end
+        elseif GameData.SellModev1 == "Backpack Full" then
+            local maxText  = tonumber(GameData.maxLabelV1.Text:match("%d+"))
+            local wghtText = tonumber(GameData.wghtLabelV1.Text:match("%d+"))
+            if maxText and wghtText and wghtText >= maxText then shouldSell = true end
+        end
+
+        if not shouldSell then continue end
+
+        local inZone = GameData:IsInSellZoneV1()
+        if inZone then continue end
+
+        warn("[RetryLoop-Sell] Belum di sell zone, retry...")
+        task.spawn(function()
+            GameData:AutoSellV1()
+        end)
+    end
+end)
+
+-- ============================================================
+--  GUI
+-- ============================================================
 Sec.Main2:AddSubSection("SHOOT FISH")
 
-Sec.Main2:AddSlider({
+Sec.Main2:AddInput({
     Title = "Tween Speed",
     Content = "Set Tween Speed to Fish",
-    Min = 1, Max = 200, Default = 20, Increment = 1,
+    Default = tostring(GameData.TweenSpeedToFishV1),
     Callback = function(value)
-        GameData.TweenSpeedToFishV1     = value
-        GameData.TweenSpeedToSafeDistV1 = value
+        local number = tonumber(value)
+        if number and number >= 1 then
+            GameData.TweenSpeedToFishV1     = number
+            GameData.TweenSpeedToSafeDistV1 = number
+        end
     end
 })
 
@@ -1066,12 +1235,15 @@ Sec.Main2:AddInput({
     end
 })
 
-Sec.Main2:AddSlider({
+Sec.Main2:AddInput({
     Title = "Tween Speed to Location",
     Content = "Tween speed towards location zone",
-    Min = 1, Max = 100, Default = 10, Increment = 1,
+    Default = tostring(GameData.TweenSpeedToLocationV1),
     Callback = function(value)
-        GameData.TweenSpeedToLocationV1 = value
+        local number = tonumber(value)
+        if number and number >= 1 then
+            GameData.TweenSpeedToLocationV1 = number
+        end
     end
 })
 
@@ -1085,6 +1257,10 @@ Sec.Main2:AddDropdown({
         if GameData.SelectedLocationV1 ~= value then
             GameData:CancelLocationTweenV1()
             GameData.SelectedLocationV1 = value
+            GameData.locationJustChangedV1 = true
+            task.delay(3, function()
+                GameData.locationJustChangedV1 = false
+            end)
             print("Lokasi dipilih:", value)
         end
     end
@@ -1127,6 +1303,11 @@ Sec.Main2:AddToggle({
         GameData.AutoShootv1 = value
         if not value then
             GameData:CancelLocationTweenV1()
+        else
+            GameData.locationJustChangedV1 = true
+            task.delay(3, function()
+                GameData.locationJustChangedV1 = false
+            end)
         end
     end
 })
@@ -1134,14 +1315,14 @@ Sec.Main2:AddToggle({
 Sec.Main2:AddSubSection("SAFE ZONE SETTINGS")
 
 Sec.Main2:AddDropdown({
-    Title = "Select Safe Zone",
-    Content = "Pilih zona aman untuk oxygen & sell",
+    Title = "Select Safe Zone (Oxygen)",
+    Content = "Zona aman untuk auto oxygen",
     Options = GameData.safeZoneNamesV1,
     Multi = false,
     Default = GameData.SelectedSafeZoneV1,
     Callback = function(value)
         GameData.SelectedSafeZoneV1 = value
-        print("Safe Zone dipilih:", value)
+        print("Safe Zone (oxygen) dipilih:", value)
     end
 })
 
@@ -1227,12 +1408,12 @@ Sec.Main2:AddToggle({
     end
 })
 
-Sec.Main3 = Tabs.Main:AddSection({
+Sec.Sell = Tabs.Main:AddSection({
     Title = "Sell Fiture",
     Open = false
 })
 
-Sec.Main3:AddDropdown({
+Sec.Sell:AddDropdown({
     Title = "Select Mode Sell",
     Content = "Select Sell Trigger Mode",
     Options = {
@@ -1246,7 +1427,7 @@ Sec.Main3:AddDropdown({
     end
 })
 
-Sec.Main3:AddInput({
+Sec.Sell:AddInput({
     Title = "Sell Delay (detik)",
     Content = "Automatic sell interval (only for Sell Delay mode)",
     Default = tostring(GameData.SellDelayv1),
@@ -1258,13 +1439,13 @@ Sec.Main3:AddInput({
     end
 })
 
-Sec.Main3:AddToggle({
+Sec.Sell:AddToggle({
     Title = "Auto Sell Fish",
     Default = false,
     Callback = function(value)
         GameData.AutoSellv1 = value
         if not value then
-            GameData:CancelSafeZoneTweenV1()
+            GameData:CancelSellLocationTweenV1()
         end
     end
 })
@@ -1470,38 +1651,28 @@ GameData.Playerv14 = GameData.Servicesv14.Playersv14.LocalPlayer
 GameData.Characterv14 = GameData.Playerv14.Character or GameData.Playerv14.CharacterAdded:Wait()
 GameData.HumanoidRootPartv14 = GameData.Characterv14:WaitForChild("HumanoidRootPart")
 
-GameData.Playerv14.CharacterAdded:Connect(function(charv14)
-    GameData.Characterv14 = charv14
-    GameData.HumanoidRootPartv14 = charv14:WaitForChild("HumanoidRootPart")
-end)
-
-GameData.ChestsFolderv14 = GameData.Servicesv14.Workspacev14.Game.Chests
-
-for _, tierv14 in pairs(GameData.ChestsFolderv14:GetChildren()) do
-    table.insert(GameData.TierOptionsv14, tierv14.Name)
+for _, tierv14 in pairs(workspace.Game.Chests:GetChildren()) do
+    table.insert(GameData.Chestv14.TierOptionsv14, tierv14.Name)
 end
 
-GameData.Remotesv14.UnlockChestv14 = GameData.Servicesv14.ReplicatedStoragev14
-    :WaitForChild("common")
-    :WaitForChild("packages")
-    :WaitForChild("Knit")
-    :WaitForChild("Services")
-    :WaitForChild("ChestService")
-    :WaitForChild("RF")
-    :WaitForChild("UnlockChest")
-
-function GameData:InvokeChestv14(tierv14, numberv14)
-    local argsv14 = { tierv14, tostring(numberv14) }
-    self.Remotesv14.UnlockChestv14:InvokeServer(unpack(argsv14))
+local function InvokeChestv14(tierv14, numberv14)
+    GameData.Servicesv14.ReplicatedStoragev14
+        :WaitForChild("common")
+        :WaitForChild("packages")
+        :WaitForChild("Knit")
+        :WaitForChild("Services")
+        :WaitForChild("ChestService")
+        :WaitForChild("RF")
+        :WaitForChild("UnlockChest")
+        :InvokeServer(tierv14, tostring(numberv14))
 end
 
-function GameData:TweenToChestv14(chestv14)
-    local cfv14 = chestv14:IsA("Model") and chestv14:GetPivot() or chestv14.CFrame
-    local targetCFramev14 = cfv14 * CFrame.new(0, 0, -5)
+local function TweenToChestv14(chestv14)
+    local targetCFramev14 = chestv14.CFrame * CFrame.new(0, 0, -5)
 
-    local tweenv14 = self.Servicesv14.TweenServicev14:Create(
-        self.HumanoidRootPartv14,
-        self.TweenInfov14,
+    local tweenv14 = GameData.Servicesv14.TweenServicev14:Create(
+        GameData.HumanoidRootPartv14,
+        GameData.Chestv14.TweenInfov14,
         { CFrame = targetCFramev14 }
     )
 
@@ -1509,84 +1680,56 @@ function GameData:TweenToChestv14(chestv14)
     tweenv14.Completed:Wait()
 end
 
-function GameData:RunTreasureHuntv14()
-    for _, tierNamev14 in pairs(self.SelectedTiersv14) do
+local function StartLoopv14()
+    GameData.Chestv14.Runningv14 = true
 
-        local tierFolderv14 = self.ChestsFolderv14:FindFirstChild(tierNamev14)
-        if not tierFolderv14 then continue end
+    while GameData.Chestv14.Runningv14 do
+        for _, tierNamev14 in pairs(GameData.Chestv14.SelectedTiersv14) do
+            if not GameData.Chestv14.Runningv14 then break end
 
-        for _, chestv14 in pairs(tierFolderv14:GetChildren()) do
-            if not self.AutoTreasurev14 then return end
+            local tierFolderv14 = workspace.Game.Chests:FindFirstChild(tierNamev14)
+            if not tierFolderv14 then continue end
 
-            self:TweenToChestv14(chestv14)
-            task.wait(0.3)
+            for _, chestv14 in pairs(tierFolderv14:GetChildren()) do
+                if not GameData.Chestv14.Runningv14 then break end
 
-            self:InvokeChestv14(tierNamev14, chestv14.Name)
-            task.wait(1)
+                TweenToChestv14(chestv14)
+                if not GameData.Chestv14.Runningv14 then break end
+
+                task.wait(0.3)
+                InvokeChestv14(tierNamev14, chestv14.Name)
+                task.wait(1)
+            end
         end
+
+        task.wait(0.5)
     end
 end
 
 Sec.Main5:AddDropdown({
-    Title = "Select Tier",
-    Content = "Select the chest tier you want to hunt",
-    Options = GameData.TierOptionsv14,
+    Title = "Select Chest Tier",
+    Content = "Select the tier you want to farm",
+    Options = GameData.Chestv14.TierOptionsv14,
     Multi = true,
-    Default = GameData.TierOptionsv14[1],
-    Callback = function(valuev14)
-        GameData.SelectedTiersv14 = {}
-        if type(valuev14) == "table" then
-            for tierNamev14, selectedv14 in pairs(valuev14) do
-                if selectedv14 then
-                    table.insert(GameData.SelectedTiersv14, tierNamev14)
-                end
-            end
-        else
-            table.insert(GameData.SelectedTiersv14, valuev14)
-        end
+    Default = {},
+    Callback = function(selectedTablev14)
+        GameData.Chestv14.SelectedTiersv14 = selectedTablev14
     end
 })
 
 Sec.Main5:AddToggle({
     Title = "Auto Treasure Hunt",
     Default = false,
-    Callback = function(v14)
-        GameData.AutoTreasurev14 = v14
-        if v14 then
-            VelarisUI:MakeNotify({
-                Title = "Auto Treasure Hunt",
-                Description = "Status",
-                Content = "Auto Treasure Hunt enabled!",
-                Color = Color3.fromRGB(0, 255, 0),
-                Delay = 2
-            })
-            task.spawn(function()
-                while GameData.AutoTreasurev14 do
+    Callback = function(valuev14)
+        if valuev14 then
+            if #GameData.Chestv14.SelectedTiersv14 == 0 then
+                warn("Pilih tier dulu di dropdown!")
+                return
+            end
 
-                    if #GameData.SelectedTiersv14 == 0 then
-                        VelarisUI:MakeNotify({
-                            Title = "Auto Treasure Hunt",
-                            Description = "Warning",
-                            Content = "Please select a tier first!",
-                            Color = Color3.fromRGB(255, 165, 0),
-                            Delay = 2
-                        })
-                        task.wait(2)
-                    else
-                        GameData:RunTreasureHuntv14()
-                        task.wait(1)
-                    end
-                end
-            end)
-
+            task.spawn(StartLoopv14)
         else
-            VelarisUI:MakeNotify({
-                Title = "Auto Treasure Hunt",
-                Description = "Status",
-                Content = "Auto Treasure Hunt disabled!",
-                Color = Color3.fromRGB(255, 0, 0),
-                Delay = 2
-            })
+            GameData.Chestv14.Runningv14 = false
         end
     end
 })
