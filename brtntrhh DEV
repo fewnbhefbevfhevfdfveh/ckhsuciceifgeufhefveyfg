@@ -66,6 +66,7 @@ local GameData = {
     TweenSpeedToFishV1     = 20,
     TweenSpeedToSafeDistV1 = 20,
     TweenSpeedToSafeZoneV1 = 10,
+    TweenSpeedToSellZoneV1 = 10, -- BARU
 
     MutationsFolderv1 = nil,
     MutationNamesv1   = {},
@@ -349,7 +350,9 @@ Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
 [+] Added Auto Treasure Hunt
+[+] Added Dropdwon Select Tier Chest
 [+] Added Auto Claim Bestiary 
+[+] Added Tween Speed Sell
 [+] Added Location Fish Farm
 [+] Added Location Tween Speed
 [+] Added Location Safe Zone
@@ -767,7 +770,7 @@ function GameData:TweenToSellZoneAndWaitV1()
 
     local tween = self.TweenServicev1:Create(
         hrp,
-        TweenInfo.new((20 * 2.0) / self.TweenSpeedToSafeZoneV1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+        TweenInfo.new((20 * 2.0) / self.TweenSpeedToSellZoneV1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), -- DIUBAH
         {CFrame = CFrame.new(targetPosition)}
     )
 
@@ -1428,13 +1431,25 @@ Sec.Sell:AddDropdown({
 })
 
 Sec.Sell:AddInput({
-    Title = "Sell Delay (detik)",
+    Title = "Sell Delay (Seconds)",
     Content = "Automatic sell interval (only for Sell Delay mode)",
     Default = tostring(GameData.SellDelayv1),
     Callback = function(value)
         local num = tonumber(value)
         if num and num > 0 then
             GameData.SellDelayv1 = num
+        end
+    end
+})
+
+Sec.Sell:AddInput({
+    Title = "Tween Speed Sell",
+    Content = "Set Tween Speed to Sell Zone",
+    Default = tostring(GameData.TweenSpeedToSellZoneV1),
+    Callback = function(value)
+        local number = tonumber(value)
+        if number and number >= 1 then
+            GameData.TweenSpeedToSellZoneV1 = number
         end
     end
 })
@@ -2182,7 +2197,7 @@ Sec.Tp1:AddButton({
         lv.Parent = hrp
 
         local distance = (hrp.Position - targetCFrame.Position).Magnitude
-        local speed = 30
+        local speed = 50
         local duration = math.clamp(distance / speed, 0.1, 30)
 
         local tween = GameData.Servicesv9.TweenServicev9:Create(
