@@ -66,6 +66,7 @@ local GameData = {
     TweenSpeedToFishV1     = 20,
     TweenSpeedToSafeDistV1 = 20,
     TweenSpeedToSafeZoneV1 = 10,
+    TweenSpeedToSellZoneV1 = 10,
 
     MutationsFolderv1 = nil,
     MutationNamesv1   = {},
@@ -212,6 +213,7 @@ local GameData = {
         ["Spirit Root Hollow"] = CFrame.new(1670.37, 4041.22, -1918.33),
         ["Morveth's Cave"]     = CFrame.new(-230.59, 4307.52, -1281.05),
         ["King Cat Cave"]      = CFrame.new(2172.57, 3825.56, -2929.93),
+		["Ancient Sands"]      = CFrame.new(-1790.41, 4463.66, 275.98),
     },
 
     LocationOptionsv9 = {},
@@ -274,24 +276,22 @@ local GameData = {
 
 	-- // Auto Treasure Hunt
 
-    TweenServicev14 = game:GetService("TweenService"),
-    ReplicatedStoragev14 = game:GetService("ReplicatedStorage"),
-    Playerv14 = game.Players.LocalPlayer,
-    Characterv14 = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait(),
-    HRPv14 = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart") or game.Players.LocalPlayer.CharacterAdded:Wait():WaitForChild("HumanoidRootPart"),
-    TweenInfov14 = TweenInfo.new(25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-    Runningv14 = false,
-    SelectedTiersv14 = {},
-    TierOptionsv14 = {},
-    ChestsFolderv14 = workspace.Game.Chests,
-    UnlockChestRFv14 = game:GetService("ReplicatedStorage")
-        :WaitForChild("common")
-        :WaitForChild("packages")
-        :WaitForChild("Knit")
-        :WaitForChild("Servicesv14")
-        :WaitForChild("ChestServicev14")
-        :WaitForChild("RFv14")
-        :WaitForChild("UnlockChestv14"),
+    Servicesv14 = {
+        TweenServicev14 = game:GetService("TweenService"),
+        ReplicatedStoragev14 = game:GetService("ReplicatedStorage"),
+        Playersv14 = game:GetService("Players")
+    },
+
+    Playerv14 = nil,
+    Characterv14 = nil,
+    HumanoidRootPartv14 = nil,
+
+    Chestv14 = {
+        Runningv14 = false,
+        SelectedTiersv14 = {},
+        TierOptionsv14 = {},
+        TweenInfov14 = TweenInfo.new(25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    },
 }
 
 local Window = Chloex:Window({
@@ -351,7 +351,9 @@ Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
 [+] Added Auto Treasure Hunt
+[+] Added Dropdwon Select Tier Chest
 [+] Added Auto Claim Bestiary 
+[+] Added Tween Speed Sell
 [+] Added Location Fish Farm
 [+] Added Location Tween Speed
 [+] Added Location Safe Zone
@@ -728,9 +730,13 @@ function GameData:TweenToSafeZoneAndWaitV1()
     local targetPosition = part.Position + Vector3.new(0, 5, 0)
     self.cancelSafeZoneTweenV1 = false
 
+    -- makin besar speed = makin cepat
+    local distance = (hrp.Position - targetPosition).Magnitude
+    local duration = math.max(1, distance / (self.TweenSpeedToSafeZoneV1 * 10))
+
     local tween = self.TweenServicev1:Create(
         hrp,
-        TweenInfo.new((20 * 2.0) / self.TweenSpeedToSafeZoneV1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+        TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
         {CFrame = CFrame.new(targetPosition)}
     )
 
@@ -767,9 +773,13 @@ function GameData:TweenToSellZoneAndWaitV1()
     local targetPosition = part.Position + Vector3.new(0, 5, 0)
     self.cancelSellLocationTweenV1 = false
 
+    -- makin besar speed = makin cepat
+    local distance = (hrp.Position - targetPosition).Magnitude
+    local duration = math.max(1, distance / (self.TweenSpeedToSellZoneV1 * 10))
+
     local tween = self.TweenServicev1:Create(
         hrp,
-        TweenInfo.new((20 * 2.0) / self.TweenSpeedToSafeZoneV1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+        TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
         {CFrame = CFrame.new(targetPosition)}
     )
 
@@ -884,6 +894,7 @@ function GameData:TweenToSelectedLocationV1()
 
     print("Tween ke lokasi:", self.SelectedLocationV1)
 
+    -- makin besar speed = makin cepat
     local distance = (hrp.Position - targetCF.Position).Magnitude
     local duration = math.max(1, distance / (self.TweenSpeedToLocationV1 * 10))
 
@@ -1011,9 +1022,14 @@ function GameData:TweenToPositionv1(position)
     if not self.Characterv1 then return end
     local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
+
+    -- makin besar speed = makin cepat
+    local distance = (hrp.Position - position).Magnitude
+    local duration = math.max(0.1, distance / (self.TweenSpeedToFishV1 * 10))
+
     self.TweenServicev1:Create(
         hrp,
-        TweenInfo.new((20 * 0.4) / self.TweenSpeedToFishV1, Enum.EasingStyle.Linear),
+        TweenInfo.new(duration, Enum.EasingStyle.Linear),
         {CFrame = CFrame.new(position)}
     ):Play()
 end
@@ -1028,9 +1044,13 @@ function GameData:TweenToSafeDistancev1(model)
     local direction    = (hrp.Position - torso.Position).Unit
     local safePosition = torso.Position + (direction * self.SAFE_DISTANCEv1)
 
+    -- makin besar speed = makin cepat
+    local distance = (hrp.Position - safePosition).Magnitude
+    local duration = math.max(0.1, distance / (self.TweenSpeedToSafeDistV1 * 10))
+
     self.TweenServicev1:Create(
         hrp,
-        TweenInfo.new((20 * 0.4) / self.TweenSpeedToSafeDistV1, Enum.EasingStyle.Linear),
+        TweenInfo.new(duration, Enum.EasingStyle.Linear),
         {CFrame = CFrame.new(safePosition, torso.Position)}
     ):Play()
 end
@@ -1215,8 +1235,8 @@ end)
 Sec.Main2:AddSubSection("SHOOT FISH")
 
 Sec.Main2:AddInput({
-    Title = "Tween Speed",
-    Content = "Set Tween Speed to Fish",
+    Title = "Tween Speed to Fish",
+    Content = "Makin besar = makin cepat",
     Default = tostring(GameData.TweenSpeedToFishV1),
     Callback = function(value)
         local number = tonumber(value)
@@ -1239,7 +1259,7 @@ Sec.Main2:AddInput({
 
 Sec.Main2:AddInput({
     Title = "Tween Speed to Location",
-    Content = "Tween speed towards location zone",
+    Content = "Makin besar = makin cepat",
     Default = tostring(GameData.TweenSpeedToLocationV1),
     Callback = function(value)
         local number = tonumber(value)
@@ -1315,6 +1335,18 @@ Sec.Main2:AddToggle({
 })
 
 Sec.Main2:AddSubSection("SAFE ZONE SETTINGS")
+
+Sec.Main2:AddInput({
+    Title = "Tween Speed to Safe Zone",
+    Content = "Makin besar = makin cepat",
+    Default = tostring(GameData.TweenSpeedToSafeZoneV1),
+    Callback = function(value)
+        local number = tonumber(value)
+        if number and number >= 1 then
+            GameData.TweenSpeedToSafeZoneV1 = number
+        end
+    end
+})
 
 Sec.Main2:AddDropdown({
     Title = "Select Safe Zone (Oxygen)",
@@ -1441,6 +1473,18 @@ Sec.Sell:AddInput({
     end
 })
 
+Sec.Sell:AddInput({
+    Title = "Tween Speed Sell",
+    Content = "Set Tween Speed To Sell",
+    Default = tostring(GameData.TweenSpeedToSellZoneV1),
+    Callback = function(value)
+        local number = tonumber(value)
+        if number and number >= 1 then
+            GameData.TweenSpeedToSellZoneV1 = number
+        end
+    end
+})
+
 Sec.Sell:AddToggle({
     Title = "Auto Sell Fish",
     Default = false,
@@ -1451,7 +1495,6 @@ Sec.Sell:AddToggle({
         end
     end
 })
-
 Sec.Main4 = Tabs.Main:AddSection({
     Title = "Support Fiture",
     Open = false
@@ -1649,41 +1692,61 @@ Sec.Main5 = Tabs.Main:AddSection({
     Open = false
 })
 
-for _, tier in pairs(GameData.ChestsFolderv14:GetChildren()) do
-    table.insert(GameData.TierOptionsv14, tier.Name)
+GameData.Playerv14 = GameData.Servicesv14.Playersv14.LocalPlayer
+GameData.Characterv14 = GameData.Playerv14.Character or GameData.Playerv14.CharacterAdded:Wait()
+GameData.HumanoidRootPartv14 = GameData.Characterv14:WaitForChild("HumanoidRootPart")
+
+for _, tierv14 in pairs(workspace.Game.Chests:GetChildren()) do
+    table.insert(GameData.Chestv14.TierOptionsv14, tierv14.Name)
 end
 
-local function invokeChest(tier, number)
-    local args = { tier, tostring(number) }
-    GameData.UnlockChestRFv14:InvokeServer(unpack(args))
+local function InvokeChestv14(tierv14, numberv14)
+    GameData.Servicesv14.ReplicatedStoragev14
+        :WaitForChild("common")
+        :WaitForChild("packages")
+        :WaitForChild("Knit")
+        :WaitForChild("Services")
+        :WaitForChild("ChestService")
+        :WaitForChild("RF")
+        :WaitForChild("UnlockChest")
+        :InvokeServer(tierv14, tostring(numberv14))
 end
 
-local function tweenToChest(chest)
-    local targetCFrame = chest.CFrame * CFrame.new(0, 0, -5)
-    local tween = GameData.TweenServicev14:Create(GameData.HRPv14, GameData.TweenInfov14, { CFrame = targetCFrame })
-    tween:Play()
-    tween.Completed:Wait()
+local function TweenToChestv14(chestv14)
+    local targetCFramev14 = chestv14.CFrame * CFrame.new(0, 0, -5)
+
+    local tweenv14 = GameData.Servicesv14.TweenServicev14:Create(
+        GameData.HumanoidRootPartv14,
+        GameData.Chestv14.TweenInfov14,
+        { CFrame = targetCFramev14 }
+    )
+
+    tweenv14:Play()
+    tweenv14.Completed:Wait()
 end
 
-local function startLoop()
-    GameData.Runningv14 = true
-    while GameData.Runningv14 do
-        for _, tierName in pairs(GameData.SelectedTiersv14) do
-            if not GameData.Runningv14 then break end
+local function StartLoopv14()
+    GameData.Chestv14.Runningv14 = true
 
-            local tierFolder = GameData.ChestsFolderv14:FindFirstChild(tierName)
-            if not tierFolder then continue end
+    while GameData.Chestv14.Runningv14 do
+        for _, tierNamev14 in pairs(GameData.Chestv14.SelectedTiersv14) do
+            if not GameData.Chestv14.Runningv14 then break end
 
-            for _, chest in pairs(tierFolder:GetChildren()) do
-                if not GameData.Runningv14 then break end
-                print("Menuju chest:", tierName, chest.Name)
-                tweenToChest(chest)
-                if not GameData.Runningv14 then break end
+            local tierFolderv14 = workspace.Game.Chests:FindFirstChild(tierNamev14)
+            if not tierFolderv14 then continue end
+
+            for _, chestv14 in pairs(tierFolderv14:GetChildren()) do
+                if not GameData.Chestv14.Runningv14 then break end
+
+                TweenToChestv14(chestv14)
+                if not GameData.Chestv14.Runningv14 then break end
+
                 task.wait(0.3)
-                invokeChest(tierName, chest.Name)
+                InvokeChestv14(tierNamev14, chestv14.Name)
                 task.wait(1)
             end
         end
+
         task.wait(0.5)
     end
 end
@@ -1691,31 +1754,27 @@ end
 Sec.Main5:AddDropdown({
     Title = "Select Chest Tier",
     Content = "Select the tier you want to farm",
-    Options = GameData.TierOptionsv14,
+    Options = GameData.Chestv14.TierOptionsv14,
     Multi = true,
     Default = {},
-    Callback = function(selectedTable)
-        GameData.SelectedTiersv14 = selectedTable
-        print("Tier dipilih:")
-        for _, v in ipairs(selectedTable) do
-            print("- " .. v)
-        end
+    Callback = function(selectedTablev14)
+        GameData.Chestv14.SelectedTiersv14 = selectedTablev14
     end
 })
-
 
 Sec.Main5:AddToggle({
     Title = "Auto Treasure Hunt",
     Default = false,
-    Callback = function(value)
-        if value then
-            if #GameData.SelectedTiersv14 == 0 then
+    Callback = function(valuev14)
+        if valuev14 then
+            if #GameData.Chestv14.SelectedTiersv14 == 0 then
                 warn("Pilih tier dulu di dropdown!")
                 return
             end
-            task.spawn(startLoop)
+
+            task.spawn(StartLoopv14)
         else
-            GameData.Runningv14 = false
+            GameData.Chestv14.Runningv14 = false
         end
     end
 })
@@ -2168,7 +2227,7 @@ Sec.Tp1:AddButton({
         lv.Parent = hrp
 
         local distance = (hrp.Position - targetCFrame.Position).Magnitude
-        local speed = 30
+        local speed = 50
         local duration = math.clamp(distance / speed, 0.1, 30)
 
         local tween = GameData.Servicesv9.TweenServicev9:Create(
