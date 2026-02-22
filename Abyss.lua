@@ -49,20 +49,15 @@ local GameData = {
     activeSafeZoneTweenV1 = nil,
 
     SelectedSafeZoneV1 = "The Forgotten Dome",
-    SelectedSellLocationV1 = "The Forgotten Dome",
 
-    WHITELIST_ZONESv1 = {
-        ["The Forgotten Dome"]  = true,
-        ["Spirit Root Hollow"]  = true,
-        ["Crazy Jeff's Store"]  = true,
-		["Monkey King's Lair"]  = true,
-    },
+    -- Sell CFrame hardcoded The Forgotten Dome
+    SellCFrameV1 = CFrame.new(-2.205, 4884.06, -1.224),
 
     SafeZoneCFramesV1 = {
         ["The Forgotten Dome"]  = CFrame.new(-2.205, 4884.06, -1.224),
         ["Spirit Root Hollow"]  = CFrame.new(1655.23535, 4040.88354, -1955.32068),
         ["Crazy Jeff's Store"]  = CFrame.new(-1790.41, 4463.66, 275.98),
-		["Monkey King's Lair"]  = CFrame.new(3862.34, 3628.94, -1258.02),
+        ["Monkey King's Lair"]  = CFrame.new(3862.34, 3628.94, -1258.02),
     },
 
     TweenSpeedToFishV1     = 10,
@@ -85,20 +80,31 @@ local GameData = {
     TweenSpeedToLocationV1   = 10,
     locationJustChangedV1    = false,
 
-    isTweeningToSellLocationV1  = false,
-    cancelSellLocationTweenV1   = false,
-    activeSellLocationTweenV1   = nil,
+    cancelSellLocationTweenV1  = false,
+    activeSellLocationTweenV1  = nil,
 
     LocationCFramesV1 = {
         ["Ancient Sands"]  = CFrame.new(-1790.41, 4463.66, 275.98),
         ["Spirit Roots"]   = CFrame.new(1532.13, 4076.12, -1795.08),
         ["Forgotten Deep"] = CFrame.new(207.66, 4864.95, 22.78),
-		["Sunken Wilds"]   = CFrame.new(3541.80, 3701.91, -1234.07),
+        ["Sunken Wilds"]   = CFrame.new(3541.80, 3701.91, -1234.07),
     },
 
     locationNamesV1 = {},
     safeZoneNamesV1 = {},
     raritySetV1     = {},
+
+    -- Anti-TP
+    antiTPEnabledV1 = true,
+    isTPDetectedV1  = false,
+    lastPositionV1  = nil,
+    tpThresholdV1   = 500,
+    tpPauseTimeV1   = 3,
+
+    -- Zone Entry Delay
+    zoneEntryTimeV1  = 0,
+    zoneEntryDelayV1 = 3,
+    wasInZoneV1      = false,
 
 	-- // Cast Mode
 
@@ -302,12 +308,40 @@ local GameData = {
 
     VIM = game:GetService("VirtualInputManager"),
 
-    AntiAfkRunning = false,
+    AntiAfkRunning = false, 
     AntiAfkThread = nil,
+
+	-- // Noclip
+
+    Servicesv15 = {
+        Playersv15 = game:GetService("Players"),
+        RunServicev15 = game:GetService("RunService")
+    },
+
+    Playerv15 = nil,
+
+    Noclipv15 = {
+        Enabledv15 = false,
+        Connectionv15 = nil
+    },
+
+	-- // Merchant
+
+    Servicesv16 = {
+        ReplicatedStoragev16 = game:GetService("ReplicatedStorage")
+    },
+
+    Knitv16 = nil,
+    DataControllerv16 = nil,
+    MerchantServicev16 = nil,
+    Replicav16 = nil,
+    Libraryv16 = nil,
+
+    MerchantUIv16 = {},
 }
 
 local Window = Chloex:Window({
-    Title = "Nexa | v0.0.5 |",
+    Title = "Nexa | V0.0.6 |",
     Footer = "Beta",
     Content = "Abyss",
     Color = "Default",
@@ -362,21 +396,10 @@ Sec.Home1 = Tabs.Home:AddSection({
 Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
-[+] Added Auto Treasure Hunt
-[+] Added Dropdwon Select Tier Chest
-[+] Added Auto Claim Bestiary 
-[+] Added Tween Speed Sell
-[+] Added Monitor Fish
-[+] Added Location Fish Farm
-[+] Added Location Tween Speed
-[+] Added Location Safe Zone
-[+] Added New Location Safe Zone
- - Monkey King's Lair
-[+] Added New Location Fish Farm
- - Sunken Wilds
-[+] Added New Location Telepeort
- - Crazy Jeff's Store
- - Sunken Wilds
+[+] Added Noclip
+[+] Added Merchant Shop
+[/] Improve Shoot Fish Tween
+[!] Fixed Tween To Fish
 	]]
 })
 
@@ -493,6 +516,7 @@ Sec.Main1:AddToggle({
     end
 })
 
+-- // Anti Afk
 
 function GameData:StartAntiAfk()
     if self.AntiAfkThread then return end
@@ -531,6 +555,53 @@ Sec.Main1:AddToggle({
     end
 })
 
+-- // Noclip
+
+GameData.Playerv15 = GameData.Servicesv15.Playersv15.LocalPlayer
+
+Sec.Main1:AddToggle({
+    Title = "Noclip",
+    Default = false,
+    Callback = function(valuev15)
+
+        GameData.Noclipv15.Enabledv15 = valuev15
+
+        if GameData.Noclipv15.Enabledv15 then
+            Notify("Noclip enabled!", 2)
+
+            GameData.Noclipv15.Connectionv15 =
+                GameData.Servicesv15.RunServicev15.Stepped:Connect(function()
+
+                    local characterv15 = GameData.Playerv15.Character
+                    if characterv15 then
+                        for _, partv15 in pairs(characterv15:GetDescendants()) do
+                            if partv15:IsA("BasePart") then
+                                partv15.CanCollide = false
+                            end
+                        end
+                    end
+                end)
+
+        else
+            Notify("Noclip disabled!", 2)
+
+            if GameData.Noclipv15.Connectionv15 then
+                GameData.Noclipv15.Connectionv15:Disconnect()
+                GameData.Noclipv15.Connectionv15 = nil
+            end
+
+            local characterv15 = GameData.Playerv15.Character
+            if characterv15 then
+                for _, partv15 in pairs(characterv15:GetDescendants()) do
+                    if partv15:IsA("BasePart") then
+                        partv15.CanCollide = true
+                    end
+                end
+            end
+        end
+    end
+})
+
 Sec.Main2 = Tabs.Main:AddSection({
     Title = "Fish Farm",
     Open = false
@@ -543,6 +614,17 @@ GameData.Characterv1 = GameData.Playerv1.Character or GameData.Playerv1.Characte
 
 GameData.Playerv1.CharacterAdded:Connect(function(char)
     GameData.Characterv1 = char
+
+    GameData.lastPositionV1         = nil
+    GameData.isTPDetectedV1         = false
+    GameData.wasInZoneV1            = false
+    GameData.zoneEntryTimeV1        = 0
+    GameData.isTweeningOxygenV1     = false
+    GameData.isSellingSellV1        = false
+    GameData.isTweeningToLocationV1 = false
+    GameData.CurrentTargetModelv1   = nil
+
+    print("[Respawn] Karakter baru, semua state direset")
 end)
 
 GameData.FishFolderv1 = GameData.ReplicatedStoragev1
@@ -620,21 +702,15 @@ end
 table.sort(GameData.safeZoneNamesV1)
 
 -- ============================================================
---  HELPER: Pastikan CFrame selalu tegak (no roll/pitch)
+--  HELPER: Pastikan CFrame selalu tegak
 -- ============================================================
 local function MakeUprightCFrame(position, optionalLookAt)
     if optionalLookAt then
-        -- lookAt tapi paksa upVector = Y+, cegah flip
         local forward = (optionalLookAt - position)
-        if forward.Magnitude < 0.01 then
-            return CFrame.new(position)
-        end
+        if forward.Magnitude < 0.01 then return CFrame.new(position) end
         forward = forward.Unit
-        -- Kalau forward hampir sejajar dengan Y, fallback
         local dot = math.abs(forward:Dot(Vector3.new(0, 1, 0)))
-        if dot > 0.99 then
-            return CFrame.new(position)
-        end
+        if dot > 0.99 then return CFrame.new(position) end
         return CFrame.lookAt(position, optionalLookAt, Vector3.new(0, 1, 0))
     else
         return CFrame.new(position)
@@ -642,7 +718,7 @@ local function MakeUprightCFrame(position, optionalLookAt)
 end
 
 -- ============================================================
---  HELPER
+--  HELPER ZONE
 -- ============================================================
 function GameData:IsInZoneV1(zoneName)
     local character = self.Characterv1
@@ -650,14 +726,32 @@ function GameData:IsInZoneV1(zoneName)
     local pos = character.HumanoidRootPart.Position
 
     local zone = workspace.Game.Regions.Locations:FindFirstChild(zoneName)
-    if not zone then
-        warn("[IsInZoneV1] Zona tidak ditemukan di workspace:", zoneName)
-        return false
-    end
+    if not zone then return false end
 
     for _, part in ipairs(zone:GetDescendants()) do
         if part:IsA("BasePart") then
             local relative = part.CFrame:PointToObjectSpace(pos)
+            local size = part.Size / 2
+            if math.abs(relative.X) <= size.X
+            and math.abs(relative.Y) <= size.Y
+            and math.abs(relative.Z) <= size.Z then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- ============================================================
+--  HELPER: Cek apakah sebuah POSISI ada di dalam zone
+-- ============================================================
+function GameData:IsPositionInZoneV1(position, zoneName)
+    local zone = workspace.Game.Regions.Locations:FindFirstChild(zoneName)
+    if not zone then return false end
+
+    for _, part in ipairs(zone:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local relative = part.CFrame:PointToObjectSpace(position)
             local size = part.Size / 2
             if math.abs(relative.X) <= size.X
             and math.abs(relative.Y) <= size.Y
@@ -695,32 +789,6 @@ function GameData:IsInSafeZoneV1()
     return false, nil
 end
 
--- ============================================================
---  SELL ZONE
--- ============================================================
-function GameData:IsInSellZoneV1()
-    local character = self.Characterv1
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return false, nil end
-    local pos = character.HumanoidRootPart.Position
-
-    for _, zone in pairs(workspace.Game.Regions.Locations:GetChildren()) do
-        if zone:GetAttribute("breathable") and zone.Name == self.SelectedSellLocationV1 then
-            for _, part in ipairs(zone:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    local relative = part.CFrame:PointToObjectSpace(pos)
-                    local size = part.Size / 2
-                    if math.abs(relative.X) <= size.X
-                    and math.abs(relative.Y) <= size.Y
-                    and math.abs(relative.Z) <= size.Z then
-                        return true, zone.Name
-                    end
-                end
-            end
-        end
-    end
-    return false, nil
-end
-
 function GameData:WaitUntilInSafeZoneV1(timeout)
     timeout = timeout or 30
     local elapsed = 0
@@ -730,19 +798,6 @@ function GameData:WaitUntilInSafeZoneV1(timeout)
         task.wait(0.2)
         elapsed = elapsed + 0.2
         if self.cancelSafeZoneTweenV1 then return false, nil end
-    end
-    return false, nil
-end
-
-function GameData:WaitUntilInSellZoneV1(timeout)
-    timeout = timeout or 30
-    local elapsed = 0
-    while elapsed < timeout do
-        local inZone, zoneName = self:IsInSellZoneV1()
-        if inZone then return true, zoneName end
-        task.wait(0.2)
-        elapsed = elapsed + 0.2
-        if self.cancelSellLocationTweenV1 then return false, nil end
     end
     return false, nil
 end
@@ -772,31 +827,6 @@ function GameData:GetNearestSafeZonev1()
     return nearestZone, nearestPart
 end
 
-function GameData:GetNearestSellZoneV1()
-    if not self.Characterv1 then return nil, nil end
-    local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
-    if not hrp then return nil, nil end
-
-    local nearestZone, nearestPart, shortestDistance = nil, nil, math.huge
-
-    for _, zone in pairs(workspace.Game.Regions.Locations:GetChildren()) do
-        if zone:GetAttribute("breathable") and zone.Name == self.SelectedSellLocationV1 then
-            for _, part in ipairs(zone:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    local distance = (hrp.Position - part.Position).Magnitude
-                    if distance < shortestDistance then
-                        shortestDistance = distance
-                        nearestZone = zone
-                        nearestPart = part
-                    end
-                end
-            end
-        end
-    end
-
-    return nearestZone, nearestPart
-end
-
 -- ============================================================
 --  SAFE ZONE TWEEN
 -- ============================================================
@@ -806,18 +836,17 @@ function GameData:TweenToSafeZoneAndWaitV1()
 
     local zone, part = self:GetNearestSafeZonev1()
     if not zone then
-        warn("Zona aman (oxygen) tidak ditemukan:", self.SelectedSafeZoneV1)
+        warn("Zona aman tidak ditemukan:", self.SelectedSafeZoneV1)
         return false
     end
 
     local alreadyIn, alreadyZone = self:IsInSafeZoneV1()
     if alreadyIn then
-        print("Sudah berada di Safe Zone:", alreadyZone)
+        print("Sudah di Safe Zone:", alreadyZone)
         return true, alreadyZone
     end
 
     local targetPosition = part.Position + Vector3.new(0, 5, 0)
-    -- ✅ FIX: CFrame tegak tanpa rotasi aneh
     local targetCF = MakeUprightCFrame(targetPosition)
     self.cancelSafeZoneTweenV1 = false
 
@@ -838,7 +867,7 @@ function GameData:TweenToSafeZoneAndWaitV1()
             local inZone, zoneName = self:IsInSafeZoneV1()
             if inZone then
                 tween:Cancel()
-                print("Sudah masuk Safe Zone sebelum tween selesai:", zoneName)
+                print("Masuk Safe Zone sebelum tween selesai:", zoneName)
                 break
             end
             if self.cancelSafeZoneTweenV1 then break end
@@ -868,31 +897,17 @@ function GameData:TweenToSafeZoneAndWaitV1()
 end
 
 -- ============================================================
---  SELL ZONE TWEEN
+--  SELL TWEEN — tween ke SellCFrameV1 lalu langsung sell
 -- ============================================================
-function GameData:TweenToSellZoneAndWaitV1()
+function GameData:TweenToSellCFrameAndSellV1()
     local hrp = self.Characterv1 and self.Characterv1:FindFirstChild("HumanoidRootPart")
     if not hrp then return false end
 
-    local zone, part = self:GetNearestSellZoneV1()
-    if not zone then
-        warn("Zona sell tidak ditemukan:", self.SelectedSellLocationV1)
-        return false
-    end
-
-    local alreadyIn, alreadyZone = self:IsInSellZoneV1()
-    if alreadyIn then
-        print("Sudah berada di Sell Zone:", alreadyZone)
-        return true, alreadyZone
-    end
-
-    local targetPosition = part.Position + Vector3.new(0, 5, 0)
-    -- ✅ FIX: CFrame tegak tanpa rotasi aneh
-    local targetCF = MakeUprightCFrame(targetPosition)
     self.cancelSellLocationTweenV1 = false
 
-    local distance = (hrp.Position - targetPosition).Magnitude
-    local duration = math.max(1, distance / (self.TweenSpeedToSellZoneV1 * 10))
+    local targetCF  = MakeUprightCFrame(self.SellCFrameV1.Position)
+    local distance  = (hrp.Position - self.SellCFrameV1.Position).Magnitude
+    local duration  = math.max(1, distance / (self.TweenSpeedToSellZoneV1 * 10))
 
     local tween = self.TweenServicev1:Create(
         hrp,
@@ -905,13 +920,10 @@ function GameData:TweenToSellZoneAndWaitV1()
 
     task.spawn(function()
         while tween.PlaybackState == Enum.PlaybackState.Playing do
-            local inZone, zoneName = self:IsInSellZoneV1()
-            if inZone then
+            if self.cancelSellLocationTweenV1 then
                 tween:Cancel()
-                print("Sudah masuk Sell Zone sebelum tween selesai:", zoneName)
                 break
             end
-            if self.cancelSellLocationTweenV1 then break end
             task.wait(0.2)
         end
     end)
@@ -925,16 +937,15 @@ function GameData:TweenToSellZoneAndWaitV1()
 
     self.activeSellLocationTweenV1 = nil
 
-    local inZone, zoneName = self:IsInSellZoneV1()
-    if inZone then return true, zoneName end
+    print("[Sell] Sampai CFrame tujuan, mulai sell!")
+    task.wait(0.3)
+    pcall(function()
+        GameData.SellEventv1:InvokeServer()
+    end)
+    print("[Sell] Sell berhasil!")
+    GameData.lastSellTimev1 = tick()
 
-    local success, zoneName2 = self:WaitUntilInSellZoneV1(30)
-    if success then
-        return true, zoneName2
-    else
-        warn("Timeout: Tidak sampai zona sell")
-        return false
-    end
+    return true
 end
 
 function GameData:CancelSafeZoneTweenV1()
@@ -964,7 +975,7 @@ function GameData:TweenToSafeZoneOxygenV1()
     if success then
         print("Sampai zona oxygen:", zoneName)
     else
-        warn("Gagal sampai zona oxygen, akan dicoba lagi oleh retry loop")
+        warn("Gagal sampai zona oxygen")
     end
 
     self.isTweeningOxygenV1 = false
@@ -976,62 +987,39 @@ function GameData:AutoSellV1()
     self.isSellingSellV1 = true
     self.CurrentTargetModelv1 = nil
 
-    local tweenSuccess, zoneName = self:TweenToSellZoneAndWaitV1()
-    if not tweenSuccess then
-        warn("Gagal sampai zona sell, akan dicoba lagi oleh retry loop")
-        self.isSellingSellV1 = false
-        return
-    end
-
-    print("Sampai zona sell:", zoneName, "— verifikasi ulang...")
-    local inZone, confirmedZone = self:IsInSellZoneV1()
-
-    if inZone then
-        print("Terverifikasi di zona sell:", confirmedZone, "— mulai sell!")
-        task.wait(0.3)
-        pcall(function()
-            GameData.SellEventv1:InvokeServer()
-        end)
-        print("Sell inventory berhasil!")
-        GameData.lastSellTimev1 = tick()
-    else
-        warn("Tidak terdeteksi di zona sell setelah tween, sell dibatalkan")
+    local success = self:TweenToSellCFrameAndSellV1()
+    if not success then
+        warn("[Sell] Gagal sell, akan retry")
     end
 
     self.isSellingSellV1 = false
 end
 
 -- ============================================================
---  LOCATION TWEEN (shoot fish)
+--  LOCATION TWEEN
 -- ============================================================
 function GameData:TweenToSelectedLocationV1()
     if self.isTweeningToLocationV1 then return end
     if not self.SelectedLocationV1 then return end
 
     local targetCF = self.LocationCFramesV1[self.SelectedLocationV1]
-    if not targetCF then
-        warn("CFrame tidak ditemukan untuk lokasi:", self.SelectedLocationV1)
-        return
-    end
+    if not targetCF then return end
 
     local hrp = self.Characterv1 and self.Characterv1:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    if self:IsInZoneV1(self.SelectedLocationV1) then
-        print("Sudah berada di zona:", self.SelectedLocationV1)
-        return
-    end
+    if self:IsInZoneV1(self.SelectedLocationV1) then return end
 
     self.isTweeningToLocationV1 = true
     self.cancelLocationTweenV1  = false
     self.CurrentTargetModelv1   = nil
+    self.wasInZoneV1            = false
+    self.zoneEntryTimeV1        = 0
 
     print("Tween ke lokasi:", self.SelectedLocationV1)
 
     local distance = (hrp.Position - targetCF.Position).Magnitude
     local duration = math.max(1, distance / (self.TweenSpeedToLocationV1 * 10))
-
-    -- ✅ FIX: Paksa CFrame tegak — ambil posisi dari targetCF tapi reset rotasi ke upright
     local uprightCF = MakeUprightCFrame(targetCF.Position)
 
     local tween = self.TweenServicev1:Create(
@@ -1048,7 +1036,7 @@ function GameData:TweenToSelectedLocationV1()
         while tween.PlaybackState == Enum.PlaybackState.Playing do
             if self:IsInZoneV1(selectedLoc) then
                 tween:Cancel()
-                print("Sudah masuk zona sebelum tween selesai:", selectedLoc)
+                print("Masuk zona sebelum tween selesai:", selectedLoc)
                 break
             end
             if self.cancelLocationTweenV1 then break end
@@ -1151,7 +1139,6 @@ function GameData:GetNearestTargetv1()
     return nearest
 end
 
--- ✅ FIX: TweenToPositionv1 — pertahankan orientasi tegak
 function GameData:TweenToPositionv1(position)
     if not self.Characterv1 then return end
     local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
@@ -1159,8 +1146,6 @@ function GameData:TweenToPositionv1(position)
 
     local distance = (hrp.Position - position).Magnitude
     local duration = math.max(0.1, distance / (self.TweenSpeedToFishV1 * 10))
-
-    -- Ambil rotasi Y saat ini, reset X dan Z agar tidak kebalik
     local _, currentY, _ = hrp.CFrame:ToEulerAnglesYXZ()
     local targetCF = CFrame.new(position) * CFrame.Angles(0, currentY, 0)
 
@@ -1171,7 +1156,6 @@ function GameData:TweenToPositionv1(position)
     ):Play()
 end
 
--- ✅ FIX: TweenToSafeDistancev1 — pakai CFrame.lookAt dengan upVector eksplisit
 function GameData:TweenToSafeDistancev1(model)
     if not self.Characterv1 then return end
     local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
@@ -1181,12 +1165,9 @@ function GameData:TweenToSafeDistancev1(model)
 
     local direction    = (hrp.Position - torso.Position).Unit
     local safePosition = torso.Position + (direction * self.SAFE_DISTANCEv1)
-
-    local distance = (hrp.Position - safePosition).Magnitude
-    local duration = math.max(0.1, distance / (self.TweenSpeedToSafeDistV1 * 10))
-
-    -- ✅ Pakai MakeUprightCFrame agar noleh ke ikan tapi tidak kebalik
-    local targetCF = MakeUprightCFrame(safePosition, torso.Position)
+    local distance     = (hrp.Position - safePosition).Magnitude
+    local duration     = math.max(0.1, distance / (self.TweenSpeedToSafeDistV1 * 10))
+    local targetCF     = MakeUprightCFrame(safePosition, torso.Position)
 
     self.TweenServicev1:Create(
         hrp,
@@ -1199,9 +1180,59 @@ end
 --  LOOPS
 -- ============================================================
 
+-- Anti-TP Detection Loop
+task.spawn(function()
+    task.wait(2)
+    GameData.lastPositionV1 = nil
+
+    while task.wait(0.2) do
+        if not GameData.antiTPEnabledV1 then continue end
+
+        local hrp = GameData.Characterv1 and GameData.Characterv1:FindFirstChild("HumanoidRootPart")
+        if not hrp then
+            GameData.lastPositionV1 = nil
+            continue
+        end
+
+        local humanoid = GameData.Characterv1:FindFirstChildOfClass("Humanoid")
+        if not humanoid or humanoid.Health <= 0 then
+            GameData.lastPositionV1 = nil
+            continue
+        end
+
+        local currentPos = hrp.Position
+
+        if GameData.lastPositionV1 then
+            local delta = (currentPos - GameData.lastPositionV1).Magnitude
+            if delta >= GameData.tpThresholdV1 and not GameData.isTPDetectedV1 then
+                warn("[AntiTP] Teleport terdeteksi! Delta:", math.floor(delta), "studs")
+                GameData.isTPDetectedV1 = true
+
+                GameData:CancelLocationTweenV1()
+                GameData:CancelSafeZoneTweenV1()
+                GameData:CancelSellLocationTweenV1()
+
+                GameData.wasInZoneV1     = false
+                GameData.zoneEntryTimeV1 = 0
+
+                task.delay(GameData.tpPauseTimeV1, function()
+                    GameData.isTPDetectedV1             = false
+                    GameData.isTweeningOxygenV1         = false
+                    GameData.isSellingSellV1             = false
+                    GameData.isTweeningToLocationV1     = false
+                    print("[AntiTP] Resume setelah pause", GameData.tpPauseTimeV1, "detik")
+                end)
+            end
+        end
+
+        GameData.lastPositionV1 = currentPos
+    end
+end)
+
 -- Auto Oxygen Safe Zone
 task.spawn(function()
     while task.wait(1) do
+        if GameData.isTPDetectedV1 then continue end
         if not GameData.AutoSafeZonev1 then continue end
         local oxygenValue = tonumber(GameData.oxygenLabelV1.Text)
         if oxygenValue and oxygenValue <= GameData.OxygenThresholdV1 then
@@ -1213,6 +1244,7 @@ end)
 -- Auto Sell
 task.spawn(function()
     while task.wait(1) do
+        if GameData.isTPDetectedV1 then continue end
         if not GameData.AutoSellv1 then continue end
         if GameData.isSellingSellV1 then continue end
 
@@ -1220,14 +1252,14 @@ task.spawn(function()
 
         if GameData.SellModev1 == "Sell Delay" then
             if currentTime - GameData.lastSellTimev1 >= GameData.SellDelayv1 then
-                print("Sell Delay tercapai (" .. GameData.SellDelayv1 .. "s), auto sell dimulai!")
+                print("[Sell] Delay tercapai, auto sell dimulai!")
                 GameData:AutoSellV1()
             end
         elseif GameData.SellModev1 == "Backpack Full" then
             local maxText  = tonumber(GameData.maxLabelV1.Text:match("%d+"))
             local wghtText = tonumber(GameData.wghtLabelV1.Text:match("%d+"))
             if maxText and wghtText and wghtText >= maxText then
-                print("Backpack Full (" .. wghtText .. "/" .. maxText .. "), auto sell dimulai!")
+                print("[Sell] Backpack Full, auto sell dimulai!")
                 GameData:AutoSellV1()
             end
         end
@@ -1237,12 +1269,23 @@ end)
 -- Loop cek lokasi shoot
 task.spawn(function()
     while task.wait(0.5) do
+        if GameData.isTPDetectedV1 then continue end
         if not GameData.AutoShootv1 then continue end
         if not GameData.SelectedLocationV1 then continue end
         if GameData.isTweeningOxygenV1 or GameData.isSellingSellV1 then continue end
         if GameData.locationJustChangedV1 then continue end
 
-        if not GameData:IsInZoneV1(GameData.SelectedLocationV1) then
+        local inZone = GameData:IsInZoneV1(GameData.SelectedLocationV1)
+
+        if inZone then
+            if not GameData.wasInZoneV1 then
+                GameData.zoneEntryTimeV1 = tick()
+                GameData.wasInZoneV1 = true
+                print("[Zone] Baru masuk zona, tunggu", GameData.zoneEntryDelayV1, "detik...")
+            end
+        else
+            GameData.wasInZoneV1 = false
+            GameData.zoneEntryTimeV1 = 0
             if not GameData.isTweeningToLocationV1 then
                 task.spawn(function()
                     GameData:TweenToSelectedLocationV1()
@@ -1252,9 +1295,12 @@ task.spawn(function()
     end
 end)
 
--- Auto Shoot Fish
+-- ============================================================
+--  AUTO SHOOT FISH (FIXED: Zone Delay → Tween ke Lokasi)
+-- ============================================================
 task.spawn(function()
     while task.wait(0.01) do
+        if GameData.isTPDetectedV1 then continue end
         if GameData.isTweeningOxygenV1 or GameData.isSellingSellV1 then continue end
         if GameData.isTweeningToLocationV1 then continue end
 
@@ -1265,11 +1311,32 @@ task.spawn(function()
 
         if GameData.SelectedLocationV1 then
             if not GameData:IsInZoneV1(GameData.SelectedLocationV1) then continue end
+
+            -- ✅ FIX: Saat delay aktif → tween ke titik lokasi, jangan shoot fish
+            if GameData.wasInZoneV1 then
+                local elapsed = tick() - GameData.zoneEntryTimeV1
+                if elapsed < GameData.zoneEntryDelayV1 then
+                    GameData.CurrentTargetModelv1 = nil
+
+                    local targetCF = GameData.LocationCFramesV1[GameData.SelectedLocationV1]
+                    if targetCF then
+                        local hrpDelay = GameData.Characterv1 and GameData.Characterv1:FindFirstChild("HumanoidRootPart")
+                        if hrpDelay then
+                            GameData:TweenToPositionv1(targetCF.Position)
+                        end
+                    end
+
+                    continue -- skip shoot, tunggu delay selesai
+                end
+            end
         end
 
         if not GameData.Characterv1 then continue end
         local hrp = GameData.Characterv1:FindFirstChild("HumanoidRootPart")
         if not hrp then continue end
+
+        local humanoid = GameData.Characterv1:FindFirstChildOfClass("Humanoid")
+        if not humanoid or humanoid.Health <= 0 then continue end
 
         local tool = GameData.Characterv1:FindFirstChildOfClass("Tool")
         if not tool then continue end
@@ -1291,6 +1358,34 @@ task.spawn(function()
         local currentTime = tick()
 
         if GameData:IsDeadv1(GameData.CurrentTargetModelv1) then
+            -- ✅ FIX: Cek posisi IKAN MATI, bukan posisi karakter
+            -- Kalau ikan mati berada di luar zone → skip, tidak diambil
+            if GameData.SelectedLocationV1 then
+                local fishPos = torso.Position
+                local zone = workspace.Game.Regions.Locations:FindFirstChild(GameData.SelectedLocationV1)
+                local fishInZone = false
+                if zone then
+                    for _, part in ipairs(zone:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            local relative = part.CFrame:PointToObjectSpace(fishPos)
+                            local size = part.Size / 2
+                            if math.abs(relative.X) <= size.X
+                            and math.abs(relative.Y) <= size.Y
+                            and math.abs(relative.Z) <= size.Z then
+                                fishInZone = true
+                                break
+                            end
+                        end
+                    end
+                end
+                if not fishInZone then
+                    -- Ikan mati di luar zone, skip & cari target baru
+                    print("[Collect] Ikan mati di luar zone, skip:", GameData.CurrentTargetModelv1.Name)
+                    GameData.CurrentTargetModelv1 = nil
+                    continue
+                end
+            end
+
             if distance > GameData.COLLECT_DISTANCEv1 then
                 GameData:TweenToPositionv1(torso.Position)
             else
@@ -1324,6 +1419,7 @@ end)
 -- Retry Loop: Oxygen
 task.spawn(function()
     while task.wait(2) do
+        if GameData.isTPDetectedV1 then continue end
         if not GameData.AutoSafeZonev1 then continue end
         if GameData.isTweeningOxygenV1 then continue end
 
@@ -1333,7 +1429,7 @@ task.spawn(function()
         local inZone = GameData:IsInSafeZoneV1()
         if inZone then continue end
 
-        warn("[RetryLoop-Oxygen] Oxygen rendah (" .. tostring(oxygenValue) .. ") tapi belum di safe zone, retry...")
+        warn("[RetryLoop-Oxygen] Retry oxygen...")
         task.spawn(function()
             GameData:TweenToSafeZoneOxygenV1()
         end)
@@ -1343,6 +1439,7 @@ end)
 -- Retry Loop: Sell
 task.spawn(function()
     while task.wait(3) do
+        if GameData.isTPDetectedV1 then continue end
         if not GameData.AutoSellv1 then continue end
         if GameData.isSellingSellV1 or GameData.isTweeningOxygenV1 then continue end
 
@@ -1359,10 +1456,7 @@ task.spawn(function()
 
         if not shouldSell then continue end
 
-        local inZone = GameData:IsInSellZoneV1()
-        if inZone then continue end
-
-        warn("[RetryLoop-Sell] Belum di sell zone, retry...")
+        warn("[RetryLoop-Sell] Retry sell...")
         task.spawn(function()
             GameData:AutoSellV1()
         end)
@@ -1384,7 +1478,6 @@ task.spawn(function()
         local wghtText = tonumber(GameData.wghtLabelV1.Text:match("%d+")) or 0
 
         local inSafeZone, _ = GameData:IsInSafeZoneV1()
-        local inSellZone, _ = GameData:IsInSellZoneV1()
         local inLocation    = GameData.SelectedLocationV1 and GameData:IsInZoneV1(GameData.SelectedLocationV1) or false
 
         local targetName     = "None"
@@ -1405,7 +1498,19 @@ task.spawn(function()
 
         local statusTweenLoc  = GameData.isTweeningToLocationV1 and "🔄 Moving..." or (inLocation and "✅ In Zone" or "❌ Out Zone")
         local statusTweenOxy  = GameData.isTweeningOxygenV1 and "🔄 Moving..." or (inSafeZone and "✅ In Zone" or "❌ Out Zone")
-        local statusTweenSell = GameData.isSellingSellV1 and "🔄 Selling..." or (inSellZone and "✅ In Zone" or "❌ Out Zone")
+        local statusTweenSell = GameData.isSellingSellV1 and "🔄 Going to Sell..." or "✅ Idle"
+        local statusTP        = GameData.isTPDetectedV1 and "⚠️ TP Detected! Pausing..." or "✅ Normal"
+
+        local statusZoneDelay = "-"
+        if GameData.wasInZoneV1 then
+            local elapsed   = tick() - GameData.zoneEntryTimeV1
+            local remaining = GameData.zoneEntryDelayV1 - elapsed
+            if remaining > 0 then
+                statusZoneDelay = string.format("⏳ %.1fs (Tween ke Lokasi...)", remaining)
+            else
+                statusZoneDelay = "✅ Ready"
+            end
+        end
 
         local nextSell = "-"
         if GameData.AutoSellv1 and GameData.SellModev1 == "Sell Delay" then
@@ -1420,14 +1525,17 @@ task.spawn(function()
             "Auto Sell    : " .. statusSell .. "\n" ..
             "Auto SafeZone: " .. statusSafeZone .. "\n" ..
             "─────────────────────\n" ..
+            "Anti-TP      : " .. statusTP .. "\n" ..
+            "─────────────────────\n" ..
             "Oxygen       : " .. oxygen .. " (Threshold: " .. GameData.OxygenThresholdV1 .. ")\n" ..
             "Weight       : " .. wghtText .. " / " .. maxText .. "\n" ..
             "─────────────────────\n" ..
             "Location     : " .. (GameData.SelectedLocationV1 or "None") .. "\n" ..
             "Loc Status   : " .. statusTweenLoc .. "\n" ..
+            "Zone Delay   : " .. statusZoneDelay .. "\n" ..
             "Safe Zone    : " .. GameData.SelectedSafeZoneV1 .. "\n" ..
             "SafeZ Status : " .. statusTweenOxy .. "\n" ..
-            "Sell Zone    : " .. GameData.SelectedSellLocationV1 .. "\n" ..
+            "Sell Target  : The Forgotten Dome\n" ..
             "Sell Status  : " .. statusTweenSell .. "\n" ..
             "─────────────────────\n" ..
             "Target Fish  : " .. targetName .. "\n" ..
@@ -1438,7 +1546,6 @@ task.spawn(function()
     end
 end)
 
-
 Sec.Main2:AddSubSection("SHOOT FISH")
 
 Sec.Main2:AddInput({
@@ -1447,7 +1554,7 @@ Sec.Main2:AddInput({
     Callback = function(value)
         local number = tonumber(value)
         if number and number >= 1 then
-            GameData.TweenSpeedToFishV1     = number 
+            GameData.TweenSpeedToFishV1     = number
             GameData.TweenSpeedToSafeDistV1 = number
         end
     end
@@ -1483,7 +1590,9 @@ Sec.Main2:AddDropdown({
     Callback = function(value)
         if GameData.SelectedLocationV1 ~= value then
             GameData:CancelLocationTweenV1()
-            GameData.SelectedLocationV1 = value
+            GameData.SelectedLocationV1    = value
+            GameData.wasInZoneV1           = false
+            GameData.zoneEntryTimeV1       = 0
             GameData.locationJustChangedV1 = true
             task.delay(3, function()
                 GameData.locationJustChangedV1 = false
@@ -1530,6 +1639,8 @@ Sec.Main2:AddToggle({
         GameData.AutoShootv1 = value
         if not value then
             GameData:CancelLocationTweenV1()
+            GameData.wasInZoneV1     = false
+            GameData.zoneEntryTimeV1 = 0
         else
             GameData.locationJustChangedV1 = true
             task.delay(3, function()
@@ -1560,7 +1671,7 @@ Sec.Main2:AddDropdown({
     Default = GameData.SelectedSafeZoneV1,
     Callback = function(value)
         GameData.SelectedSafeZoneV1 = value
-        print("Safe Zone (oxygen) dipilih:", value)
+        print("Safe Zone dipilih:", value)
     end
 })
 
@@ -1654,10 +1765,7 @@ Sec.Sell = Tabs.Main:AddSection({
 Sec.Sell:AddDropdown({
     Title = "Select Mode Sell",
     Content = "Select Sell Trigger Mode",
-    Options = {
-        "Sell Delay",
-        "Backpack Full",
-    },
+    Options = {"Sell Delay", "Backpack Full"},
     Multi = false,
     Default = "Sell Delay",
     Callback = function(value)
@@ -1671,9 +1779,7 @@ Sec.Sell:AddInput({
     Default = tostring(GameData.SellDelayv1),
     Callback = function(value)
         local num = tonumber(value)
-        if num and num > 0 then
-            GameData.SellDelayv1 = num
-        end
+        if num and num > 0 then GameData.SellDelayv1 = num end
     end
 })
 
@@ -1693,9 +1799,7 @@ Sec.Sell:AddToggle({
     Default = false,
     Callback = function(value)
         GameData.AutoSellv1 = value
-        if not value then
-            GameData:CancelSellLocationTweenV1()
-        end
+        if not value then GameData:CancelSellLocationTweenV1() end
     end
 })
 
@@ -2460,7 +2564,7 @@ Sec.Tp1:AddButton({
 
 Sec.Shop1 = Tabs.Shop:AddSection({
     Title = "Item Shop",
-    Open = true
+    Open = false
 })
 
 Sec.Shop1:AddSubSection("GUNS SHOP")
@@ -2601,3 +2705,143 @@ Sec.Shop1:AddButton({
     end
 })
 
+Sec.Merchant = Tabs.Shop:AddSection({
+    Title = "Merchant",
+    Open = false
+})
+
+GameData.Knitv16 = require(
+    GameData.Servicesv16.ReplicatedStoragev16.common.packages.Knit
+)
+
+GameData.DataControllerv16 = GameData.Knitv16.GetController("DataController")
+GameData.MerchantServicev16 = GameData.Knitv16.GetService("MerchantService")
+GameData.Replicav16 = GameData.DataControllerv16:GetReplica()
+
+GameData.Libraryv16 = require(
+    GameData.Servicesv16.ReplicatedStoragev16.common.library
+)
+
+function GameData.CreateMerchantUIv16(merchantv16)
+
+    local containerv16 = {}
+    containerv16.autoBuyv16 = false
+    containerv16.itemMapv16 = {}
+
+    Sec.Merchant:AddSubSection(merchantv16)
+
+    containerv16.stoc_infov16 = Sec.Merchant:AddParagraph({
+        Title = merchantv16.." Stock",
+        Content = "Loading..."
+    })
+
+    containerv16.selectitemsv16 = Sec.Merchant:AddDropdown({
+        Title = merchantv16.." Item",
+        Content = "Select item",
+        Options = {},
+        Multi = true,
+        Default = {}
+    })
+
+    Sec.Merchant:AddToggle({
+        Title = merchantv16.." Auto Buy",
+        Default = false,
+        Callback = function(valv16)
+            containerv16.autoBuyv16 = valv16
+        end
+    })
+
+    Sec.Merchant:AddButton({
+        Title = merchantv16.." Refresh",
+        Version = "V2",
+        Icon = "rbxassetid://79715859717613",
+        Callback = function()
+            GameData.RefreshMerchantv16(merchantv16)
+        end
+    })
+
+    GameData.MerchantUIv16[merchantv16] = containerv16
+end
+
+function GameData.RefreshMerchantv16(merchantv16)
+
+    local uiv16 = GameData.MerchantUIv16[merchantv16]
+    if not uiv16 then return end
+
+    local datav16 = GameData.Replicav16.Data.merchant_stocks[merchantv16]
+    local merchantInfov16 = GameData.Libraryv16.merchants[merchantv16]
+
+    if not datav16 then
+        uiv16.stoc_infov16:SetContent("No stock data")
+        return
+    end
+
+    local linesv16 = {}
+    local optionsv16 = {}
+    uiv16.itemMapv16 = {}
+
+    for slotv16, itemDatav16 in pairs(datav16.stock) do
+
+        local pricev16 = "?"
+        if merchantInfov16 and merchantInfov16.stock[itemDatav16.item] then
+            pricev16 = merchantInfov16.stock[itemDatav16.item].price
+        end
+
+        local labelv16 = "["..slotv16.."] "..itemDatav16.item
+        uiv16.itemMapv16[labelv16] = slotv16
+
+        table.insert(optionsv16, labelv16)
+        table.insert(linesv16,
+            string.format(
+                "%s\n Stock: %s\n Price: %s\n",
+                labelv16,
+                itemDatav16.stock,
+                pricev16
+            )
+        )
+    end
+
+    uiv16.stoc_infov16:SetContent(table.concat(linesv16,"──────────\n"))
+    uiv16.selectitemsv16:SetValues(optionsv16,false)
+end
+
+for merchantv16 in pairs(GameData.Replicav16.Data.merchant_stocks) do
+    GameData.CreateMerchantUIv16(merchantv16)
+    GameData.RefreshMerchantv16(merchantv16)
+end
+
+task.spawn(function()
+
+    while true do
+        task.wait(0.3)
+
+        for merchantv16, uiv16 in pairs(GameData.MerchantUIv16) do
+            if uiv16.autoBuyv16 then
+
+                local selectedv16 = uiv16.selectitemsv16:GetValue() or {}
+                local datav16 = GameData.Replicav16.Data.merchant_stocks[merchantv16]
+
+                if datav16 then
+                    for _, labelv16 in ipairs(selectedv16) do
+                        local slotv16 = uiv16.itemMapv16[labelv16]
+
+                        if slotv16
+                        and datav16.stock[slotv16]
+                        and datav16.stock[slotv16].stock > 0 then
+
+                            GameData.MerchantServicev16:Buy(merchantv16, slotv16, 1)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+end)
+
+GameData.Replicav16:ListenToRaw(function(pathv16)
+    if pathv16[1] == "merchant_stocks" then
+        task.wait(0.2)
+        GameData.RefreshMerchantv16(pathv16[2])
+    end
+end)
