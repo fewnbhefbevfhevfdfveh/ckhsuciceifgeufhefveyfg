@@ -741,6 +741,27 @@ function GameData:IsInZoneV1(zoneName)
 end
 
 -- ============================================================
+--  HELPER: Cek apakah sebuah POSISI ada di dalam zone
+-- ============================================================
+function GameData:IsPositionInZoneV1(position, zoneName)
+    local zone = workspace.Game.Regions.Locations:FindFirstChild(zoneName)
+    if not zone then return false end
+
+    for _, part in ipairs(zone:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local relative = part.CFrame:PointToObjectSpace(position)
+            local size = part.Size / 2
+            if math.abs(relative.X) <= size.X
+            and math.abs(relative.Y) <= size.Y
+            and math.abs(relative.Z) <= size.Z then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- ============================================================
 --  SAFE ZONE (Oxygen)
 -- ============================================================
 function GameData:IsInSafeZoneV1()
@@ -1272,7 +1293,9 @@ task.spawn(function()
     end
 end)
 
--- Auto Shoot Fish
+-- ============================================================
+--  AUTO SHOOT FISH (FIXED: Zone Delay → Tween ke Lokasi)
+-- ============================================================
 task.spawn(function()
     while task.wait(0.01) do
         if GameData.isTPDetectedV1 then continue end
@@ -1286,7 +1309,24 @@ task.spawn(function()
 
         if GameData.SelectedLocationV1 then
             if not GameData:IsInZoneV1(GameData.SelectedLocationV1) then continue end
-            if GameData.wasInZoneV1 and (tick() - GameData.zoneEntryTimeV1) < GameData.zoneEntryDelayV1 then continue end
+
+            -- ✅ FIX: Saat delay aktif → tween ke titik lokasi, jangan shoot fish
+            if GameData.wasInZoneV1 then
+                local elapsed = tick() - GameData.zoneEntryTimeV1
+                if elapsed < GameData.zoneEntryDelayV1 then
+                    GameData.CurrentTargetModelv1 = nil
+
+                    local targetCF = GameData.LocationCFramesV1[GameData.SelectedLocationV1]
+                    if targetCF then
+                        local hrpDelay = GameData.Characterv1 and GameData.Characterv1:FindFirstChild("HumanoidRootPart")
+                        if hrpDelay then
+                            GameData:TweenToPositionv1(targetCF.Position)
+                        end
+                    end
+
+                    continue -- skip shoot, tunggu delay selesai
+                end
+            end
         end
 
         if not GameData.Characterv1 then continue end
@@ -1316,6 +1356,34 @@ task.spawn(function()
         local currentTime = tick()
 
         if GameData:IsDeadv1(GameData.CurrentTargetModelv1) then
+            -- ✅ FIX: Cek posisi IKAN MATI, bukan posisi karakter
+            -- Kalau ikan mati berada di luar zone → skip, tidak diambil
+            if GameData.SelectedLocationV1 then
+                local fishPos = torso.Position
+                local zone = workspace.Game.Regions.Locations:FindFirstChild(GameData.SelectedLocationV1)
+                local fishInZone = false
+                if zone then
+                    for _, part in ipairs(zone:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            local relative = part.CFrame:PointToObjectSpace(fishPos)
+                            local size = part.Size / 2
+                            if math.abs(relative.X) <= size.X
+                            and math.abs(relative.Y) <= size.Y
+                            and math.abs(relative.Z) <= size.Z then
+                                fishInZone = true
+                                break
+                            end
+                        end
+                    end
+                end
+                if not fishInZone then
+                    -- Ikan mati di luar zone, skip & cari target baru
+                    print("[Collect] Ikan mati di luar zone, skip:", GameData.CurrentTargetModelv1.Name)
+                    GameData.CurrentTargetModelv1 = nil
+                    continue
+                end
+            end
+
             if distance > GameData.COLLECT_DISTANCEv1 then
                 GameData:TweenToPositionv1(torso.Position)
             else
@@ -1435,7 +1503,11 @@ task.spawn(function()
         if GameData.wasInZoneV1 then
             local elapsed   = tick() - GameData.zoneEntryTimeV1
             local remaining = GameData.zoneEntryDelayV1 - elapsed
-            statusZoneDelay = remaining > 0 and string.format("⏳ %.1fs", remaining) or "✅ Ready"
+            if remaining > 0 then
+                statusZoneDelay = string.format("⏳ %.1fs (Tween ke Lokasi...)", remaining)
+            else
+                statusZoneDelay = "✅ Ready"
+            end
         end
 
         local nextSell = "-"
