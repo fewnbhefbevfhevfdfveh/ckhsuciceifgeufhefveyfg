@@ -298,6 +298,12 @@ local GameData = {
         TweenInfov14 = TweenInfo.new(25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     },
 
+	-- // Anti Afk
+
+    VIM = game:GetService("VirtualInputManager"),
+
+    AntiAfkRunning = false,
+    AntiAfkThread = nil,
 }
 
 local Window = Chloex:Window({
@@ -484,6 +490,44 @@ Sec.Main1:AddToggle({
 
             Notify("Zoom 1000 Disabled!", 2)
         end
+    end
+})
+
+
+function GameData:StartAntiAfk()
+    if self.AntiAfkThread then return end
+
+    self.AntiAfkThread = task.spawn(function()
+        while GameData.AntiAfkRunning do
+
+            GameData.VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
+            task.wait(0.05)
+            GameData.VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
+
+            task.wait(0.15)
+
+            GameData.VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
+            task.wait(0.05)
+            GameData.VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
+
+            task.wait(600)
+        end
+
+        GameData.AntiAfkThread = nil
+    end)
+end
+
+Sec.Main1:AddToggle({ 
+    Title = "Anti Afk", 
+    Default = false,
+    Callback = function(value)
+
+        GameData.AntiAfkRunning = value
+
+        if value then
+            GameData:StartAntiAfk()
+        end
+
     end
 })
 
