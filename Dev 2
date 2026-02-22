@@ -310,6 +310,34 @@ local GameData = {
 
     AntiAfkRunning = false, 
     AntiAfkThread = nil,
+
+	-- // Noclip
+
+    Servicesv15 = {
+        Playersv15 = game:GetService("Players"),
+        RunServicev15 = game:GetService("RunService")
+    },
+
+    Playerv15 = nil,
+
+    Noclipv15 = {
+        Enabledv15 = false,
+        Connectionv15 = nil
+    },
+
+	-- // Merchant
+
+    Servicesv16 = {
+        ReplicatedStoragev16 = game:GetService("ReplicatedStorage")
+    },
+
+    Knitv16 = nil,
+    DataControllerv16 = nil,
+    MerchantServicev16 = nil,
+    Replicav16 = nil,
+    Libraryv16 = nil,
+
+    MerchantUIv16 = {},
 }
 
 local Window = Chloex:Window({
@@ -368,21 +396,8 @@ Sec.Home1 = Tabs.Home:AddSection({
 Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
-[+] Added Auto Treasure Hunt
-[+] Added Dropdwon Select Tier Chest
-[+] Added Auto Claim Bestiary 
-[+] Added Tween Speed Sell
-[+] Added Monitor Fish
-[+] Added Location Fish Farm
-[+] Added Location Tween Speed
-[+] Added Location Safe Zone
-[+] Added New Location Safe Zone
- - Monkey King's Lair
-[+] Added New Location Fish Farm
- - Sunken Wilds
-[+] Added New Location Telepeort
- - Crazy Jeff's Store
- - Sunken Wilds
+[+] Added Noclip
+[+] Added Merchant Shop
 	]]
 })
 
@@ -499,6 +514,7 @@ Sec.Main1:AddToggle({
     end
 })
 
+-- // Anti Afk
 
 function GameData:StartAntiAfk()
     if self.AntiAfkThread then return end
@@ -534,6 +550,53 @@ Sec.Main1:AddToggle({
             GameData:StartAntiAfk()
         end
 
+    end
+})
+
+-- // Noclip
+
+GameData.Playerv15 = GameData.Servicesv15.Playersv15.LocalPlayer
+
+Sec.Main1:AddToggle({
+    Title = "Noclip",
+    Default = false,
+    Callback = function(valuev15)
+
+        GameData.Noclipv15.Enabledv15 = valuev15
+
+        if GameData.Noclipv15.Enabledv15 then
+            Notify("Noclip enabled!", 2)
+
+            GameData.Noclipv15.Connectionv15 =
+                GameData.Servicesv15.RunServicev15.Stepped:Connect(function()
+
+                    local characterv15 = GameData.Playerv15.Character
+                    if characterv15 then
+                        for _, partv15 in pairs(characterv15:GetDescendants()) do
+                            if partv15:IsA("BasePart") then
+                                partv15.CanCollide = false
+                            end
+                        end
+                    end
+                end)
+
+        else
+            Notify("Noclip disabled!", 2)
+
+            if GameData.Noclipv15.Connectionv15 then
+                GameData.Noclipv15.Connectionv15:Disconnect()
+                GameData.Noclipv15.Connectionv15 = nil
+            end
+
+            local characterv15 = GameData.Playerv15.Character
+            if characterv15 then
+                for _, partv15 in pairs(characterv15:GetDescendants()) do
+                    if partv15:IsA("BasePart") then
+                        partv15.CanCollide = true
+                    end
+                end
+            end
+        end
     end
 })
 
@@ -2439,7 +2502,7 @@ Sec.Tp1:AddButton({
 
 Sec.Shop1 = Tabs.Shop:AddSection({
     Title = "Item Shop",
-    Open = true
+    Open = false
 })
 
 Sec.Shop1:AddSubSection("GUNS SHOP")
@@ -2580,3 +2643,143 @@ Sec.Shop1:AddButton({
     end
 })
 
+Sec.Merchant = Tabs.Shop:AddSection({
+    Title = "Merchant",
+    Open = false
+})
+
+GameData.Knitv16 = require(
+    GameData.Servicesv16.ReplicatedStoragev16.common.packages.Knit
+)
+
+GameData.DataControllerv16 = GameData.Knitv16.GetController("DataController")
+GameData.MerchantServicev16 = GameData.Knitv16.GetService("MerchantService")
+GameData.Replicav16 = GameData.DataControllerv16:GetReplica()
+
+GameData.Libraryv16 = require(
+    GameData.Servicesv16.ReplicatedStoragev16.common.library
+)
+
+function GameData.CreateMerchantUIv16(merchantv16)
+
+    local containerv16 = {}
+    containerv16.autoBuyv16 = false
+    containerv16.itemMapv16 = {}
+
+    Sec.Merchant:AddSubSection(merchantv16)
+
+    containerv16.stoc_infov16 = Sec.Merchant:AddParagraph({
+        Title = merchantv16.." Stock",
+        Content = "Loading..."
+    })
+
+    containerv16.selectitemsv16 = Sec.Merchant:AddDropdown({
+        Title = merchantv16.." Item",
+        Content = "Select item",
+        Options = {},
+        Multi = true,
+        Default = {}
+    })
+
+    Sec.Merchant:AddToggle({
+        Title = merchantv16.." Auto Buy",
+        Default = false,
+        Callback = function(valv16)
+            containerv16.autoBuyv16 = valv16
+        end
+    })
+
+    Sec.Merchant:AddButton({
+        Title = merchantv16.." Refresh",
+        Version = "V2",
+        Icon = "rbxassetid://79715859717613",
+        Callback = function()
+            GameData.RefreshMerchantv16(merchantv16)
+        end
+    })
+
+    GameData.MerchantUIv16[merchantv16] = containerv16
+end
+
+function GameData.RefreshMerchantv16(merchantv16)
+
+    local uiv16 = GameData.MerchantUIv16[merchantv16]
+    if not uiv16 then return end
+
+    local datav16 = GameData.Replicav16.Data.merchant_stocks[merchantv16]
+    local merchantInfov16 = GameData.Libraryv16.merchants[merchantv16]
+
+    if not datav16 then
+        uiv16.stoc_infov16:SetContent("No stock data")
+        return
+    end
+
+    local linesv16 = {}
+    local optionsv16 = {}
+    uiv16.itemMapv16 = {}
+
+    for slotv16, itemDatav16 in pairs(datav16.stock) do
+
+        local pricev16 = "?"
+        if merchantInfov16 and merchantInfov16.stock[itemDatav16.item] then
+            pricev16 = merchantInfov16.stock[itemDatav16.item].price
+        end
+
+        local labelv16 = "["..slotv16.."] "..itemDatav16.item
+        uiv16.itemMapv16[labelv16] = slotv16
+
+        table.insert(optionsv16, labelv16)
+        table.insert(linesv16,
+            string.format(
+                "%s\n Stock: %s\n Price: %s\n",
+                labelv16,
+                itemDatav16.stock,
+                pricev16
+            )
+        )
+    end
+
+    uiv16.stoc_infov16:SetContent(table.concat(linesv16,"──────────\n"))
+    uiv16.selectitemsv16:SetValues(optionsv16,false)
+end
+
+for merchantv16 in pairs(GameData.Replicav16.Data.merchant_stocks) do
+    GameData.CreateMerchantUIv16(merchantv16)
+    GameData.RefreshMerchantv16(merchantv16)
+end
+
+task.spawn(function()
+
+    while true do
+        task.wait(0.3)
+
+        for merchantv16, uiv16 in pairs(GameData.MerchantUIv16) do
+            if uiv16.autoBuyv16 then
+
+                local selectedv16 = uiv16.selectitemsv16:GetValue() or {}
+                local datav16 = GameData.Replicav16.Data.merchant_stocks[merchantv16]
+
+                if datav16 then
+                    for _, labelv16 in ipairs(selectedv16) do
+                        local slotv16 = uiv16.itemMapv16[labelv16]
+
+                        if slotv16
+                        and datav16.stock[slotv16]
+                        and datav16.stock[slotv16].stock > 0 then
+
+                            GameData.MerchantServicev16:Buy(merchantv16, slotv16, 1)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+end)
+
+GameData.Replicav16:ListenToRaw(function(pathv16)
+    if pathv16[1] == "merchant_stocks" then
+        task.wait(0.2)
+        GameData.RefreshMerchantv16(pathv16[2])
+    end
+end)
