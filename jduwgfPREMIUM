@@ -30,6 +30,10 @@ local games = {
     ["Abyss"] = {
         placeIds = {127794225497302},
         url = "https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Abyss.lua"
+    },
+    ["Garden Horizons"] = {
+        placeIds = {130594398886540},
+        url = "https://raw.githubusercontent.com/fewnbhefbevfhevfdfveh/ckhsuciceifgeufhefveyfg/refs/heads/main/Garden%20Horizons.lua"
     }
 }
 
