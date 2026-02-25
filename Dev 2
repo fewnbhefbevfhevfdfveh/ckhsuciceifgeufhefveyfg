@@ -91,6 +91,7 @@ local GameData = {
         StartAutoBuy = nil,
     },
 
+
     -- // Auto Buy Gear
 
     Servicesv3 = {
@@ -242,6 +243,24 @@ local GameData = {
     SellModev9 = "SellAll",
 
     PlantOptionsv9 = {},
+
+    -- // Auto Plant
+
+    ReplicatedStorage = game:GetService("ReplicatedStorage"),
+    Players = game:GetService("Players"),
+
+    SeedsFolder = nil,
+    PlotsFolder = nil,
+
+    Player = nil,
+
+    PlantDelay = 0.01,
+    TpDelay = 0.01,
+
+    SeedNames = {},
+    SelectedSeed = nil,
+    IsPlanting = false,
+    SelectedPlantMode = "Character Position",
 }
 
 local MarketplaceService = game:GetService("MarketplaceService")
@@ -310,6 +329,9 @@ Sec.Home1:AddParagraph({
   [+] Dropdown Select Mutations
   [+] Input Min Fruit Weight
   [+] Input Max Fruit Weight
+[+] Added Auto Plant
+ [+] Dropdown Select Seed
+ [+] Dropdown Select Plant Position
 [+] Added Auto Favorite
   [+] Dropdown Select Seed
   [+] Dropdown Select Mutations
@@ -1023,7 +1045,213 @@ Sec.Main3:AddToggle({
     end
 })
 
-Sec.Sell1 = Tabs.Main:AddSection({
+Sec.Main4 = Tabs.Main:AddSection({
+    Title = "Sell Features",
+    Open = false
+})
+
+GameData.SeedsFolder = GameData.ReplicatedStorage.Plants.Tools.Seeds
+GameData.PlotsFolder = workspace:WaitForChild("Plots")
+GameData.Player = GameData.Players.LocalPlayer
+
+function GameData:FindPlayerPlot(p)
+    for _, plot in pairs(self.PlotsFolder:GetChildren()) do
+        if plot:GetAttribute("Owner") == p.UserId then
+            return plot
+        end
+    end
+end
+
+for _, seed in pairs(GameData.SeedsFolder:GetChildren()) do
+    table.insert(GameData.SeedNames, seed.Name)
+end
+
+GameData.SelectedSeed = GameData.SeedNames[1]
+
+function GameData:GetSeedItemName(seedName)
+    return string.gsub(seedName, " Seed", "")
+end
+
+function GameData:GetToolFromBackpack(seedName)
+    local backpack = self.Player.Backpack
+    for _, tool in pairs(backpack:GetChildren()) do
+        if string.find(tool.Name, seedName) then
+            return tool
+        end
+    end
+end
+
+function GameData:GetToolFromCharacter(seedName)
+    local char = self.Player.Character
+    if char then
+        for _, tool in pairs(char:GetChildren()) do
+            if string.find(tool.Name, seedName) then
+                return tool
+            end
+        end
+    end
+end
+
+function GameData:EquipTool(tool)
+    local char = self.Player.Character
+    if char and tool then
+        tool.Parent = char
+        task.wait(0.3)
+    end
+end
+
+function GameData:ScanPart(targetPart, seedName)
+    local character = self.Player.Character or self.Player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+    local Event = self.ReplicatedStorage.RemoteEvents.PlantSeed
+
+    local size = targetPart.Size
+    local step = 2
+
+    local axes = {
+        {value = size.X, vector = Vector3.new(1,0,0)},
+        {value = size.Y, vector = Vector3.new(0,1,0)},
+        {value = size.Z, vector = Vector3.new(0,0,1)},
+    }
+
+    table.sort(axes, function(a,b)
+        return a.value > b.value
+    end)
+
+    self.axis1 = axes[1]
+    self.axis2 = axes[2]
+    self.thinAxis = axes[3]
+    self.goingRight = true
+
+    for a = -self.axis1.value/2, self.axis1.value/2, step do
+        if not self.IsPlanting or self.SelectedPlantMode ~= "Random Plant" then break end
+
+        if self.goingRight then
+            for b = -self.axis2.value/2, self.axis2.value/2, step do
+                if not self.IsPlanting or self.SelectedPlantMode ~= "Random Plant" then break end
+
+                local offset =
+                    self.axis1.vector * a +
+                    self.axis2.vector * b +
+                    self.thinAxis.vector * 3
+
+                local worldPos = (targetPart.CFrame * CFrame.new(offset)).Position
+                worldPos = worldPos + Vector3.new(0,5,0)
+
+                hrp.CFrame = CFrame.new(worldPos)
+                task.wait(self.TpDelay)
+
+                Event:InvokeServer(seedName, hrp.Position)
+                task.wait(self.PlantDelay)
+            end
+        else
+            for b = self.axis2.value/2, -self.axis2.value/2, -step do
+                if not self.IsPlanting or self.SelectedPlantMode ~= "Random Plant" then break end
+
+                local offset =
+                    self.axis1.vector * a +
+                    self.axis2.vector * b +
+                    self.thinAxis.vector * 3
+
+                local worldPos = (targetPart.CFrame * CFrame.new(offset)).Position
+                worldPos = worldPos + Vector3.new(0,5,0)
+
+                hrp.CFrame = CFrame.new(worldPos)
+                task.wait(self.TpDelay)
+
+                Event:InvokeServer(seedName, hrp.Position)
+                task.wait(self.PlantDelay)
+            end
+        end
+
+        self.goingRight = not self.goingRight
+    end
+end
+
+Sec.Main4:AddDropdown({
+    Title = "Select a Seed",
+    Content = "Choose a seed from the list",
+    Options = GameData.SeedNames,
+    Multi = false,
+    Default = GameData.SeedNames[1],
+    Callback = function(value)
+        GameData.SelectedSeed = value
+    end
+})
+
+Sec.Main4:AddDropdown({
+    Title = "Select Plant Position",
+    Content = "Choose where to plant the seed",
+    Options = {"Character Position", "Random Plant"},
+    Multi = false,
+    Default = "Character Position",
+    Callback = function(value)
+        GameData.SelectedPlantMode = value
+    end
+})
+
+Sec.Main4:AddToggle({
+    Title = "Auto Plant Seed",
+    Default = false,
+    Callback = function(value)
+        GameData.IsPlanting = value
+
+        if value then
+            task.spawn(function()
+                while GameData.IsPlanting do
+
+                    local heldTool = GameData:GetToolFromCharacter(GameData.SelectedSeed)
+                    if not heldTool then
+                        local tool = GameData:GetToolFromBackpack(GameData.SelectedSeed)
+                        if tool then
+                            GameData:EquipTool(tool)
+                            task.wait(0.2)
+                        else
+                            task.wait(1)
+                            continue
+                        end
+                    end
+
+                    if GameData.SelectedPlantMode == "Character Position" then
+                        local char = GameData.Player.Character
+                        if char then
+                            local hrp = char:FindFirstChild("HumanoidRootPart")
+                            if hrp then
+                                GameData.ReplicatedStorage.RemoteEvents.PlantSeed:InvokeServer(
+                                    GameData:GetSeedItemName(GameData.SelectedSeed),
+                                    hrp.Position
+                                )
+                            end
+                        end
+                        task.wait(GameData.PlantDelay)
+
+                    elseif GameData.SelectedPlantMode == "Random Plant" then
+                        local myPlot = GameData:FindPlayerPlot(GameData.Player)
+                        if not myPlot then
+                            task.wait(2)
+                            continue
+                        end
+
+                        local plantableArea = myPlot:FindFirstChild("PlantableArea")
+                        if not plantableArea then
+                            task.wait(2)
+                            continue
+                        end
+
+                        for _, obj in pairs(plantableArea:GetChildren()) do
+                            if not GameData.IsPlanting then break end
+                            if obj:IsA("BasePart") then
+                                GameData:ScanPart(obj, GameData:GetSeedItemName(GameData.SelectedSeed))
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+})
+
+Sec.Sell1 = Tabs.Backpack:AddSection({
     Title = "Sell Features",
     Open = false
 })
@@ -1718,7 +1946,9 @@ GameData.SeedShopv2.GetShopDatav2 =
         :WaitForChild("GetShopData")
 
 for _, info in pairs(GameData.SeedShopv2.Datav2.ShopData) do
-    table.insert(GameData.SeedShopv2.SeedOptionsv2, info.Name)
+    if info.Name then
+        table.insert(GameData.SeedShopv2.SeedOptionsv2, info.Name)
+    end
 end
 
 do
@@ -1791,10 +2021,11 @@ GameData.Fnv2.GetSeedsByRarity = function(selectedRarities)
     for _, r in ipairs(selectedRarities) do
         rarityLookup[r] = true
     end
-    for _, plantData in pairs(GameData.SeedShopv2.PlantDefinitionsv2) do
+    for plantName, plantData in pairs(GameData.SeedShopv2.PlantDefinitionsv2) do
         if plantData.Rarity and rarityLookup[plantData.Rarity] then
+            local seedName = plantName .. " Seed"
             for _, shopInfo in pairs(GameData.SeedShopv2.Datav2.ShopData) do
-                if shopInfo.Name == plantData.Name or shopInfo.Name == (plantData.Name .. " Seed") then
+                if shopInfo.Name and shopInfo.Name == seedName then
                     table.insert(result, shopInfo.Name)
                     break
                 end
