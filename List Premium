@@ -18,7 +18,109 @@ local Request =
     (fluxus and fluxus.request)
 
 if not Request then
-    player:Kick("❌ Executor not supported")
+    -- Tampilkan kick screen lalu kick
+    local function KickNoExecutor()
+        local playerGui = player:WaitForChild("PlayerGui")
+        local gui = Instance.new("ScreenGui")
+        gui.Name = "NexaKickScreen"
+        gui.ResetOnSpawn = false
+        gui.IgnoreGuiInset = true
+        gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        gui.Parent = playerGui
+
+        local blur = Instance.new("Frame")
+        blur.Parent = gui
+        blur.Size = UDim2.new(1, 0, 1, 0)
+        blur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        blur.BackgroundTransparency = 0.4
+        blur.BorderSizePixel = 0
+        blur.ZIndex = 1
+
+        local card = Instance.new("Frame")
+        card.Parent = gui
+        card.Size = UDim2.new(0, 340, 0, 200)
+        card.AnchorPoint = Vector2.new(0.5, 0.5)
+        card.Position = UDim2.new(0.5, 0, 0.3, 0)
+        card.BackgroundColor3 = Color3.fromRGB(13, 13, 13)
+        card.BackgroundTransparency = 1
+        card.BorderSizePixel = 0
+        card.ZIndex = 2
+
+        local cardCorner = Instance.new("UICorner")
+        cardCorner.CornerRadius = UDim.new(0, 10)
+        cardCorner.Parent = card
+
+        local topBar = Instance.new("Frame")
+        topBar.Parent = card
+        topBar.Size = UDim2.new(1, 0, 0, 4)
+        topBar.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        topBar.BorderSizePixel = 0
+        topBar.ZIndex = 3
+        Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 10)
+
+        local iconCircle = Instance.new("Frame")
+        iconCircle.Parent = card
+        iconCircle.Size = UDim2.new(0, 48, 0, 48)
+        iconCircle.AnchorPoint = Vector2.new(0.5, 0)
+        iconCircle.Position = UDim2.new(0.5, 0, 0, 22)
+        iconCircle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        iconCircle.BorderSizePixel = 0
+        iconCircle.ZIndex = 3
+        Instance.new("UICorner", iconCircle).CornerRadius = UDim.new(1, 0)
+
+        local iconLabel = Instance.new("TextLabel")
+        iconLabel.Parent = iconCircle
+        iconLabel.Size = UDim2.new(1, 0, 1, 0)
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.Text = "✕"
+        iconLabel.Font = Enum.Font.GothamBold
+        iconLabel.TextSize = 22
+        iconLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        iconLabel.ZIndex = 4
+
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Parent = card
+        titleLabel.Size = UDim2.new(1, -20, 0, 28)
+        titleLabel.Position = UDim2.new(0, 10, 0, 80)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Text = "⚙️ Executor Tidak Didukung"
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.TextSize = 17
+        titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+        titleLabel.ZIndex = 3
+
+        local divider = Instance.new("Frame")
+        divider.Parent = card
+        divider.Size = UDim2.new(0.7, 0, 0, 1)
+        divider.AnchorPoint = Vector2.new(0.5, 0)
+        divider.Position = UDim2.new(0.5, 0, 0, 114)
+        divider.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        divider.BorderSizePixel = 0
+        divider.ZIndex = 3
+
+        local msgLabel = Instance.new("TextLabel")
+        msgLabel.Parent = card
+        msgLabel.Size = UDim2.new(1, -30, 0, 55)
+        msgLabel.Position = UDim2.new(0, 15, 0, 122)
+        msgLabel.BackgroundTransparency = 1
+        msgLabel.Text = "Executor yang kamu gunakan tidak kompatibel.\nCoba gunakan executor yang didukung."
+        msgLabel.Font = Enum.Font.Gotham
+        msgLabel.TextSize = 13
+        msgLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+        msgLabel.TextXAlignment = Enum.TextXAlignment.Center
+        msgLabel.TextWrapped = true
+        msgLabel.ZIndex = 3
+
+        TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0.5, 0, 0.5, 0),
+            BackgroundTransparency = 0
+        }):Play()
+
+        task.wait(3)
+        player:Kick("⚙️ Executor Tidak Didukung")
+    end
+    KickNoExecutor()
     return
 end
 
@@ -36,62 +138,180 @@ local DEVICE_ID =
     RbxAnalytics:GetClientId()
 
 --// ================================
---// KEY VALIDATION (WAJIB INPUT)
+--// KICK SCREEN UI
 --// ================================
-if typeof(script_key) ~= "string" or script_key == "" then
-    player:Kick("❌ Key wajib diinput sebelum load script")
-    return
+
+--// == KUSTOMISASI == \\
+local KICK_TITLE   = "🔐 Nexa Hub"         -- Judul default (jika reason tidak dikenali)
+local KICK_CONTENT = "Akses kamu ditolak.\nHubungi admin untuk informasi lebih lanjut."  -- Pesan default
+--// ================ \\
+
+local KICK_MESSAGES = {
+    missing_key     = { "🔐 Key Tidak Ditemukan",         "Key wajib diinput sebelum memuat script.\nPastikan kamu sudah mengisi key dengan benar." },
+    invalid_key     = { "❌ Key Tidak Valid",               "Key yang kamu masukkan tidak dikenali.\nPeriksa kembali atau hubungi admin." },
+    device_mismatch = { "🔒 Device Tidak Cocok",           "Key ini sudah terdaftar di perangkat lain.\nKey tidak dapat dibagikan." },
+    expired         = { "⏳ Key Sudah Expired",             "Masa aktif key kamu telah habis.\nSilakan perpanjang untuk melanjutkan akses." },
+    server_fail     = { "🌐 Gagal Terhubung ke Server",    "Tidak dapat memverifikasi key saat ini.\nPeriksa koneksi atau coba beberapa saat lagi." },
+    invalid_resp    = { "⚠️ Respons Server Tidak Valid",   "Server mengembalikan data yang tidak dikenali.\nCoba lagi atau hubungi admin." },
+}
+
+local function ShowKickScreen(title, message)
+    local playerGui = player:WaitForChild("PlayerGui")
+
+    for _, g in pairs(playerGui:GetChildren()) do
+        if g.Name == "NexaKickScreen" then g:Destroy() end
+    end
+
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "NexaKickScreen"
+    gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.Parent = playerGui
+
+    -- Overlay
+    local blur = Instance.new("Frame")
+    blur.Parent = gui
+    blur.Size = UDim2.new(1, 0, 1, 0)
+    blur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    blur.BackgroundTransparency = 0.4
+    blur.BorderSizePixel = 0
+    blur.ZIndex = 1
+
+    -- Card
+    local card = Instance.new("Frame")
+    card.Parent = gui
+    card.Size = UDim2.new(0, 340, 0, 200)
+    card.AnchorPoint = Vector2.new(0.5, 0.5)
+    card.Position = UDim2.new(0.5, 0, 0.3, 0)
+    card.BackgroundColor3 = Color3.fromRGB(13, 13, 13)
+    card.BackgroundTransparency = 1
+    card.BorderSizePixel = 0
+    card.ZIndex = 2
+
+    local cardCorner = Instance.new("UICorner")
+    cardCorner.CornerRadius = UDim.new(0, 10)
+    cardCorner.Parent = card
+
+    -- Top accent bar
+    local topBar = Instance.new("Frame")
+    topBar.Parent = card
+    topBar.Size = UDim2.new(1, 0, 0, 4)
+    topBar.Position = UDim2.new(0, 0, 0, 0)
+    topBar.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    topBar.BorderSizePixel = 0
+    topBar.ZIndex = 3
+    Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 10)
+
+    -- Icon circle
+    local iconCircle = Instance.new("Frame")
+    iconCircle.Parent = card
+    iconCircle.Size = UDim2.new(0, 48, 0, 48)
+    iconCircle.AnchorPoint = Vector2.new(0.5, 0)
+    iconCircle.Position = UDim2.new(0.5, 0, 0, 22)
+    iconCircle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    iconCircle.BorderSizePixel = 0
+    iconCircle.ZIndex = 3
+    Instance.new("UICorner", iconCircle).CornerRadius = UDim.new(1, 0)
+
+    local iconLabel = Instance.new("TextLabel")
+    iconLabel.Parent = iconCircle
+    iconLabel.Size = UDim2.new(1, 0, 1, 0)
+    iconLabel.BackgroundTransparency = 1
+    iconLabel.Text = "✕"
+    iconLabel.Font = Enum.Font.GothamBold
+    iconLabel.TextSize = 22
+    iconLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+    iconLabel.ZIndex = 4
+
+    -- Title
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Parent = card
+    titleLabel.Size = UDim2.new(1, -20, 0, 28)
+    titleLabel.Position = UDim2.new(0, 10, 0, 80)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextSize = 17
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+    titleLabel.ZIndex = 3
+
+    -- Divider
+    local divider = Instance.new("Frame")
+    divider.Parent = card
+    divider.Size = UDim2.new(0.7, 0, 0, 1)
+    divider.AnchorPoint = Vector2.new(0.5, 0)
+    divider.Position = UDim2.new(0.5, 0, 0, 114)
+    divider.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    divider.BorderSizePixel = 0
+    divider.ZIndex = 3
+
+    -- Message
+    local msgLabel = Instance.new("TextLabel")
+    msgLabel.Parent = card
+    msgLabel.Size = UDim2.new(1, -30, 0, 55)
+    msgLabel.Position = UDim2.new(0, 15, 0, 122)
+    msgLabel.BackgroundTransparency = 1
+    msgLabel.Text = message
+    msgLabel.Font = Enum.Font.Gotham
+    msgLabel.TextSize = 13
+    msgLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+    msgLabel.TextXAlignment = Enum.TextXAlignment.Center
+    msgLabel.TextWrapped = true
+    msgLabel.ZIndex = 3
+
+    -- Animate in
+    TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        BackgroundTransparency = 0
+    }):Play()
+
+    task.wait(3)
 end
 
-local KEY = tostring(script_key)
+local function KickPlayer(reason)
+    local entry = KICK_MESSAGES[reason] or { KICK_TITLE, KICK_CONTENT }
+    ShowKickScreen(entry[1], entry[2])
+    player:Kick(entry[1] .. " — " .. entry[2]:gsub("\n", " "))
+end
 
 --// ================================
 --// MINIMALIST NOTIFICATION UI
 --// ================================
 local function ShowNotification(text, isError)
     local playerGui = player:WaitForChild("PlayerGui")
-    
-    -- Cleanup existing notifications
+
     for _, gui in pairs(playerGui:GetChildren()) do
-        if gui.Name == "NexaNotify" then
-            gui:Destroy()
-        end
+        if gui.Name == "NexaNotify" then gui:Destroy() end
     end
-    
-    -- Create GUI
+
     local gui = Instance.new("ScreenGui")
     gui.Name = "NexaNotify"
     gui.ResetOnSpawn = false
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     gui.Parent = playerGui
-    
-    -- Main Frame
+
     local frame = Instance.new("Frame")
     frame.Parent = gui
     frame.Size = UDim2.new(0, 280, 0, 50)
-    frame.Position = UDim2.new(1, -300, 0.1, 0)
+    frame.Position = UDim2.new(1, 50, 0.1, 0)
     frame.AnchorPoint = Vector2.new(1, 0)
     frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     frame.BorderSizePixel = 0
-    
-    -- Corner
+
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = frame
-    
-    -- Accent Border (Left side)
+
     local accent = Instance.new("Frame")
     accent.Parent = frame
     accent.Size = UDim2.new(0, 3, 1, 0)
     accent.Position = UDim2.new(0, 0, 0, 0)
     accent.BackgroundColor3 = isError and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 200, 100)
     accent.BorderSizePixel = 0
-    
-    local accentCorner = Instance.new("UICorner")
-    accentCorner.CornerRadius = UDim.new(0, 6)
-    accentCorner.Parent = accent
-    
-    -- Shadow
+    Instance.new("UICorner", accent).CornerRadius = UDim.new(0, 6)
+
     local shadow = Instance.new("ImageLabel")
     shadow.Parent = frame
     shadow.Size = UDim2.new(1, 10, 1, 10)
@@ -104,8 +324,7 @@ local function ShowNotification(text, isError)
     shadow.SliceCenter = Rect.new(23, 23, 277, 277)
     shadow.SliceScale = 1
     shadow.ZIndex = -1
-    
-    -- Icon
+
     local icon = Instance.new("TextLabel")
     icon.Parent = frame
     icon.Size = UDim2.new(0, 30, 0, 30)
@@ -115,8 +334,7 @@ local function ShowNotification(text, isError)
     icon.Font = Enum.Font.GothamSemibold
     icon.TextSize = 18
     icon.TextColor3 = isError and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 200, 100)
-    
-    -- Text Label
+
     local label = Instance.new("TextLabel")
     label.Parent = frame
     label.Size = UDim2.new(1, -60, 1, -10)
@@ -128,8 +346,7 @@ local function ShowNotification(text, isError)
     label.TextColor3 = Color3.fromRGB(220, 220, 220)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Text = text
-    
-    -- Close button (X)
+
     local closeBtn = Instance.new("TextButton")
     closeBtn.Parent = frame
     closeBtn.Size = UDim2.new(0, 20, 0, 20)
@@ -140,15 +357,13 @@ local function ShowNotification(text, isError)
     closeBtn.TextSize = 16
     closeBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
     closeBtn.TextTransparency = 0.3
-    
+
     closeBtn.MouseEnter:Connect(function()
         closeBtn.TextTransparency = 0
     end)
-    
     closeBtn.MouseLeave:Connect(function()
         closeBtn.TextTransparency = 0.3
     end)
-    
     closeBtn.MouseButton1Click:Connect(function()
         TweenService:Create(frame, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
             Position = UDim2.new(1, 50, 0.1, 0)
@@ -156,14 +371,11 @@ local function ShowNotification(text, isError)
         task.wait(0.2)
         gui:Destroy()
     end)
-    
-    -- Animation
-    frame.Position = UDim2.new(1, 50, 0.1, 0)
+
     TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
         Position = UDim2.new(1, -300, 0.1, 0)
     }):Play()
-    
-    -- Auto-hide after 5 seconds
+
     task.delay(5, function()
         if gui.Parent then
             TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
@@ -174,6 +386,16 @@ local function ShowNotification(text, isError)
         end
     end)
 end
+
+--// ================================
+--// KEY VALIDATION
+--// ================================
+if typeof(script_key) ~= "string" or script_key == "" then
+    KickPlayer("missing_key")
+    return
+end
+
+local KEY = tostring(script_key)
 
 --// ================================
 --// REQUEST TO SERVER
@@ -190,8 +412,8 @@ local response = Request({
 
 if not response or not response.Body then
     ShowNotification("❌ Gagal terhubung ke server", true)
-    task.wait(2)
-    player:Kick("❌ Failed to connect server")
+    task.wait(1)
+    KickPlayer("server_fail")
     return
 end
 
@@ -205,8 +427,8 @@ end)
 
 if not success or typeof(data) ~= "table" then
     ShowNotification("❌ Response server tidak valid", true)
-    task.wait(2)
-    player:Kick("❌ Invalid server response")
+    task.wait(1)
+    KickPlayer("invalid_resp")
     return
 end
 
@@ -216,20 +438,16 @@ end
 if not data.allowed then
     local reason = data.reason or "unknown"
 
-    if reason == "missing_key" then
-        ShowNotification("❌ Key tidak terdeteksi", true)
-    elseif reason == "invalid_key" then
-        ShowNotification("❌ Key tidak valid", true)
-    elseif reason == "device_mismatch" then
-        ShowNotification("❌ Key sudah dipakai di device lain", true)
-    elseif reason == "expired" then
-        ShowNotification("⏳ Key sudah expired", true)
-    else
-        ShowNotification("❌ Akses ditolak", true)
-    end
+    local notifMessages = {
+        missing_key     = "❌ Key tidak terdeteksi",
+        invalid_key     = "❌ Key tidak valid",
+        device_mismatch = "❌ Key sudah dipakai di device lain",
+        expired         = "⏳ Key sudah expired",
+    }
 
-    task.wait(2)
-    player:Kick("❌ Access denied: " .. reason)
+    ShowNotification(notifMessages[reason] or "❌ Akses ditolak", true)
+    task.wait(1)
+    KickPlayer(reason)
     return
 end
 
@@ -239,7 +457,7 @@ end
 if data.type == "lifetime" then
     ShowNotification("💎 Lifetime Premium Activated", false)
 elseif data.type == "30d" then
-    ShowNotification("⏳ Premium Active\nExpired: " .. tostring(data.expires), false)
+    ShowNotification("⏳ Premium Active  |  Expired: " .. tostring(data.expires), false)
 else
     ShowNotification("✅ Premium Access Granted", false)
 end
