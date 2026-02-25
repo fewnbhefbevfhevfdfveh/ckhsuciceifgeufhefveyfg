@@ -380,6 +380,20 @@ GameData.Plantsv1.WeatherDatav1 = require(
         :WaitForChild("WeatherDataDefinitions")
 )
 
+GameData.Plantsv1.PlantDatav1 = require(
+    GameData.Servicesv1.ReplicatedStoragev1
+        :WaitForChild("Plants")
+        :WaitForChild("Definitions")
+        :WaitForChild("PlantDataDefinitions")
+)
+
+GameData.Plantsv1.RarityDatav1 = require(
+    GameData.Servicesv1.ReplicatedStoragev1
+        :WaitForChild("Plants")
+        :WaitForChild("Definitions")
+        :WaitForChild("RarityDefinitions")
+)
+
 GameData.Plantsv1.VariantFolderv1 =
     GameData.Servicesv1.ReplicatedStoragev1:WaitForChild("VariantEffects")
 
@@ -411,6 +425,13 @@ for _, data in pairs(GameData.Plantsv1.WeatherDatav1) do
 end
 table.sort(GameData.Plantsv1.WeatherOptionsv1)
 
+-- Rarity options
+table.insert(GameData.Plantsv1.RarityOptionsv1, "All Rarity")
+for rarityName, _ in pairs(GameData.Plantsv1.RarityDatav1) do
+    table.insert(GameData.Plantsv1.RarityOptionsv1, rarityName)
+end
+table.sort(GameData.Plantsv1.RarityOptionsv1)
+
 -- Functions
 GameData.Functionsv1.FindPlayerPlotv1 = function()
     for _, plot in pairs(GameData.Worldv1.PlotsFolderv1:GetChildren()) do
@@ -431,7 +452,40 @@ GameData.Functionsv1.TeleportTov1 = function(position)
     end
 end
 
-GameData.Functionsv1.ShouldHarvestTargetv1 = function(targetv1, hasPlantv1, hasMutationv1, hasVariantv1, hasWeatherv1, plantSelectedv1, allMutationv1)
+GameData.Functionsv1.GetPlantBaseNamev1 = function(plantNamev1)
+    return plantNamev1:match("^(%a+)%d*$")
+end
+
+GameData.Functionsv1.IsPlantSelectedv1 = function(plantv1, hasPlantv1, hasRarityv1, allPlantv1, allRarityv1)
+    -- Rarity diprioritaskan kalau dipilih
+    if hasRarityv1 then
+        if allRarityv1 then return true end
+        local baseNamev1 = GameData.Functionsv1.GetPlantBaseNamev1(plantv1.Name)
+        local plantDatav1 = GameData.Plantsv1.PlantDatav1[baseNamev1]
+        if not plantDatav1 then return false end
+        for _, selectedRar in pairs(GameData.Plantsv1.SelectedRaritiesv1) do
+            if plantDatav1.Rarity == selectedRar then
+                return true
+            end
+        end
+        return false
+    end
+
+    -- Kalau hanya Plant dipilih
+    if hasPlantv1 then
+        if allPlantv1 then return true end
+        for _, selectedName in pairs(GameData.Plantsv1.SelectedPlantsv1) do
+            if plantv1.Name:match("^" .. selectedName .. "%d*$") then
+                return true
+            end
+        end
+        return false
+    end
+
+    return false
+end
+
+GameData.Functionsv1.ShouldHarvestTargetv1 = function(targetv1, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1)
     local mutationv1 = targetv1:GetAttribute("Mutation")
     local variantv1 = targetv1:GetAttribute("Variant")
     local weatherv1 = targetv1:GetAttribute("Weather")
@@ -440,54 +494,45 @@ GameData.Functionsv1.ShouldHarvestTargetv1 = function(targetv1, hasPlantv1, hasM
     if not variantv1 and hasVariantv1 then return false end
     if not weatherv1 and hasWeatherv1 then return false end
 
-    local mutationSelectedv1 = allMutationv1
-    if not mutationSelectedv1 and hasMutationv1 then
+    local mutationMatchv1 = allMutationv1
+    if not mutationMatchv1 and hasMutationv1 then
         for _, selectedMut in pairs(GameData.Plantsv1.SelectedMutationsv1) do
             if mutationv1 == selectedMut then
-                mutationSelectedv1 = true
+                mutationMatchv1 = true
                 break
             end
         end
     end
 
-    local variantMatchv1 = variantv1 == GameData.Plantsv1.SelectedVariantv1
-    local weatherMatchv1 = weatherv1 == GameData.Plantsv1.SelectedWeatherv1
-
-    local shouldHarvestv1 = false
-
-    if hasPlantv1 and hasMutationv1 and hasVariantv1 and hasWeatherv1 then
-        shouldHarvestv1 = plantSelectedv1 and mutationSelectedv1 and variantMatchv1 and weatherMatchv1
-    elseif hasPlantv1 and hasMutationv1 and hasVariantv1 then
-        shouldHarvestv1 = plantSelectedv1 and mutationSelectedv1 and variantMatchv1
-    elseif hasPlantv1 and hasMutationv1 and hasWeatherv1 then
-        shouldHarvestv1 = plantSelectedv1 and mutationSelectedv1 and weatherMatchv1
-    elseif hasPlantv1 and hasVariantv1 and hasWeatherv1 then
-        shouldHarvestv1 = plantSelectedv1 and variantMatchv1 and weatherMatchv1
-    elseif hasMutationv1 and hasVariantv1 and hasWeatherv1 then
-        shouldHarvestv1 = mutationSelectedv1 and variantMatchv1 and weatherMatchv1
-    elseif hasPlantv1 and hasMutationv1 then
-        shouldHarvestv1 = plantSelectedv1 and mutationSelectedv1
-    elseif hasPlantv1 and hasVariantv1 then
-        shouldHarvestv1 = plantSelectedv1 and variantMatchv1
-    elseif hasPlantv1 and hasWeatherv1 then
-        shouldHarvestv1 = plantSelectedv1 and weatherMatchv1
-    elseif hasMutationv1 and hasVariantv1 then
-        shouldHarvestv1 = mutationSelectedv1 and variantMatchv1
-    elseif hasMutationv1 and hasWeatherv1 then
-        shouldHarvestv1 = mutationSelectedv1 and weatherMatchv1
-    elseif hasVariantv1 and hasWeatherv1 then
-        shouldHarvestv1 = variantMatchv1 and weatherMatchv1
-    elseif hasPlantv1 then
-        shouldHarvestv1 = plantSelectedv1
-    elseif hasMutationv1 then
-        shouldHarvestv1 = mutationSelectedv1
-    elseif hasVariantv1 then
-        shouldHarvestv1 = variantMatchv1
-    elseif hasWeatherv1 then
-        shouldHarvestv1 = weatherMatchv1
+    local variantMatchv1 = allVariantv1
+    if not variantMatchv1 and hasVariantv1 then
+        for _, selectedVar in pairs(GameData.Plantsv1.SelectedVariantsv1) do
+            if variantv1 == selectedVar then
+                variantMatchv1 = true
+                break
+            end
+        end
     end
 
-    return shouldHarvestv1
+    local weatherMatchv1 = allWeatherv1
+    if not weatherMatchv1 and hasWeatherv1 then
+        for _, selectedWea in pairs(GameData.Plantsv1.SelectedWeathersv1) do
+            if weatherv1 == selectedWea then
+                weatherMatchv1 = true
+                break
+            end
+        end
+    end
+
+    if not hasMutationv1 and not hasVariantv1 and not hasWeatherv1 then
+        return true
+    end
+
+    if hasMutationv1 and not mutationMatchv1 then return false end
+    if hasVariantv1 and not variantMatchv1 then return false end
+    if hasWeatherv1 and not weatherMatchv1 then return false end
+
+    return true
 end
 
 -- UI
@@ -499,6 +544,17 @@ Sec.Main1:AddDropdown({
     Default = {},
     Callback = function(selectedTable)
         GameData.Plantsv1.SelectedPlantsv1 = selectedTable
+    end
+})
+
+Sec.Main1:AddDropdown({
+    Title = "Select Rarity (Harvest)",
+    Content = "Rarity takes priority over Plant if both selected",
+    Options = GameData.Plantsv1.RarityOptionsv1,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedTable)
+        GameData.Plantsv1.SelectedRaritiesv1 = selectedTable
     end
 })
 
@@ -519,8 +575,8 @@ Sec.Main1:AddDropdown({
     Options = GameData.Plantsv1.VariantOptionsv1,
     Multi = true,
     Default = {},
-    Callback = function(value)
-        GameData.Plantsv1.SelectedVariantv1 = value
+    Callback = function(selectedTable)
+        GameData.Plantsv1.SelectedVariantsv1 = selectedTable
     end
 })
 
@@ -530,8 +586,8 @@ Sec.Main1:AddDropdown({
     Options = GameData.Plantsv1.WeatherOptionsv1,
     Multi = true,
     Default = {},
-    Callback = function(value)
-        GameData.Plantsv1.SelectedWeatherv1 = value
+    Callback = function(selectedTable)
+        GameData.Plantsv1.SelectedWeathersv1 = selectedTable
     end
 })
 
@@ -574,18 +630,29 @@ Sec.Main1:AddToggle({
                     task.wait(0.5)
 
                     local hasPlantv1 = #GameData.Plantsv1.SelectedPlantsv1 > 0
+                    local hasRarityv1 = #GameData.Plantsv1.SelectedRaritiesv1 > 0
                     local hasMutationv1 = #GameData.Plantsv1.SelectedMutationsv1 > 0
-                    local hasVariantv1 =
-                        GameData.Plantsv1.SelectedVariantv1 ~= nil and
-                        GameData.Plantsv1.SelectedVariantv1 ~= "All Variants"
-                    local hasWeatherv1 =
-                        GameData.Plantsv1.SelectedWeatherv1 ~= nil and
-                        GameData.Plantsv1.SelectedWeatherv1 ~= "All Weather"
+                    local hasVariantv1 = #GameData.Plantsv1.SelectedVariantsv1 > 0
+                    local hasWeatherv1 = #GameData.Plantsv1.SelectedWeathersv1 > 0
+
+                    -- Kalau semua kosong skip
+                    if not hasPlantv1 and not hasRarityv1 and not hasMutationv1 and not hasVariantv1 and not hasWeatherv1 then
+                        task.wait(0.5)
+                        continue
+                    end
 
                     local allPlantv1 = false
                     for _, selectedName in pairs(GameData.Plantsv1.SelectedPlantsv1) do
                         if selectedName == "All Plant" then
                             allPlantv1 = true
+                            break
+                        end
+                    end
+
+                    local allRarityv1 = false
+                    for _, selectedRar in pairs(GameData.Plantsv1.SelectedRaritiesv1) do
+                        if selectedRar == "All Rarity" then
+                            allRarityv1 = true
                             break
                         end
                     end
@@ -598,16 +665,26 @@ Sec.Main1:AddToggle({
                         end
                     end
 
+                    local allVariantv1 = false
+                    for _, selectedVar in pairs(GameData.Plantsv1.SelectedVariantsv1) do
+                        if selectedVar == "All Variants" then
+                            allVariantv1 = true
+                            break
+                        end
+                    end
+
+                    local allWeatherv1 = false
+                    for _, selectedWea in pairs(GameData.Plantsv1.SelectedWeathersv1) do
+                        if selectedWea == "All Weather" then
+                            allWeatherv1 = true
+                            break
+                        end
+                    end
+
                     for _, plant in pairs(GameData.Worldv1.ClientPlantsv1:GetChildren()) do
 
-                        local plantSelectedv1 = allPlantv1
-                        if not plantSelectedv1 then
-                            for _, selectedName in pairs(GameData.Plantsv1.SelectedPlantsv1) do
-                                if plant.Name:match("^" .. selectedName .. "%d*$") then
-                                    plantSelectedv1 = true
-                                    break
-                                end
-                            end
+                        if not GameData.Functionsv1.IsPlantSelectedv1(plant, hasPlantv1, hasRarityv1, allPlantv1, allRarityv1) then
+                            continue
                         end
 
                         local hasFruitsv1 = false
@@ -622,7 +699,7 @@ Sec.Main1:AddToggle({
                             -- Case 1: Plant punya Fruit (Corn, dll)
                             for _, fruit in pairs(plant:GetChildren()) do
                                 if fruit.Name:match("^Fruit%d+$") then
-                                    if GameData.Functionsv1.ShouldHarvestTargetv1(fruit, hasPlantv1, hasMutationv1, hasVariantv1, hasWeatherv1, plantSelectedv1, allMutationv1) then
+                                    if GameData.Functionsv1.ShouldHarvestTargetv1(fruit, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1) then
                                         GameData.Functionsv1.TeleportTov1(fruit:GetPivot().Position)
                                         task.wait(0.3)
 
@@ -636,7 +713,7 @@ Sec.Main1:AddToggle({
                             end
                         else
                             -- Case 2: Plant tidak punya Fruit (Carrot, dll)
-                            if GameData.Functionsv1.ShouldHarvestTargetv1(plant, hasPlantv1, hasMutationv1, hasVariantv1, hasWeatherv1, plantSelectedv1, allMutationv1) then
+                            if GameData.Functionsv1.ShouldHarvestTargetv1(plant, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1) then
                                 GameData.Functionsv1.TeleportTov1(plant:GetPivot().Position)
                                 task.wait(0.3)
 
