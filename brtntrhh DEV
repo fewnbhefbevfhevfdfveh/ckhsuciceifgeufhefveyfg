@@ -267,12 +267,26 @@ local GameData = {
         lastBv10 = nil,
         goingRightv10 = true,
     },
+
+    -- // Teleport Plot
+
+    PlayersV11 = game:GetService("Players"),
+    PlotsFolderV11 = nil,
+    PlotNamesV11 = {},
+    SelectedPlotV11 = nil,
+
+    -- // Auto Claim Quest
+
+    ReplicatedStorageV12 = game:GetService("ReplicatedStorage"),
+    ClaimQuestEventV12 = nil,
+    SelectedQuestsV12 = {},
+    AutoClaimV12 = false,
 }
 
 local MarketplaceService = game:GetService("MarketplaceService")
 
 local Window = Chloex:Window({
-    Title = "Nexa | v0.0.2 |",
+    Title = "Nexa | v0.0.3 |",
     Footer = "Premium",
     Content = MarketplaceService:GetProductInfo(game.PlaceId).Name,  -- otomatis isi nama game
     Color = "Default",
@@ -309,6 +323,11 @@ local Tabs = {
         Name = "Shop",
         Icon = "lucide:store",
     }),
+
+    Tp = Window:AddTab({
+        Name = "Teleport",
+        Icon = "lucide:map-pin-house",
+    }),
 }
 
 local Sec = {}
@@ -321,9 +340,9 @@ Sec.Home1 = Tabs.Home:AddSection({
 Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
-[/] Inprove Auto Plant 
-[+] Added Input Set Speed Plant
-[+] Added Input Set Tp Plant
+[+] Added Tab Teleport
+[+] Added Teleport To Plot
+[+] Added Auto Claim Quest
 	]]
 })
 
@@ -679,7 +698,7 @@ Sec.Main1:AddToggle({
                                 if fruit.Name:match("^Fruit%d+$") then
                                     if GameData.Functionsv1.ShouldHarvestTargetv1(fruit, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1) then
                                         GameData.Functionsv1.TeleportTov1(fruit:GetPivot().Position)
-                                        task.wait(0.03)
+                                        task.wait(0.3)
 
                                         local promptv1 = fruit:FindFirstChild("HarvestPrompt", true)
                                         if promptv1 and promptv1:IsA("ProximityPrompt") then
@@ -693,7 +712,7 @@ Sec.Main1:AddToggle({
                             -- Case 2: Plant tidak punya Fruit (Carrot, dll)
                             if GameData.Functionsv1.ShouldHarvestTargetv1(plant, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1) then
                                 GameData.Functionsv1.TeleportTov1(plant:GetPivot().Position)
-                                task.wait(0.03)
+                                task.wait(0.3)
 
                                 local harvestPartv1 = plant:FindFirstChild("HarvestBoundingPart")
                                 if harvestPartv1 then
@@ -1422,6 +1441,52 @@ Sec.Main4:AddButton({
         GameData.ScanProgressv10.lastAv10 = nil
         GameData.ScanProgressv10.lastBv10 = nil
         GameData.ScanProgressv10.goingRightv10 = true
+    end
+})
+
+Sec.Main5 = Tabs.Main:AddSection({
+    Title = "Quest",
+    Open = false
+})
+
+GameData.ClaimQuestEventV12 = GameData.ReplicatedStorageV12.RemoteEvents.ClaimQuest
+
+Sec.Main5:AddDropdown({ 
+    Title = "Select Quest", 
+    Content = "Choose quest type",
+    Options = {
+        "Daily",
+        "Weekly"
+    },
+    Multi = true,
+    Default = {"Daily"},
+    Callback = function(selectedTable)
+        GameData.SelectedQuestsV12 = selectedTable
+    end
+})
+
+Sec.Main5:AddToggle({ 
+    Title = "Auto Claim Quest", 
+    Default = false,
+    Callback = function(value)
+        GameData.AutoClaimV12 = value
+        if value then
+            Notify("Auto Claim Enabled!", 2)
+            task.spawn(function()
+                while GameData.AutoClaimV12 do
+                    for i = 1, 10 do
+                        for _, questType in ipairs(GameData.SelectedQuestsV12) do
+                            if not GameData.AutoClaimV12 then break end
+                            GameData.ClaimQuestEventV12:FireServer(questType, tostring(i))
+                            task.wait(0.2)
+                        end
+                    end
+                    task.wait(1)
+                end
+            end)
+        else
+            Notify("Auto Claim Disabled!", 2)
+        end
     end
 })
 
@@ -2489,6 +2554,67 @@ Sec.Gear1:AddToggle({
             StartAutoBuy()
         else
             Notify("Auto Buy Gear Disabled!", 2)
+        end
+    end
+})
+
+Sec.Tp1 = Tabs.Tp:AddSection({
+    Title = "Teleport Plot",
+    Open = false
+})
+
+GameData.PlotsFolderV11 = workspace:WaitForChild("Plots")
+
+for _, plot in ipairs(GameData.PlotsFolderV11:GetChildren()) do
+    if plot:IsA("Model") then
+        table.insert(GameData.PlotNamesV11, plot.Name)
+    end
+end
+
+GameData.SelectedPlotV11 = GameData.PlotNamesV11[1]
+
+Sec.Tp1:AddDropdown({ 
+    Title = "Select Plot",
+    Content = "Choose plot to teleport",
+    Options = GameData.PlotNamesV11,
+    Multi = false,
+    Default = GameData.SelectedPlotV11,
+    Callback = function(value)
+        GameData.SelectedPlotV11 = value
+        print("Selected Plot:", value)
+    end
+})
+
+Sec.Tp1:AddButton({ 
+    Title = "Teleport To Plot", 
+    Version = "V2",
+    Icon = "rbxassetid://79715859717613",
+    Callback = function()
+
+        GameData.PlotsFolderV11 = workspace:WaitForChild("Plots")
+        GameData.PlotModelV11 = GameData.PlotsFolderV11:FindFirstChild(GameData.SelectedPlotV11)
+        if not GameData.PlotModelV11 then
+            Nt("Plot tidak ditemukan!", 2)
+            return
+        end
+
+        GameData.SpawnFolderV11 = GameData.PlotModelV11:FindFirstChild("Spawn")
+        if not GameData.SpawnFolderV11 then
+            Nt("Folder Spawn tidak ditemukan!", 2)
+            return
+        end
+
+        GameData.SpawnPartV11 = GameData.SpawnFolderV11:FindFirstChild("Spawn")
+        if not GameData.SpawnPartV11 or not GameData.SpawnPartV11:IsA("BasePart") then
+            Nt("Spawn part tidak ditemukan!", 2)
+            return
+        end
+
+        GameData.CharacterV11 = GameData.PlayersV11.LocalPlayer.Character
+        if GameData.CharacterV11 then
+            GameData.TargetPositionV11 = GameData.SpawnPartV11.Position + Vector3.new(0, 5, 0)
+            GameData.CharacterV11:PivotTo(CFrame.new(GameData.TargetPositionV11))
+            Nt("Teleported to "..GameData.SelectedPlotV11, 2)
         end
     end
 })
