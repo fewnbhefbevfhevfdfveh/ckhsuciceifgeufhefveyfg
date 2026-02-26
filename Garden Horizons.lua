@@ -339,7 +339,6 @@ Sec.Home1:AddParagraph({
 
 Sec.Main1 = Tabs.Main:AddSection({
     Title = "Auto Harvest",
-    Icon = "lucide:tractor",
     Open = false
 })
 
@@ -734,7 +733,6 @@ Sec.Main1:AddToggle({
 
 Sec.Main2 = Tabs.Main:AddSection({
     Title = "Auto Water",
-    Icon = "lucide:droplet",
     Open = false
 })
 
@@ -815,7 +813,6 @@ Sec.Main2:AddToggle({
 
 Sec.Main3 = Tabs.Main:AddSection({
     Title = "Auto Shovel",
-    Icon = "lucide:shovel",
     Open = false
 })
 
@@ -1105,33 +1102,8 @@ Sec.Main3:AddToggle({
 
 Sec.Main4 = Tabs.Main:AddSection({
     Title = "Auto Plant Seed",
-    Icon = "lucide:sprout",
     Open = false
 })
-
-lualocal GameData = {
-    ReplicatedStoragev10 = game:GetService("ReplicatedStorage"),
-    Playersv10 = game:GetService("Players"),
-
-    SeedsFolderv10 = nil,
-    PlotsFolderv10 = nil,
-
-    Playerv10 = nil,
-
-    PlantDelayv10 = 0.01,
-    TpDelayv10 = 0.01,
-
-    SeedNamesv10 = {},
-    SelectedSeedv10 = nil,
-    IsPlantingv10 = false,
-    SelectedPlantModev10 = "Character Position",
-
-    ScanProgressv10 = {
-        lastAv10 = nil,
-        lastBv10 = nil,
-        goingRightv10 = true,
-    },
-}
 
 GameData.SeedsFolderv10 = GameData.ReplicatedStoragev10.Plants.Tools.Seeds
 GameData.PlotsFolderv10 = workspace:WaitForChild("Plots")
@@ -1455,7 +1427,6 @@ Sec.Main4:AddButton({
 
 Sec.Sell1 = Tabs.Backpack:AddSection({
     Title = "Auto Sell",
-    Icon = "lucide:circle-dollar-sign"
     Open = false
 })
 
@@ -1763,7 +1734,6 @@ Sec.Sell1:AddToggle({
 
 Sec.Favorite1 = Tabs.Backpack:AddSection({
     Title = "Auto Favorite",
-    Icon = "lucide:star"
     Open = false
 })
 
@@ -2073,7 +2043,6 @@ Sec.Favorite1:AddToggle({
 
 Sec.Seed1 = Tabs.Shop:AddSection({
     Title = "Seed Shop",
-    Icon = "lucide:sprout"
     Open = false
 })
 
@@ -2324,7 +2293,6 @@ Sec.Seed1:AddToggle({
 
 Sec.Gear1 = Tabs.Shop:AddSection({
     Title = "Gear Shop",
-    Icon = "lucide:bubbles"
     Open = false
 })
 
