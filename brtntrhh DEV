@@ -1,349 +1,280 @@
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/main.lua"))()
 
 local GameData = {
-	-- // Auto Shoot Fish, Safe Oxygen, Sell Fish
 
-    Playersv1 = game:GetService("Players"),
-    ReplicatedStoragev1 = game:GetService("ReplicatedStorage"),
-    TweenServicev1 = game:GetService("TweenService"),
+    -- // Auto Harvest
 
-    Playerv1 = nil,
-    Characterv1 = nil,
-
-    AutoShootv1 = false,
-    AutoSellv1 = false,
-    AutoSafeZonev1 = false,
-    SelectedFishv1 = {},
-    SelectedMutationsv1 = {},
-    CurrentTargetModelv1 = nil,
-
-    SAFE_DISTANCEv1 = 1,
-    COLLECT_DISTANCEv1 = 4,
-
-    FishFolderv1 = nil,
-    Fishv1 = {},
-
-    CollectEventv1 = nil,
-    StartCatchEventv1 = nil,
-    SellEventv1 = nil,
-
-    shootCooldownv1 = 0.001,
-    catchCooldownv1 = 0.001,
-    lastShootv1 = 0,
-    lastCatchv1 = 0,
-
-    isTweeningOxygenV1 = false,
-    OxygenThresholdV1 = 20,
-    oxygenLabelV1 = nil,
-
-    isSellingSellV1 = false,
-    SellModev1 = "Sell Delay",
-    SellDelayv1 = 30,
-    lastSellTimev1 = 0,
-
-    weightGuiV1 = nil,
-    maxLabelV1 = nil,
-    wghtLabelV1 = nil,
-
-    cancelSafeZoneTweenV1 = false,
-    activeSafeZoneTweenV1 = nil,
-
-    SelectedSafeZoneV1 = "The Forgotten Dome",
-
-    -- Sell CFrame hardcoded The Forgotten Dome
-    SellCFrameV1 = CFrame.new(-2.205, 4884.06, -1.224),
-
-    SafeZoneCFramesV1 = {
-        ["The Forgotten Dome"]  = CFrame.new(-2.205, 4884.06, -1.224),
-        ["Spirit Root Hollow"]  = CFrame.new(1655.23535, 4040.88354, -1955.32068),
-        ["Crazy Jeff's Store"]  = CFrame.new(-1790.41, 4463.66, 275.98),
-        ["Monkey King's Lair"]  = CFrame.new(3862.34, 3628.94, -1258.02),
+    Servicesv1 = {
+        ReplicatedStoragev1 = game:GetService("ReplicatedStorage"),
+        Playersv1 = game:GetService("Players")
     },
 
-    TweenSpeedToFishV1     = 10,
-    TweenSpeedToSafeDistV1 = 20,
-    TweenSpeedToSafeZoneV1 = 5,
-    TweenSpeedToSellZoneV1 = 5,
-
-    MutationsFolderv1 = nil,
-    MutationNamesv1   = {},
-
-    FishPresetsFolderv1  = nil,
-    FishRarityMapv1      = {},
-    RarityNamesv1        = {},
-    SelectedRaritiesv1   = {},
-
-    SelectedLocationV1       = nil,
-    isTweeningToLocationV1   = false,
-    cancelLocationTweenV1    = false,
-    activeLocationTweenV1    = nil,
-    TweenSpeedToLocationV1   = 10,
-    locationJustChangedV1    = false,
-
-    cancelSellLocationTweenV1  = false,
-    activeSellLocationTweenV1  = nil,
-
-    LocationCFramesV1 = {
-        ["Ancient Sands"]  = CFrame.new(-1790.41, 4463.66, 275.98),
-        ["Spirit Roots"]   = CFrame.new(1532.13, 4076.12, -1795.08),
-        ["Forgotten Deep"] = CFrame.new(207.66, 4864.95, 22.78),
-        ["Sunken Wilds"]   = CFrame.new(3541.80, 3701.91, -1234.07),
+    Playerv1 = {
+        LocalPlayerv1 = game:GetService("Players").LocalPlayer,
+        Characterv1 = nil,
+        Plotv1 = nil
     },
 
-    locationNamesV1 = {},
-    safeZoneNamesV1 = {},
-    raritySetV1     = {},
+    Plantsv1 = {
+        Modelsv1 = nil,
+        MutationDatav1 = nil,
+        WeatherDatav1 = nil,
+        PlantDatav1 = nil,
+        RarityDatav1 = nil,
+        VariantFolderv1 = nil,
 
-    -- Anti-TP
-    antiTPEnabledV1 = true,
-    isTPDetectedV1  = false,
-    lastPositionV1  = nil,
-    tpThresholdV1   = 500,
-    tpPauseTimeV1   = 3,
+        PlantOptionsv1 = {},
+        MutationOptionsv1 = {},
+        VariantOptionsv1 = {},
+        WeatherOptionsv1 = {},
+        RarityOptionsv1 = {},
 
-    -- Zone Entry Delay
-    zoneEntryTimeV1  = 0,
-    zoneEntryDelayV1 = 3,
-    wasInZoneV1      = false,
+        SelectedPlantsv1 = {},
+        SelectedMutationsv1 = {},
+        SelectedVariantsv1 = {},
+        SelectedWeathersv1 = {},
+        SelectedRaritiesv1 = {},
 
-	-- // Cast Mode
+        HarvestLoopv1 = nil
+    },
+
+    Worldv1 = {
+        ClientPlantsv1 = workspace:WaitForChild("ClientPlants"),
+        PlotsFolderv1 = workspace:WaitForChild("Plots")
+    },
+
+    Functionsv1 = {
+        FindPlayerPlotv1 = nil,
+        TeleportTov1 = nil,
+        ShouldHarvestTargetv1 = nil,
+        GetPlantBaseNamev1 = nil,
+        IsPlantSelectedv1 = nil,
+    },
+    -- // Auto Buy Seed
 
     Servicesv2 = {
-        Playersv2 = game:GetService("Players"),
         ReplicatedStoragev2 = game:GetService("ReplicatedStorage"),
+        PlayerServicev2 = game:GetService("Players")
     },
 
-    Playerv2 = nil,
+    SeedShopv2 = {
+        Datav2 = nil,
+        Eventv2 = nil,
+        GetShopDatav2 = nil,
+        PlantDefinitionsv2 = nil,
 
-    UIv2 = {
-        Greenv2 = nil,
-        Gradientv2 = nil,
+        SelectedSeedsv2 = {},
+        SeedOptionsv2 = {},
+
+        SelectedRaritiesv2 = {},
+        RarityOptionsv2 = {},
+
+        AutoBuyv2 = false
     },
 
-    AutoCastv2 = false,
-    LoopThreadv2 = nil,
-    CastModev2 = "Normal",
-
-    Remotesv2 = {
-        CancelMinigamev2 = nil,
+    Plotv2 = {
+        PlotsFolderv2 = workspace:WaitForChild("Plots"),
+        PlayerPlotv2 = nil
     },
 
-	--// Auto Respawn
+    Teleportv2 = {
+        SeedsTeleportv2 = workspace.MapPhysical.Teleports.SeedsTeleport
+    },
+
+    Fnv2 = {
+        FindPlayerPlot = nil,
+        CheckSeedStock = nil,
+        TeleportToShop = nil,
+        TeleportToPlot = nil,
+        GetSeedsByRarity = nil,
+        ResolveSeedList = nil,
+        StartAutoBuy = nil,
+    },
+
+
+    -- // Auto Buy Gear
 
     Servicesv3 = {
         ReplicatedStoragev3 = game:GetService("ReplicatedStorage"),
+        PlayerServicev3 = game:GetService("Players")
     },
 
-    AutoRespawnv3 = false,
+    GearShopv3 = {
+        Datav3 = nil,
+        Eventv3 = nil,
+        GetShopDatav3 = nil,
 
-    Remotesv3 = {
-        Respawnv3 = nil,
+        SelectedGearsv3 = {},
+        GearOptionsv3 = {},
+
+        AutoBuyv3 = false
     },
 
-	-- // Auto Equip Guns
+    Plotv3 = {
+        PlotsFolderv3 = workspace:WaitForChild("Plots"),
+        PlayerPlotv3 = nil
+    },
+
+    Teleportv3 = {
+        GearNPCv3 = workspace.MapPhysical.Shops["Gear Shop"].GearNPC
+    },
+
+    -- // Auto Favorite
 
     Servicesv4 = {
-        Players = game:GetService("Players"),
         ReplicatedStoragev4 = game:GetService("ReplicatedStorage"),
-        Workspacev4 = workspace
+        Playersv4 = game:GetService("Players")
     },
 
-    LocalPlayerv4 = game:GetService("Players").LocalPlayer,
-    Remotesv4 = {},
-    AutoEquipv4 = false,
-    Connectionsv4 = {},
+    FavoriteSystemv4 = {
 
-	-- // WalkSpeed
+        PlantsModelsv4 = nil,
+        Playerv4 = nil,
+        RemoteEventv4 = nil,
+
+        MutationDatav4 = nil,
+
+        PlantOptionsv4 = {},
+        MutationOptionsv4 = {},
+
+        SelectedPlantsv4 = {},
+        SelectedMutationsv4 = {},
+
+        AutoFavoriteEnabledv4 = false,
+        AutoFavoriteLoopv4 = nil,
+
+        AutoUnfavoriteEnabledv4 = false,
+        AutoUnfavoriteLoopv4 = nil
+    },
+
+    -- // Info Stock Seed
 
     Servicesv5 = {
-        Playersv5 = game:GetService("Players"),
+        ReplicatedStoragev5 = game:GetService("ReplicatedStorage")
     },
-    Playerv5 = nil,
-    WalkEnabledv5 = false,
-    CustomSpeedv5 = 16,
-    DefaultSpeedv5 = 16,
 
-	-- // Zoom 1000
+    SeedStockv5 = {
+        RemoteEventsv5 = nil,
+        GetShopDatav5 = nil,
+        Paragraphv5 = nil
+    },
+
+    -- // Info Stock Gear
 
     Servicesv6 = {
-        Playersv6 = game:GetService("Players"),
+        ReplicatedStoragev6 = game:GetService("ReplicatedStorage")
     },
 
-    Playerv6 = nil,
+    GearStockv6 = {
+        RemoteEventsv6 = nil,
+        GetShopDatav6 = nil,
+        Paragraphv6 = nil
+    },
 
-    ZoomEnabledv6 = false,
-
-    ZoomMaxv6 = 1000,
-    DefaultMaxv6 = 128,
-    MinZoomv6 = 0.5,
-
-	-- // Equip Items Guns
+    -- // Use Watering Can
 
     Servicesv7 = {
         ReplicatedStoragev7 = game:GetService("ReplicatedStorage"),
+        Workspacev7 = game:GetService("Workspace")
     },
 
-    GunsFolderv7 = nil,
-    GunOptionsv7 = {},
-    SelectedGunv7 = nil,
-
-    Remotesv7 = {
-        EquipItemv7 = nil,
+    AutoWaterv7 = {
+        Eventv7 = nil,
+        ModelsFolderv7 = nil,
+        PlantNamesv7 = {},
+        SelectedPlantv7 = nil,
+        Enabledv7 = false
     },
 
-	-- // Equip Items Tubes
+    -- // Remove Plant
 
     Servicesv8 = {
         ReplicatedStoragev8 = game:GetService("ReplicatedStorage"),
+        Workspacev8 = game:GetService("Workspace")
     },
 
-    TubesFolderv8 = nil,
-    TubeOptionsv8 = {},
-    SelectedTubev8 = nil,
+    RemoveSystemv8 = {
+        Eventv8 = nil,
+        ModelsFolderv8 = nil,
 
-    Remotesv8 = {
-        EquipItemv8 = nil,
+        PlantNamesv8 = {},
+        MutationDatav8 = nil,
+        MutationNamesv8 = {},
+        PlantDatav8 = nil,
+        RarityDefinitionsv8 = nil,
+        RarityListv8 = {},
+
+        SelectedPlantv8 = "",
+        SelectedModev8 = "Fruit",
+        SelectedMutationsv8 = {},
+        SelectedRaritiesv8 = {},
+        MinFruitWeightv8 = nil,
+        MaxFruitWeightv8 = nil,
+
+        RemovedUuidsv8 = {},
+
+        IsRunningv8 = false
     },
 
-	-- // Teleport Locations
+    -- // Auto Sell
 
-    Servicesv9 = {
-        TweenServicev9 = game:GetService("TweenService"),
-        Playersv9 = game:GetService("Players"),
-    },
+    Playerv9 = game:GetService("Players").LocalPlayer,
+    ReplicatedStoragev9 = game:GetService("ReplicatedStorage"),
+    Backpackv9 = nil,
+    Characterv9 = nil,
 
-    Playerv9 = nil,
+    SellEventv9 = nil,
+    ModelsFolderv9 = nil,
 
-    Locationsv9 = {
-        ["Golem's Cave"]       = CFrame.new(1705.53, 3956.89, -2650.63),
-        ["Angler Cave"]        = CFrame.new(439.21, 4171.75, 155.40),
-        ["Angler Cave - Shop"] = CFrame.new(735.37, 4266.42, -159.23),
-        ["The Forgotten Demo"] = CFrame.new(-2.205, 4884.06, -1.224),
-        ["Spirit Root Hollow"] = CFrame.new(1670.37, 4041.22, -1918.33),
-        ["Morveth's Cave"]     = CFrame.new(-230.59, 4307.52, -1281.05),
-        ["King Cat Cave"]      = CFrame.new(2172.57, 3825.56, -2929.93),
-		["Ancient Sands"]      = CFrame.new(-1790.41, 4463.66, 275.98),
-		["Sunken Wilds"]       = CFrame.new(3899.61, 3630.88, -1214.10),
-		["Crazy Jeff's Store"] = CFrame.new(-1790.41, 4463.66, 275.98),
-    },
+    MutationDatav9 = nil,
+    MutationNamesv9 = {},
 
-    LocationOptionsv9 = {},
-    SelectedLocationv9 = nil,
+    PlantDatav9 = nil,
+    PlantRarityMapv9 = {},
 
-	-- // Favorite Fish
+    RarityDefinitionsv9 = nil,
+    RarityListv9 = {},
+
+    SelectedPlantsv9 = {},
+    SelectedMutationsv9 = {},
+    SelectedRaritiesv9 = {},
+    AutoSellv9 = false,
+    SellDelayv9 = 5,
+    SellModev9 = "SellAll",
+
+    PlantOptionsv9 = {},
+
+    -- // Auto Plant
 
     ReplicatedStoragev10 = game:GetService("ReplicatedStorage"),
-    Knitv10 = nil,
-    FavoriteRFv10 = nil,
-    rarityMapv10 = {},
-    fishFolderv10 = nil,
-    mutationListv10 = {"None"},
-    mutationsFolderv10 = nil,
-    fishListv10 = {"None"},
-    fishAssetsFolderv10 = nil,
-    selectedRarityv10 = "None",
-    selectedMutationv10 = "None",
-    selectedFishv10 = "None",
-    autoFavRunningv10 = false,
-    autoUnfavRunningv10 = false,
+    Playersv10 = game:GetService("Players"),
 
-	-- // Buy Item Guns
+    SeedsFolderv10 = nil,
+    PlotsFolderv10 = nil,
 
-    Servicesv11 = {
-        ReplicatedStoragev11 = game:GetService("ReplicatedStorage"),
+    Playerv10 = nil,
+
+    PlantDelayv10 = 0.01,
+    TpDelayv10 = 0.01,
+
+    SeedNamesv10 = {},
+    SelectedSeedv10 = nil,
+    IsPlantingv10 = false,
+    SelectedPlantModev10 = "Character Position",
+
+    ScanProgressv10 = {
+        lastAv10 = nil,
+        lastBv10 = nil,
+        goingRightv10 = true,
     },
-    GunsFolderv11 = nil,
-    GunOptionsv11 = {},
-    SelectedGunv11 = nil,
-    Remotesv11 = {
-        BuyItemv11 = nil,
-    },
-
-	-- // Buy Item Tubes
-
-    Servicesv12 = {
-        ReplicatedStoragev12 = game:GetService("ReplicatedStorage"),
-    },
-    TubesFolderv12 = nil,
-    TubeOptionsv12 = {},
-    SelectedTubev12 = nil,
-    Remotesv12 = {
-        BuyItemv12 = nil,
-    },
-
-	-- // Auto Claim Bestiary
-
-    Servicesv13 = {
-        ReplicatedStoragev13 = game:GetService("ReplicatedStorage"),
-    },
-
-    FishFolderv13 = nil,
-
-    Remotesv13 = {
-        ClaimRewardv13 = nil,
-    },
-
-    AutoClaimBestiaryv13 = false,
-
-	-- // Auto Treasure Hunt
-
-    Servicesv14 = {
-        TweenServicev14 = game:GetService("TweenService"),
-        ReplicatedStoragev14 = game:GetService("ReplicatedStorage"),
-        Playersv14 = game:GetService("Players")
-    },
-
-    Playerv14 = nil,
-    Characterv14 = nil,
-    HumanoidRootPartv14 = nil,
-
-    Chestv14 = {
-        Runningv14 = false,
-        SelectedTiersv14 = {},
-        TierOptionsv14 = {},
-        TweenInfov14 = TweenInfo.new(25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    },
-
-	-- // Anti Afk
-
-    VIM = game:GetService("VirtualInputManager"),
-
-    AntiAfkRunning = false, 
-    AntiAfkThread = nil,
-
-	-- // Noclip
-
-    Servicesv15 = {
-        Playersv15 = game:GetService("Players"),
-        RunServicev15 = game:GetService("RunService")
-    },
-
-    Playerv15 = nil,
-
-    Noclipv15 = {
-        Enabledv15 = false,
-        Connectionv15 = nil
-    },
-
-	-- // Merchant
-
-    Servicesv16 = {
-        ReplicatedStoragev16 = game:GetService("ReplicatedStorage")
-    },
-
-    Knitv16 = nil,
-    DataControllerv16 = nil,
-    MerchantServicev16 = nil,
-    Replicav16 = nil,
-    Libraryv16 = nil,
-
-    MerchantUIv16 = {},
 }
 
+local MarketplaceService = game:GetService("MarketplaceService")
+
 local Window = Chloex:Window({
-    Title = "Nexa | V0.0.6 |",
-    Footer = "Beta",
-    Content = "Abyss",
+    Title = "Nexa | v0.0.2 |",
+    Footer = "Premium",
+    Content = MarketplaceService:GetProductInfo(game.PlaceId).Name,  -- otomatis isi nama game
     Color = "Default",
     Version = 1.0,
     ["Tab Width"] = 120,
@@ -351,7 +282,7 @@ local Window = Chloex:Window({
     Configname = "Nexa",
     Uitransparent = 0.20,
     ShowUser = true,
-	Search = true,  
+    Search = true,  
     Config = {
         AutoSave = true,
         AutoLoad = true, 
@@ -374,32 +305,25 @@ local Tabs = {
         Icon = "lucide:backpack",
     }),
 
-    Tp = Window:AddTab({
-        Name = "Teleport",
-        Icon = "lucide:map",
-    }),
-
     Shop = Window:AddTab({
         Name = "Shop",
         Icon = "lucide:store",
     }),
-
 }
 
 local Sec = {}
 
 Sec.Home1 = Tabs.Home:AddSection({
-    Title = "Update Log",
+    Title = "Information",
     Open = false
 })
 
 Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
-[+] Added Noclip
-[+] Added Merchant Shop
-[/] Improve Shoot Fish Tween
-[!] Fixed Tween To Fish
+[/] Inprove Auto Plant 
+[+] Added Input Set Speed Plant
+[+] Added Input Set Tp Plant
 	]]
 })
 
@@ -414,2439 +338,2157 @@ Sec.Home1:AddParagraph({
 })
 
 Sec.Main1 = Tabs.Main:AddSection({
-    Title = "LocalPlayer",
+    Title = "Auto Harvest",
     Open = false
 })
 
--- // Auto Respawn
+GameData.Plantsv1.Modelsv1 =
+    GameData.Servicesv1.ReplicatedStoragev1.Plants.Models
 
-GameData.Remotesv3.Respawnv3 = GameData.Servicesv3.ReplicatedStoragev3
-    .common.packages.Knit.Services.MovementService.RF.Respawn
+GameData.Plantsv1.MutationDatav1 = require(
+    GameData.Servicesv1.ReplicatedStoragev1
+        :WaitForChild("Plants")
+        :WaitForChild("Definitions")
+        :WaitForChild("MutationDataDefinitions")
+)
 
-Sec.Main1:AddToggle({
-    Title = "Auto Respawn",
-    Default = false,
-    Callback = function(v)
-        GameData.AutoRespawnv3 = v
+GameData.Plantsv1.WeatherDatav1 = require(
+    GameData.Servicesv1.ReplicatedStoragev1
+        :WaitForChild("Weather")
+        :WaitForChild("WeatherDataDefinitions")
+)
+
+GameData.Plantsv1.PlantDatav1 = require(
+    GameData.Servicesv1.ReplicatedStoragev1
+        :WaitForChild("Plants")
+        :WaitForChild("Definitions")
+        :WaitForChild("PlantDataDefinitions")
+)
+
+GameData.Plantsv1.RarityDatav1 = require(
+    GameData.Servicesv1.ReplicatedStoragev1
+        :WaitForChild("Plants")
+        :WaitForChild("Definitions")
+        :WaitForChild("RarityDefinitions")
+)
+
+GameData.Plantsv1.VariantFolderv1 =
+    GameData.Servicesv1.ReplicatedStoragev1:WaitForChild("VariantEffects")
+
+-- Plant options
+table.insert(GameData.Plantsv1.PlantOptionsv1, "All Plant")
+for _, model in pairs(GameData.Plantsv1.Modelsv1:GetChildren()) do
+    table.insert(GameData.Plantsv1.PlantOptionsv1, model.Name)
+end
+
+-- Mutation options
+table.insert(GameData.Plantsv1.MutationOptionsv1, "All Mutations")
+for name, _ in pairs(GameData.Plantsv1.MutationDatav1) do
+    table.insert(GameData.Plantsv1.MutationOptionsv1, name)
+end
+
+-- Variant options
+table.insert(GameData.Plantsv1.VariantOptionsv1, "All Variants")
+for _, variant in pairs(GameData.Plantsv1.VariantFolderv1:GetChildren()) do
+    table.insert(GameData.Plantsv1.VariantOptionsv1, variant.Name)
+end
+table.sort(GameData.Plantsv1.VariantOptionsv1)
+
+-- Weather options
+table.insert(GameData.Plantsv1.WeatherOptionsv1, "All Weather")
+for _, data in pairs(GameData.Plantsv1.WeatherDatav1) do
+    if type(data) == "table" and data.Name then
+        table.insert(GameData.Plantsv1.WeatherOptionsv1, data.Name)
     end
-})
+end
+table.sort(GameData.Plantsv1.WeatherOptionsv1)
 
-task.spawn(function()
-    while true do
-        if GameData.AutoRespawnv3 then
-            GameData.Remotesv3.Respawnv3:InvokeServer("free")
+-- Rarity options
+table.insert(GameData.Plantsv1.RarityOptionsv1, "All Rarity")
+for rarityName, _ in pairs(GameData.Plantsv1.RarityDatav1) do
+    table.insert(GameData.Plantsv1.RarityOptionsv1, rarityName)
+end
+table.sort(GameData.Plantsv1.RarityOptionsv1)
+
+-- Functions
+GameData.Functionsv1.FindPlayerPlotv1 = function()
+    for _, plot in pairs(GameData.Worldv1.PlotsFolderv1:GetChildren()) do
+        if plot:FindFirstChild("Owner") then
+            local ownerIdv1 = plot:GetAttribute("Owner")
+            if ownerIdv1 == GameData.Playerv1.LocalPlayerv1.UserId then
+                return plot
+            end
         end
-        task.wait(1)
     end
-end)
+    return nil
+end
 
--- // WalkSpeed
-
-GameData.Playerv5 = GameData.Servicesv5.Playersv5.LocalPlayer
-
-function GameData:ApplySpeedv5()
-    if self.Playerv5.Character and self.Playerv5.Character:FindFirstChild("Humanoid") then
-        local humanoid = self.Playerv5.Character:FindFirstChild("Humanoid")
-
-        if self.WalkEnabledv5 then
-            humanoid.WalkSpeed = self.CustomSpeedv5
-        else
-            humanoid.WalkSpeed = self.DefaultSpeedv5
-        end
+GameData.Functionsv1.TeleportTov1 = function(position)
+    GameData.Playerv1.Characterv1 = GameData.Playerv1.LocalPlayerv1.Character
+    if GameData.Playerv1.Characterv1 and GameData.Playerv1.Characterv1:FindFirstChild("HumanoidRootPart") then
+        GameData.Playerv1.Characterv1.HumanoidRootPart.CFrame = CFrame.new(position + Vector3.new(0, 5, 0))
     end
 end
 
-GameData.Playerv5.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    GameData:ApplySpeedv5()
-end)
-
-Sec.Main1:AddSlider({
-    Title = "WalkSpeed",
-    Content = "Set your custom WalkSpeed",
-    Min = 0,
-    Max = 200,
-    Default = 16,
-    Increment = 1,
-    Callback = function(value)
-        GameData.CustomSpeedv5 = value
-
-        if GameData.WalkEnabledv5 then
-            GameData:ApplySpeedv5()
-        end
-    end
-})
-
-Sec.Main1:AddToggle({
-    Title = "Enable WalkSpeed",
-    Default = false,
-    Callback = function(v)
-        GameData.WalkEnabledv5 = v
-        GameData:ApplySpeedv5()
-
-        if v then
-            Notify("WalkSpeed Enabled!", 2)
-        else
-            Notify("WalkSpeed Disabled!", 2)
-        end
-    end
-})
-
--- // Zoom 1000
-
-GameData.Playerv6 = GameData.Servicesv6.Playersv6.LocalPlayer
-
-Sec.Main1:AddToggle({
-    Title = "Zoom Max 1000",
-    Default = false,
-    Callback = function(v)
-        GameData.ZoomEnabledv6 = v
-
-        if v then
-            GameData.Playerv6.CameraMaxZoomDistance = GameData.ZoomMaxv6
-            GameData.Playerv6.CameraMinZoomDistance = GameData.MinZoomv6
-
-            Notify("Zoom 1000 Enabled!", 2)
-        else
-            GameData.Playerv6.CameraMaxZoomDistance = GameData.DefaultMaxv6
-            GameData.Playerv6.CameraMinZoomDistance = GameData.MinZoomv6
-
-            Notify("Zoom 1000 Disabled!", 2)
-        end
-    end
-})
-
--- // Anti Afk
-
-function GameData:StartAntiAfk()
-    if self.AntiAfkThread then return end
-
-    self.AntiAfkThread = task.spawn(function()
-        while GameData.AntiAfkRunning do
-
-            GameData.VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
-            task.wait(0.05)
-            GameData.VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
-
-            task.wait(0.15)
-
-            GameData.VIM:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
-            task.wait(0.05)
-            GameData.VIM:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
-
-            task.wait(600)
-        end
-
-        GameData.AntiAfkThread = nil
-    end)
+GameData.Functionsv1.GetPlantBaseNamev1 = function(plantNamev1)
+    return plantNamev1:match("^(%a+)%d*$")
 end
 
-Sec.Main1:AddToggle({ 
-    Title = "Anti Afk", 
+GameData.Functionsv1.IsPlantSelectedv1 = function(plantv1, hasPlantv1, hasRarityv1, allPlantv1, allRarityv1)
+    -- Rarity diprioritaskan kalau dipilih
+    if hasRarityv1 then
+        if allRarityv1 then return true end
+        local baseNamev1 = GameData.Functionsv1.GetPlantBaseNamev1(plantv1.Name)
+        local plantDatav1 = GameData.Plantsv1.PlantDatav1[baseNamev1]
+        if not plantDatav1 then return false end
+        for _, selectedRar in pairs(GameData.Plantsv1.SelectedRaritiesv1) do
+            if plantDatav1.Rarity == selectedRar then
+                return true
+            end
+        end
+        return false
+    end
+
+    -- Kalau hanya Plant dipilih
+    if hasPlantv1 then
+        if allPlantv1 then return true end
+        for _, selectedName in pairs(GameData.Plantsv1.SelectedPlantsv1) do
+            if plantv1.Name:match("^" .. selectedName .. "%d*$") then
+                return true
+            end
+        end
+        return false
+    end
+
+    return false
+end
+
+GameData.Functionsv1.ShouldHarvestTargetv1 = function(targetv1, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1)
+    local mutationv1 = targetv1:GetAttribute("Mutation")
+    local variantv1 = targetv1:GetAttribute("Variant")
+    local weatherv1 = targetv1:GetAttribute("Weather")
+
+    if not mutationv1 and hasMutationv1 then return false end
+    if not variantv1 and hasVariantv1 then return false end
+    if not weatherv1 and hasWeatherv1 then return false end
+
+    local mutationMatchv1 = allMutationv1
+    if not mutationMatchv1 and hasMutationv1 then
+        for _, selectedMut in pairs(GameData.Plantsv1.SelectedMutationsv1) do
+            if mutationv1 == selectedMut then
+                mutationMatchv1 = true
+                break
+            end
+        end
+    end
+
+    local variantMatchv1 = allVariantv1
+    if not variantMatchv1 and hasVariantv1 then
+        for _, selectedVar in pairs(GameData.Plantsv1.SelectedVariantsv1) do
+            if variantv1 == selectedVar then
+                variantMatchv1 = true
+                break
+            end
+        end
+    end
+
+    local weatherMatchv1 = allWeatherv1
+    if not weatherMatchv1 and hasWeatherv1 then
+        for _, selectedWea in pairs(GameData.Plantsv1.SelectedWeathersv1) do
+            if weatherv1 == selectedWea then
+                weatherMatchv1 = true
+                break
+            end
+        end
+    end
+
+    if not hasMutationv1 and not hasVariantv1 and not hasWeatherv1 then
+        return true
+    end
+
+    if hasMutationv1 and not mutationMatchv1 then return false end
+    if hasVariantv1 and not variantMatchv1 then return false end
+    if hasWeatherv1 and not weatherMatchv1 then return false end
+
+    return true
+end
+
+-- UI
+Sec.Main1:AddDropdown({
+    Title = "Select Plant (Harvest)",
+    Content = "Select the plants you want to harvest",
+    Options = GameData.Plantsv1.PlantOptionsv1,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedTable)
+        GameData.Plantsv1.SelectedPlantsv1 = selectedTable
+    end
+})
+
+Sec.Main1:AddDropdown({
+    Title = "Select Rarity (Harvest)",
+    Content = "Rarity takes priority over Plant if both selected",
+    Options = GameData.Plantsv1.RarityOptionsv1,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedTable)
+        GameData.Plantsv1.SelectedRaritiesv1 = selectedTable
+    end
+})
+
+Sec.Main1:AddDropdown({
+    Title = "Select Mutation (Harvest)",
+    Content = "Select the mutation you want to harvest",
+    Options = GameData.Plantsv1.MutationOptionsv1,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedTable)
+        GameData.Plantsv1.SelectedMutationsv1 = selectedTable
+    end
+})
+
+Sec.Main1:AddDropdown({
+    Title = "Select Variant (Harvest)",
+    Content = "Select the variant you want to harvest",
+    Options = GameData.Plantsv1.VariantOptionsv1,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedTable)
+        GameData.Plantsv1.SelectedVariantsv1 = selectedTable
+    end
+})
+
+Sec.Main1:AddDropdown({
+    Title = "Select Weather (Harvest)",
+    Content = "Select the weather you want to harvest",
+    Options = GameData.Plantsv1.WeatherOptionsv1,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedTable)
+        GameData.Plantsv1.SelectedWeathersv1 = selectedTable
+    end
+})
+
+Sec.Main1:AddToggle({
+    Title = "Auto Harvest",
     Default = false,
     Callback = function(value)
-
-        GameData.AntiAfkRunning = value
 
         if value then
-            GameData:StartAntiAfk()
-        end
+            Chloex:MakeNotify({
+                Title = "Auto Harvest",
+                Description = "Enabled",
+                Content = "Auto Harvest has been activated!",
+                Color = "Green",
+                Time = 0.5,
+                Delay = 5,
+                Icon = ""
+            })
 
-    end
-})
+            GameData.Plantsv1.HarvestLoopv1 = task.spawn(function()
 
--- // Noclip
+                while value do
 
-GameData.Playerv15 = GameData.Servicesv15.Playersv15.LocalPlayer
+                    GameData.Playerv1.Plotv1 = GameData.Functionsv1.FindPlayerPlotv1()
+                    if not GameData.Playerv1.Plotv1 then
+                        Chloex:MakeNotify({
+                            Title = "Auto Harvest",
+                            Description = "Error",
+                            Content = "Player plot not found!",
+                            Color = "Red",
+                            Time = 0.5,
+                            Delay = 3,
+                            Icon = ""
+                        })
+                        task.wait(3)
+                        continue
+                    end
 
-Sec.Main1:AddToggle({
-    Title = "Noclip",
-    Default = false,
-    Callback = function(valuev15)
+                    GameData.Functionsv1.TeleportTov1(GameData.Playerv1.Plotv1:GetPivot().Position)
+                    task.wait(0.5)
 
-        GameData.Noclipv15.Enabledv15 = valuev15
+                    local hasPlantv1 = #GameData.Plantsv1.SelectedPlantsv1 > 0
+                    local hasRarityv1 = #GameData.Plantsv1.SelectedRaritiesv1 > 0
+                    local hasMutationv1 = #GameData.Plantsv1.SelectedMutationsv1 > 0
+                    local hasVariantv1 = #GameData.Plantsv1.SelectedVariantsv1 > 0
+                    local hasWeatherv1 = #GameData.Plantsv1.SelectedWeathersv1 > 0
 
-        if GameData.Noclipv15.Enabledv15 then
-            Notify("Noclip enabled!", 2)
+                    -- Kalau semua kosong skip
+                    if not hasPlantv1 and not hasRarityv1 and not hasMutationv1 and not hasVariantv1 and not hasWeatherv1 then
+                        task.wait(0.5)
+                        continue
+                    end
 
-            GameData.Noclipv15.Connectionv15 =
-                GameData.Servicesv15.RunServicev15.Stepped:Connect(function()
+                    local allPlantv1 = false
+                    for _, selectedName in pairs(GameData.Plantsv1.SelectedPlantsv1) do
+                        if selectedName == "All Plant" then
+                            allPlantv1 = true
+                            break
+                        end
+                    end
 
-                    local characterv15 = GameData.Playerv15.Character
-                    if characterv15 then
-                        for _, partv15 in pairs(characterv15:GetDescendants()) do
-                            if partv15:IsA("BasePart") then
-                                partv15.CanCollide = false
+                    local allRarityv1 = false
+                    for _, selectedRar in pairs(GameData.Plantsv1.SelectedRaritiesv1) do
+                        if selectedRar == "All Rarity" then
+                            allRarityv1 = true
+                            break
+                        end
+                    end
+
+                    local allMutationv1 = false
+                    for _, selectedMut in pairs(GameData.Plantsv1.SelectedMutationsv1) do
+                        if selectedMut == "All Mutations" then
+                            allMutationv1 = true
+                            break
+                        end
+                    end
+
+                    local allVariantv1 = false
+                    for _, selectedVar in pairs(GameData.Plantsv1.SelectedVariantsv1) do
+                        if selectedVar == "All Variants" then
+                            allVariantv1 = true
+                            break
+                        end
+                    end
+
+                    local allWeatherv1 = false
+                    for _, selectedWea in pairs(GameData.Plantsv1.SelectedWeathersv1) do
+                        if selectedWea == "All Weather" then
+                            allWeatherv1 = true
+                            break
+                        end
+                    end
+
+                    for _, plant in pairs(GameData.Worldv1.ClientPlantsv1:GetChildren()) do
+
+                        if not GameData.Functionsv1.IsPlantSelectedv1(plant, hasPlantv1, hasRarityv1, allPlantv1, allRarityv1) then
+                            continue
+                        end
+
+                        local hasFruitsv1 = false
+                        for _, child in pairs(plant:GetChildren()) do
+                            if child.Name:match("^Fruit%d+$") then
+                                hasFruitsv1 = true
+                                break
+                            end
+                        end
+
+                        if hasFruitsv1 then
+                            -- Case 1: Plant punya Fruit (Corn, dll)
+                            for _, fruit in pairs(plant:GetChildren()) do
+                                if fruit.Name:match("^Fruit%d+$") then
+                                    if GameData.Functionsv1.ShouldHarvestTargetv1(fruit, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1) then
+                                        GameData.Functionsv1.TeleportTov1(fruit:GetPivot().Position)
+                                        task.wait(0.03)
+
+                                        local promptv1 = fruit:FindFirstChild("HarvestPrompt", true)
+                                        if promptv1 and promptv1:IsA("ProximityPrompt") then
+                                            fireproximityprompt(promptv1)
+                                            task.wait(0.01)
+                                        end
+                                    end
+                                end
+                            end
+                        else
+                            -- Case 2: Plant tidak punya Fruit (Carrot, dll)
+                            if GameData.Functionsv1.ShouldHarvestTargetv1(plant, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1) then
+                                GameData.Functionsv1.TeleportTov1(plant:GetPivot().Position)
+                                task.wait(0.03)
+
+                                local harvestPartv1 = plant:FindFirstChild("HarvestBoundingPart")
+                                if harvestPartv1 then
+                                    local promptv1 = harvestPartv1:FindFirstChild("HarvestPrompt")
+                                    if promptv1 and promptv1:IsA("ProximityPrompt") then
+                                        fireproximityprompt(promptv1)
+                                        task.wait(0.01)
+                                    end
+                                end
                             end
                         end
                     end
-                end)
+
+                    task.wait(0.5)
+                end
+
+            end)
 
         else
-            Notify("Noclip disabled!", 2)
+            Chloex:MakeNotify({
+                Title = "Auto Harvest",
+                Description = "Disabled",
+                Content = "Auto Harvest has been deactivated!",
+                Color = "Red",
+                Time = 0.5,
+                Delay = 5,
+                Icon = ""
+            })
 
-            if GameData.Noclipv15.Connectionv15 then
-                GameData.Noclipv15.Connectionv15:Disconnect()
-                GameData.Noclipv15.Connectionv15 = nil
-            end
-
-            local characterv15 = GameData.Playerv15.Character
-            if characterv15 then
-                for _, partv15 in pairs(characterv15:GetDescendants()) do
-                    if partv15:IsA("BasePart") then
-                        partv15.CanCollide = true
-                    end
-                end
+            if GameData.Plantsv1.HarvestLoopv1 then
+                task.cancel(GameData.Plantsv1.HarvestLoopv1)
+                GameData.Plantsv1.HarvestLoopv1 = nil
             end
         end
     end
 })
 
 Sec.Main2 = Tabs.Main:AddSection({
-    Title = "Fish Farm",
+    Title = "Auto Water",
     Open = false
 })
 
--- // Auto Shoot Fish
+GameData.AutoWaterv7.Eventv7 =
+    GameData.Servicesv7.ReplicatedStoragev7
+        :WaitForChild("RemoteEvents")
+        :WaitForChild("UseGear")
 
-GameData.Playerv1    = GameData.Playersv1.LocalPlayer
-GameData.Characterv1 = GameData.Playerv1.Character or GameData.Playerv1.CharacterAdded:Wait()
+GameData.AutoWaterv7.ModelsFolderv7 =
+    GameData.Servicesv7.ReplicatedStoragev7
+        :WaitForChild("Plants")
+        :WaitForChild("Models")
 
-GameData.Playerv1.CharacterAdded:Connect(function(char)
-    GameData.Characterv1 = char
-
-    GameData.lastPositionV1         = nil
-    GameData.isTPDetectedV1         = false
-    GameData.wasInZoneV1            = false
-    GameData.zoneEntryTimeV1        = 0
-    GameData.isTweeningOxygenV1     = false
-    GameData.isSellingSellV1        = false
-    GameData.isTweeningToLocationV1 = false
-    GameData.CurrentTargetModelv1   = nil
-
-    print("[Respawn] Karakter baru, semua state direset")
-end)
-
-GameData.FishFolderv1 = GameData.ReplicatedStoragev1
-    :WaitForChild("common")
-    :WaitForChild("assets")
-    :WaitForChild("fish")
-
-for _, fish in ipairs(GameData.FishFolderv1:GetChildren()) do
-    table.insert(GameData.Fishv1, fish.Name)
+for _, itemv7 in pairs(GameData.AutoWaterv7.ModelsFolderv7:GetChildren()) do
+    if itemv7:IsA("Folder") then
+        table.insert(GameData.AutoWaterv7.PlantNamesv7, itemv7.Name)
+    end
 end
 
-GameData.MutationsFolderv1 = GameData.ReplicatedStoragev1
-    :WaitForChild("common")
-    :WaitForChild("presets")
-    :WaitForChild("fish")
-    :WaitForChild("mutations")
+table.sort(GameData.AutoWaterv7.PlantNamesv7)
 
-for _, mutation in ipairs(GameData.MutationsFolderv1:GetChildren()) do
-    table.insert(GameData.MutationNamesv1, mutation.Name)
-end
-table.sort(GameData.MutationNamesv1)
+GameData.AutoWaterv7.SelectedPlantv7 =
+    GameData.AutoWaterv7.PlantNamesv7[1]
 
-GameData.FishPresetsFolderv1 = GameData.ReplicatedStoragev1
-    :WaitForChild("common")
-    :WaitForChild("presets")
-    :WaitForChild("items")
-    :WaitForChild("fish")
+Sec.Main2:AddDropdown({
+    Title = "Select Plant",
+    Options = GameData.AutoWaterv7.PlantNamesv7,
+    Multi = false,
+    Default = GameData.AutoWaterv7.PlantNamesv7[1],
+    Callback = function(value)
+        GameData.AutoWaterv7.SelectedPlantv7 = value
+        print("Selected plant:", value)
+    end
+})
 
-for _, folder in ipairs(GameData.FishPresetsFolderv1:GetChildren()) do
-    if folder:IsA("Folder") then
-        for _, module in ipairs(folder:GetChildren()) do
-            if module:IsA("ModuleScript") then
-                local success, data = pcall(require, module)
-                if success and type(data) == "table" and data.rarity then
-                    GameData.FishRarityMapv1[module.Name] = tostring(data.rarity)
-                    GameData.raritySetV1[tostring(data.rarity)] = true
+Sec.Main2:AddToggle({
+    Title = "Auto Watering Can",
+    Default = false,
+    Callback = function(value)
+        GameData.AutoWaterv7.Enabledv7 = value
+        if value then
+            Notify("Auto Watering enabled!", 2)
+            task.spawn(function()
+                while GameData.AutoWaterv7.Enabledv7 do
+                    for _, plantv7 in pairs(
+                        GameData.Servicesv7.Workspacev7
+                            .ClientPlants
+                            :GetChildren()
+                    ) do
+                        if not GameData.AutoWaterv7.Enabledv7 then
+                            break
+                        end
+                        if plantv7.Name:lower():match(
+                            "^" .. GameData.AutoWaterv7.SelectedPlantv7:lower()
+                        ) then
+                            if plantv7.PrimaryPart then
+                                GameData.AutoWaterv7.Eventv7:FireServer(
+                                    "Watering Can",
+                                    {
+                                        position =
+                                            plantv7.PrimaryPart.Position
+                                    }
+                                )
+                                task.wait(0.01)
+                            end
+                        end
+                    end
+                    task.wait(0.01)
                 end
-            end
+            end)
+        else
+
+            Notify("Auto Watering disabled!", 2)
+
         end
     end
-end
-for rarityName in pairs(GameData.raritySetV1) do
-    table.insert(GameData.RarityNamesv1, rarityName)
-end
-table.sort(GameData.RarityNamesv1)
-GameData.raritySetV1 = nil
+})
 
-GameData.CollectEventv1 = GameData.ReplicatedStoragev1
-    :WaitForChild("common"):WaitForChild("packages"):WaitForChild("Knit")
-    :WaitForChild("Services"):WaitForChild("FishService"):WaitForChild("RF"):WaitForChild("CollectFish")
+Sec.Main3 = Tabs.Main:AddSection({
+    Title = "Auto Shovel",
+    Open = false
+})
 
-GameData.StartCatchEventv1 = GameData.ReplicatedStoragev1
-    :WaitForChild("common"):WaitForChild("packages"):WaitForChild("Knit")
-    :WaitForChild("Services"):WaitForChild("HarpoonService"):WaitForChild("RF"):WaitForChild("StartCatching")
+GameData.RemoveSystemv8.Eventv8 =
+    GameData.Servicesv8.ReplicatedStoragev8
+        :WaitForChild("RemoteEvents")
+        :WaitForChild("RemovePlant")
 
-GameData.SellEventv1 = GameData.ReplicatedStoragev1
-    :WaitForChild("common"):WaitForChild("packages"):WaitForChild("Knit")
-    :WaitForChild("Services"):WaitForChild("SellService"):WaitForChild("RF"):WaitForChild("SellInventory")
+GameData.RemoveSystemv8.ModelsFolderv8 =
+    GameData.Servicesv8.ReplicatedStoragev8
+        :WaitForChild("Plants")
+        :WaitForChild("Models")
 
-GameData.oxygenLabelV1 = GameData.Playerv1.PlayerGui
-    :WaitForChild("Main"):WaitForChild("Oxygen"):WaitForChild("CanvasGroup"):WaitForChild("Oxygen")
-
-GameData.weightGuiV1 = GameData.Playerv1.PlayerGui.Main.Oxygen.RightStats.Frame.Weight
-GameData.maxLabelV1  = GameData.weightGuiV1.Max
-GameData.wghtLabelV1 = GameData.weightGuiV1.Wght
-
-for name in pairs(GameData.LocationCFramesV1) do
-    table.insert(GameData.locationNamesV1, name)
-end
-table.sort(GameData.locationNamesV1)
-
-for name in pairs(GameData.SafeZoneCFramesV1) do
-    table.insert(GameData.safeZoneNamesV1, name)
-end
-table.sort(GameData.safeZoneNamesV1)
-
--- ============================================================
---  HELPER: Pastikan CFrame selalu tegak
--- ============================================================
-local function MakeUprightCFrame(position, optionalLookAt)
-    if optionalLookAt then
-        local forward = (optionalLookAt - position)
-        if forward.Magnitude < 0.01 then return CFrame.new(position) end
-        forward = forward.Unit
-        local dot = math.abs(forward:Dot(Vector3.new(0, 1, 0)))
-        if dot > 0.99 then return CFrame.new(position) end
-        return CFrame.lookAt(position, optionalLookAt, Vector3.new(0, 1, 0))
-    else
-        return CFrame.new(position)
+for _, itemv8 in pairs(GameData.RemoveSystemv8.ModelsFolderv8:GetChildren()) do
+    if itemv8:IsA("Folder") then
+        table.insert(GameData.RemoveSystemv8.PlantNamesv8, itemv8.Name)
     end
 end
 
--- ============================================================
---  HELPER ZONE
--- ============================================================
-function GameData:IsInZoneV1(zoneName)
-    local character = self.Characterv1
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return false end
-    local pos = character.HumanoidRootPart.Position
+table.sort(GameData.RemoveSystemv8.PlantNamesv8)
 
-    local zone = workspace.Game.Regions.Locations:FindFirstChild(zoneName)
-    if not zone then return false end
+GameData.RemoveSystemv8.MutationDatav8 = require(
+    GameData.Servicesv8.ReplicatedStoragev8
+        :WaitForChild("Plants")
+        :WaitForChild("Definitions")
+        :WaitForChild("MutationDataDefinitions")
+)
 
-    for _, part in ipairs(zone:GetDescendants()) do
-        if part:IsA("BasePart") then
-            local relative = part.CFrame:PointToObjectSpace(pos)
-            local size = part.Size / 2
-            if math.abs(relative.X) <= size.X
-            and math.abs(relative.Y) <= size.Y
-            and math.abs(relative.Z) <= size.Z then
-                return true
-            end
+GameData.RemoveSystemv8.MutationNamesv8 = {"None"}
+
+for mutationNamev8, _ in pairs(GameData.RemoveSystemv8.MutationDatav8) do
+    table.insert(GameData.RemoveSystemv8.MutationNamesv8, mutationNamev8)
+end
+
+table.sort(GameData.RemoveSystemv8.MutationNamesv8)
+
+GameData.RemoveSystemv8.PlantDatav8 = require(
+    GameData.Servicesv8.ReplicatedStoragev8
+        :WaitForChild("Plants")
+        :WaitForChild("Definitions")
+        :WaitForChild("PlantDataDefinitions")
+)
+
+GameData.RemoveSystemv8.RarityDefinitionsv8 = require(
+    GameData.Servicesv8.ReplicatedStoragev8
+        :WaitForChild("Plants")
+        :WaitForChild("Definitions")
+        :WaitForChild("RarityDefinitions")
+)
+
+for rarityNamev8, _ in pairs(GameData.RemoveSystemv8.RarityDefinitionsv8) do
+    table.insert(GameData.RemoveSystemv8.RarityListv8, rarityNamev8)
+end
+table.sort(GameData.RemoveSystemv8.RarityListv8)
+
+GameData.RemoveSystemv8.IsPlantMatchRarityv8 = function(plantNamev8)
+    if #GameData.RemoveSystemv8.SelectedRaritiesv8 == 0 then
+        return false
+    end
+
+    local cleanNamev8 = plantNamev8:gsub("%d+$", "")
+    local plantInfov8 = GameData.RemoveSystemv8.PlantDatav8[cleanNamev8]
+    if not plantInfov8 then return false end
+
+    for _, rv8 in ipairs(GameData.RemoveSystemv8.SelectedRaritiesv8) do
+        if rv8 == plantInfov8["Rarity"] then
+            return true
         end
     end
     return false
 end
 
--- ============================================================
---  HELPER: Cek apakah sebuah POSISI ada di dalam zone
--- ============================================================
-function GameData:IsPositionInZoneV1(position, zoneName)
-    local zone = workspace.Game.Regions.Locations:FindFirstChild(zoneName)
-    if not zone then return false end
+GameData.RemoveSystemv8.IsMatchMutationv8 = function(targetv8)
+    if #GameData.RemoveSystemv8.SelectedMutationsv8 == 0 then
+        return true
+    end
 
-    for _, part in ipairs(zone:GetDescendants()) do
-        if part:IsA("BasePart") then
-            local relative = part.CFrame:PointToObjectSpace(position)
-            local size = part.Size / 2
-            if math.abs(relative.X) <= size.X
-            and math.abs(relative.Y) <= size.Y
-            and math.abs(relative.Z) <= size.Z then
-                return true
-            end
+    local mutationv8 = targetv8:GetAttribute("Mutation") or "None"
+    for _, mv8 in ipairs(GameData.RemoveSystemv8.SelectedMutationsv8) do
+        if mv8 == mutationv8 then
+            return true
         end
     end
     return false
 end
 
--- ============================================================
---  SAFE ZONE (Oxygen)
--- ============================================================
-function GameData:IsInSafeZoneV1()
-    local character = self.Characterv1
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return false, nil end
-    local pos = character.HumanoidRootPart.Position
+GameData.RemoveSystemv8.IsMatchWeightv8 = function(fruitv8)
+    local weightv8 = fruitv8:GetAttribute("FruitWeight")
 
-    for _, zone in pairs(workspace.Game.Regions.Locations:GetChildren()) do
-        if zone:GetAttribute("breathable") and zone.Name == self.SelectedSafeZoneV1 then
-            for _, part in ipairs(zone:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    local relative = part.CFrame:PointToObjectSpace(pos)
-                    local size = part.Size / 2
-                    if math.abs(relative.X) <= size.X
-                    and math.abs(relative.Y) <= size.Y
-                    and math.abs(relative.Z) <= size.Z then
-                        return true, zone.Name
-                    end
-                end
-            end
-        end
+    if weightv8 == nil then
+        return true
     end
-    return false, nil
-end
 
-function GameData:WaitUntilInSafeZoneV1(timeout)
-    timeout = timeout or 30
-    local elapsed = 0
-    while elapsed < timeout do
-        local inZone, zoneName = self:IsInSafeZoneV1()
-        if inZone then return true, zoneName end
-        task.wait(0.2)
-        elapsed = elapsed + 0.2
-        if self.cancelSafeZoneTweenV1 then return false, nil end
-    end
-    return false, nil
-end
-
-function GameData:GetNearestSafeZonev1()
-    if not self.Characterv1 then return nil, nil end
-    local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
-    if not hrp then return nil, nil end
-
-    local nearestZone, nearestPart, shortestDistance = nil, nil, math.huge
-
-    for _, zone in pairs(workspace.Game.Regions.Locations:GetChildren()) do
-        if zone:GetAttribute("breathable") and zone.Name == self.SelectedSafeZoneV1 then
-            for _, part in ipairs(zone:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    local distance = (hrp.Position - part.Position).Magnitude
-                    if distance < shortestDistance then
-                        shortestDistance = distance
-                        nearestZone = zone
-                        nearestPart = part
-                    end
-                end
-            end
+    if GameData.RemoveSystemv8.MaxFruitWeightv8 ~= nil then
+        if weightv8 > GameData.RemoveSystemv8.MaxFruitWeightv8 then
+            return true
         end
     end
 
-    return nearestZone, nearestPart
-end
-
--- ============================================================
---  SAFE ZONE TWEEN
--- ============================================================
-function GameData:TweenToSafeZoneAndWaitV1()
-    local hrp = self.Characterv1 and self.Characterv1:FindFirstChild("HumanoidRootPart")
-    if not hrp then return false end
-
-    local zone, part = self:GetNearestSafeZonev1()
-    if not zone then
-        warn("Zona aman tidak ditemukan:", self.SelectedSafeZoneV1)
-        return false
-    end
-
-    local alreadyIn, alreadyZone = self:IsInSafeZoneV1()
-    if alreadyIn then
-        print("Sudah di Safe Zone:", alreadyZone)
-        return true, alreadyZone
-    end
-
-    local targetPosition = part.Position + Vector3.new(0, 5, 0)
-    local targetCF = MakeUprightCFrame(targetPosition)
-    self.cancelSafeZoneTweenV1 = false
-
-    local distance = (hrp.Position - targetPosition).Magnitude
-    local duration = math.max(1, distance / (self.TweenSpeedToSafeZoneV1 * 10))
-
-    local tween = self.TweenServicev1:Create(
-        hrp,
-        TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-        {CFrame = targetCF}
-    )
-
-    self.activeSafeZoneTweenV1 = tween
-    tween:Play()
-
-    task.spawn(function()
-        while tween.PlaybackState == Enum.PlaybackState.Playing do
-            local inZone, zoneName = self:IsInSafeZoneV1()
-            if inZone then
-                tween:Cancel()
-                print("Masuk Safe Zone sebelum tween selesai:", zoneName)
-                break
-            end
-            if self.cancelSafeZoneTweenV1 then break end
-            task.wait(0.2)
+    if GameData.RemoveSystemv8.MinFruitWeightv8 ~= nil then
+        if weightv8 < GameData.RemoveSystemv8.MinFruitWeightv8 then
+            return true
         end
-    end)
-
-    tween.Completed:Wait()
-
-    if self.cancelSafeZoneTweenV1 then
-        self.activeSafeZoneTweenV1 = nil
-        return false
     end
 
-    self.activeSafeZoneTweenV1 = nil
-
-    local inZone, zoneName = self:IsInSafeZoneV1()
-    if inZone then return true, zoneName end
-
-    local success, zoneName2 = self:WaitUntilInSafeZoneV1(30)
-    if success then
-        return true, zoneName2
-    else
-        warn("Timeout: Tidak sampai zona oxygen")
+    if GameData.RemoveSystemv8.MinFruitWeightv8 ~= nil
+        or GameData.RemoveSystemv8.MaxFruitWeightv8 ~= nil then
         return false
     end
-end
-
--- ============================================================
---  SELL TWEEN — tween ke SellCFrameV1 lalu langsung sell
--- ============================================================
-function GameData:TweenToSellCFrameAndSellV1()
-    local hrp = self.Characterv1 and self.Characterv1:FindFirstChild("HumanoidRootPart")
-    if not hrp then return false end
-
-    self.cancelSellLocationTweenV1 = false
-
-    local targetCF  = MakeUprightCFrame(self.SellCFrameV1.Position)
-    local distance  = (hrp.Position - self.SellCFrameV1.Position).Magnitude
-    local duration  = math.max(1, distance / (self.TweenSpeedToSellZoneV1 * 10))
-
-    local tween = self.TweenServicev1:Create(
-        hrp,
-        TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-        {CFrame = targetCF}
-    )
-
-    self.activeSellLocationTweenV1 = tween
-    tween:Play()
-
-    task.spawn(function()
-        while tween.PlaybackState == Enum.PlaybackState.Playing do
-            if self.cancelSellLocationTweenV1 then
-                tween:Cancel()
-                break
-            end
-            task.wait(0.2)
-        end
-    end)
-
-    tween.Completed:Wait()
-
-    if self.cancelSellLocationTweenV1 then
-        self.activeSellLocationTweenV1 = nil
-        return false
-    end
-
-    self.activeSellLocationTweenV1 = nil
-
-    print("[Sell] Sampai CFrame tujuan, mulai sell!")
-    task.wait(0.3)
-    pcall(function()
-        GameData.SellEventv1:InvokeServer()
-    end)
-    print("[Sell] Sell berhasil!")
-    GameData.lastSellTimev1 = tick()
 
     return true
 end
 
-function GameData:CancelSafeZoneTweenV1()
-    self.cancelSafeZoneTweenV1 = true
-    if self.activeSafeZoneTweenV1 then
-        self.activeSafeZoneTweenV1:Cancel()
-        self.activeSafeZoneTweenV1 = nil
-    end
-    self.isTweeningOxygenV1 = false
+GameData.RemoveSystemv8.IsAlreadyRemovedv8 = function(uuidv8)
+    return GameData.RemoveSystemv8.RemovedUuidsv8[uuidv8] == true
 end
 
-function GameData:CancelSellLocationTweenV1()
-    self.cancelSellLocationTweenV1 = true
-    if self.activeSellLocationTweenV1 then
-        self.activeSellLocationTweenV1:Cancel()
-        self.activeSellLocationTweenV1 = nil
-    end
-    self.isSellingSellV1 = false
+GameData.RemoveSystemv8.MarkRemovedv8 = function(uuidv8)
+    GameData.RemoveSystemv8.RemovedUuidsv8[uuidv8] = true
 end
 
-function GameData:TweenToSafeZoneOxygenV1()
-    if self.isTweeningOxygenV1 then return end
-    self.isTweeningOxygenV1 = true
-    self.CurrentTargetModelv1 = nil
-
-    local success, zoneName = self:TweenToSafeZoneAndWaitV1()
-    if success then
-        print("Sampai zona oxygen:", zoneName)
-    else
-        warn("Gagal sampai zona oxygen")
-    end
-
-    self.isTweeningOxygenV1 = false
+GameData.RemoveSystemv8.ResetRemovedUuidsv8 = function()
+    GameData.RemoveSystemv8.RemovedUuidsv8 = {}
 end
 
-function GameData:AutoSellV1()
-    if self.isSellingSellV1 then return end
-
-    self.isSellingSellV1 = true
-    self.CurrentTargetModelv1 = nil
-
-    local success = self:TweenToSellCFrameAndSellV1()
-    if not success then
-        warn("[Sell] Gagal sell, akan retry")
+Sec.Main3:AddDropdown({
+    Title = "Select Plant (Plant)",
+    Options = GameData.RemoveSystemv8.PlantNamesv8,
+    Multi = false,
+    Default = "",
+    Callback = function(value)
+        GameData.RemoveSystemv8.SelectedPlantv8 = value or ""
     end
+})
 
-    self.isSellingSellV1 = false
-end
-
--- ============================================================
---  LOCATION TWEEN
--- ============================================================
-function GameData:TweenToSelectedLocationV1()
-    if self.isTweeningToLocationV1 then return end
-    if not self.SelectedLocationV1 then return end
-
-    local targetCF = self.LocationCFramesV1[self.SelectedLocationV1]
-    if not targetCF then return end
-
-    local hrp = self.Characterv1 and self.Characterv1:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    if self:IsInZoneV1(self.SelectedLocationV1) then return end
-
-    self.isTweeningToLocationV1 = true
-    self.cancelLocationTweenV1  = false
-    self.CurrentTargetModelv1   = nil
-    self.wasInZoneV1            = false
-    self.zoneEntryTimeV1        = 0
-
-    print("Tween ke lokasi:", self.SelectedLocationV1)
-
-    local distance = (hrp.Position - targetCF.Position).Magnitude
-    local duration = math.max(1, distance / (self.TweenSpeedToLocationV1 * 10))
-    local uprightCF = MakeUprightCFrame(targetCF.Position)
-
-    local tween = self.TweenServicev1:Create(
-        hrp,
-        TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
-        {CFrame = uprightCF}
-    )
-
-    self.activeLocationTweenV1 = tween
-    tween:Play()
-
-    local selectedLoc = self.SelectedLocationV1
-    task.spawn(function()
-        while tween.PlaybackState == Enum.PlaybackState.Playing do
-            if self:IsInZoneV1(selectedLoc) then
-                tween:Cancel()
-                print("Masuk zona sebelum tween selesai:", selectedLoc)
-                break
-            end
-            if self.cancelLocationTweenV1 then break end
-            task.wait(0.2)
-        end
-    end)
-
-    tween.Completed:Wait()
-    self.activeLocationTweenV1 = nil
-    self.isTweeningToLocationV1 = false
-end
-
-function GameData:CancelLocationTweenV1()
-    self.cancelLocationTweenV1 = true
-    if self.activeLocationTweenV1 then
-        self.activeLocationTweenV1:Cancel()
-        self.activeLocationTweenV1 = nil
+Sec.Main3:AddDropdown({
+    Title = "Select Mode",
+    Options = {"Fruit", "Plant"},
+    Multi = false,
+    Default = "Fruit",
+    Callback = function(value)
+        GameData.RemoveSystemv8.SelectedModev8 = value
     end
-    self.isTweeningToLocationV1 = false
-end
+})
 
--- ============================================================
---  FISH HELPERS
--- ============================================================
-function GameData:IsDeadv1(model)
-    if not model or not model.Parent then return true end
-    local head = model:FindFirstChild("Head")
-    if not head then return true end
-    local stats = head:FindFirstChild("stats")
-    if not stats then return true end
-    local health = stats:FindFirstChild("Health")
-    if not health then return true end
-    local amount = health:FindFirstChild("Amount")
-    if not amount then return true end
-    local current = amount.Text:match("^(%d+)/")
-    return current and tonumber(current) == 0
-end
-
-function GameData:IsSelectedFishv1(model)
-    local hasFishFilter     = #self.SelectedFishv1 > 0
-    local hasMutationFilter = #self.SelectedMutationsv1 > 0
-    local hasRarityFilter   = #self.SelectedRaritiesv1 > 0
-
-    if not hasFishFilter and not hasMutationFilter and not hasRarityFilter then return false end
-
-    local head = model:FindFirstChild("Head")
-    if not head then return false end
-    local stats = head:FindFirstChild("stats")
-    if not stats then return false end
-
-    local fishPart     = stats:FindFirstChild("Fish")
-    local fishName     = fishPart and fishPart.Text or nil
-    local mutationPart = stats:FindFirstChild("Mutation")
-    local labelPart    = mutationPart and mutationPart:FindFirstChild("Label")
-    local mutationName = labelPart and labelPart.Text or nil
-    local fishRarity   = fishName and self.FishRarityMapv1[fishName] or nil
-
-    local fishMatch, mutationMatch, rarityMatch = false, false, false
-
-    if hasFishFilter and fishName then
-        for _, name in ipairs(self.SelectedFishv1) do
-            if fishName == name then fishMatch = true break end
-        end
+Sec.Main3:AddDropdown({
+    Title = "Select Mutation",
+    Options = GameData.RemoveSystemv8.MutationNamesv8,
+    Multi = true,
+    Default = {},
+    Callback = function(selected)
+        GameData.RemoveSystemv8.SelectedMutationsv8 = selected
     end
-    if hasMutationFilter and mutationName then
-        for _, name in ipairs(self.SelectedMutationsv1) do
-            if mutationName == name then mutationMatch = true break end
-        end
+})
+
+Sec.Main3:AddDropdown({
+    Title = "Select Rarity (Filter)",
+    Options = GameData.RemoveSystemv8.RarityListv8,
+    Multi = true,
+    Default = {},
+    Callback = function(selected)
+        GameData.RemoveSystemv8.SelectedRaritiesv8 = selected
     end
-    if hasRarityFilter and fishRarity then
-        for _, name in ipairs(self.SelectedRaritiesv1) do
-            if fishRarity == name then rarityMatch = true break end
-        end
-    end
+})
 
-    if hasFishFilter and fishMatch then return true end
-    if hasMutationFilter and hasRarityFilter then return mutationMatch and rarityMatch end
-    if hasMutationFilter then return mutationMatch end
-    if hasRarityFilter then return rarityMatch end
-    return false
-end
-
-function GameData:GetNearestTargetv1()
-    if not self.Characterv1 or not self.Characterv1:FindFirstChild("HumanoidRootPart") then return nil end
-    local nearest, shortestDistance = nil, math.huge
-    local origin = self.Characterv1.HumanoidRootPart.Position
-
-    for _, model in pairs(workspace.Game.Fish.client:GetChildren()) do
-        if model:IsA("Model") and self:IsSelectedFishv1(model) then
-            local torso = model:FindFirstChild("UpperTorso")
-            if torso then
-                local distance = (torso.Position - origin).Magnitude
-                if distance < shortestDistance then
-                    shortestDistance = distance
-                    nearest = model
-                end
-            end
-        end
-    end
-    return nearest
-end
-
-function GameData:TweenToPositionv1(position)
-    if not self.Characterv1 then return end
-    local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    local distance = (hrp.Position - position).Magnitude
-    local duration = math.max(0.1, distance / (self.TweenSpeedToFishV1 * 10))
-    local _, currentY, _ = hrp.CFrame:ToEulerAnglesYXZ()
-    local targetCF = CFrame.new(position) * CFrame.Angles(0, currentY, 0)
-
-    self.TweenServicev1:Create(
-        hrp,
-        TweenInfo.new(duration, Enum.EasingStyle.Linear),
-        {CFrame = targetCF}
-    ):Play()
-end
-
-function GameData:TweenToSafeDistancev1(model)
-    if not self.Characterv1 then return end
-    local hrp = self.Characterv1:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    local torso = model:FindFirstChild("UpperTorso")
-    if not torso then return end
-
-    local direction    = (hrp.Position - torso.Position).Unit
-    local safePosition = torso.Position + (direction * self.SAFE_DISTANCEv1)
-    local distance     = (hrp.Position - safePosition).Magnitude
-    local duration     = math.max(0.1, distance / (self.TweenSpeedToSafeDistV1 * 10))
-    local targetCF     = MakeUprightCFrame(safePosition, torso.Position)
-
-    self.TweenServicev1:Create(
-        hrp,
-        TweenInfo.new(duration, Enum.EasingStyle.Linear),
-        {CFrame = targetCF}
-    ):Play()
-end
-
--- ============================================================
---  LOOPS
--- ============================================================
-
--- Anti-TP Detection Loop
-task.spawn(function()
-    task.wait(2)
-    GameData.lastPositionV1 = nil
-
-    while task.wait(0.2) do
-        if not GameData.antiTPEnabledV1 then continue end
-
-        local hrp = GameData.Characterv1 and GameData.Characterv1:FindFirstChild("HumanoidRootPart")
-        if not hrp then
-            GameData.lastPositionV1 = nil
-            continue
-        end
-
-        local humanoid = GameData.Characterv1:FindFirstChildOfClass("Humanoid")
-        if not humanoid or humanoid.Health <= 0 then
-            GameData.lastPositionV1 = nil
-            continue
-        end
-
-        local currentPos = hrp.Position
-
-        if GameData.lastPositionV1 then
-            local delta = (currentPos - GameData.lastPositionV1).Magnitude
-            if delta >= GameData.tpThresholdV1 and not GameData.isTPDetectedV1 then
-                warn("[AntiTP] Teleport terdeteksi! Delta:", math.floor(delta), "studs")
-                GameData.isTPDetectedV1 = true
-
-                GameData:CancelLocationTweenV1()
-                GameData:CancelSafeZoneTweenV1()
-                GameData:CancelSellLocationTweenV1()
-
-                GameData.wasInZoneV1     = false
-                GameData.zoneEntryTimeV1 = 0
-
-                task.delay(GameData.tpPauseTimeV1, function()
-                    GameData.isTPDetectedV1             = false
-                    GameData.isTweeningOxygenV1         = false
-                    GameData.isSellingSellV1             = false
-                    GameData.isTweeningToLocationV1     = false
-                    print("[AntiTP] Resume setelah pause", GameData.tpPauseTimeV1, "detik")
-                end)
-            end
-        end
-
-        GameData.lastPositionV1 = currentPos
-    end
-end)
-
--- Auto Oxygen Safe Zone
-task.spawn(function()
-    while task.wait(1) do
-        if GameData.isTPDetectedV1 then continue end
-        if not GameData.AutoSafeZonev1 then continue end
-        local oxygenValue = tonumber(GameData.oxygenLabelV1.Text)
-        if oxygenValue and oxygenValue <= GameData.OxygenThresholdV1 then
-            GameData:TweenToSafeZoneOxygenV1()
-        end
-    end
-end)
-
--- Auto Sell
-task.spawn(function()
-    while task.wait(1) do
-        if GameData.isTPDetectedV1 then continue end
-        if not GameData.AutoSellv1 then continue end
-        if GameData.isSellingSellV1 then continue end
-
-        local currentTime = tick()
-
-        if GameData.SellModev1 == "Sell Delay" then
-            if currentTime - GameData.lastSellTimev1 >= GameData.SellDelayv1 then
-                print("[Sell] Delay tercapai, auto sell dimulai!")
-                GameData:AutoSellV1()
-            end
-        elseif GameData.SellModev1 == "Backpack Full" then
-            local maxText  = tonumber(GameData.maxLabelV1.Text:match("%d+"))
-            local wghtText = tonumber(GameData.wghtLabelV1.Text:match("%d+"))
-            if maxText and wghtText and wghtText >= maxText then
-                print("[Sell] Backpack Full, auto sell dimulai!")
-                GameData:AutoSellV1()
-            end
-        end
-    end
-end)
-
--- Loop cek lokasi shoot
-task.spawn(function()
-    while task.wait(0.5) do
-        if GameData.isTPDetectedV1 then continue end
-        if not GameData.AutoShootv1 then continue end
-        if not GameData.SelectedLocationV1 then continue end
-        if GameData.isTweeningOxygenV1 or GameData.isSellingSellV1 then continue end
-        if GameData.locationJustChangedV1 then continue end
-
-        local inZone = GameData:IsInZoneV1(GameData.SelectedLocationV1)
-
-        if inZone then
-            if not GameData.wasInZoneV1 then
-                GameData.zoneEntryTimeV1 = tick()
-                GameData.wasInZoneV1 = true
-                print("[Zone] Baru masuk zona, tunggu", GameData.zoneEntryDelayV1, "detik...")
+Sec.Main3:AddInput({
+    Title = "Min Fruit Weight",
+    Content = "Example: 0.10 — fruit < min will be removed",
+    Default = "",
+    Callback = function(value)
+        if value ~= "" then
+            local numv8 = tonumber(value)
+            if numv8 then
+                GameData.RemoveSystemv8.MinFruitWeightv8 = numv8
+            else
+                GameData.RemoveSystemv8.MinFruitWeightv8 = nil
             end
         else
-            GameData.wasInZoneV1 = false
-            GameData.zoneEntryTimeV1 = 0
-            if not GameData.isTweeningToLocationV1 then
-                task.spawn(function()
-                    GameData:TweenToSelectedLocationV1()
-                end)
-            end
+            GameData.RemoveSystemv8.MinFruitWeightv8 = nil
         end
     end
-end)
+})
 
--- ============================================================
---  AUTO SHOOT FISH — FIXED: Zone Delay dicek langsung di shoot loop
--- ============================================================
-task.spawn(function()
-    while task.wait(0.01) do
-        if GameData.isTPDetectedV1 then continue end
-        if GameData.isTweeningOxygenV1 or GameData.isSellingSellV1 then continue end
-        if GameData.isTweeningToLocationV1 then continue end
-
-        if not GameData.AutoShootv1 then
-            GameData.CurrentTargetModelv1 = nil
-            continue
-        end
-
-        if GameData.SelectedLocationV1 then
-            -- ✅ FIX #1: Kalau tidak di zone → skip
-            if not GameData:IsInZoneV1(GameData.SelectedLocationV1) then continue end
-
-            -- ✅ FIX #2: Kalau wasInZoneV1 belum di-set padahal sudah di zone
-            --           (race condition dengan loop 0.5s), paksa init di sini
-            if not GameData.wasInZoneV1 then
-                GameData.wasInZoneV1 = true
-                GameData.zoneEntryTimeV1 = tick()
-                print("[ShootLoop] Zone entry diinit dari shoot loop (race condition fix)")
+Sec.Main3:AddInput({
+    Title = "Max Fruit Weight",
+    Content = "Example: 0.18 — fruit > max will be removed",
+    Default = "",
+    Callback = function(value)
+        if value ~= "" then
+            local numv8 = tonumber(value)
+            if numv8 then
+                GameData.RemoveSystemv8.MaxFruitWeightv8 = numv8
+            else
+                GameData.RemoveSystemv8.MaxFruitWeightv8 = nil
             end
-
-            -- ✅ FIX #3: Selama delay aktif → tween ke titik lokasi, JANGAN shoot
-            local elapsed = tick() - GameData.zoneEntryTimeV1
-            if elapsed < GameData.zoneEntryDelayV1 then
-                GameData.CurrentTargetModelv1 = nil
-
-                local targetCF = GameData.LocationCFramesV1[GameData.SelectedLocationV1]
-                if targetCF then
-                    local hrpDelay = GameData.Characterv1 and GameData.Characterv1:FindFirstChild("HumanoidRootPart")
-                    if hrpDelay then
-                        GameData:TweenToPositionv1(targetCF.Position)
-                    end
-                end
-
-                continue -- skip shoot, tunggu delay selesai
-            end
+        else
+            GameData.RemoveSystemv8.MaxFruitWeightv8 = nil
         end
+    end
+})
 
-        if not GameData.Characterv1 then continue end
-        local hrp = GameData.Characterv1:FindFirstChild("HumanoidRootPart")
-        if not hrp then continue end
+Sec.Main3:AddToggle({
+    Title = "Remove Plant",
+    Default = false,
+    Callback = function(value)
+        GameData.RemoveSystemv8.IsRunningv8 = value
 
-        local humanoid = GameData.Characterv1:FindFirstChildOfClass("Humanoid")
-        if not humanoid or humanoid.Health <= 0 then continue end
+        if value then
+            Notify("Remove " .. GameData.RemoveSystemv8.SelectedModev8 .. " started!", 3)
 
-        local tool = GameData.Characterv1:FindFirstChildOfClass("Tool")
-        if not tool then continue end
-        local event = tool:FindFirstChild("Event")
-        if not event then continue end
+            task.spawn(function()
+                while GameData.RemoveSystemv8.IsRunningv8 do
 
-        if not GameData.CurrentTargetModelv1 or not GameData.CurrentTargetModelv1.Parent then
-            GameData.CurrentTargetModelv1 = GameData:GetNearestTargetv1()
-        end
-        if not GameData.CurrentTargetModelv1 then continue end
+                    for _, plantv8 in ipairs(GameData.Servicesv8.Workspacev8.ClientPlants:GetChildren()) do
+                        if not GameData.RemoveSystemv8.IsRunningv8 then break end
 
-        local torso = GameData.CurrentTargetModelv1:FindFirstChild("UpperTorso")
-        if not torso then
-            GameData.CurrentTargetModelv1 = nil
-            continue
-        end
+                        local hasRarityv8 = #GameData.RemoveSystemv8.SelectedRaritiesv8 > 0
+                        local plantBasev8 = plantv8.Name:gsub("%d+$", "")
 
-        local distance    = (hrp.Position - torso.Position).Magnitude
-        local currentTime = tick()
+                        local passFilterv8 = false
 
-        if GameData:IsDeadv1(GameData.CurrentTargetModelv1) then
-            -- ✅ Cek posisi IKAN MATI, kalau di luar zone → skip
-            if GameData.SelectedLocationV1 then
-                local fishPos = torso.Position
-                local zone = workspace.Game.Regions.Locations:FindFirstChild(GameData.SelectedLocationV1)
-                local fishInZone = false
-                if zone then
-                    for _, part in ipairs(zone:GetDescendants()) do
-                        if part:IsA("BasePart") then
-                            local relative = part.CFrame:PointToObjectSpace(fishPos)
-                            local size = part.Size / 2
-                            if math.abs(relative.X) <= size.X
-                            and math.abs(relative.Y) <= size.Y
-                            and math.abs(relative.Z) <= size.Z then
-                                fishInZone = true
-                                break
+                        if hasRarityv8 then
+                            passFilterv8 = GameData.RemoveSystemv8.IsPlantMatchRarityv8(plantv8.Name)
+                        else
+                            if GameData.RemoveSystemv8.SelectedPlantv8 == "" then
+                                passFilterv8 = true
+                            else
+                                passFilterv8 = (plantBasev8 == GameData.RemoveSystemv8.SelectedPlantv8)
+                            end
+                        end
+
+                        if passFilterv8 then
+                            if GameData.RemoveSystemv8.SelectedModev8 == "Plant" then
+
+                                local rawUuidv8 = plantv8:GetAttribute("Uuid")
+
+                                if rawUuidv8 and GameData.RemoveSystemv8.IsMatchMutationv8(plantv8) then
+                                    local uuidKeyv8 = rawUuidv8:split(":")[1]
+
+                                    if not GameData.RemoveSystemv8.IsAlreadyRemovedv8(uuidKeyv8) then
+                                        GameData.RemoveSystemv8.MarkRemovedv8(uuidKeyv8)
+                                        GameData.RemoveSystemv8.Eventv8:FireServer(
+                                            uuidKeyv8, nil
+                                        )
+                                        task.wait(0.5)
+                                    end
+                                end
+
+                            elseif GameData.RemoveSystemv8.SelectedModev8 == "Fruit" then
+
+                                for _, fruitv8 in ipairs(plantv8:GetChildren()) do
+                                    if not GameData.RemoveSystemv8.IsRunningv8 then break end
+
+                                    if fruitv8.Name:gsub("%d+$", "") == "Fruit" then
+                                        local rawUuidv8 = fruitv8:GetAttribute("Uuid")
+
+                                        if rawUuidv8
+                                            and GameData.RemoveSystemv8.IsMatchMutationv8(fruitv8)
+                                            and GameData.RemoveSystemv8.IsMatchWeightv8(fruitv8) then
+
+                                            local uuidKeyv8 = rawUuidv8:split(":")[1]
+
+                                            if not GameData.RemoveSystemv8.IsAlreadyRemovedv8(uuidKeyv8) then
+                                                GameData.RemoveSystemv8.MarkRemovedv8(uuidKeyv8)
+                                                GameData.RemoveSystemv8.Eventv8:FireServer(
+                                                    uuidKeyv8, 1
+                                                )
+                                                task.wait(0.5)
+                                            end
+                                        end
+                                    end
+                                end
                             end
                         end
                     end
+
+                    task.wait(1)
+                    GameData.RemoveSystemv8.ResetRemovedUuidsv8()
+
                 end
-                if not fishInZone then
-                    print("[Collect] Ikan mati di luar zone, skip:", GameData.CurrentTargetModelv1.Name)
-                    GameData.CurrentTargetModelv1 = nil
-                    continue
-                end
-            end
 
-            if distance > GameData.COLLECT_DISTANCEv1 then
-                GameData:TweenToPositionv1(torso.Position)
-            else
-                pcall(function()
-                    GameData.CollectEventv1:InvokeServer(GameData.CurrentTargetModelv1.Name)
-                end)
-                GameData.CurrentTargetModelv1 = nil
-                task.wait(0.01)
-            end
-        else
-            GameData:TweenToSafeDistancev1(GameData.CurrentTargetModelv1)
-
-            local origin    = hrp.Position
-            local targetPos = torso.Position
-            local direction = (targetPos - origin).Unit
-
-            if currentTime - GameData.lastShootv1 >= GameData.shootCooldownv1 then
-                event:FireServer("use", targetPos, direction)
-                GameData.lastShootv1 = currentTime
-            end
-            if currentTime - GameData.lastCatchv1 >= GameData.catchCooldownv1 then
-                pcall(function()
-                    GameData.StartCatchEventv1:InvokeServer(GameData.CurrentTargetModelv1.Name)
-                end)
-                GameData.lastCatchv1 = currentTime
-            end
-        end
-    end
-end)
-
--- Retry Loop: Oxygen
-task.spawn(function()
-    while task.wait(2) do
-        if GameData.isTPDetectedV1 then continue end
-        if not GameData.AutoSafeZonev1 then continue end
-        if GameData.isTweeningOxygenV1 then continue end
-
-        local oxygenValue = tonumber(GameData.oxygenLabelV1.Text)
-        if not oxygenValue or oxygenValue > GameData.OxygenThresholdV1 then continue end
-
-        local inZone = GameData:IsInSafeZoneV1()
-        if inZone then continue end
-
-        warn("[RetryLoop-Oxygen] Retry oxygen...")
-        task.spawn(function()
-            GameData:TweenToSafeZoneOxygenV1()
-        end)
-    end
-end)
-
--- Retry Loop: Sell
-task.spawn(function()
-    while task.wait(3) do
-        if GameData.isTPDetectedV1 then continue end
-        if not GameData.AutoSellv1 then continue end
-        if GameData.isSellingSellV1 or GameData.isTweeningOxygenV1 then continue end
-
-        local shouldSell = false
-
-        if GameData.SellModev1 == "Sell Delay" then
-            local overdue = (tick() - GameData.lastSellTimev1) >= (GameData.SellDelayv1 * 2)
-            if overdue then shouldSell = true end
-        elseif GameData.SellModev1 == "Backpack Full" then
-            local maxText  = tonumber(GameData.maxLabelV1.Text:match("%d+"))
-            local wghtText = tonumber(GameData.wghtLabelV1.Text:match("%d+"))
-            if maxText and wghtText and wghtText >= maxText then shouldSell = true end
-        end
-
-        if not shouldSell then continue end
-
-        warn("[RetryLoop-Sell] Retry sell...")
-        task.spawn(function()
-            GameData:AutoSellV1()
-        end)
-    end
-end)
-
--- ============================================================
---  MONITOR PARAGRAPH LOOP
--- ============================================================
-local monitorParagraph = Sec.Main2:AddParagraph({
-    Title = "Monitors",
-    Content = "Waiting for data..."
-})
-
-task.spawn(function()
-    while task.wait(0.5) do
-        local oxygen   = tonumber(GameData.oxygenLabelV1.Text) or 0
-        local maxText  = tonumber(GameData.maxLabelV1.Text:match("%d+")) or 0
-        local wghtText = tonumber(GameData.wghtLabelV1.Text:match("%d+")) or 0
-
-        local inSafeZone, _ = GameData:IsInSafeZoneV1()
-        local inLocation    = GameData.SelectedLocationV1 and GameData:IsInZoneV1(GameData.SelectedLocationV1) or false
-
-        local targetName     = "None"
-        local targetMutation = "None"
-        if GameData.CurrentTargetModelv1 then
-            local head         = GameData.CurrentTargetModelv1:FindFirstChild("Head")
-            local stats        = head and head:FindFirstChild("stats")
-            local fishPart     = stats and stats:FindFirstChild("Fish")
-            local mutationPart = stats and stats:FindFirstChild("Mutation")
-            local labelPart    = mutationPart and mutationPart:FindFirstChild("Label")
-            targetName     = fishPart and fishPart.Text or GameData.CurrentTargetModelv1.Name
-            targetMutation = (labelPart and labelPart.Text ~= "" and labelPart.Text) or "No Mutation"
-        end
-
-        local statusShoot    = GameData.AutoShootv1 and "✅ ON" or "❌ OFF"
-        local statusSell     = GameData.AutoSellv1 and "✅ ON" or "❌ OFF"
-        local statusSafeZone = GameData.AutoSafeZonev1 and "✅ ON" or "❌ OFF"
-
-        local statusTweenLoc  = GameData.isTweeningToLocationV1 and "🔄 Moving..." or (inLocation and "✅ In Zone" or "❌ Out Zone")
-        local statusTweenOxy  = GameData.isTweeningOxygenV1 and "🔄 Moving..." or (inSafeZone and "✅ In Zone" or "❌ Out Zone")
-        local statusTweenSell = GameData.isSellingSellV1 and "🔄 Going to Sell..." or "✅ Idle"
-        local statusTP        = GameData.isTPDetectedV1 and "⚠️ TP Detected! Pausing..." or "✅ Normal"
-
-        local statusZoneDelay = "-"
-        if GameData.wasInZoneV1 then
-            local elapsed   = tick() - GameData.zoneEntryTimeV1
-            local remaining = GameData.zoneEntryDelayV1 - elapsed
-            if remaining > 0 then
-                statusZoneDelay = string.format("⏳ %.1fs (Tween ke Lokasi...)", remaining)
-            else
-                statusZoneDelay = "✅ Ready"
-            end
-        end
-
-        local nextSell = "-"
-        if GameData.AutoSellv1 and GameData.SellModev1 == "Sell Delay" then
-            local remaining = GameData.SellDelayv1 - (tick() - GameData.lastSellTimev1)
-            nextSell = remaining > 0 and string.format("%.1fs", remaining) or "Segera!"
-        elseif GameData.SellModev1 == "Backpack Full" then
-            nextSell = "Backpack Full Mode"
-        end
-
-        local content =
-            "Auto Shoot   : " .. statusShoot .. "\n" ..
-            "Auto Sell    : " .. statusSell .. "\n" ..
-            "Auto SafeZone: " .. statusSafeZone .. "\n" ..
-            "─────────────────────\n" ..
-            "Anti-TP      : " .. statusTP .. "\n" ..
-            "─────────────────────\n" ..
-            "Oxygen       : " .. oxygen .. " (Threshold: " .. GameData.OxygenThresholdV1 .. ")\n" ..
-            "Weight       : " .. wghtText .. " / " .. maxText .. "\n" ..
-            "─────────────────────\n" ..
-            "Location     : " .. (GameData.SelectedLocationV1 or "None") .. "\n" ..
-            "Loc Status   : " .. statusTweenLoc .. "\n" ..
-            "Zone Delay   : " .. statusZoneDelay .. "\n" ..
-            "Safe Zone    : " .. GameData.SelectedSafeZoneV1 .. "\n" ..
-            "SafeZ Status : " .. statusTweenOxy .. "\n" ..
-            "Sell Target  : The Forgotten Dome\n" ..
-            "Sell Status  : " .. statusTweenSell .. "\n" ..
-            "─────────────────────\n" ..
-            "Target Fish  : " .. targetName .. "\n" ..
-            "Fish Mutation: " .. targetMutation .. "\n" ..
-            "Next Sell    : " .. nextSell
-
-        monitorParagraph:SetContent(content)
-    end
-end)
-
-Sec.Main2:AddSubSection("SHOOT FISH")
-
-Sec.Main2:AddInput({
-    Title = "Tween Speed to Fish",
-    Default = tostring(GameData.TweenSpeedToFishV1),
-    Callback = function(value)
-        local number = tonumber(value)
-        if number and number >= 1 then
-            GameData.TweenSpeedToFishV1     = number
-            GameData.TweenSpeedToSafeDistV1 = number
-        end
-    end
-})
-
-Sec.Main2:AddInput({
-    Title = "Safe Distance",
-    Content = "Set Safe Distance to Fish",
-    Default = tostring(GameData.SAFE_DISTANCEv1),
-    Callback = function(value)
-        local num = tonumber(value)
-        if num and num > 0 then GameData.SAFE_DISTANCEv1 = num end
-    end
-})
-
-Sec.Main2:AddInput({
-    Title = "Tween Speed to Location",
-    Default = tostring(GameData.TweenSpeedToLocationV1),
-    Callback = function(value)
-        local number = tonumber(value)
-        if number and number >= 1 then
-            GameData.TweenSpeedToLocationV1 = number
-        end
-    end
-})
-
-Sec.Main2:AddDropdown({
-    Title = "Select Location",
-    Content = "Select the target zone before shooting fish",
-    Options = GameData.locationNamesV1,
-    Multi = false,
-    Default = GameData.locationNamesV1[1],
-    Callback = function(value)
-        if GameData.SelectedLocationV1 ~= value then
-            GameData:CancelLocationTweenV1()
-            GameData.SelectedLocationV1    = value
-            GameData.wasInZoneV1           = false
-            GameData.zoneEntryTimeV1       = 0
-            GameData.locationJustChangedV1 = true
-            task.delay(3, function()
-                GameData.locationJustChangedV1 = false
-            end)
-            print("Lokasi dipilih:", value)
-        end
-    end
-})
-
-Sec.Main2:AddDropdown({
-    Title = "Fish List",
-    Content = "Select Fish (Multi)",
-    Options = GameData.Fishv1,
-    Multi = true, Default = {},
-    Callback = function(selectedTable)
-        GameData.SelectedFishv1 = selectedTable
-    end
-})
-
-Sec.Main2:AddDropdown({
-    Title = "Mutation List",
-    Content = "Select Mutation (Multi)",
-    Options = GameData.MutationNamesv1,
-    Multi = true, Default = {},
-    Callback = function(selectedTable)
-        GameData.SelectedMutationsv1 = selectedTable
-    end
-})
-
-Sec.Main2:AddDropdown({
-    Title = "Rarity List",
-    Content = "Select Rarity (Multi)",
-    Options = GameData.RarityNamesv1,
-    Multi = true, Default = {},
-    Callback = function(selectedTable)
-        GameData.SelectedRaritiesv1 = selectedTable
-    end
-})
-
-Sec.Main2:AddToggle({
-    Title = "Auto Shoot Fish",
-    Default = false,
-    Callback = function(value)
-        GameData.AutoShootv1 = value
-        if not value then
-            GameData:CancelLocationTweenV1()
-            GameData.wasInZoneV1     = false
-            GameData.zoneEntryTimeV1 = 0
-        else
-            GameData.locationJustChangedV1 = true
-            task.delay(3, function()
-                GameData.locationJustChangedV1 = false
+                Notify("Remove " .. GameData.RemoveSystemv8.SelectedModev8 .. " stopped!", 2)
             end)
         end
-    end
-})
-
-Sec.Main2:AddSubSection("SAFE ZONE SETTINGS")
-
-Sec.Main2:AddInput({
-    Title = "Tween Speed to Safe Zone",
-    Default = tostring(GameData.TweenSpeedToSafeZoneV1),
-    Callback = function(value)
-        local number = tonumber(value)
-        if number and number >= 1 then
-            GameData.TweenSpeedToSafeZoneV1 = number
-        end
-    end
-})
-
-Sec.Main2:AddDropdown({
-    Title = "Select Safe Zone (Oxygen)",
-    Content = "Safe zone for auto oxygen",
-    Options = GameData.safeZoneNamesV1,
-    Multi = false,
-    Default = GameData.SelectedSafeZoneV1,
-    Callback = function(value)
-        GameData.SelectedSafeZoneV1 = value
-        print("Safe Zone dipilih:", value)
-    end
-})
-
-Sec.Main2:AddInput({
-    Title = "Oxygen Threshold",
-    Content = "Enter Safe Oxygen...",
-    Default = tostring(GameData.OxygenThresholdV1),
-    Callback = function(value)
-        local num = tonumber(value)
-        if num then GameData.OxygenThresholdV1 = num end
-    end
-})
-
-Sec.Main2:AddToggle({
-    Title = "Auto Safe Zone",
-    Default = false,
-    Callback = function(value)
-        GameData.AutoSafeZonev1 = value
-        if not value then GameData:CancelSafeZoneTweenV1() end
-    end
-})
-
-Sec.Main2:AddSubSection("CAST MODE SETTINGS")
-
--- // Cast Mode
-
-GameData.Playerv2 = GameData.Servicesv2.Playersv2.LocalPlayer
-
-GameData.UIv2.Greenv2 = GameData.Playerv2.PlayerGui.Main
-    .CatchingBar.Frame.Bar.Catch.Green
-
-GameData.UIv2.Gradientv2 = GameData.Playerv2.PlayerGui.Main
-    .CatchingBar.Frame.Bar.Catch.Gradient
-
-GameData.Remotesv2.CancelMinigamev2 = GameData.Servicesv2.ReplicatedStoragev2
-    :WaitForChild("common")
-    :WaitForChild("packages")
-    :WaitForChild("Knit")
-    :WaitForChild("Services")
-    :WaitForChild("MinigameService")
-    :WaitForChild("RF")
-    :WaitForChild("CancelMinigame")
-
-Sec.Main2:AddDropdown({
-    Title = "Select Cast Mode",
-    Content = "Choose fishing cast behavior",
-    Options = {"Normal", "Blatant"},
-    Multi = false,
-    Default = "Normal",
-    Callback = function(value)
-        GameData.CastModev2 = value
-    end
-})
-
-Sec.Main2:AddToggle({
-    Title = "Auto Cast",
-    Default = false,
-    Callback = function(value)
-        GameData.AutoCastv2 = value
-
-        if value then
-            if not GameData.LoopThreadv2 then
-                GameData.LoopThreadv2 = task.spawn(function()
-                    while GameData.AutoCastv2 do
-
-                        if GameData.UIv2.Greenv2 and GameData.UIv2.Gradientv2 then
-                            GameData.UIv2.Greenv2.Size = GameData.UIv2.Gradientv2.Size
-                        end
-
-                        if GameData.CastModev2 == "Blatant" then
-                            GameData.Remotesv2.CancelMinigamev2:InvokeServer()
-                        end
-
-                        task.wait(0.001)
-                    end
-
-                    GameData.LoopThreadv2 = nil
-                end)
-            end
-        else
-            GameData.AutoCastv2 = false
-        end
-    end
-})
-
-Sec.Sell = Tabs.Main:AddSection({
-    Title = "Sell Fiture",
-    Open = false
-})
-
-Sec.Sell:AddDropdown({
-    Title = "Select Mode Sell",
-    Content = "Select Sell Trigger Mode",
-    Options = {"Sell Delay", "Backpack Full"},
-    Multi = false,
-    Default = "Sell Delay",
-    Callback = function(value)
-        GameData.SellModev1 = value
-    end
-})
-
-Sec.Sell:AddInput({
-    Title = "Sell Delay (Seconds)",
-    Content = "Automatic sell interval (only for Sell Delay mode)",
-    Default = tostring(GameData.SellDelayv1),
-    Callback = function(value)
-        local num = tonumber(value)
-        if num and num > 0 then GameData.SellDelayv1 = num end
-    end
-})
-
-Sec.Sell:AddInput({
-    Title = "Tween Speed Sell",
-    Default = tostring(GameData.TweenSpeedToSellZoneV1),
-    Callback = function(value)
-        local number = tonumber(value)
-        if number and number >= 1 then
-            GameData.TweenSpeedToSellZoneV1 = number
-        end
-    end
-})
-
-Sec.Sell:AddToggle({
-    Title = "Auto Sell Fish",
-    Default = false,
-    Callback = function(value)
-        GameData.AutoSellv1 = value
-        if not value then GameData:CancelSellLocationTweenV1() end
     end
 })
 
 Sec.Main4 = Tabs.Main:AddSection({
-    Title = "Support Fiture",
+    Title = "Auto Plant Seed",
     Open = false
 })
 
--- // Equip Guns
+GameData.SeedsFolderv10 = GameData.ReplicatedStoragev10.Plants.Tools.Seeds
+GameData.PlotsFolderv10 = workspace:WaitForChild("Plots")
+GameData.Playerv10 = GameData.Playersv10.LocalPlayer
 
-GameData.Remotesv4.BackpackRFv4 = GameData.Servicesv4.ReplicatedStoragev4
-    :WaitForChild("common")
-    :WaitForChild("packages")
-    :WaitForChild("Knit")
-    :WaitForChild("Services")
-    :WaitForChild("BackpackService")
-    :WaitForChild("RF")
+function GameData:FindPlayerPlotv10(p)
+    for _, plot in pairs(self.PlotsFolderv10:GetChildren()) do
+        if plot:GetAttribute("Owner") == p.UserId then
+            return plot
+        end
+    end
+end
 
--- Fungsi untuk mulai auto equip
-function GameData:StartAutoEquipv4()
-    task.spawn(function()
-        while self.AutoEquipv4 do
-            local debris = self.Servicesv4.Workspacev4:FindFirstChild("debris")
-            local playerFolder = debris and debris:FindFirstChild(self.LocalPlayerv4.Name)
-            local tool = playerFolder and playerFolder:FindFirstChild("Tool")
+for _, seed in pairs(GameData.SeedsFolderv10:GetChildren()) do
+    table.insert(GameData.SeedNamesv10, seed.Name)
+end
 
-            -- Kalau Tool gak ada, baru equip
-            if not (tool and tool:IsA("Tool")) then
-                local args = {"1"}
-                self.Remotesv4.BackpackRFv4
-                    :WaitForChild("Equip")
-                    :InvokeServer(unpack(args))
+GameData.SelectedSeedv10 = GameData.SeedNamesv10[1]
+
+function GameData:GetSeedItemNamev10(seedName)
+    return string.gsub(seedName, " Seed", "")
+end
+
+function GameData:GetToolFromBackpackv10(seedName)
+    local backpackv10 = self.Playerv10.Backpack
+    for _, tool in pairs(backpackv10:GetChildren()) do
+        if string.find(tool.Name, seedName) then
+            return tool
+        end
+    end
+end
+
+function GameData:GetToolFromCharacterv10(seedName)
+    local charv10 = self.Playerv10.Character
+    if charv10 then
+        for _, tool in pairs(charv10:GetChildren()) do
+            if string.find(tool.Name, seedName) then
+                return tool
             end
+        end
+    end
+end
 
-            task.wait(1)
+function GameData:EquipToolv10(tool)
+    local charv10 = self.Playerv10.Character
+    if charv10 and tool then
+        tool.Parent = charv10
+        task.wait(0.3)
+    end
+end
+
+function GameData:HasSeedv10(seedName)
+    local itemNamev10 = self:GetSeedItemNamev10(seedName)
+    local backpackv10 = self.Playerv10.Backpack
+    for _, tool in pairs(backpackv10:GetChildren()) do
+        if string.find(tool.Name, itemNamev10) then
+            return true
+        end
+    end
+    local charv10 = self.Playerv10.Character
+    if charv10 then
+        for _, tool in pairs(charv10:GetChildren()) do
+            if string.find(tool.Name, itemNamev10) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function GameData:WaitForSeedv10()
+    while self.IsPlantingv10 do
+        task.wait(1)
+        if self:HasSeedv10(self.SelectedSeedv10) then
+            local toolv10 = self:GetToolFromBackpackv10(self.SelectedSeedv10)
+            if toolv10 then
+                self:EquipToolv10(toolv10)
+            end
+            return true
+        end
+    end
+    return false
+end
+
+function GameData:ScanPartv10(targetPart, seedName)
+    local characterv10 = self.Playerv10.Character or self.Playerv10.CharacterAdded:Wait()
+    local hrpv10 = characterv10:WaitForChild("HumanoidRootPart")
+    local Eventv10 = self.ReplicatedStoragev10.RemoteEvents.PlantSeed
+
+    local sizev10 = targetPart.Size
+    local stepv10 = 2
+
+    local axesv10 = {
+        {value = sizev10.X, vector = Vector3.new(1,0,0)},
+        {value = sizev10.Y, vector = Vector3.new(0,1,0)},
+        {value = sizev10.Z, vector = Vector3.new(0,0,1)},
+    }
+
+    table.sort(axesv10, function(a,b)
+        return a.value > b.value
+    end)
+
+    self.axis1v10 = axesv10[1]
+    self.axis2v10 = axesv10[2]
+    self.thinAxisv10 = axesv10[3]
+
+    local startAv10 = self.ScanProgressv10.lastAv10 or -self.axis1v10.value/2
+    local startGoingRightv10 = self.ScanProgressv10.goingRightv10
+    local isFirstAv10 = true
+
+    for a = startAv10, self.axis1v10.value/2, stepv10 do
+        if not self.IsPlantingv10 or self.SelectedPlantModev10 ~= "Random Plant" then
+            self.ScanProgressv10.lastAv10 = a
+            self.ScanProgressv10.goingRightv10 = startGoingRightv10
+            return
+        end
+
+        if not self:HasSeedv10(self.SelectedSeedv10) then
+            self.ScanProgressv10.lastAv10 = a
+            self.ScanProgressv10.goingRightv10 = startGoingRightv10
+            if not self:WaitForSeedv10() then return end
+        end
+
+        local startBv10
+        if isFirstAv10 and self.ScanProgressv10.lastBv10 then
+            startBv10 = self.ScanProgressv10.lastBv10
+            isFirstAv10 = false
+        else
+            startBv10 = startGoingRightv10 and -self.axis2v10.value/2 or self.axis2v10.value/2
+            isFirstAv10 = false
+        end
+
+        if startGoingRightv10 then
+            for b = startBv10, self.axis2v10.value/2, stepv10 do
+                if not self.IsPlantingv10 or self.SelectedPlantModev10 ~= "Random Plant" then
+                    self.ScanProgressv10.lastAv10 = a
+                    self.ScanProgressv10.lastBv10 = b
+                    self.ScanProgressv10.goingRightv10 = startGoingRightv10
+                    return
+                end
+
+                if not self:HasSeedv10(self.SelectedSeedv10) then
+                    self.ScanProgressv10.lastAv10 = a
+                    self.ScanProgressv10.lastBv10 = b
+                    self.ScanProgressv10.goingRightv10 = startGoingRightv10
+                    if not self:WaitForSeedv10() then return end
+                end
+
+                local offsetv10 = self.axis1v10.vector * a + self.axis2v10.vector * b + self.thinAxisv10.vector * 3
+                local worldPosv10 = (targetPart.CFrame * CFrame.new(offsetv10)).Position + Vector3.new(0,5,0)
+
+                hrpv10.CFrame = CFrame.new(worldPosv10)
+                task.wait(self.TpDelayv10)
+                Eventv10:InvokeServer(seedName, hrpv10.Position)
+                task.wait(self.PlantDelayv10)
+            end
+        else
+            for b = startBv10, -self.axis2v10.value/2, -stepv10 do
+                if not self.IsPlantingv10 or self.SelectedPlantModev10 ~= "Random Plant" then
+                    self.ScanProgressv10.lastAv10 = a
+                    self.ScanProgressv10.lastBv10 = b
+                    self.ScanProgressv10.goingRightv10 = startGoingRightv10
+                    return
+                end
+
+                if not self:HasSeedv10(self.SelectedSeedv10) then
+                    self.ScanProgressv10.lastAv10 = a
+                    self.ScanProgressv10.lastBv10 = b
+                    self.ScanProgressv10.goingRightv10 = startGoingRightv10
+                    if not self:WaitForSeedv10() then return end
+                end
+
+                local offsetv10 = self.axis1v10.vector * a + self.axis2v10.vector * b + self.thinAxisv10.vector * 3
+                local worldPosv10 = (targetPart.CFrame * CFrame.new(offsetv10)).Position + Vector3.new(0,5,0)
+
+                hrpv10.CFrame = CFrame.new(worldPosv10)
+                task.wait(self.TpDelayv10)
+                Eventv10:InvokeServer(seedName, hrpv10.Position)
+                task.wait(self.PlantDelayv10)
+            end
+        end
+
+        self.ScanProgressv10.lastBv10 = nil
+        startGoingRightv10 = not startGoingRightv10
+    end
+
+    self.ScanProgressv10.lastAv10 = nil
+    self.ScanProgressv10.lastBv10 = nil
+    self.ScanProgressv10.goingRightv10 = true
+end
+
+Sec.Main4:AddDropdown({
+    Title = "Select a Seed",
+    Content = "Choose a seed from the list",
+    Options = GameData.SeedNamesv10,
+    Multi = false,
+    Default = GameData.SeedNamesv10[1],
+    Callback = function(value)
+        GameData.SelectedSeedv10 = value
+    end
+})
+
+Sec.Main4:AddDropdown({
+    Title = "Select Plant Position",
+    Content = "Choose where to plant the seed",
+    Options = {"Character Position", "Random Plant"},
+    Multi = false,
+    Default = "Character Position",
+    Callback = function(value)
+        GameData.SelectedPlantModev10 = value
+    end
+})
+
+Sec.Main4:AddInput({
+    Title = "Set Plant Speed",
+    Content = "Default: auto (0.01)",
+    Default = "0.01",
+    Callback = function(value)
+        if value ~= "" then
+            local numv10 = tonumber(value)
+            if numv10 then
+                GameData.PlantDelayv10 = numv10
+            end
+        else
+            GameData.PlantDelayv10 = 0.01
+        end
+    end
+})
+
+Sec.Main4:AddInput({
+    Title = "Set Tp Speed",
+    Content = "Default: auto (0.01)",
+    Default = "0.01",
+    Callback = function(value)
+        if value ~= "" then
+            local numv10 = tonumber(value)
+            if numv10 then
+                GameData.TpDelayv10 = numv10
+            end
+        else
+            GameData.TpDelayv10 = 0.01
+        end
+    end
+})
+
+Sec.Main4:AddToggle({
+    Title = "Auto Plant Seed",
+    Default = false,
+    Callback = function(value)
+        GameData.IsPlantingv10 = value
+
+        if value then
+            task.spawn(function()
+                while GameData.IsPlantingv10 do
+
+                    if not GameData:HasSeedv10(GameData.SelectedSeedv10) then
+                        if not GameData:WaitForSeedv10() then break end
+                    end
+
+                    local heldToolv10 = GameData:GetToolFromCharacterv10(GameData.SelectedSeedv10)
+                    if not heldToolv10 then
+                        local toolv10 = GameData:GetToolFromBackpackv10(GameData.SelectedSeedv10)
+                        if toolv10 then
+                            GameData:EquipToolv10(toolv10)
+                            task.wait(0.2)
+                        else
+                            task.wait(1)
+                            continue
+                        end
+                    end
+
+                    if GameData.SelectedPlantModev10 == "Character Position" then
+                        local charv10 = GameData.Playerv10.Character
+                        if charv10 then
+                            local hrpv10 = charv10:FindFirstChild("HumanoidRootPart")
+                            if hrpv10 then
+                                GameData.ReplicatedStoragev10.RemoteEvents.PlantSeed:InvokeServer(
+                                    GameData:GetSeedItemNamev10(GameData.SelectedSeedv10),
+                                    hrpv10.Position
+                                )
+                            end
+                        end
+                        task.wait(GameData.PlantDelayv10)
+
+                    elseif GameData.SelectedPlantModev10 == "Random Plant" then
+                        local myPlotv10 = GameData:FindPlayerPlotv10(GameData.Playerv10)
+                        if not myPlotv10 then
+                            task.wait(2)
+                            continue
+                        end
+
+                        local plantableAreav10 = myPlotv10:FindFirstChild("PlantableArea")
+                        if not plantableAreav10 then
+                            task.wait(2)
+                            continue
+                        end
+
+                        for _, obj in pairs(plantableAreav10:GetChildren()) do
+                            if not GameData.IsPlantingv10 then break end
+                            if obj:IsA("BasePart") then
+                                GameData:ScanPartv10(obj, GameData:GetSeedItemNamev10(GameData.SelectedSeedv10))
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+})
+
+Sec.Main4:AddButton({
+    Title = "Reset Plant Progress",
+    Version = "V2",
+    Icon = "rbxassetid://79715859717613",
+    Callback = function()
+        GameData.ScanProgressv10.lastAv10 = nil
+        GameData.ScanProgressv10.lastBv10 = nil
+        GameData.ScanProgressv10.goingRightv10 = true
+    end
+})
+
+Sec.Sell1 = Tabs.Backpack:AddSection({
+    Title = "Auto Sell",
+    Open = false
+})
+
+GameData.Backpackv9 = GameData.Playerv9:WaitForChild("Backpack")
+GameData.Characterv9 = GameData.Playerv9.Character or GameData.Playerv9.CharacterAdded:Wait()
+
+GameData.SellEventv9 = GameData.ReplicatedStoragev9.RemoteEvents.SellItems
+GameData.ModelsFolderv9 = GameData.ReplicatedStoragev9.Plants.Models
+
+GameData.MutationDatav9 = require(
+    GameData.ReplicatedStoragev9
+        :WaitForChild("Plants")
+        :WaitForChild("Definitions")
+        :WaitForChild("MutationDataDefinitions")
+)
+
+GameData.PlantDatav9 = require(
+    GameData.ReplicatedStoragev9
+        :WaitForChild("Plants")
+        :WaitForChild("Definitions")
+        :WaitForChild("PlantDataDefinitions")
+)
+
+GameData.RarityDefinitionsv9 = require(
+    GameData.ReplicatedStoragev9
+        :WaitForChild("Plants")
+        :WaitForChild("Definitions")
+        :WaitForChild("RarityDefinitions")
+)
+
+for mutationNamev9, _ in pairs(GameData.MutationDatav9) do
+    table.insert(GameData.MutationNamesv9, mutationNamev9)
+end
+table.sort(GameData.MutationNamesv9)
+
+for rarityNamev9, _ in pairs(GameData.RarityDefinitionsv9) do
+    table.insert(GameData.RarityListv9, rarityNamev9)
+end
+table.sort(GameData.RarityListv9)
+
+for plantNamev9, plantInfov9 in pairs(GameData.PlantDatav9) do
+    if plantInfov9.Rarity then
+        GameData.PlantRarityMapv9[plantNamev9] = plantInfov9.Rarity
+    end
+end
+
+for _, plantv9 in pairs(GameData.ModelsFolderv9:GetChildren()) do
+    table.insert(GameData.PlantOptionsv9, plantv9.Name)
+end
+
+function GameData:GetMutationsv9(toolv9)
+    local mutationsv9 = {}
+
+    local mutationAttrv9 = toolv9:GetAttribute("Mutation") or toolv9:GetAttribute("Mutasi")
+    if mutationAttrv9 then
+        for mutationv9 in string.gmatch(tostring(mutationAttrv9), "[^,|]+") do
+            table.insert(mutationsv9, mutationv9:match("^%s*(.-)%s*$"))
+        end
+    end
+
+    local iv9 = 1
+    while true do
+        local attrv9 = toolv9:GetAttribute("Mutation" .. iv9) or toolv9:GetAttribute("Mutasi" .. iv9)
+        if attrv9 then
+            table.insert(mutationsv9, tostring(attrv9))
+            iv9 += 1
+        else
+            break
+        end
+    end
+
+    return mutationsv9
+end
+
+function GameData:GetPlantRarityv9(toolNamev9)
+    for plantNamev9, rarityv9 in pairs(self.PlantRarityMapv9) do
+        if string.find(toolNamev9, plantNamev9) then
+            return rarityv9
+        end
+    end
+    return nil
+end
+
+function GameData:GetPlantToolv9()
+    local hasPlantv9 = #self.SelectedPlantsv9 > 0
+    local hasMutationv9 = #self.SelectedMutationsv9 > 0
+    local hasRarityv9 = #self.SelectedRaritiesv9 > 0
+
+    if not hasPlantv9 and not hasMutationv9 and not hasRarityv9 then
+        return nil
+    end
+
+    for _, containerv9 in pairs({self.Backpackv9, self.Characterv9}) do
+        if containerv9 then
+            for _, toolv9 in pairs(containerv9:GetChildren()) do
+                if toolv9:IsA("Tool") then
+
+                    if string.find(toolv9.Name, "Seed") then
+                        continue
+                    end
+
+                    local toolMutationsv9 = self:GetMutationsv9(toolv9)
+                    local toolRarityv9 = self:GetPlantRarityv9(toolv9.Name)
+
+                    local rarityMatchv9 = false
+                    local plantMatchv9 = false
+                    local mutationMatchv9 = false
+
+                    if hasRarityv9 then
+                        for _, selectedv9 in ipairs(self.SelectedRaritiesv9) do
+                            if toolRarityv9 == selectedv9 then
+                                rarityMatchv9 = true
+                                break
+                            end
+                        end
+                    end
+
+                    if hasPlantv9 then
+                        for _, selectedv9 in ipairs(self.SelectedPlantsv9) do
+                            if string.find(toolv9.Name, selectedv9) then
+                                plantMatchv9 = true
+                                break
+                            end
+                        end
+                    end
+
+                    if hasMutationv9 then
+                        for _, selectedv9 in ipairs(self.SelectedMutationsv9) do
+                            for _, toolMutv9 in ipairs(toolMutationsv9) do
+                                if toolMutv9 == selectedv9 then
+                                    mutationMatchv9 = true
+                                    break
+                                end
+                            end
+                            if mutationMatchv9 then break end
+                        end
+                    end
+
+                    if hasRarityv9 then
+                        if hasMutationv9 then
+                            if rarityMatchv9 and mutationMatchv9 then
+                                return toolv9
+                            end
+                        else
+                            if rarityMatchv9 then
+                                return toolv9
+                            end
+                        end
+                    elseif hasPlantv9 and hasMutationv9 then
+                        if plantMatchv9 and mutationMatchv9 then
+                            return toolv9
+                        end
+                    elseif hasPlantv9 and not hasMutationv9 then
+                        if plantMatchv9 then
+                            return toolv9
+                        end
+                    elseif not hasPlantv9 and hasMutationv9 then
+                        if mutationMatchv9 then
+                            return toolv9
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+Sec.Sell1:AddDropdown({
+    Title = "Sell Mode",
+    Content = "Choose sell mode",
+    Options = {"SellAll", "Single Sell"},
+    Multi = false,
+    Default = GameData.SellModev9,
+    Callback = function(selectedv9)
+        GameData.SellModev9 = selectedv9
+        GameData.SelectedPlantsv9 = {}
+        GameData.SelectedMutationsv9 = {}
+        GameData.SelectedRaritiesv9 = {}
+    end
+})
+
+Sec.Sell1:AddDropdown({
+    Title = "Select Seed (Sell)",
+    Content = "Select plants to sell (Single Sell only)",
+    Options = GameData.PlantOptionsv9,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedTablev9)
+        if GameData.SellModev9 == "Single Sell" then
+            GameData.SelectedPlantsv9 = selectedTablev9
+        end
+    end
+})
+
+Sec.Sell1:AddDropdown({
+    Title = "Select Rarity (Sell)",
+    Content = "(Single Sell only)",
+    Options = GameData.RarityListv9,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedTablev9)
+        if GameData.SellModev9 == "Single Sell" then
+            GameData.SelectedRaritiesv9 = selectedTablev9
+        end
+    end
+})
+
+Sec.Sell1:AddDropdown({
+    Title = "Select Mutation (Sell)",
+    Content = "(Single Sell only)",
+    Options = GameData.MutationNamesv9,
+    Multi = true,
+    Default = {"Sandy"},
+    Callback = function(selectedv9)
+        if GameData.SellModev9 == "Single Sell" then
+            GameData.SelectedMutationsv9 = selectedv9
+        end
+    end
+})
+
+Sec.Sell1:AddInput({
+    Title = "Sell Delay",
+    Content = "(SellAll only)",
+    Default = tostring(GameData.SellDelayv9),
+    Callback = function(valuev9)
+        if GameData.SellModev9 == "SellAll" then
+            local numv9 = tonumber(valuev9)
+            if numv9 then
+                GameData.SellDelayv9 = numv9
+            end
+        end
+    end
+})
+
+Sec.Sell1:AddToggle({
+    Title = "Auto Sell",
+    Default = false,
+    Callback = function(valuev9)
+        GameData.AutoSellv9 = valuev9
+
+        if valuev9 then
+            Notify("Auto Sell Enabled! Mode: " .. GameData.SellModev9, 2)
+
+            task.spawn(function()
+                while GameData.AutoSellv9 do
+                    GameData.Characterv9 = GameData.Playerv9.Character or GameData.Playerv9.CharacterAdded:Wait()
+                    local hrpv9 = GameData.Characterv9:WaitForChild("HumanoidRootPart")
+                    local sellTeleportv9 = workspace.MapPhysical.Teleports.SellTeleport
+
+                    if GameData.SellModev9 == "SellAll" then
+                        local savedCFramev9 = hrpv9.CFrame
+                        hrpv9.CFrame = sellTeleportv9.CFrame
+                        task.wait(0.5)
+
+                        GameData.SellEventv9:InvokeServer("SellAll")
+                        task.wait(0.5)
+
+                        hrpv9.CFrame = savedCFramev9
+                        task.wait(GameData.SellDelayv9)
+
+                    elseif GameData.SellModev9 == "Single Sell" then
+                        local hasPlantv9 = #GameData.SelectedPlantsv9 > 0
+                        local hasMutationv9 = #GameData.SelectedMutationsv9 > 0
+                        local hasRarityv9 = #GameData.SelectedRaritiesv9 > 0
+
+                        if not hasPlantv9 and not hasMutationv9 and not hasRarityv9 then
+                            task.wait(0.1)
+                            continue
+                        end
+
+                        local toolv9 = GameData:GetPlantToolv9()
+
+                        if toolv9 then
+                            local savedCFramev9 = hrpv9.CFrame
+                            hrpv9.CFrame = sellTeleportv9.CFrame
+                            task.wait(0.3)
+
+                            while GameData.AutoSellv9 do
+                                local currentToolv9 = GameData:GetPlantToolv9()
+
+                                if currentToolv9 then
+                                    GameData.Characterv9.Humanoid:EquipTool(currentToolv9)
+                                    task.wait(0.5)
+                                    GameData.SellEventv9:InvokeServer("SellSingle")
+                                    task.wait(0.01)
+                                else
+                                    hrpv9.CFrame = savedCFramev9
+                                    Notify("Fruit empty, waiting for new fruit...", 2)
+                                    break
+                                end
+                            end
+                        else
+                            task.wait(0.1)
+                        end
+                    end
+                end
+            end)
+        else
+            Notify("Auto Sell Disabled!", 2)
+        end
+    end
+})
+
+Sec.Favorite1 = Tabs.Backpack:AddSection({
+    Title = "Auto Favorite",
+    Open = false
+})
+
+GameData.FavoriteSystemv4.PlantsModelsv4 =
+    GameData.Servicesv4.ReplicatedStoragev4.Plants.Models
+
+GameData.FavoriteSystemv4.Playerv4 =
+    GameData.Servicesv4.Playersv4.LocalPlayer
+
+GameData.FavoriteSystemv4.RemoteEventv4 =
+    GameData.Servicesv4.ReplicatedStoragev4
+        :WaitForChild("RemoteEvents")
+        :WaitForChild("ToggleFavorite")
+
+GameData.FavoriteSystemv4.MutationDatav4 = require(
+    GameData.Servicesv4.ReplicatedStoragev4
+        :WaitForChild("Plants")
+        :WaitForChild("Definitions")
+        :WaitForChild("MutationDataDefinitions")
+)
+
+for _, model in ipairs(GameData.FavoriteSystemv4.PlantsModelsv4:GetChildren()) do
+    table.insert(GameData.FavoriteSystemv4.PlantOptionsv4, model.Name)
+end
+
+for key, _ in pairs(GameData.FavoriteSystemv4.MutationDatav4) do
+    table.insert(GameData.FavoriteSystemv4.MutationOptionsv4, key)
+end
+
+table.sort(GameData.FavoriteSystemv4.MutationOptionsv4)
+
+function GameData.FavoriteSystemv4.GetMutationv4(tool)
+
+    local mutationv4 = tool:GetAttribute("Mutation")
+
+    if not mutationv4 then
+        local mutationValuev4 = tool:FindFirstChild("Mutation")
+        if mutationValuev4 then
+            mutationv4 = mutationValuev4.Value
+        end
+    end
+
+    if not mutationv4 or mutationv4 == "" then
+        mutationv4 = "None"
+    end
+
+    return mutationv4
+end
+
+function GameData.FavoriteSystemv4.IsAlreadyFavoritedv4(tool)
+    return tool:GetAttribute("Favorited") == true
+end
+
+function GameData.FavoriteSystemv4.IsMatchv4(tool)
+
+    if not tool:IsA("Tool") then
+        return false
+    end
+
+    local hasPlantFilterv4 =
+        #GameData.FavoriteSystemv4.SelectedPlantsv4 > 0
+
+    local hasMutationFilterv4 =
+        #GameData.FavoriteSystemv4.SelectedMutationsv4 > 0
+
+    local toolMutationv4 =
+        GameData.FavoriteSystemv4.GetMutationv4(tool)
+
+    local nameMatchv4 = false
+    for _, plantName in ipairs(GameData.FavoriteSystemv4.SelectedPlantsv4) do
+        if string.find(tool.Name, plantName, 1, true) then
+            nameMatchv4 = true
+            break
+        end
+    end
+
+    local mutationMatchv4 = false
+    for _, mut in ipairs(GameData.FavoriteSystemv4.SelectedMutationsv4) do
+        if toolMutationv4 == mut then
+            mutationMatchv4 = true
+            break
+        end
+    end
+
+    if hasPlantFilterv4 and hasMutationFilterv4 then
+        return nameMatchv4 and mutationMatchv4
+    elseif hasMutationFilterv4 and not hasPlantFilterv4 then
+        return mutationMatchv4
+    elseif hasPlantFilterv4 and not hasMutationFilterv4 then
+        return nameMatchv4
+    else
+        return false
+    end
+end
+
+function GameData.FavoriteSystemv4.ScanContainersv4(callback)
+
+    local containersv4 = {
+        GameData.FavoriteSystemv4.Playerv4.Backpack,
+        GameData.FavoriteSystemv4.Playerv4.Character
+    }
+
+    for _, containerv4 in ipairs(containersv4) do
+        if containerv4 then
+            for _, tool in pairs(containerv4:GetChildren()) do
+                callback(tool)
+            end
+        end
+    end
+end
+
+function GameData.FavoriteSystemv4.FavoritePlantsv4()
+
+    GameData.FavoriteSystemv4.ScanContainersv4(function(tool)
+        if GameData.FavoriteSystemv4.IsMatchv4(tool)
+        and not GameData.FavoriteSystemv4.IsAlreadyFavoritedv4(tool) then
+
+            GameData.FavoriteSystemv4.RemoteEventv4:FireServer(tool)
+
+            print("Favorited: "
+                .. tool.Name
+                .. " | Mutation: "
+                .. GameData.FavoriteSystemv4.GetMutationv4(tool))
         end
     end)
 end
 
--- Fungsi untuk stop auto equip
-function GameData:StopAutoEquipv4()
-    self.AutoEquipv4 = false
-    local args = {"1"}
-    self.Remotesv4.BackpackRFv4
-        :WaitForChild("Unequip")
-        :InvokeServer(unpack(args))
+function GameData.FavoriteSystemv4.UnfavoritePlantsv4()
+
+    GameData.FavoriteSystemv4.ScanContainersv4(function(tool)
+        if GameData.FavoriteSystemv4.IsMatchv4(tool)
+        and GameData.FavoriteSystemv4.IsAlreadyFavoritedv4(tool) then
+
+            GameData.FavoriteSystemv4.RemoteEventv4:FireServer(tool)
+
+            print("Unfavorited: "
+                .. tool.Name
+                .. " | Mutation: "
+                .. GameData.FavoriteSystemv4.GetMutationv4(tool))
+        end
+    end)
 end
 
--- Toggle di GUI
-Sec.Main4:AddToggle({
-    Title = "Auto Equip Gun",
-	Badge = "Fixed",
+function GameData.FavoriteSystemv4.UnfavoriteAllPlantsv4()
+
+    local foundv4 = false
+
+    GameData.FavoriteSystemv4.ScanContainersv4(function(tool)
+        if tool:IsA("Tool")
+        and GameData.FavoriteSystemv4.IsAlreadyFavoritedv4(tool) then
+
+            GameData.FavoriteSystemv4.RemoteEventv4:FireServer(tool)
+
+            print("Unfavorited All: "
+                .. tool.Name
+                .. " | Mutation: "
+                .. GameData.FavoriteSystemv4.GetMutationv4(tool))
+
+            foundv4 = true
+        end
+    end)
+
+    if not foundv4 then
+        print("No favorited tools found.")
+    end
+end
+
+Sec.Favorite1:AddDropdown({
+    Title = "Select Seed (Favorite)",
+    Options = GameData.FavoriteSystemv4.PlantOptionsv4,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedTable)
+        GameData.FavoriteSystemv4.SelectedPlantsv4 = selectedTable
+    end
+})
+
+-- BAGIAN YANG DIUBAH
+Sec.Favorite1:AddDropdown({
+    Title = "Select Mutation (Favorite)",
+    Options = GameData.FavoriteSystemv4.MutationOptionsv4,
+    Multi = true,
+    Default = {"Sandy"},
+    Callback = function(selectedTable)
+        GameData.FavoriteSystemv4.SelectedMutationsv4 = selectedTable
+        print("Mutation selected:")
+        for _, mutation in ipairs(selectedTable) do
+            print("-", mutation)
+        end
+    end
+})
+
+Sec.Favorite1:AddToggle({
+    Title = "Auto Favorite",
     Default = false,
     Callback = function(value)
-        GameData.AutoEquipv4 = value
+
+        GameData.FavoriteSystemv4.AutoFavoriteEnabledv4 = value
 
         if value then
-            Chloex:MakeNotify({
-                Title = "Auto Equip",
-                Description = "Enabled",
-                Content = "Gun has been equip!",
-                Color = Color3.fromRGB(0,255,0),
-                Time = 0.5,
-                Delay = 3
-            })
 
-            GameData:StartAutoEquipv4()
+            GameData.FavoriteSystemv4.AutoUnfavoriteEnabledv4 = false
 
+            if GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4 then
+                task.cancel(GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4)
+                GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4 = nil
+            end
+
+            Notify("Auto Favorite Enabled!", 2)
+
+            GameData.FavoriteSystemv4.AutoFavoriteLoopv4 =
+                task.spawn(function()
+
+                    while GameData.FavoriteSystemv4.AutoFavoriteEnabledv4 do
+                        GameData.FavoriteSystemv4.FavoritePlantsv4()
+                        task.wait(1)
+                    end
+
+                end)
         else
-            Chloex:MakeNotify({
-                Title = "Auto Equip",
-                Description = "Disabled",
-                Content = "Gun has been unequipped!",
-                Color = Color3.fromRGB(255,0,0),
-                Time = 0.5,
-                Delay = 3
-            })
 
-            GameData:StopAutoEquipv4()
+            Notify("Auto Favorite Disabled!", 2)
+
+            if GameData.FavoriteSystemv4.AutoFavoriteLoopv4 then
+                task.cancel(GameData.FavoriteSystemv4.AutoFavoriteLoopv4)
+                GameData.FavoriteSystemv4.AutoFavoriteLoopv4 = nil
+            end
         end
     end
 })
 
--- // Equip Items Guns
-
-GameData.GunsFolderv7 = GameData.Servicesv7.ReplicatedStoragev7
-    :WaitForChild("common")
-    :WaitForChild("assets")
-    :WaitForChild("guns")
-
-for _, gun in pairs(GameData.GunsFolderv7:GetChildren()) do
-    table.insert(GameData.GunOptionsv7, gun.Name)
-end
-
-GameData.SelectedGunv7 = GameData.GunOptionsv7[1]
-
-GameData.Remotesv7.EquipItemv7 = GameData.Servicesv7.ReplicatedStoragev7
-    :WaitForChild("common")
-    :WaitForChild("packages")
-    :WaitForChild("Knit")
-    :WaitForChild("Services")
-    :WaitForChild("InventoryService")
-    :WaitForChild("RF")
-    :WaitForChild("EquipItem")
-
-Sec.Main4:AddDropdown({
-    Title = "Select Guns",
-    Content = "Choose your gun",
-    Options = GameData.GunOptionsv7,
-    Multi = false,
-    Default = GameData.GunOptionsv7[1],
+Sec.Favorite1:AddToggle({
+    Title = "Auto Unfavorite",
+    Default = false,
     Callback = function(value)
-        GameData.SelectedGunv7 = value
-        print("Selected Gun:", value)
-    end
-})
 
-Sec.Main4:AddButton({
-    Title = "Equip Items Gun",
-    Version = "V2",
-    Icon = "rbxassetid://79715859717613",
-    Callback = function()
+        GameData.FavoriteSystemv4.AutoUnfavoriteEnabledv4 = value
 
-        if not GameData.SelectedGunv7 then
-            warn("No gun selected!")
-            return
+        if value then
+
+            GameData.FavoriteSystemv4.AutoFavoriteEnabledv4 = false
+
+            if GameData.FavoriteSystemv4.AutoFavoriteLoopv4 then
+                task.cancel(GameData.FavoriteSystemv4.AutoFavoriteLoopv4)
+                GameData.FavoriteSystemv4.AutoFavoriteLoopv4 = nil
+            end
+
+            Notify("Auto Unfavorite Selected Enabled!", 2)
+
+            GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4 =
+                task.spawn(function()
+
+                    while GameData.FavoriteSystemv4.AutoUnfavoriteEnabledv4 do
+                        GameData.FavoriteSystemv4.UnfavoritePlantsv4()
+                        task.wait(1)
+                    end
+
+                end)
+        else
+
+            Notify("Auto Unfavorite Selected Disabled!", 2)
+
+            if GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4 then
+                task.cancel(GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4)
+                GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4 = nil
+            end
         end
-
-        local args = {
-            "guns",
-            GameData.SelectedGunv7
-        }
-
-        GameData.Remotesv7.EquipItemv7:InvokeServer(unpack(args))
-
-        print("Equipped Gun:", GameData.SelectedGunv7)
     end
 })
 
--- // Equip Items Tubes
+Sec.Favorite1:AddToggle({
+    Title = "Auto Unfavorite All",
+    Default = false,
+    Callback = function(value)
 
-GameData.TubesFolderv8 = GameData.Servicesv8.ReplicatedStoragev8
-    :WaitForChild("common")
-    :WaitForChild("assets")
-    :WaitForChild("tubes")
+        if value then
 
-for _, tube in pairs(GameData.TubesFolderv8:GetChildren()) do
-    table.insert(GameData.TubeOptionsv8, tube.Name)
-end
+            GameData.FavoriteSystemv4.AutoFavoriteEnabledv4 = false
 
-GameData.SelectedTubev8 = GameData.TubeOptionsv8[1]
+            if GameData.FavoriteSystemv4.AutoFavoriteLoopv4 then
+                task.cancel(GameData.FavoriteSystemv4.AutoFavoriteLoopv4)
+                GameData.FavoriteSystemv4.AutoFavoriteLoopv4 = nil
+            end
 
-GameData.Remotesv8.EquipItemv8 = GameData.Servicesv8.ReplicatedStoragev8
-    :WaitForChild("common")
-    :WaitForChild("packages")
-    :WaitForChild("Knit")
-    :WaitForChild("Services")
-    :WaitForChild("InventoryService")
-    :WaitForChild("RF")
-    :WaitForChild("EquipItem")
+            Notify("Auto Unfavorite All Enabled!", 2)
 
-Sec.Main4:AddDropdown({
-    Title = "Select Tubes",
-    Content = "Choose your tube",
-    Options = GameData.TubeOptionsv8,
-    Multi = false,
-    Default = GameData.TubeOptionsv8[1],
-    Callback = function(v)
-        GameData.SelectedTubev8 = v
-        print("Selected Tube:", v)
-    end
-})
+            GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4 =
+                task.spawn(function()
 
-Sec.Main4:AddButton({
-    Title = "Equip Items Tubes",
-    Version = "V2",
-    Icon = "rbxassetid://79715859717613",
-    Callback = function()
+                    while value do
+                        GameData.FavoriteSystemv4.UnfavoriteAllPlantsv4()
+                        task.wait(1)
+                    end
 
-        if not GameData.SelectedTubev8 then
-            warn("No tube selected!")
-            return
+                end)
+        else
+
+            Notify("Auto Unfavorite All Disabled!", 2)
+
+            if GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4 then
+                task.cancel(GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4)
+                GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4 = nil
+            end
         end
-
-        local args = {
-            "tubes",
-            GameData.SelectedTubev8
-        }
-
-        GameData.Remotesv8.EquipItemv8:InvokeServer(unpack(args))
-
-        print("Equipped:", GameData.SelectedTubev8)
     end
 })
 
-Sec.Main5 = Tabs.Main:AddSection({
-    Title = "Treasure",
+Sec.Seed1 = Tabs.Shop:AddSection({
+    Title = "Seed Shop",
     Open = false
 })
 
-GameData.Playerv14 = GameData.Servicesv14.Playersv14.LocalPlayer
-GameData.Characterv14 = GameData.Playerv14.Character or GameData.Playerv14.CharacterAdded:Wait()
-GameData.HumanoidRootPartv14 = GameData.Characterv14:WaitForChild("HumanoidRootPart")
+-- // Info Stock Seed
 
-for _, tierv14 in pairs(workspace.Game.Chests:GetChildren()) do
-    table.insert(GameData.Chestv14.TierOptionsv14, tierv14.Name)
-end
+GameData.SeedStockv5.RemoteEventsv5 =
+    GameData.Servicesv5.ReplicatedStoragev5:WaitForChild("RemoteEvents")
 
-local function InvokeChestv14(tierv14, numberv14)
-    GameData.Servicesv14.ReplicatedStoragev14
-        :WaitForChild("common")
-        :WaitForChild("packages")
-        :WaitForChild("Knit")
-        :WaitForChild("Services")
-        :WaitForChild("ChestService")
-        :WaitForChild("RF")
-        :WaitForChild("UnlockChest")
-        :InvokeServer(tierv14, tostring(numberv14))
-end
+GameData.SeedStockv5.GetShopDatav5 =
+    GameData.SeedStockv5.RemoteEventsv5:FindFirstChild("GetShopData")
 
-local function TweenToChestv14(chestv14)
-    local targetCFramev14 = chestv14.CFrame * CFrame.new(0, 0, -5)
-
-    local tweenv14 = GameData.Servicesv14.TweenServicev14:Create(
-        GameData.HumanoidRootPartv14,
-        GameData.Chestv14.TweenInfov14,
-        { CFrame = targetCFramev14 }
+GameData.SeedStockv5.Paragraphv5 =
+    Sec.Seed1:AddParagraph({
+        Title = "Seed Shop Stock",
+        Content = "Loading seed stock..."
+    })
+if not (
+    GameData.SeedStockv5.GetShopDatav5
+    and GameData.SeedStockv5.GetShopDatav5:IsA("RemoteFunction")
+) then
+    GameData.SeedStockv5.Paragraphv5:SetContent(
+        "Remote GetShopData tidak ditemukan"
     )
-
-    tweenv14:Play()
-    tweenv14.Completed:Wait()
-end
-
-local function StartLoopv14()
-    GameData.Chestv14.Runningv14 = true
-
-    while GameData.Chestv14.Runningv14 do
-        for _, tierNamev14 in pairs(GameData.Chestv14.SelectedTiersv14) do
-            if not GameData.Chestv14.Runningv14 then break end
-
-            local tierFolderv14 = workspace.Game.Chests:FindFirstChild(tierNamev14)
-            if not tierFolderv14 then continue end
-
-            for _, chestv14 in pairs(tierFolderv14:GetChildren()) do
-                if not GameData.Chestv14.Runningv14 then break end
-
-                TweenToChestv14(chestv14)
-                if not GameData.Chestv14.Runningv14 then break end
-
-                task.wait(0.3)
-                InvokeChestv14(tierNamev14, chestv14.Name)
-                task.wait(1)
+else
+    task.spawn(function()
+        while task.wait(1) do
+            local successv5, datav5 = pcall(function()
+                return GameData.SeedStockv5.GetShopDatav5:InvokeServer("SeedShop")
+            end)
+            if successv5 and datav5 and datav5.Items then
+                local textv5 = ""
+                for itemNamev5, itemDatav5 in pairs(datav5.Items) do
+                    textv5 ..= itemNamev5
+                        .. " = "
+                        .. itemDatav5.Amount
+                        .. "x\n"
+                end
+                if textv5 == "" then
+                    textv5 = "Semua seed habis!"
+                end
+                GameData.SeedStockv5.Paragraphv5:SetContent(textv5)
+            else
+                GameData.SeedStockv5.Paragraphv5:SetContent(
+                    "Gagal ambil data SeedShop"
+                )
             end
         end
+    end)
+end
 
+-- // Auto Buy Seed
+
+GameData.SeedShopv2.Datav2 = require(
+    GameData.Servicesv2.ReplicatedStoragev2
+        .Shop
+        .ShopData
+        .SeedShopData
+)
+
+GameData.SeedShopv2.PlantDefinitionsv2 = require(
+    GameData.Servicesv2.ReplicatedStoragev2
+        :WaitForChild("Plants")
+        :WaitForChild("Definitions")
+        :WaitForChild("PlantDataDefinitions")
+)
+
+GameData.SeedShopv2.Eventv2 =
+    GameData.Servicesv2.ReplicatedStoragev2
+        .RemoteEvents
+        .PurchaseShopItem
+
+GameData.SeedShopv2.GetShopDatav2 =
+    GameData.Servicesv2.ReplicatedStoragev2
+        .RemoteEvents
+        :WaitForChild("GetShopData")
+
+for _, info in pairs(GameData.SeedShopv2.Datav2.ShopData) do
+    if info.Name then
+        table.insert(GameData.SeedShopv2.SeedOptionsv2, info.Name)
+    end
+end
+
+do
+    local raritySet = {}
+    for _, plantData in pairs(GameData.SeedShopv2.PlantDefinitionsv2) do
+        local rarity = plantData.Rarity
+        if rarity and not raritySet[rarity] then
+            raritySet[rarity] = true
+            table.insert(GameData.SeedShopv2.RarityOptionsv2, rarity)
+        end
+    end
+    table.sort(GameData.SeedShopv2.RarityOptionsv2)
+end
+
+GameData.Fnv2.FindPlayerPlot = function()
+    local player = GameData.Servicesv2.PlayerServicev2.LocalPlayer
+    for _, plot in pairs(GameData.Plotv2.PlotsFolderv2:GetChildren()) do
+        if plot:IsA("Model") and plot:GetAttribute("Owner") == player.UserId then
+            return plot
+        end
+    end
+    return nil
+end
+
+GameData.Fnv2.CheckSeedStock = function(seedName)
+    if not (GameData.SeedShopv2.GetShopDatav2 and GameData.SeedShopv2.GetShopDatav2:IsA("RemoteFunction")) then
+        return 0
+    end
+    local success, data = pcall(function()
+        return GameData.SeedShopv2.GetShopDatav2:InvokeServer("SeedShop")
+    end)
+    if success and data and data.Items then
+        for itemName, itemData in pairs(data.Items) do
+            if itemName == seedName then
+                return itemData.Amount
+            end
+        end
+    end
+    return 0
+end
+
+GameData.Fnv2.TeleportToShop = function()
+    local character = GameData.Servicesv2.PlayerServicev2.LocalPlayer.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local seedTP = GameData.Teleportv2.SeedsTeleportv2
+        character.HumanoidRootPart.CFrame = CFrame.new(seedTP.Position + Vector3.new(0, 3, 0))
         task.wait(0.5)
     end
 end
 
-Sec.Main5:AddDropdown({
-    Title = "Select Chest Tier",
-    Content = "Select the tier you want to farm",
-    Options = GameData.Chestv14.TierOptionsv14,
+GameData.Fnv2.TeleportToPlot = function()
+    local character = GameData.Servicesv2.PlayerServicev2.LocalPlayer.Character
+    local plot = GameData.Plotv2.PlayerPlotv2
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    if not plot or not plot:IsA("Model") then return end
+    local targetCFrame
+    if plot.PrimaryPart then
+        targetCFrame = plot.PrimaryPart.CFrame + Vector3.new(0, 5, 0)
+    else
+        local cf, size = plot:GetBoundingBox()
+        targetCFrame = cf + Vector3.new(0, size.Y / 2 + 3, 0)
+    end
+    character.HumanoidRootPart.CFrame = targetCFrame
+    task.wait(0.5)
+end
+
+GameData.Fnv2.GetSeedsByRarity = function(selectedRarities)
+    local result = {}
+    local rarityLookup = {}
+    for _, r in ipairs(selectedRarities) do
+        rarityLookup[r] = true
+    end
+    for plantName, plantData in pairs(GameData.SeedShopv2.PlantDefinitionsv2) do
+        if plantData.Rarity and rarityLookup[plantData.Rarity] then
+            local seedName = plantName .. " Seed"
+            for _, shopInfo in pairs(GameData.SeedShopv2.Datav2.ShopData) do
+                if shopInfo.Name and shopInfo.Name == seedName then
+                    table.insert(result, shopInfo.Name)
+                    break
+                end
+            end
+        end
+    end
+    return result
+end
+
+GameData.Fnv2.ResolveSeedList = function()
+    local hasRarity = #GameData.SeedShopv2.SelectedRaritiesv2 > 0
+    local hasSeed = #GameData.SeedShopv2.SelectedSeedsv2 > 0
+    if hasRarity then
+        return GameData.Fnv2.GetSeedsByRarity(GameData.SeedShopv2.SelectedRaritiesv2)
+    elseif hasSeed then
+        return GameData.SeedShopv2.SelectedSeedsv2
+    end
+    return {}
+end
+
+GameData.Fnv2.StartAutoBuy = function()
+    GameData.Plotv2.PlayerPlotv2 = GameData.Fnv2.FindPlayerPlot()
+    task.spawn(function()
+        local atShop = false
+        while GameData.SeedShopv2.AutoBuyv2 do
+            local seedList = GameData.Fnv2.ResolveSeedList()
+            if #seedList == 0 then
+                task.wait(2)
+                continue
+            end
+            local anyStockFound = false
+            for _, seedName in ipairs(seedList) do
+                local stock = GameData.Fnv2.CheckSeedStock(seedName)
+                if stock > 0 then
+                    anyStockFound = true
+                    if not atShop then
+                        GameData.Fnv2.TeleportToShop()
+                        atShop = true
+                    end
+                    GameData.SeedShopv2.Eventv2:InvokeServer("SeedShop", seedName)
+                    task.wait(0.01)
+                end
+            end
+            if not anyStockFound and atShop then
+                GameData.Fnv2.TeleportToPlot()
+                atShop = false
+            end
+            task.wait(1)
+        end
+        if atShop then
+            GameData.Fnv2.TeleportToPlot()
+        end
+    end)
+end
+
+Sec.Seed1:AddDropdown({
+    Title = "Select Rarity",
+    Content = "Filter seeds by rarity (overrides seed selection)",
+    Options = GameData.SeedShopv2.RarityOptionsv2,
     Multi = true,
     Default = {},
-    Callback = function(selectedTablev14)
-        GameData.Chestv14.SelectedTiersv14 = selectedTablev14
+    Callback = function(selectedTable)
+        GameData.SeedShopv2.SelectedRaritiesv2 = selectedTable
     end
 })
 
-Sec.Main5:AddToggle({
-    Title = "Auto Treasure Hunt",
-    Default = false,
-    Callback = function(valuev14)
-        if valuev14 then
-            if #GameData.Chestv14.SelectedTiersv14 == 0 then
-                warn("Pilih tier dulu di dropdown!")
-                return
-            end
-
-            task.spawn(StartLoopv14)
-        else
-            GameData.Chestv14.Runningv14 = false
-        end
+Sec.Seed1:AddDropdown({
+    Title = "Select Seeds",
+    Content = "Choose seeds manually (used only if no rarity selected)",
+    Options = GameData.SeedShopv2.SeedOptionsv2,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedTable)
+        GameData.SeedShopv2.SelectedSeedsv2 = selectedTable
     end
 })
 
-Sec.Bestiary = Tabs.Main:AddSection({
-    Title = "Bestiary",
-    Open = false
-})
-
-GameData.FishFolderv13 = GameData.Servicesv13.ReplicatedStoragev13
-    :WaitForChild("common")
-    :WaitForChild("assets")
-    :WaitForChild("fish")
-
-GameData.Remotesv13.ClaimRewardv13 = GameData.Servicesv13.ReplicatedStoragev13
-    :WaitForChild("common")
-    :WaitForChild("packages")
-    :WaitForChild("Knit")
-    :WaitForChild("Services")
-    :WaitForChild("BestiaryService")
-    :WaitForChild("RF")
-    :WaitForChild("ClaimReward")
-
-Sec.Bestiary:AddToggle({
-    Title = "Auto Claim Bestiary",
-    Default = false,
-    Callback = function(v13)
-
-        GameData.AutoClaimBestiaryv13 = v13
-        
-        if v13 then
-            VelarisUI:MakeNotify({
-                Title = "Auto Claim Bestiary",
-                Description = "Status",
-                Content = "Auto Claim Bestiary Enabled!",
-                Color = Color3.fromRGB(0, 255, 0),
-                Delay = 2
-            })
-
-            task.spawn(function()
-                while GameData.AutoClaimBestiaryv13 do
-
-                    for _, fishv13 in ipairs(GameData.FishFolderv13:GetChildren()) do
-                        if not GameData.AutoClaimBestiaryv13 then break end
-                        
-                        pcall(function()
-                            GameData.Remotesv13.ClaimRewardv13:InvokeServer(fishv13.Name)
-                        end)
-                        
-                        task.wait(0.2)
-                    end
-                    
-                    task.wait(1)
-                end
-            end)
-
-        else
-            VelarisUI:MakeNotify({
-                Title = "Auto Claim Bestiary",
-                Description = "Status",
-                Content = "Auto Claim Bestiary Disabled!",
-                Color = Color3.fromRGB(255, 0, 0),
-                Delay = 2
-            })
-        end
-    end
-})
-
-Sec.Favorite = Tabs.Backpack:AddSection({
-    Title = "Favorite [Beta]",
-    Open = true
-})
-
-GameData.Knitv10 = require(GameData.ReplicatedStoragev10.common.packages.Knit)
-GameData.FavoriteRFv10 = GameData.ReplicatedStoragev10:WaitForChild("common"):WaitForChild("packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("BackpackService"):WaitForChild("RF"):WaitForChild("Favorite")
-
-GameData.fishFolderv10 = GameData.ReplicatedStoragev10.common.presets.items.fish
-for _, folder in ipairs(GameData.fishFolderv10:GetChildren()) do
-    if folder:IsA("Folder") then
-        for _, module in ipairs(folder:GetChildren()) do
-            if module:IsA("ModuleScript") then
-                local success, data = pcall(require, module)
-                if success and type(data) == "table" then
-                    GameData.rarityMapv10[module.Name] = data.rarity or "Unknown"
-                end
-            end
-        end
-    end
-end
-
-GameData.mutationsFolderv10 = GameData.ReplicatedStoragev10.common.presets.fish.mutations
-for _, mutModule in ipairs(GameData.mutationsFolderv10:GetChildren()) do
-    table.insert(GameData.mutationListv10, mutModule.Name)
-end
-table.sort(GameData.mutationListv10)
-
-GameData.fishAssetsFolderv10 = GameData.ReplicatedStoragev10.common.assets.fish
-for _, fishModel in ipairs(GameData.fishAssetsFolderv10:GetChildren()) do
-    table.insert(GameData.fishListv10, fishModel.Name)
-end
-table.sort(GameData.fishListv10)
-
-Sec.Favorite:AddDropdown({
-    Title = "Filter Rarity",
-    Content = "Cannot be combined with Fish filter",
-    Options = {"None", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythical"},
-    Multi = false,
-    Default = "None",
-    Callback = function(value)
-        if value ~= "None" and GameData.selectedFishv10 ~= "None" then
-            Chloex:MakeNotify({
-                Title = "Filter Warning",
-                Description = "Filter System",
-                Content = "Cannot combine Rarity + Fish filter! Resetting Fish to None.",
-                Color = Color3.fromRGB(255, 165, 0),
-                Time = 0.5,
-                Delay = 3
-            })
-            GameData.selectedFishv10 = "None"
-        end
-        GameData.selectedRarityv10 = value
-        Chloex:MakeNotify({
-            Title = "Rarity Filter",
-            Description = "Filter System",
-            Content = "Rarity filter set to: " .. GameData.selectedRarityv10,
-            Color = Color3.fromRGB(0, 170, 255),
-            Time = 0.5,
-            Delay = 3
-        })
-    end
-})
-
-Sec.Favorite:AddDropdown({
-    Title = "Filter Fish",
-    Content = "Cannot be combined with Rarity filter",
-    Options = GameData.fishListv10,
-    Multi = false,
-    Default = "None",
-    Callback = function(value)
-        if value ~= "None" and GameData.selectedRarityv10 ~= "None" then
-            Chloex:MakeNotify({
-                Title = "Filter Warning",
-                Description = "Filter System",
-                Content = "Cannot combine Fish + Rarity filter! Resetting Rarity to None.",
-                Color = Color3.fromRGB(255, 165, 0),
-                Time = 0.5,
-                Delay = 3
-            })
-            GameData.selectedRarityv10 = "None"
-        end
-        GameData.selectedFishv10 = value
-        Chloex:MakeNotify({
-            Title = "Fish Filter",
-            Description = "Filter System",
-            Content = "Fish filter set to: " .. GameData.selectedFishv10,
-            Color = Color3.fromRGB(0, 170, 255),
-            Time = 0.5,
-            Delay = 3
-        })
-    end
-})
-
-Sec.Favorite:AddDropdown({
-    Title = "Filter Mutation",
-    Content = "Can be combined with Rarity or Fish filter",
-    Options = GameData.mutationListv10,
-    Multi = false,
-    Default = "None",
-    Callback = function(value)
-        GameData.selectedMutationv10 = value
-        Chloex:MakeNotify({
-            Title = "Mutation Filter",
-            Description = "Filter System",
-            Content = "Mutation filter set to: " .. GameData.selectedMutationv10,
-            Color = Color3.fromRGB(0, 170, 255),
-            Time = 0.5,
-            Delay = 3
-        })
-    end
-})
-
-local function matchesFilter(item)
-    local fishName = item.name
-    if item.class == "fish_loot" then
-        fishName = string.split(item.name, "_")[1]
-    end
-
-    local rarity = GameData.rarityMapv10[fishName] or GameData.rarityMapv10[item.name] or "Unknown"
-    local mutations = item.mutations or {}
-
-    local hasMutation = false
-    if GameData.selectedMutationv10 ~= "None" then
-        for _, mut in ipairs(mutations) do
-            if mut == GameData.selectedMutationv10 then
-                hasMutation = true
-                break
-            end
-        end
-    end
-
-    if GameData.selectedFishv10 ~= "None" and GameData.selectedMutationv10 ~= "None" then
-        return fishName == GameData.selectedFishv10 and hasMutation
-    elseif GameData.selectedFishv10 ~= "None" then
-        return fishName == GameData.selectedFishv10
-    elseif GameData.selectedRarityv10 ~= "None" and GameData.selectedMutationv10 ~= "None" then
-        return rarity == GameData.selectedRarityv10 and hasMutation
-    elseif GameData.selectedRarityv10 ~= "None" then
-        return rarity == GameData.selectedRarityv10
-    elseif GameData.selectedMutationv10 ~= "None" then
-        return hasMutation
-    end
-
-    return false
-end
-
-Sec.Favorite:AddToggle({
-    Title = "Auto Favorite",
+Sec.Seed1:AddToggle({
+    Title = "Auto Buy Seed",
     Default = false,
     Callback = function(value)
-        GameData.autoFavRunningv10 = value
-
+        GameData.SeedShopv2.AutoBuyv2 = value
         if value then
-            if GameData.selectedRarityv10 == "None" and GameData.selectedMutationv10 == "None" and GameData.selectedFishv10 == "None" then
-                Chloex:MakeNotify({
-                    Title = "Auto Favorite",
-                    Description = "Filter System",
-                    Content = "Please select at least one filter first!",
-                    Color = Color3.fromRGB(255, 0, 0),
-                    Time = 0.5,
-                    Delay = 3
-                })
-                GameData.autoFavRunningv10 = false
-                return
-            end
-
-            Chloex:MakeNotify({
-                Title = "Auto Favorite",
-                Description = "Status",
-                Content = "Auto Favorite is now ON.",
-                Color = Color3.fromRGB(0, 255, 0),
-                Time = 0.5,
-                Delay = 3
-            })
-
-            task.spawn(function()
-                while GameData.autoFavRunningv10 do
-                    local replica = GameData.Knitv10.GetController("DataController"):GetReplica()
-                    local inventory = replica.Data.inventory or {}
-
-                    for id, item in pairs(inventory) do
-                        if not GameData.autoFavRunningv10 then break end
-
-                        if (item.class == "fish" or item.class == "fish_loot") and not item.favorited then
-                            if matchesFilter(item) then
-                                local success, err = pcall(function()
-                                    GameData.FavoriteRFv10:InvokeServer(id)
-                                end)
-                                if success then
-                                    local mutations = item.mutations or {}
-                                    Chloex:MakeNotify({
-                                        Title = "Favorited",
-                                        Description = item.name,
-                                        Content = "Mutation: " .. (table.concat(mutations, ", ") ~= "" and table.concat(mutations, ", ") or "None"),
-                                        Color = Color3.fromRGB(0, 255, 0),
-                                        Time = 0.5,
-                                        Delay = 3
-                                    })
-                                else
-                                    Chloex:MakeNotify({
-                                        Title = "Auto Favorite",
-                                        Description = "Error",
-                                        Content = "Failed to favorite: " .. tostring(err),
-                                        Color = Color3.fromRGB(255, 0, 0),
-                                        Time = 0.5,
-                                        Delay = 3
-                                    })
-                                end
-                                task.wait(0.3)
-                            end
-                        end
-                    end
-
-                    task.wait(1)
-                end
-
-                Chloex:MakeNotify({
-                    Title = "Auto Favorite",
-                    Description = "Status",
-                    Content = "Auto Favorite has stopped.",
-                    Color = Color3.fromRGB(255, 0, 0),
-                    Time = 0.5,
-                    Delay = 3
-                })
-            end)
+            Notify("Auto Buy Enabled!", 2)
+            GameData.Fnv2.StartAutoBuy()
         else
-            Chloex:MakeNotify({
-                Title = "Auto Favorite",
-                Description = "Status",
-                Content = "Auto Favorite is now OFF.",
-                Color = Color3.fromRGB(255, 0, 0),
-                Time = 0.5,
-                Delay = 3
-            })
+            Notify("Auto Buy Disabled!", 2)
         end
     end
 })
 
-Sec.Favorite:AddToggle({
-    Title = "Auto Unfavorite",
-    Default = false,
-    Callback = function(value)
-        GameData.autoUnfavRunningv10 = value
-
-        if value then
-            if GameData.selectedRarityv10 == "None" and GameData.selectedMutationv10 == "None" and GameData.selectedFishv10 == "None" then
-                Chloex:MakeNotify({
-                    Title = "Auto Unfavorite",
-                    Description = "Filter System",
-                    Content = "Please select at least one filter first!",
-                    Color = Color3.fromRGB(255, 0, 0),
-                    Time = 0.5,
-                    Delay = 3
-                })
-                GameData.autoUnfavRunningv10 = false
-                return
-            end
-
-            Chloex:MakeNotify({
-                Title = "Auto Unfavorite",
-                Description = "Status",
-                Content = "Auto Unfavorite is now ON.",
-                Color = Color3.fromRGB(0, 255, 0),
-                Time = 0.5,
-                Delay = 3
-            })
-
-            task.spawn(function()
-                while GameData.autoUnfavRunningv10 do
-                    local replica = GameData.Knitv10.GetController("DataController"):GetReplica()
-                    local inventory = replica.Data.inventory or {}
-
-                    for id, item in pairs(inventory) do
-                        if not GameData.autoUnfavRunningv10 then break end
-
-                        if (item.class == "fish" or item.class == "fish_loot") and item.favorited then
-                            if matchesFilter(item) then
-                                local success, err = pcall(function()
-                                    GameData.FavoriteRFv10:InvokeServer(id) -- invoke again = unfavorite
-                                end)
-                                if success then
-                                    local mutations = item.mutations or {}
-                                    Chloex:MakeNotify({
-                                        Title = "Unfavorited",
-                                        Description = item.name,
-                                        Content = "Mutation: " .. (table.concat(mutations, ", ") ~= "" and table.concat(mutations, ", ") or "None"),
-                                        Color = Color3.fromRGB(255, 100, 0),
-                                        Time = 0.5,
-                                        Delay = 3
-                                    })
-                                else
-                                    Chloex:MakeNotify({
-                                        Title = "Auto Unfavorite",
-                                        Description = "Error",
-                                        Content = "Failed to unfavorite: " .. tostring(err),
-                                        Color = Color3.fromRGB(255, 0, 0),
-                                        Time = 0.5,
-                                        Delay = 3
-                                    })
-                                end
-                                task.wait(0.3)
-                            end
-                        end
-                    end
-
-                    task.wait(1)
-                end
-
-                Chloex:MakeNotify({
-                    Title = "Auto Unfavorite",
-                    Description = "Status",
-                    Content = "Auto Unfavorite has stopped.",
-                    Color = Color3.fromRGB(255, 0, 0),
-                    Time = 0.5,
-                    Delay = 3
-                })
-            end)
-        else
-            Chloex:MakeNotify({
-                Title = "Auto Unfavorite",
-                Description = "Status",
-                Content = "Auto Unfavorite is now OFF.",
-                Color = Color3.fromRGB(255, 0, 0),
-                Time = 0.5,
-                Delay = 3
-            })
-        end
-    end
-})
-
-Sec.Tp1 = Tabs.Tp:AddSection({
-    Title = "Locations",
-    Open = true
-})
-
-GameData.Playerv9 = GameData.Servicesv9.Playersv9.LocalPlayer
-
-for name, _ in pairs(GameData.Locationsv9) do
-    table.insert(GameData.LocationOptionsv9, name)
-end
-
-GameData.SelectedLocationv9 = GameData.LocationOptionsv9[1]
-
-Sec.Tp1:AddDropdown({
-    Title = "Select Locations",
-    Options = GameData.LocationOptionsv9,
-    Multi = false,
-    Default = {GameData.LocationOptionsv9[1]},
-    Callback = function(tbl)
-        if type(tbl) == "table" then
-            GameData.SelectedLocationv9 = tbl[1]
-        else
-            GameData.SelectedLocationv9 = tbl
-        end
-    end
-})
-
-Sec.Tp1:AddButton({
-    Title = "Tween To Locations",
-    Version = "V2",
-    Icon = "rbxassetid://79715859717613",
-    Callback = function()
-        if not GameData.SelectedLocationv9 then return end
-
-        local targetCFrame = GameData.Locationsv9[GameData.SelectedLocationv9]
-        if not targetCFrame then return end
-
-        local char = GameData.Playerv9.Character or GameData.Playerv9.CharacterAdded:Wait()
-        local hrp = char:WaitForChild("HumanoidRootPart")
-        local hum = char:WaitForChild("Humanoid")
-
-        hum.PlatformStand = true
-
-        local attachment = Instance.new("Attachment")
-        attachment.Parent = hrp
-
-        local lv = Instance.new("LinearVelocity")
-        lv.Attachment0 = attachment
-        lv.MaxForce = math.huge
-        lv.VectorVelocity = Vector3.zero
-        lv.Parent = hrp
-
-        local distance = (hrp.Position - targetCFrame.Position).Magnitude
-        local speed = 40
-        local duration = math.clamp(distance / speed, 0.1, 30)
-
-        local tween = GameData.Servicesv9.TweenServicev9:Create(
-            hrp,
-            TweenInfo.new(duration, Enum.EasingStyle.Linear),
-            {CFrame = targetCFrame}
-        )
-
-        tween:Play()
-
-        tween.Completed:Connect(function()
-            lv:Destroy()
-            attachment:Destroy()
-            hum.PlatformStand = false
-            VelarisUI:MakeNotify({
-                Title = "Teleport",
-                Description = "Success",
-                Content = "Arrived at " .. GameData.SelectedLocationv9,
-                Color = Color3.fromRGB(0, 255, 0),
-                Time = 0.5,
-                Delay = 3
-            })
-        end)
-    end
-})
-
-Sec.Shop1 = Tabs.Shop:AddSection({
-    Title = "Item Shop",
+Sec.Gear1 = Tabs.Shop:AddSection({
+    Title = "Gear Shop",
     Open = false
 })
 
-Sec.Shop1:AddSubSection("GUNS SHOP")
+-- // Info Stock Gear
 
-GameData.GunsFolderv11 = GameData.Servicesv11.ReplicatedStoragev11
-    :WaitForChild("common")
-    :WaitForChild("assets")
-    :WaitForChild("guns")
-for _, gunv11 in pairs(GameData.GunsFolderv11:GetChildren()) do
-    table.insert(GameData.GunOptionsv11, gunv11.Name)
-end
-GameData.SelectedGunv11 = GameData.GunOptionsv11[1]
-GameData.Remotesv11.BuyItemv11 = GameData.Servicesv11.ReplicatedStoragev11
-    :WaitForChild("common")
-    :WaitForChild("packages")
-    :WaitForChild("Knit")
-    :WaitForChild("Services")
-    :WaitForChild("PurchaseService")
-    :WaitForChild("RF")
-    :WaitForChild("BuyItem")
-Sec.Shop1:AddDropdown({
-    Title = "Select Gun to Buy",
-    Content = "Choose gun to purchase",
-    Options = GameData.GunOptionsv11,
-    Multi = false,
-    Default = GameData.GunOptionsv11[1],
-    Callback = function(v11)
-        GameData.SelectedGunv11 = v11
-        VelarisUI:MakeNotify({
-            Title = "Gun Selected",
-            Description = "Selection",
-            Content = "Selected Gun to Buy: " .. tostring(v11),
-            Color = Color3.fromRGB(0, 170, 255),
-            Time = 0.5,
-            Delay = 3
-        })
-    end
-})
-Sec.Shop1:AddButton({
-    Title = "Buy Gun",
-    Version = "V2",
-    Icon = "rbxassetid://79715859717613",
-    Callback = function()
-        if not GameData.SelectedGunv11 then
-            VelarisUI:MakeNotify({
-                Title = "Error",
-                Description = "Purchase Failed",
-                Content = "No gun selected!",
-                Color = Color3.fromRGB(255, 0, 0),
-                Time = 0.5,
-                Delay = 3
-            })
-            return
+GameData.GearStockv6.RemoteEventsv6 =
+    GameData.Servicesv6.ReplicatedStoragev6:WaitForChild("RemoteEvents")
+
+GameData.GearStockv6.GetShopDatav6 =
+    GameData.GearStockv6.RemoteEventsv6:FindFirstChild("GetShopData")
+
+GameData.GearStockv6.Paragraphv6 =
+    Sec.Gear1:AddParagraph({
+        Title = "Gear Shop Stock",
+        Content = "Loading stock..."
+    })
+if not (
+    GameData.GearStockv6.GetShopDatav6
+    and GameData.GearStockv6.GetShopDatav6:IsA("RemoteFunction")
+) then
+    GameData.GearStockv6.Paragraphv6:SetContent(
+        "Remote GetShopData tidak ditemukan"
+    )
+
+else
+    task.spawn(function()
+        while task.wait(1) do
+            local successv6, datav6 = pcall(function()
+                return GameData.GearStockv6.GetShopDatav6:InvokeServer("GearShop")
+            end)
+            if successv6 and datav6 and datav6.Items then
+                local textv6 = ""
+                for itemNamev6, itemDatav6 in pairs(datav6.Items) do
+                    textv6 ..= itemNamev6
+                        .. " = "
+                        .. itemDatav6.Amount
+                        .. "x\n"
+                end
+                GameData.GearStockv6.Paragraphv6:SetContent(textv6)
+            else
+                GameData.GearStockv6.Paragraphv6:SetContent(
+                    "Gagal ambil data shop"
+                )
+            end
         end
-        local argsv11 = {
-            GameData.SelectedGunv11,
-            1,
-            "guns"
-        }
-        GameData.Remotesv11.BuyItemv11:InvokeServer(unpack(argsv11))
-        VelarisUI:MakeNotify({
-            Title = "Purchase Successful",
-            Description = "Shop",
-            Content = "Purchased Gun: " .. tostring(GameData.SelectedGunv11),
-            Color = Color3.fromRGB(0, 255, 0),
-            Time = 0.5,
-            Delay = 3
-        })
-    end
-})
-
-Sec.Shop1:AddSubSection("TUBES SHOP")
-
-GameData.TubesFolderv12 = GameData.Servicesv12.ReplicatedStoragev12
-    :WaitForChild("common")
-    :WaitForChild("assets")
-    :WaitForChild("tubes")
-for _, tubev12 in pairs(GameData.TubesFolderv12:GetChildren()) do
-    table.insert(GameData.TubeOptionsv12, tubev12.Name)
+    end)
 end
-GameData.SelectedTubev12 = GameData.TubeOptionsv12[1]
-GameData.Remotesv12.BuyItemv12 = GameData.Servicesv12.ReplicatedStoragev12
-    :WaitForChild("common")
-    :WaitForChild("packages")
-    :WaitForChild("Knit")
-    :WaitForChild("Services")
-    :WaitForChild("PurchaseService")
-    :WaitForChild("RF")
-    :WaitForChild("BuyItem")
-Sec.Shop1:AddDropdown({
-    Title = "Select Tube to Buy",
-    Content = "Choose tube to purchase",
-    Options = GameData.TubeOptionsv12,
-    Multi = false,
-    Default = GameData.TubeOptionsv12[1],
-    Callback = function(v12)
-        GameData.SelectedTubev12 = v12
-        VelarisUI:MakeNotify({
-            Title = "Tube Selected",
-            Description = "Selection",
-            Content = "Selected Tube to Buy: " .. tostring(v12),
-            Color = Color3.fromRGB(0, 170, 255),
-            Time = 0.5,
-            Delay = 3
-        })
-    end
-})
-Sec.Shop1:AddButton({
-    Title = "Buy Tube",
-    Version = "V2",
-    Icon = "rbxassetid://79715859717613",
-    Callback = function()
-        if not GameData.SelectedTubev12 then
-            VelarisUI:MakeNotify({
-                Title = "Error",
-                Description = "Purchase Failed",
-                Content = "No tube selected!",
-                Color = Color3.fromRGB(255, 0, 0),
-                Time = 0.5,
-                Delay = 3
-            })
-            return
-        end
-        local argsv12 = {
-            GameData.SelectedTubev12,
-            1,
-            "tubes"
-        }
-        GameData.Remotesv12.BuyItemv12:InvokeServer(unpack(argsv12))
-        VelarisUI:MakeNotify({
-            Title = "Purchase Successful",
-            Description = "Shop",
-            Content = "Purchased Tube: " .. tostring(GameData.SelectedTubev12),
-            Color = Color3.fromRGB(0, 255, 0),
-            Time = 0.5,
-            Delay = 3
-        })
-    end
-})
 
-Sec.Merchant = Tabs.Shop:AddSection({
-    Title = "Merchant",
-    Open = false
-})
+-- // Auto Buy Gear
 
-GameData.Knitv16 = require(
-    GameData.Servicesv16.ReplicatedStoragev16.common.packages.Knit
+GameData.GearShopv3.Datav3 = require(
+    GameData.Servicesv3.ReplicatedStoragev3
+        .Shop
+        .ShopData
+        .GearShopData
 )
 
-GameData.DataControllerv16 = GameData.Knitv16.GetController("DataController")
-GameData.MerchantServicev16 = GameData.Knitv16.GetService("MerchantService")
-GameData.Replicav16 = GameData.DataControllerv16:GetReplica()
+GameData.GearShopv3.Eventv3 =
+    GameData.Servicesv3.ReplicatedStoragev3
+        .RemoteEvents
+        .PurchaseShopItem
 
-GameData.Libraryv16 = require(
-    GameData.Servicesv16.ReplicatedStoragev16.common.library
-)
+GameData.GearShopv3.GetShopDatav3 =
+    GameData.Servicesv3.ReplicatedStoragev3
+        .RemoteEvents
+        :WaitForChild("GetShopData")
 
-function GameData.CreateMerchantUIv16(merchantv16)
-
-    local containerv16 = {}
-    containerv16.autoBuyv16 = false
-    containerv16.itemMapv16 = {}
-
-    Sec.Merchant:AddSubSection(merchantv16)
-
-    containerv16.stoc_infov16 = Sec.Merchant:AddParagraph({
-        Title = merchantv16.." Stock",
-        Content = "Loading..."
-    })
-
-    containerv16.selectitemsv16 = Sec.Merchant:AddDropdown({
-        Title = merchantv16.." Item",
-        Content = "Select item",
-        Options = {},
-        Multi = true,
-        Default = {}
-    })
-
-    Sec.Merchant:AddToggle({
-        Title = merchantv16.." Auto Buy",
-        Default = false,
-        Callback = function(valv16)
-            containerv16.autoBuyv16 = valv16
-        end
-    })
-
-    Sec.Merchant:AddButton({
-        Title = merchantv16.." Refresh",
-        Version = "V2",
-        Icon = "rbxassetid://79715859717613",
-        Callback = function()
-            GameData.RefreshMerchantv16(merchantv16)
-        end
-    })
-
-    GameData.MerchantUIv16[merchantv16] = containerv16
+for _, info in pairs(GameData.GearShopv3.Datav3.ShopData) do
+    table.insert(GameData.GearShopv3.GearOptionsv3, info.Name)
 end
 
-function GameData.RefreshMerchantv16(merchantv16)
+local function FindPlayerPlot()
+    local player = GameData.Servicesv3.PlayerServicev3.LocalPlayer
+    for _, plot in pairs(GameData.Plotv3.PlotsFolderv3:GetChildren()) do
+        if plot:IsA("Model") and plot:GetAttribute("Owner") == player.UserId then
+            return plot
+        end
+    end
+    return nil
+end
 
-    local uiv16 = GameData.MerchantUIv16[merchantv16]
-    if not uiv16 then return end
+local function CheckGearStock(gearName)
+    if not (GameData.GearShopv3.GetShopDatav3 and GameData.GearShopv3.GetShopDatav3:IsA("RemoteFunction")) then
+        return 0
+    end
 
-    local datav16 = GameData.Replicav16.Data.merchant_stocks[merchantv16]
-    local merchantInfov16 = GameData.Libraryv16.merchants[merchantv16]
+    local success, data = pcall(function()
+        return GameData.GearShopv3.GetShopDatav3:InvokeServer("GearShop")
+    end)
 
-    if not datav16 then
-        uiv16.stoc_infov16:SetContent("No stock data")
+    if success and data and data.Items then
+        for itemName, itemData in pairs(data.Items) do
+            if itemName == gearName then
+                return itemData.Amount
+            end
+        end
+    end
+
+    return 0
+end
+
+local function TeleportToShop()
+    local character = GameData.Servicesv3.PlayerServicev3.LocalPlayer.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local gearNPC = GameData.Teleportv3.GearNPCv3
+        character.HumanoidRootPart.CFrame = CFrame.new(gearNPC.Position + Vector3.new(0, 3, 0))
+        task.wait(0.5)
+    end
+end
+
+local function TeleportToPlot()
+    local character = GameData.Servicesv3.PlayerServicev3.LocalPlayer.Character
+    local plot = GameData.Plotv3.PlayerPlotv3
+
+    if not character or not character:FindFirstChild("HumanoidRootPart") then
         return
     end
 
-    local linesv16 = {}
-    local optionsv16 = {}
-    uiv16.itemMapv16 = {}
-
-    for slotv16, itemDatav16 in pairs(datav16.stock) do
-
-        local pricev16 = "?"
-        if merchantInfov16 and merchantInfov16.stock[itemDatav16.item] then
-            pricev16 = merchantInfov16.stock[itemDatav16.item].price
-        end
-
-        local labelv16 = "["..slotv16.."] "..itemDatav16.item
-        uiv16.itemMapv16[labelv16] = slotv16
-
-        table.insert(optionsv16, labelv16)
-        table.insert(linesv16,
-            string.format(
-                "%s\n Stock: %s\n Price: %s\n",
-                labelv16,
-                itemDatav16.stock,
-                pricev16
-            )
-        )
+    if not plot or not plot:IsA("Model") then
+        return
     end
 
-    uiv16.stoc_infov16:SetContent(table.concat(linesv16,"──────────\n"))
-    uiv16.selectitemsv16:SetValues(optionsv16,false)
+    local targetCFrame
+
+    if plot.PrimaryPart then
+        targetCFrame = plot.PrimaryPart.CFrame + Vector3.new(0, 5, 0)
+    else
+        local cf, size = plot:GetBoundingBox()
+        targetCFrame = cf + Vector3.new(0, size.Y / 2 + 3, 0)
+    end
+
+    character.HumanoidRootPart.CFrame = targetCFrame
+    task.wait(0.5)
 end
 
-for merchantv16 in pairs(GameData.Replicav16.Data.merchant_stocks) do
-    GameData.CreateMerchantUIv16(merchantv16)
-    GameData.RefreshMerchantv16(merchantv16)
-end
+local function StartAutoBuy()
+    GameData.Plotv3.PlayerPlotv3 = FindPlayerPlot()
 
-task.spawn(function()
+    task.spawn(function()
+        local atShop = false
 
-    while true do
-        task.wait(0.3)
+        while GameData.GearShopv3.AutoBuyv3 do
+            local anyStockFound = false
 
-        for merchantv16, uiv16 in pairs(GameData.MerchantUIv16) do
-            if uiv16.autoBuyv16 then
+            for _, gearName in ipairs(GameData.GearShopv3.SelectedGearsv3) do
+                local stock = CheckGearStock(gearName)
 
-                local selectedv16 = uiv16.selectitemsv16:GetValue() or {}
-                local datav16 = GameData.Replicav16.Data.merchant_stocks[merchantv16]
+                if stock > 0 then
+                    anyStockFound = true
 
-                if datav16 then
-                    for _, labelv16 in ipairs(selectedv16) do
-                        local slotv16 = uiv16.itemMapv16[labelv16]
-
-                        if slotv16
-                        and datav16.stock[slotv16]
-                        and datav16.stock[slotv16].stock > 0 then
-
-                            GameData.MerchantServicev16:Buy(merchantv16, slotv16, 1)
-                        end
+                    if not atShop then
+                        TeleportToShop()
+                        atShop = true
                     end
+
+                    GameData.GearShopv3.Eventv3:InvokeServer("GearShop", gearName)
+                    task.wait(0.01)
                 end
             end
+
+            if not anyStockFound and atShop then
+                TeleportToPlot()
+                atShop = false
+            end
+
+            task.wait(1)
+        end
+
+        if atShop then
+            TeleportToPlot()
+        end
+    end)
+end
+
+Sec.Gear1:AddDropdown({
+    Title = "Select Gear",
+    Content = "Choose gears to auto buy",
+    Options = GameData.GearShopv3.GearOptionsv3,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedTable)
+        GameData.GearShopv3.SelectedGearsv3 = selectedTable
+    end
+})
+
+Sec.Gear1:AddToggle({
+    Title = "Auto Buy Gear",
+    Default = false,
+    Callback = function(value)
+        GameData.GearShopv3.AutoBuyv3 = value
+
+        if value then
+            Notify("Auto Buy Gear Enabled!", 2)
+            StartAutoBuy()
+        else
+            Notify("Auto Buy Gear Disabled!", 2)
         end
     end
-
-end)
-
-GameData.Replicav16:ListenToRaw(function(pathv16)
-    if pathv16[1] == "merchant_stocks" then
-        task.wait(0.2)
-        GameData.RefreshMerchantv16(pathv16[2])
-    end
-end)
+})
