@@ -281,12 +281,31 @@ local GameData = {
     ClaimQuestEventV12 = nil,
     SelectedQuestsV12 = {},
     AutoClaimV12 = false,
+
+    -- Auto Favorite Plant
+
+    ReplicatedStoragev13 = game:GetService("ReplicatedStorage"),
+    Eventv13 = nil,
+    ModelsFolderv13 = nil,
+    MutationDatav13 = nil,
+    PlantDatav13 = nil,
+    RarityDefinitionsv13 = nil,
+    VariantFolderv13 = nil,
+    selectedPlantsv13 = {},
+    selectedMutationsv13 = {},
+    selectedVariantsv13 = {},
+    selectedRaritiesv13 = {},
+    isRunningv13 = false,
+    MutationNamesv13 = {},
+    VariantNamesv13 = {},
+    seedNamesv13 = {},
+    RarityListv13 = {},
 }
 
 local MarketplaceService = game:GetService("MarketplaceService")
 
 local Window = Chloex:Window({
-    Title = "Nexa | v0.0.3 |",
+    Title = "Nexa | v0.0.4 |",
     Footer = "Premium",
     Content = MarketplaceService:GetProductInfo(game.PlaceId).Name,  -- otomatis isi nama game
     Color = "Default",
@@ -340,9 +359,11 @@ Sec.Home1 = Tabs.Home:AddSection({
 Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
-[+] Added Tab Teleport
-[+] Added Teleport To Plot
-[+] Added Auto Claim Quest
+[+] Added Favorite Plant
+[+] Dropdwon Select Plant
+[+] Dropdwon Select Rarity
+[+] Dropdwon Select Mutation
+[+] Dropdwon Select Variant
 	]]
 })
 
@@ -2102,6 +2123,202 @@ Sec.Favorite1:AddToggle({
                 task.cancel(GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4)
                 GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4 = nil
             end
+        end
+    end
+})
+
+Sec.Favorite1:AddSubSection("Favorite Plant")
+
+GameData.Eventv13 = GameData.ReplicatedStoragev13.RemoteEvents.UseGear
+GameData.ModelsFolderv13 = GameData.ReplicatedStoragev13:WaitForChild("Plants"):WaitForChild("Models")
+GameData.MutationDatav13 = require(
+    GameData.ReplicatedStoragev13:WaitForChild("Plants"):WaitForChild("Definitions"):WaitForChild("MutationDataDefinitions")
+)
+GameData.PlantDatav13 = require(
+    GameData.ReplicatedStoragev13:WaitForChild("Plants"):WaitForChild("Definitions"):WaitForChild("PlantDataDefinitions")
+)
+GameData.RarityDefinitionsv13 = require(
+    GameData.ReplicatedStoragev13:WaitForChild("Plants"):WaitForChild("Definitions"):WaitForChild("RarityDefinitions")
+)
+GameData.VariantFolderv13 = GameData.ReplicatedStoragev13:WaitForChild("VariantEffects")
+
+for mutationNamev13, _ in pairs(GameData.MutationDatav13) do
+    table.insert(GameData.MutationNamesv13, mutationNamev13)
+end
+table.sort(GameData.MutationNamesv13)
+
+for _, variantv13 in pairs(GameData.VariantFolderv13:GetChildren()) do
+    table.insert(GameData.VariantNamesv13, variantv13.Name)
+end
+table.sort(GameData.VariantNamesv13)
+
+for _, itemv13 in ipairs(GameData.ModelsFolderv13:GetChildren()) do
+    if itemv13:IsA("Folder") then
+        table.insert(GameData.seedNamesv13, itemv13.Name)
+    end
+end
+
+for rarityNamev13, _ in pairs(GameData.RarityDefinitionsv13) do
+    table.insert(GameData.RarityListv13, rarityNamev13)
+end
+table.sort(GameData.RarityListv13)
+
+local function getPlantRarityv13(plantBaseNamev13)
+    for plantNamev13, datav13 in pairs(GameData.PlantDatav13) do
+        if plantNamev13:lower() == plantBaseNamev13:lower() then
+            return datav13.Rarity
+        end
+    end
+    return nil
+end
+
+local function isPlantSelectedv13(plantBaseNamev13)
+    for _, selectedv13 in ipairs(GameData.selectedPlantsv13) do
+        if plantBaseNamev13 and plantBaseNamev13:lower() == selectedv13:lower() then
+            return true
+        end
+    end
+    return false
+end
+
+local function isRaritySelectedv13(plantBaseNamev13)
+    if #GameData.selectedRaritiesv13 == 0 then return true end
+    local rarityv13 = getPlantRarityv13(plantBaseNamev13)
+    for _, selectedRarityv13 in ipairs(GameData.selectedRaritiesv13) do
+        if rarityv13 and rarityv13:lower() == selectedRarityv13:lower() then
+            return true
+        end
+    end
+    return false
+end
+
+local function isMutationSelectedv13(mutationv13)
+    for _, selectedMutv13 in ipairs(GameData.selectedMutationsv13) do
+        if mutationv13 and mutationv13:lower() == selectedMutv13:lower() then
+            return true
+        end
+    end
+    return false
+end
+
+local function isVariantSelectedv13(variantv13)
+    for _, selectedVarv13 in ipairs(GameData.selectedVariantsv13) do
+        if variantv13 and variantv13:lower() == selectedVarv13:lower() then
+            return true
+        end
+    end
+    return false
+end
+
+local function tryFavoritev13(instancev13)
+    if instancev13:GetAttribute("Favorited") ~= nil then return end
+    local rawUuidv13 = instancev13:GetAttribute("uuid")
+    if not rawUuidv13 then return end
+    local cleanUuidv13 = rawUuidv13:gsub(":regrow:%d+", "")
+    GameData.Eventv13:FireServer("Favorite Tool", {
+        PlantUuid = cleanUuidv13,
+        GrowthAnchorIndex = 1
+    })
+    task.wait(1)
+end
+
+local function getTargetsv13(plantv13)
+    local fruitsv13 = {}
+    for _, childv13 in pairs(plantv13:GetChildren()) do
+        if childv13.Name:match("^Fruit") then
+            table.insert(fruitsv13, childv13)
+        end
+    end
+    if #fruitsv13 > 0 then return fruitsv13 end
+    return {plantv13}
+end
+
+Sec.Favorite1:AddDropdown({
+    Title = "Select Plant To Favorite",
+    Options = GameData.seedNamesv13,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedTablev13)
+        GameData.selectedPlantsv13 = selectedTablev13
+    end
+})
+
+Sec.Favorite1:AddDropdown({
+    Title = "Select Rarity To Favorite",
+    Options = GameData.RarityListv13,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedv13)
+        GameData.selectedRaritiesv13 = selectedv13
+    end
+})
+
+Sec.Favorite1:AddDropdown({
+    Title = "Select Mutation To Favorite",
+    Options = GameData.MutationNamesv13,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedv13)
+        GameData.selectedMutationsv13 = selectedv13
+    end
+})
+
+Sec.Favorite1:AddDropdown({
+    Title = "Select Variant To Favorite",
+    Options = GameData.VariantNamesv13,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedv13)
+        GameData.selectedVariantsv13 = selectedv13
+    end
+})
+
+Sec.Favorite1:AddToggle({
+    Title = "Auto Favorite Plant",
+    Default = false,
+    Callback = function(valuev13)
+        GameData.isRunningv13 = valuev13
+        if valuev13 then
+            task.spawn(function()
+                while GameData.isRunningv13 do
+                    local hasPlantv13    = #GameData.selectedPlantsv13 > 0
+                    local hasRarityv13   = #GameData.selectedRaritiesv13 > 0
+                    local hasMutationv13 = #GameData.selectedMutationsv13 > 0
+                    local hasVariantv13  = #GameData.selectedVariantsv13 > 0
+
+                    for _, plantv13 in pairs(workspace.ClientPlants:GetChildren()) do
+                        local plantBaseNamev13 = plantv13.Name:match("^(%a+)")
+                        local targetsv13 = getTargetsv13(plantv13)
+
+                        for _, targetv13 in ipairs(targetsv13) do
+                            local mutationv13 = targetv13:GetAttribute("Mutation")
+                            local variantv13  = targetv13:GetAttribute("Variant")
+
+                            local plantMatchv13    = not hasPlantv13    or isPlantSelectedv13(plantBaseNamev13)
+                            local rarityMatchv13   = isRaritySelectedv13(plantBaseNamev13)
+                            local mutationMatchv13 = not hasMutationv13 or isMutationSelectedv13(mutationv13)
+                            local variantMatchv13  = not hasVariantv13  or isVariantSelectedv13(variantv13)
+
+                            if hasRarityv13 then
+                                if rarityMatchv13 and mutationMatchv13 and variantMatchv13 then
+                                    tryFavoritev13(targetv13)
+                                end
+                            elseif hasPlantv13 and not hasMutationv13 and not hasVariantv13 then
+                                if plantMatchv13 then tryFavoritev13(targetv13) end
+                            elseif not hasPlantv13 and hasMutationv13 and not hasVariantv13 then
+                                if mutationMatchv13 then tryFavoritev13(targetv13) end
+                            elseif not hasPlantv13 and not hasMutationv13 and hasVariantv13 then
+                                if variantMatchv13 then tryFavoritev13(targetv13) end
+                            elseif hasPlantv13 or hasMutationv13 or hasVariantv13 then
+                                if plantMatchv13 and mutationMatchv13 and variantMatchv13 then
+                                    tryFavoritev13(targetv13)
+                                end
+                            end
+                        end
+                    end
+                    task.wait(1)
+                end
+            end)
         end
     end
 })
