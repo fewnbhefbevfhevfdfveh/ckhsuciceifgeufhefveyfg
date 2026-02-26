@@ -246,27 +246,33 @@ local GameData = {
 
     -- // Auto Plant
 
-    ReplicatedStorage = game:GetService("ReplicatedStorage"),
-    Players = game:GetService("Players"),
+    ReplicatedStoragev10 = game:GetService("ReplicatedStorage"),
+    Playersv10 = game:GetService("Players"),
 
-    SeedsFolder = nil,
-    PlotsFolder = nil,
+    SeedsFolderv10 = nil,
+    PlotsFolderv10 = nil,
 
-    Player = nil,
+    Playerv10 = nil,
 
-    PlantDelay = 0.01,
-    TpDelay = 0.01,
+    PlantDelayv10 = 0.01,
+    TpDelayv10 = 0.01,
 
-    SeedNames = {},
-    SelectedSeed = nil,
-    IsPlanting = false,
-    SelectedPlantMode = "Character Position",
+    SeedNamesv10 = {},
+    SelectedSeedv10 = nil,
+    IsPlantingv10 = false,
+    SelectedPlantModev10 = "Character Position",
+
+    ScanProgressv10 = {
+        lastAv10 = nil,
+        lastBv10 = nil,
+        goingRightv10 = true,
+    },
 }
 
 local MarketplaceService = game:GetService("MarketplaceService")
 
 local Window = Chloex:Window({
-    Title = "Nexa | v0.0.1 |",
+    Title = "Nexa | v0.0.2 |",
     Footer = "Premium",
     Content = MarketplaceService:GetProductInfo(game.PlaceId).Name,  -- otomatis isi nama game
     Color = "Default",
@@ -308,44 +314,16 @@ local Tabs = {
 local Sec = {}
 
 Sec.Home1 = Tabs.Home:AddSection({
-    Title = "Update Log",
+    Title = "Information",
     Open = false
 })
 
 Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
-[+] Added Auto Harvers
-  [+] Dropdown Select Plant
-  [+] Dropdown Select Rarity
-  [+] Dropdown Select Mutations
-  [+] Dropdown Select Variant
-  [+] Dropdown Select Weather
-[+] Added Watering Can
-  [+] Dropdown Select Plant
-[+] Added Remove Plant
-  [+] Dropdown Select Mode (Fruit, Plant)
-  [+] Dropdown Select Rarity
-  [+] Dropdown Select Mutations
-  [+] Input Min Fruit Weight
-  [+] Input Max Fruit Weight
-[+] Added Auto Plant
- [+] Dropdown Select Seed
- [+] Dropdown Select Plant Position
-[+] Added Auto Favorite
-  [+] Dropdown Select Seed
-  [+] Dropdown Select Mutations
-  [+] Toggle Unfavorite All
-[+] Added Auto Sell
-  [+] Dropdown Select Sell Mode (SellAll, Single Sell)
-  [+] Dropdown Select Seed (Single Sell Only)
-  [+] Dropdown Select Rarity (Single Sell Only)
-  [+] Dropdown Select Mutations (Single Sell Only)
-  [+] Input Sell Delay (SellAll only)
-[+] Added Auto Buy Seed
-  [+] Dropdown Select Rarity
-  [+] Dropdown Select Seed
-[+] Added Auto Buy Gear
+[/] Inprove Auto Plant 
+[+] Added Input Set Speed Plant
+[+] Added Input Set Tp Plant
 	]]
 })
 
@@ -360,7 +338,8 @@ Sec.Home1:AddParagraph({
 })
 
 Sec.Main1 = Tabs.Main:AddSection({
-    Title = "Harvest",
+    Title = "Auto Harvest",
+    Icon = "lucide:tractor",
     Open = false
 })
 
@@ -701,12 +680,12 @@ Sec.Main1:AddToggle({
                                 if fruit.Name:match("^Fruit%d+$") then
                                     if GameData.Functionsv1.ShouldHarvestTargetv1(fruit, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1) then
                                         GameData.Functionsv1.TeleportTov1(fruit:GetPivot().Position)
-                                        task.wait(0.3)
+                                        task.wait(0.03)
 
                                         local promptv1 = fruit:FindFirstChild("HarvestPrompt", true)
                                         if promptv1 and promptv1:IsA("ProximityPrompt") then
                                             fireproximityprompt(promptv1)
-                                            task.wait(0.2)
+                                            task.wait(0.01)
                                         end
                                     end
                                 end
@@ -715,14 +694,14 @@ Sec.Main1:AddToggle({
                             -- Case 2: Plant tidak punya Fruit (Carrot, dll)
                             if GameData.Functionsv1.ShouldHarvestTargetv1(plant, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1) then
                                 GameData.Functionsv1.TeleportTov1(plant:GetPivot().Position)
-                                task.wait(0.3)
+                                task.wait(0.03)
 
                                 local harvestPartv1 = plant:FindFirstChild("HarvestBoundingPart")
                                 if harvestPartv1 then
                                     local promptv1 = harvestPartv1:FindFirstChild("HarvestPrompt")
                                     if promptv1 and promptv1:IsA("ProximityPrompt") then
                                         fireproximityprompt(promptv1)
-                                        task.wait(0.2)
+                                        task.wait(0.01)
                                     end
                                 end
                             end
@@ -754,7 +733,8 @@ Sec.Main1:AddToggle({
 })
 
 Sec.Main2 = Tabs.Main:AddSection({
-    Title = "Water",
+    Title = "Auto Water",
+    Icon = "lucide:droplet",
     Open = false
 })
 
@@ -834,7 +814,8 @@ Sec.Main2:AddToggle({
 })
 
 Sec.Main3 = Tabs.Main:AddSection({
-    Title = "Shovel",
+    Title = "Auto Shovel",
+    Icon = "lucide:shovel",
     Open = false
 })
 
@@ -1123,45 +1104,70 @@ Sec.Main3:AddToggle({
 })
 
 Sec.Main4 = Tabs.Main:AddSection({
-    Title = "Plant",
+    Title = "Auto Plant Seed",
+    Icon = "lucide:sprout",
     Open = false
 })
 
-GameData.SeedsFolder = GameData.ReplicatedStorage.Plants.Tools.Seeds
-GameData.PlotsFolder = workspace:WaitForChild("Plots")
-GameData.Player = GameData.Players.LocalPlayer
+lualocal GameData = {
+    ReplicatedStoragev10 = game:GetService("ReplicatedStorage"),
+    Playersv10 = game:GetService("Players"),
 
-function GameData:FindPlayerPlot(p)
-    for _, plot in pairs(self.PlotsFolder:GetChildren()) do
+    SeedsFolderv10 = nil,
+    PlotsFolderv10 = nil,
+
+    Playerv10 = nil,
+
+    PlantDelayv10 = 0.01,
+    TpDelayv10 = 0.01,
+
+    SeedNamesv10 = {},
+    SelectedSeedv10 = nil,
+    IsPlantingv10 = false,
+    SelectedPlantModev10 = "Character Position",
+
+    ScanProgressv10 = {
+        lastAv10 = nil,
+        lastBv10 = nil,
+        goingRightv10 = true,
+    },
+}
+
+GameData.SeedsFolderv10 = GameData.ReplicatedStoragev10.Plants.Tools.Seeds
+GameData.PlotsFolderv10 = workspace:WaitForChild("Plots")
+GameData.Playerv10 = GameData.Playersv10.LocalPlayer
+
+function GameData:FindPlayerPlotv10(p)
+    for _, plot in pairs(self.PlotsFolderv10:GetChildren()) do
         if plot:GetAttribute("Owner") == p.UserId then
             return plot
         end
     end
 end
 
-for _, seed in pairs(GameData.SeedsFolder:GetChildren()) do
-    table.insert(GameData.SeedNames, seed.Name)
+for _, seed in pairs(GameData.SeedsFolderv10:GetChildren()) do
+    table.insert(GameData.SeedNamesv10, seed.Name)
 end
 
-GameData.SelectedSeed = GameData.SeedNames[1]
+GameData.SelectedSeedv10 = GameData.SeedNamesv10[1]
 
-function GameData:GetSeedItemName(seedName)
+function GameData:GetSeedItemNamev10(seedName)
     return string.gsub(seedName, " Seed", "")
 end
 
-function GameData:GetToolFromBackpack(seedName)
-    local backpack = self.Player.Backpack
-    for _, tool in pairs(backpack:GetChildren()) do
+function GameData:GetToolFromBackpackv10(seedName)
+    local backpackv10 = self.Playerv10.Backpack
+    for _, tool in pairs(backpackv10:GetChildren()) do
         if string.find(tool.Name, seedName) then
             return tool
         end
     end
 end
 
-function GameData:GetToolFromCharacter(seedName)
-    local char = self.Player.Character
-    if char then
-        for _, tool in pairs(char:GetChildren()) do
+function GameData:GetToolFromCharacterv10(seedName)
+    local charv10 = self.Playerv10.Character
+    if charv10 then
+        for _, tool in pairs(charv10:GetChildren()) do
             if string.find(tool.Name, seedName) then
                 return tool
             end
@@ -1169,90 +1175,162 @@ function GameData:GetToolFromCharacter(seedName)
     end
 end
 
-function GameData:EquipTool(tool)
-    local char = self.Player.Character
-    if char and tool then
-        tool.Parent = char
+function GameData:EquipToolv10(tool)
+    local charv10 = self.Playerv10.Character
+    if charv10 and tool then
+        tool.Parent = charv10
         task.wait(0.3)
     end
 end
 
-function GameData:ScanPart(targetPart, seedName)
-    local character = self.Player.Character or self.Player.CharacterAdded:Wait()
-    local hrp = character:WaitForChild("HumanoidRootPart")
-    local Event = self.ReplicatedStorage.RemoteEvents.PlantSeed
+function GameData:HasSeedv10(seedName)
+    local itemNamev10 = self:GetSeedItemNamev10(seedName)
+    local backpackv10 = self.Playerv10.Backpack
+    for _, tool in pairs(backpackv10:GetChildren()) do
+        if string.find(tool.Name, itemNamev10) then
+            return true
+        end
+    end
+    local charv10 = self.Playerv10.Character
+    if charv10 then
+        for _, tool in pairs(charv10:GetChildren()) do
+            if string.find(tool.Name, itemNamev10) then
+                return true
+            end
+        end
+    end
+    return false
+end
 
-    local size = targetPart.Size
-    local step = 2
+function GameData:WaitForSeedv10()
+    while self.IsPlantingv10 do
+        task.wait(1)
+        if self:HasSeedv10(self.SelectedSeedv10) then
+            local toolv10 = self:GetToolFromBackpackv10(self.SelectedSeedv10)
+            if toolv10 then
+                self:EquipToolv10(toolv10)
+            end
+            return true
+        end
+    end
+    return false
+end
 
-    local axes = {
-        {value = size.X, vector = Vector3.new(1,0,0)},
-        {value = size.Y, vector = Vector3.new(0,1,0)},
-        {value = size.Z, vector = Vector3.new(0,0,1)},
+function GameData:ScanPartv10(targetPart, seedName)
+    local characterv10 = self.Playerv10.Character or self.Playerv10.CharacterAdded:Wait()
+    local hrpv10 = characterv10:WaitForChild("HumanoidRootPart")
+    local Eventv10 = self.ReplicatedStoragev10.RemoteEvents.PlantSeed
+
+    local sizev10 = targetPart.Size
+    local stepv10 = 2
+
+    local axesv10 = {
+        {value = sizev10.X, vector = Vector3.new(1,0,0)},
+        {value = sizev10.Y, vector = Vector3.new(0,1,0)},
+        {value = sizev10.Z, vector = Vector3.new(0,0,1)},
     }
 
-    table.sort(axes, function(a,b)
+    table.sort(axesv10, function(a,b)
         return a.value > b.value
     end)
 
-    self.axis1 = axes[1]
-    self.axis2 = axes[2]
-    self.thinAxis = axes[3]
-    self.goingRight = true
+    self.axis1v10 = axesv10[1]
+    self.axis2v10 = axesv10[2]
+    self.thinAxisv10 = axesv10[3]
 
-    for a = -self.axis1.value/2, self.axis1.value/2, step do
-        if not self.IsPlanting or self.SelectedPlantMode ~= "Random Plant" then break end
+    local startAv10 = self.ScanProgressv10.lastAv10 or -self.axis1v10.value/2
+    local startGoingRightv10 = self.ScanProgressv10.goingRightv10
+    local isFirstAv10 = true
 
-        if self.goingRight then
-            for b = -self.axis2.value/2, self.axis2.value/2, step do
-                if not self.IsPlanting or self.SelectedPlantMode ~= "Random Plant" then break end
+    for a = startAv10, self.axis1v10.value/2, stepv10 do
+        if not self.IsPlantingv10 or self.SelectedPlantModev10 ~= "Random Plant" then
+            self.ScanProgressv10.lastAv10 = a
+            self.ScanProgressv10.goingRightv10 = startGoingRightv10
+            return
+        end
 
-                local offset =
-                    self.axis1.vector * a +
-                    self.axis2.vector * b +
-                    self.thinAxis.vector * 3
+        if not self:HasSeedv10(self.SelectedSeedv10) then
+            self.ScanProgressv10.lastAv10 = a
+            self.ScanProgressv10.goingRightv10 = startGoingRightv10
+            if not self:WaitForSeedv10() then return end
+        end
 
-                local worldPos = (targetPart.CFrame * CFrame.new(offset)).Position
-                worldPos = worldPos + Vector3.new(0,5,0)
+        local startBv10
+        if isFirstAv10 and self.ScanProgressv10.lastBv10 then
+            startBv10 = self.ScanProgressv10.lastBv10
+            isFirstAv10 = false
+        else
+            startBv10 = startGoingRightv10 and -self.axis2v10.value/2 or self.axis2v10.value/2
+            isFirstAv10 = false
+        end
 
-                hrp.CFrame = CFrame.new(worldPos)
-                task.wait(self.TpDelay)
+        if startGoingRightv10 then
+            for b = startBv10, self.axis2v10.value/2, stepv10 do
+                if not self.IsPlantingv10 or self.SelectedPlantModev10 ~= "Random Plant" then
+                    self.ScanProgressv10.lastAv10 = a
+                    self.ScanProgressv10.lastBv10 = b
+                    self.ScanProgressv10.goingRightv10 = startGoingRightv10
+                    return
+                end
 
-                Event:InvokeServer(seedName, hrp.Position)
-                task.wait(self.PlantDelay)
+                if not self:HasSeedv10(self.SelectedSeedv10) then
+                    self.ScanProgressv10.lastAv10 = a
+                    self.ScanProgressv10.lastBv10 = b
+                    self.ScanProgressv10.goingRightv10 = startGoingRightv10
+                    if not self:WaitForSeedv10() then return end
+                end
+
+                local offsetv10 = self.axis1v10.vector * a + self.axis2v10.vector * b + self.thinAxisv10.vector * 3
+                local worldPosv10 = (targetPart.CFrame * CFrame.new(offsetv10)).Position + Vector3.new(0,5,0)
+
+                hrpv10.CFrame = CFrame.new(worldPosv10)
+                task.wait(self.TpDelayv10)
+                Eventv10:InvokeServer(seedName, hrpv10.Position)
+                task.wait(self.PlantDelayv10)
             end
         else
-            for b = self.axis2.value/2, -self.axis2.value/2, -step do
-                if not self.IsPlanting or self.SelectedPlantMode ~= "Random Plant" then break end
+            for b = startBv10, -self.axis2v10.value/2, -stepv10 do
+                if not self.IsPlantingv10 or self.SelectedPlantModev10 ~= "Random Plant" then
+                    self.ScanProgressv10.lastAv10 = a
+                    self.ScanProgressv10.lastBv10 = b
+                    self.ScanProgressv10.goingRightv10 = startGoingRightv10
+                    return
+                end
 
-                local offset =
-                    self.axis1.vector * a +
-                    self.axis2.vector * b +
-                    self.thinAxis.vector * 3
+                if not self:HasSeedv10(self.SelectedSeedv10) then
+                    self.ScanProgressv10.lastAv10 = a
+                    self.ScanProgressv10.lastBv10 = b
+                    self.ScanProgressv10.goingRightv10 = startGoingRightv10
+                    if not self:WaitForSeedv10() then return end
+                end
 
-                local worldPos = (targetPart.CFrame * CFrame.new(offset)).Position
-                worldPos = worldPos + Vector3.new(0,5,0)
+                local offsetv10 = self.axis1v10.vector * a + self.axis2v10.vector * b + self.thinAxisv10.vector * 3
+                local worldPosv10 = (targetPart.CFrame * CFrame.new(offsetv10)).Position + Vector3.new(0,5,0)
 
-                hrp.CFrame = CFrame.new(worldPos)
-                task.wait(self.TpDelay)
-
-                Event:InvokeServer(seedName, hrp.Position)
-                task.wait(self.PlantDelay)
+                hrpv10.CFrame = CFrame.new(worldPosv10)
+                task.wait(self.TpDelayv10)
+                Eventv10:InvokeServer(seedName, hrpv10.Position)
+                task.wait(self.PlantDelayv10)
             end
         end
 
-        self.goingRight = not self.goingRight
+        self.ScanProgressv10.lastBv10 = nil
+        startGoingRightv10 = not startGoingRightv10
     end
+
+    self.ScanProgressv10.lastAv10 = nil
+    self.ScanProgressv10.lastBv10 = nil
+    self.ScanProgressv10.goingRightv10 = true
 end
 
 Sec.Main4:AddDropdown({
     Title = "Select a Seed",
     Content = "Choose a seed from the list",
-    Options = GameData.SeedNames,
+    Options = GameData.SeedNamesv10,
     Multi = false,
-    Default = GameData.SeedNames[1],
+    Default = GameData.SeedNamesv10[1],
     Callback = function(value)
-        GameData.SelectedSeed = value
+        GameData.SelectedSeedv10 = value
     end
 })
 
@@ -1263,7 +1341,39 @@ Sec.Main4:AddDropdown({
     Multi = false,
     Default = "Character Position",
     Callback = function(value)
-        GameData.SelectedPlantMode = value
+        GameData.SelectedPlantModev10 = value
+    end
+})
+
+Sec.Main4:AddInput({
+    Title = "Set Plant Speed",
+    Content = "Default: auto (0.01)",
+    Default = "0.01",
+    Callback = function(value)
+        if value ~= "" then
+            local numv10 = tonumber(value)
+            if numv10 then
+                GameData.PlantDelayv10 = numv10
+            end
+        else
+            GameData.PlantDelayv10 = 0.01
+        end
+    end
+})
+
+Sec.Main4:AddInput({
+    Title = "Set Tp Speed",
+    Content = "Default: auto (0.01)",
+    Default = "0.01",
+    Callback = function(value)
+        if value ~= "" then
+            local numv10 = tonumber(value)
+            if numv10 then
+                GameData.TpDelayv10 = numv10
+            end
+        else
+            GameData.TpDelayv10 = 0.01
+        end
     end
 })
 
@@ -1271,17 +1381,21 @@ Sec.Main4:AddToggle({
     Title = "Auto Plant Seed",
     Default = false,
     Callback = function(value)
-        GameData.IsPlanting = value
+        GameData.IsPlantingv10 = value
 
         if value then
             task.spawn(function()
-                while GameData.IsPlanting do
+                while GameData.IsPlantingv10 do
 
-                    local heldTool = GameData:GetToolFromCharacter(GameData.SelectedSeed)
-                    if not heldTool then
-                        local tool = GameData:GetToolFromBackpack(GameData.SelectedSeed)
-                        if tool then
-                            GameData:EquipTool(tool)
+                    if not GameData:HasSeedv10(GameData.SelectedSeedv10) then
+                        if not GameData:WaitForSeedv10() then break end
+                    end
+
+                    local heldToolv10 = GameData:GetToolFromCharacterv10(GameData.SelectedSeedv10)
+                    if not heldToolv10 then
+                        local toolv10 = GameData:GetToolFromBackpackv10(GameData.SelectedSeedv10)
+                        if toolv10 then
+                            GameData:EquipToolv10(toolv10)
                             task.wait(0.2)
                         else
                             task.wait(1)
@@ -1289,36 +1403,36 @@ Sec.Main4:AddToggle({
                         end
                     end
 
-                    if GameData.SelectedPlantMode == "Character Position" then
-                        local char = GameData.Player.Character
-                        if char then
-                            local hrp = char:FindFirstChild("HumanoidRootPart")
-                            if hrp then
-                                GameData.ReplicatedStorage.RemoteEvents.PlantSeed:InvokeServer(
-                                    GameData:GetSeedItemName(GameData.SelectedSeed),
-                                    hrp.Position
+                    if GameData.SelectedPlantModev10 == "Character Position" then
+                        local charv10 = GameData.Playerv10.Character
+                        if charv10 then
+                            local hrpv10 = charv10:FindFirstChild("HumanoidRootPart")
+                            if hrpv10 then
+                                GameData.ReplicatedStoragev10.RemoteEvents.PlantSeed:InvokeServer(
+                                    GameData:GetSeedItemNamev10(GameData.SelectedSeedv10),
+                                    hrpv10.Position
                                 )
                             end
                         end
-                        task.wait(GameData.PlantDelay)
+                        task.wait(GameData.PlantDelayv10)
 
-                    elseif GameData.SelectedPlantMode == "Random Plant" then
-                        local myPlot = GameData:FindPlayerPlot(GameData.Player)
-                        if not myPlot then
+                    elseif GameData.SelectedPlantModev10 == "Random Plant" then
+                        local myPlotv10 = GameData:FindPlayerPlotv10(GameData.Playerv10)
+                        if not myPlotv10 then
                             task.wait(2)
                             continue
                         end
 
-                        local plantableArea = myPlot:FindFirstChild("PlantableArea")
-                        if not plantableArea then
+                        local plantableAreav10 = myPlotv10:FindFirstChild("PlantableArea")
+                        if not plantableAreav10 then
                             task.wait(2)
                             continue
                         end
 
-                        for _, obj in pairs(plantableArea:GetChildren()) do
-                            if not GameData.IsPlanting then break end
+                        for _, obj in pairs(plantableAreav10:GetChildren()) do
+                            if not GameData.IsPlantingv10 then break end
                             if obj:IsA("BasePart") then
-                                GameData:ScanPart(obj, GameData:GetSeedItemName(GameData.SelectedSeed))
+                                GameData:ScanPartv10(obj, GameData:GetSeedItemNamev10(GameData.SelectedSeedv10))
                             end
                         end
                     end
@@ -1328,8 +1442,20 @@ Sec.Main4:AddToggle({
     end
 })
 
+Sec.Main4:AddButton({
+    Title = "Reset Plant Progress",
+    Version = "V2",
+    Icon = "rbxassetid://79715859717613",
+    Callback = function()
+        GameData.ScanProgressv10.lastAv10 = nil
+        GameData.ScanProgressv10.lastBv10 = nil
+        GameData.ScanProgressv10.goingRightv10 = true
+    end
+})
+
 Sec.Sell1 = Tabs.Backpack:AddSection({
-    Title = "Sell Features",
+    Title = "Auto Sell",
+    Icon = "lucide:circle-dollar-sign"
     Open = false
 })
 
@@ -1514,7 +1640,7 @@ Sec.Sell1:AddDropdown({
 })
 
 Sec.Sell1:AddDropdown({
-    Title = "Select Seed To Sell",
+    Title = "Select Seed (Sell)",
     Content = "Select plants to sell (Single Sell only)",
     Options = GameData.PlantOptionsv9,
     Multi = true,
@@ -1527,8 +1653,8 @@ Sec.Sell1:AddDropdown({
 })
 
 Sec.Sell1:AddDropdown({
-    Title = "Select Rarity To Sell",
-    Content = "Choose plant rarity (Single Sell only, overrides Plant filter)",
+    Title = "Select Rarity (Sell)",
+    Content = "(Single Sell only)",
     Options = GameData.RarityListv9,
     Multi = true,
     Default = {},
@@ -1540,7 +1666,7 @@ Sec.Sell1:AddDropdown({
 })
 
 Sec.Sell1:AddDropdown({
-    Title = "Select Mutation To Sell",
+    Title = "Select Mutation (Sell)",
     Content = "(Single Sell only)",
     Options = GameData.MutationNamesv9,
     Multi = true,
@@ -1636,7 +1762,8 @@ Sec.Sell1:AddToggle({
 })
 
 Sec.Favorite1 = Tabs.Backpack:AddSection({
-    Title = "Favorite",
+    Title = "Auto Favorite",
+    Icon = "lucide:star"
     Open = false
 })
 
@@ -1945,7 +2072,8 @@ Sec.Favorite1:AddToggle({
 })
 
 Sec.Seed1 = Tabs.Shop:AddSection({
-    Title = "Seed",
+    Title = "Seed Shop",
+    Icon = "lucide:sprout"
     Open = false
 })
 
@@ -2143,7 +2271,7 @@ GameData.Fnv2.StartAutoBuy = function()
                         atShop = true
                     end
                     GameData.SeedShopv2.Eventv2:InvokeServer("SeedShop", seedName)
-                    task.wait(0.3)
+                    task.wait(0.01)
                 end
             end
             if not anyStockFound and atShop then
@@ -2195,7 +2323,8 @@ Sec.Seed1:AddToggle({
 })
 
 Sec.Gear1 = Tabs.Shop:AddSection({
-    Title = "Gear",
+    Title = "Gear Shop",
+    Icon = "lucide:bubbles"
     Open = false
 })
 
@@ -2271,17 +2400,14 @@ local function FindPlayerPlot()
     local player = GameData.Servicesv3.PlayerServicev3.LocalPlayer
     for _, plot in pairs(GameData.Plotv3.PlotsFolderv3:GetChildren()) do
         if plot:IsA("Model") and plot:GetAttribute("Owner") == player.UserId then
-            print("[Plot] Plot ditemukan:", plot.Name)
             return plot
         end
     end
-    warn("[Plot] Plot tidak ditemukan!")
     return nil
 end
 
 local function CheckGearStock(gearName)
     if not (GameData.GearShopv3.GetShopDatav3 and GameData.GearShopv3.GetShopDatav3:IsA("RemoteFunction")) then
-        warn("[Stock] Remote GetShopData tidak valid")
         return 0
     end
 
@@ -2292,24 +2418,19 @@ local function CheckGearStock(gearName)
     if success and data and data.Items then
         for itemName, itemData in pairs(data.Items) do
             if itemName == gearName then
-                print("[Stock]", gearName, "=", itemData.Amount, "x")
                 return itemData.Amount
             end
         end
-    else
-        warn("[Stock] Gagal ambil data GearShop")
     end
 
     return 0
 end
 
--- Teleport ke GearNPC
 local function TeleportToShop()
     local character = GameData.Servicesv3.PlayerServicev3.LocalPlayer.Character
     if character and character:FindFirstChild("HumanoidRootPart") then
         local gearNPC = GameData.Teleportv3.GearNPCv3
         character.HumanoidRootPart.CFrame = CFrame.new(gearNPC.Position + Vector3.new(0, 3, 0))
-        print("[TP] Teleport ke GearNPC")
         task.wait(0.5)
     end
 end
@@ -2319,30 +2440,23 @@ local function TeleportToPlot()
     local plot = GameData.Plotv3.PlayerPlotv3
 
     if not character or not character:FindFirstChild("HumanoidRootPart") then
-        warn("[TP] Character tidak ditemukan")
         return
     end
 
     if not plot or not plot:IsA("Model") then
-        warn("[TP] Plot model tidak valid")
         return
     end
 
     local targetCFrame
 
-    -- Prioritas 1: PrimaryPart
     if plot.PrimaryPart then
         targetCFrame = plot.PrimaryPart.CFrame + Vector3.new(0, 5, 0)
-        print("[TP] Menggunakan PrimaryPart:", plot.PrimaryPart.Name)
-
     else
         local cf, size = plot:GetBoundingBox()
         targetCFrame = cf + Vector3.new(0, size.Y / 2 + 3, 0)
-        print("[TP] Menggunakan BoundingBox model")
     end
 
     character.HumanoidRootPart.CFrame = targetCFrame
-    print("[TP] Kembali ke plot:", plot.Name)
     task.wait(0.5)
 end
 
@@ -2367,15 +2481,11 @@ local function StartAutoBuy()
                     end
 
                     GameData.GearShopv3.Eventv3:InvokeServer("GearShop", gearName)
-                    print("[Buy] Membeli:", gearName)
-                    task.wait(0.3)
-                else
-                    print("[Stock] Stock habis untuk:", gearName)
+                    task.wait(0.01)
                 end
             end
 
             if not anyStockFound and atShop then
-                print("[Info] Semua stock habis, kembali ke plot")
                 TeleportToPlot()
                 atShop = false
             end
@@ -2389,7 +2499,6 @@ local function StartAutoBuy()
     end)
 end
 
--- ===== UI =====
 Sec.Gear1:AddDropdown({
     Title = "Select Gear",
     Content = "Choose gears to auto buy",
@@ -2398,10 +2507,6 @@ Sec.Gear1:AddDropdown({
     Default = {},
     Callback = function(selectedTable)
         GameData.GearShopv3.SelectedGearsv3 = selectedTable
-        print("[Dropdown] Gears dipilih:")
-        for _, gear in ipairs(GameData.GearShopv3.SelectedGearsv3) do
-            print("-", gear)
-        end
     end
 })
 
@@ -2410,7 +2515,6 @@ Sec.Gear1:AddToggle({
     Default = false,
     Callback = function(value)
         GameData.GearShopv3.AutoBuyv3 = value
-        print("[Toggle] Auto Buy Gear:", value)
 
         if value then
             Notify("Auto Buy Gear Enabled!", 2)
