@@ -49,7 +49,9 @@ local GameData = {
         ShouldHarvestTargetv1 = nil,
         GetPlantBaseNamev1 = nil,
         IsPlantSelectedv1 = nil,
+        IsReadyToHarvestv1 = nil,
     },
+
     -- // Auto Buy Seed
 
     Servicesv2 = {
@@ -213,7 +215,8 @@ local GameData = {
 
         RemovedUuidsv8 = {},
 
-        IsRunningv8 = false
+        IsRunningv8 = false,
+        AntiRemoveFavoritev8 = false
     },
 
     -- // Auto Sell
@@ -281,12 +284,31 @@ local GameData = {
     ClaimQuestEventV12 = nil,
     SelectedQuestsV12 = {},
     AutoClaimV12 = false,
+
+    -- Auto Favorite Plant
+
+    ReplicatedStoragev13 = game:GetService("ReplicatedStorage"),
+    Eventv13 = nil,
+    ModelsFolderv13 = nil,
+    MutationDatav13 = nil,
+    PlantDatav13 = nil,
+    RarityDefinitionsv13 = nil,
+    VariantFolderv13 = nil,
+    selectedPlantsv13 = {},
+    selectedMutationsv13 = {},
+    selectedVariantsv13 = {},
+    selectedRaritiesv13 = {},
+    isRunningv13 = false,
+    MutationNamesv13 = {},
+    VariantNamesv13 = {},
+    seedNamesv13 = {},
+    RarityListv13 = {},
 }
 
 local MarketplaceService = game:GetService("MarketplaceService")
 
 local Window = Chloex:Window({
-    Title = "Nexa | v0.0.3 |",
+    Title = "Nexa | v0.0.5 |",
     Footer = "Premium",
     Content = MarketplaceService:GetProductInfo(game.PlaceId).Name,  -- otomatis isi nama game
     Color = "Default",
@@ -340,9 +362,9 @@ Sec.Home1 = Tabs.Home:AddSection({
 Sec.Home1:AddParagraph({
     Title = "Whats New?",
     Content = [[
-[+] Added Tab Teleport
-[+] Added Teleport To Plot
-[+] Added Auto Claim Quest
+[+] Added Anti Remove Seed Favorite (Plant, Fruit)
+[!] FIxed Auto Harvest
+[/] Improve Auto Sell (Single Sell)
 	]]
 })
 
@@ -453,8 +475,15 @@ GameData.Functionsv1.GetPlantBaseNamev1 = function(plantNamev1)
     return plantNamev1:match("^(%a+)%d*$")
 end
 
+-- Cek apakah plant/fruit sudah siap harvest
+GameData.Functionsv1.IsReadyToHarvestv1 = function(targetv1)
+    local growthHealth = targetv1:GetAttribute("GrowthHealth")
+    local growthMaxHealth = targetv1:GetAttribute("GrowthMaxHealth")
+    if growthHealth == nil or growthMaxHealth == nil then return false end
+    return growthHealth >= growthMaxHealth
+end
+
 GameData.Functionsv1.IsPlantSelectedv1 = function(plantv1, hasPlantv1, hasRarityv1, allPlantv1, allRarityv1)
-    -- Rarity diprioritaskan kalau dipilih
     if hasRarityv1 then
         if allRarityv1 then return true end
         local baseNamev1 = GameData.Functionsv1.GetPlantBaseNamev1(plantv1.Name)
@@ -468,7 +497,6 @@ GameData.Functionsv1.IsPlantSelectedv1 = function(plantv1, hasPlantv1, hasRarity
         return false
     end
 
-    -- Kalau hanya Plant dipilih
     if hasPlantv1 then
         if allPlantv1 then return true end
         for _, selectedName in pairs(GameData.Plantsv1.SelectedPlantsv1) do
@@ -531,6 +559,9 @@ GameData.Functionsv1.ShouldHarvestTargetv1 = function(targetv1, hasMutationv1, h
 
     return true
 end
+
+-- Remote Event
+local HarvestEvent = game:GetService("ReplicatedStorage").RemoteEvents.HarvestFruit
 
 -- UI
 Sec.Main1:AddDropdown({
@@ -608,31 +639,12 @@ Sec.Main1:AddToggle({
 
                 while value do
 
-                    GameData.Playerv1.Plotv1 = GameData.Functionsv1.FindPlayerPlotv1()
-                    if not GameData.Playerv1.Plotv1 then
-                        Chloex:MakeNotify({
-                            Title = "Auto Harvest",
-                            Description = "Error",
-                            Content = "Player plot not found!",
-                            Color = "Red",
-                            Time = 0.5,
-                            Delay = 3,
-                            Icon = ""
-                        })
-                        task.wait(3)
-                        continue
-                    end
-
-                    GameData.Functionsv1.TeleportTov1(GameData.Playerv1.Plotv1:GetPivot().Position)
-                    task.wait(0.5)
-
                     local hasPlantv1 = #GameData.Plantsv1.SelectedPlantsv1 > 0
                     local hasRarityv1 = #GameData.Plantsv1.SelectedRaritiesv1 > 0
                     local hasMutationv1 = #GameData.Plantsv1.SelectedMutationsv1 > 0
                     local hasVariantv1 = #GameData.Plantsv1.SelectedVariantsv1 > 0
                     local hasWeatherv1 = #GameData.Plantsv1.SelectedWeathersv1 > 0
 
-                    -- Kalau semua kosong skip
                     if not hasPlantv1 and not hasRarityv1 and not hasMutationv1 and not hasVariantv1 and not hasWeatherv1 then
                         task.wait(0.5)
                         continue
@@ -678,6 +690,9 @@ Sec.Main1:AddToggle({
                         end
                     end
 
+                    -- Kumpulkan dulu semua target yang ready
+                    local readyTargetsv1 = {}
+
                     for _, plant in pairs(GameData.Worldv1.ClientPlantsv1:GetChildren()) do
 
                         if not GameData.Functionsv1.IsPlantSelectedv1(plant, hasPlantv1, hasRarityv1, allPlantv1, allRarityv1) then
@@ -697,13 +712,12 @@ Sec.Main1:AddToggle({
                             for _, fruit in pairs(plant:GetChildren()) do
                                 if fruit.Name:match("^Fruit%d+$") then
                                     if GameData.Functionsv1.ShouldHarvestTargetv1(fruit, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1) then
-                                        GameData.Functionsv1.TeleportTov1(fruit:GetPivot().Position)
-                                        task.wait(0.3)
-
-                                        local promptv1 = fruit:FindFirstChild("HarvestPrompt", true)
-                                        if promptv1 and promptv1:IsA("ProximityPrompt") then
-                                            fireproximityprompt(promptv1)
-                                            task.wait(0.01)
+                                        -- Cek GrowthHealth == GrowthMaxHealth
+                                        if GameData.Functionsv1.IsReadyToHarvestv1(fruit) then
+                                            table.insert(readyTargetsv1, {
+                                                target = fruit,
+                                                isFruit = true
+                                            })
                                         end
                                     end
                                 end
@@ -711,16 +725,63 @@ Sec.Main1:AddToggle({
                         else
                             -- Case 2: Plant tidak punya Fruit (Carrot, dll)
                             if GameData.Functionsv1.ShouldHarvestTargetv1(plant, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1) then
-                                GameData.Functionsv1.TeleportTov1(plant:GetPivot().Position)
-                                task.wait(0.3)
+                                -- Cek GrowthHealth == GrowthMaxHealth
+                                if GameData.Functionsv1.IsReadyToHarvestv1(plant) then
+                                    table.insert(readyTargetsv1, {
+                                        target = plant,
+                                        isFruit = false
+                                    })
+                                end
+                            end
+                        end
+                    end
 
-                                local harvestPartv1 = plant:FindFirstChild("HarvestBoundingPart")
-                                if harvestPartv1 then
-                                    local promptv1 = harvestPartv1:FindFirstChild("HarvestPrompt")
-                                    if promptv1 and promptv1:IsA("ProximityPrompt") then
-                                        fireproximityprompt(promptv1)
-                                        task.wait(0.01)
-                                    end
+                    -- Kalau ada yang ready, baru tp ke plot dulu lalu harvest
+                    if #readyTargetsv1 > 0 then
+                        GameData.Playerv1.Plotv1 = GameData.Functionsv1.FindPlayerPlotv1()
+                        if not GameData.Playerv1.Plotv1 then
+                            Chloex:MakeNotify({
+                                Title = "Auto Harvest",
+                                Description = "Error",
+                                Content = "Player plot not found!",
+                                Color = "Red",
+                                Time = 0.5,
+                                Delay = 3,
+                                Icon = ""
+                            })
+                            task.wait(3)
+                            continue
+                        end
+
+                        GameData.Functionsv1.TeleportTov1(GameData.Playerv1.Plotv1:GetPivot().Position)
+                        task.wait(0.5)
+
+                        for _, data in pairs(readyTargetsv1) do
+                            local target = data.target
+                            local isFruit = data.isFruit
+
+                            GameData.Functionsv1.TeleportTov1(target:GetPivot().Position)
+                            task.wait(0.3)
+
+                            if isFruit then
+                                local rawUuid = target:GetAttribute("Uuid")
+                                local growthIndex = target:GetAttribute("GrowthAnchorIndex") or 1
+                                if rawUuid then
+                                    local cleanUuid = rawUuid:match("^([^:]+)")
+                                    HarvestEvent:FireServer({{
+                                        GrowthAnchorIndex = growthIndex,
+                                        Uuid = cleanUuid
+                                    }})
+                                    task.wait(0.01)
+                                end
+                            else
+                                local rawUuid = target:GetAttribute("Uuid")
+                                if rawUuid then
+                                    local cleanUuid = rawUuid:match("^([^:]+)")
+                                    HarvestEvent:FireServer({{
+                                        Uuid = cleanUuid
+                                    }})
+                                    task.wait(0.01)
                                 end
                             end
                         end
@@ -746,86 +807,6 @@ Sec.Main1:AddToggle({
                 task.cancel(GameData.Plantsv1.HarvestLoopv1)
                 GameData.Plantsv1.HarvestLoopv1 = nil
             end
-        end
-    end
-})
-
-Sec.Main2 = Tabs.Main:AddSection({
-    Title = "Auto Water",
-    Open = false
-})
-
-GameData.AutoWaterv7.Eventv7 =
-    GameData.Servicesv7.ReplicatedStoragev7
-        :WaitForChild("RemoteEvents")
-        :WaitForChild("UseGear")
-
-GameData.AutoWaterv7.ModelsFolderv7 =
-    GameData.Servicesv7.ReplicatedStoragev7
-        :WaitForChild("Plants")
-        :WaitForChild("Models")
-
-for _, itemv7 in pairs(GameData.AutoWaterv7.ModelsFolderv7:GetChildren()) do
-    if itemv7:IsA("Folder") then
-        table.insert(GameData.AutoWaterv7.PlantNamesv7, itemv7.Name)
-    end
-end
-
-table.sort(GameData.AutoWaterv7.PlantNamesv7)
-
-GameData.AutoWaterv7.SelectedPlantv7 =
-    GameData.AutoWaterv7.PlantNamesv7[1]
-
-Sec.Main2:AddDropdown({
-    Title = "Select Plant",
-    Options = GameData.AutoWaterv7.PlantNamesv7,
-    Multi = false,
-    Default = GameData.AutoWaterv7.PlantNamesv7[1],
-    Callback = function(value)
-        GameData.AutoWaterv7.SelectedPlantv7 = value
-        print("Selected plant:", value)
-    end
-})
-
-Sec.Main2:AddToggle({
-    Title = "Auto Watering Can",
-    Default = false,
-    Callback = function(value)
-        GameData.AutoWaterv7.Enabledv7 = value
-        if value then
-            Notify("Auto Watering enabled!", 2)
-            task.spawn(function()
-                while GameData.AutoWaterv7.Enabledv7 do
-                    for _, plantv7 in pairs(
-                        GameData.Servicesv7.Workspacev7
-                            .ClientPlants
-                            :GetChildren()
-                    ) do
-                        if not GameData.AutoWaterv7.Enabledv7 then
-                            break
-                        end
-                        if plantv7.Name:lower():match(
-                            "^" .. GameData.AutoWaterv7.SelectedPlantv7:lower()
-                        ) then
-                            if plantv7.PrimaryPart then
-                                GameData.AutoWaterv7.Eventv7:FireServer(
-                                    "Watering Can",
-                                    {
-                                        position =
-                                            plantv7.PrimaryPart.Position
-                                    }
-                                )
-                                task.wait(0.01)
-                            end
-                        end
-                    end
-                    task.wait(0.01)
-                end
-            end)
-        else
-
-            Notify("Auto Watering disabled!", 2)
-
         end
     end
 })
@@ -957,6 +938,13 @@ GameData.RemoveSystemv8.ResetRemovedUuidsv8 = function()
     GameData.RemoveSystemv8.RemovedUuidsv8 = {}
 end
 
+GameData.RemoveSystemv8.IsFavorited8 = function(targetv8)
+    if not GameData.RemoveSystemv8.AntiRemoveFavoritev8 then
+        return false
+    end
+    return targetv8:GetAttribute("Favorited") == true
+end
+
 Sec.Main3:AddDropdown({
     Title = "Select Plant (Plant)",
     Options = GameData.RemoveSystemv8.PlantNamesv8,
@@ -1034,6 +1022,14 @@ Sec.Main3:AddInput({
 })
 
 Sec.Main3:AddToggle({
+    Title = "Anti Remove Favorite",
+    Default = false,
+    Callback = function(value)
+        GameData.RemoveSystemv8.AntiRemoveFavoritev8 = value
+    end
+})
+
+Sec.Main3:AddToggle({
     Title = "Remove Plant",
     Default = false,
     Callback = function(value)
@@ -1069,6 +1065,11 @@ Sec.Main3:AddToggle({
                                 local rawUuidv8 = plantv8:GetAttribute("Uuid")
 
                                 if rawUuidv8 and GameData.RemoveSystemv8.IsMatchMutationv8(plantv8) then
+
+                                    if GameData.RemoveSystemv8.IsFavorited8(plantv8) then
+                                        continue
+                                    end
+
                                     local uuidKeyv8 = rawUuidv8:split(":")[1]
 
                                     if not GameData.RemoveSystemv8.IsAlreadyRemovedv8(uuidKeyv8) then
@@ -1091,6 +1092,10 @@ Sec.Main3:AddToggle({
                                         if rawUuidv8
                                             and GameData.RemoveSystemv8.IsMatchMutationv8(fruitv8)
                                             and GameData.RemoveSystemv8.IsMatchWeightv8(fruitv8) then
+
+                                            if GameData.RemoveSystemv8.IsFavorited8(fruitv8) then
+                                                continue
+                                            end
 
                                             local uuidKeyv8 = rawUuidv8:split(":")[1]
 
@@ -1542,6 +1547,24 @@ for _, plantv9 in pairs(GameData.ModelsFolderv9:GetChildren()) do
     table.insert(GameData.PlantOptionsv9, plantv9.Name)
 end
 
+function GameData:IsToolFavoritedv9(toolv9)
+    return toolv9:GetAttribute("Favorited") == true
+end
+
+function GameData:GetFavoriteToolNamesv9()
+    local favoritesv9 = {}
+    for _, containerv9 in pairs({self.Backpackv9, self.Characterv9}) do
+        if containerv9 then
+            for _, toolv9 in pairs(containerv9:GetChildren()) do
+                if toolv9:IsA("Tool") and self:IsToolFavoritedv9(toolv9) then
+                    table.insert(favoritesv9, toolv9.Name)
+                end
+            end
+        end
+    end
+    return favoritesv9
+end
+
 function GameData:GetMutationsv9(toolv9)
     local mutationsv9 = {}
 
@@ -1590,6 +1613,10 @@ function GameData:GetPlantToolv9()
                 if toolv9:IsA("Tool") then
 
                     if string.find(toolv9.Name, "Seed") then
+                        continue
+                    end
+
+                    if self:IsToolFavoritedv9(toolv9) then
                         continue
                     end
 
@@ -1775,14 +1802,44 @@ Sec.Sell1:AddToggle({
                                 local currentToolv9 = GameData:GetPlantToolv9()
 
                                 if currentToolv9 then
+                                    if GameData:IsToolFavoritedv9(currentToolv9) then
+                                        break
+                                    end
+
                                     GameData.Characterv9.Humanoid:EquipTool(currentToolv9)
-                                    task.wait(0.5)
-                                    GameData.SellEventv9:InvokeServer("SellSingle")
                                     task.wait(0.01)
+
+                                    local maxRetryv9 = 10
+                                    local retryv9 = 0
+                                    while GameData.AutoSellv9 and retryv9 < maxRetryv9 do
+                                        local stillEquippedv9 = false
+                                        for _, tv9 in pairs(GameData.Characterv9:GetChildren()) do
+                                            if tv9 == currentToolv9 then
+                                                stillEquippedv9 = true
+                                                break
+                                            end
+                                        end
+
+                                        if not stillEquippedv9 then
+                                            break
+                                        end
+
+                                        GameData.SellEventv9:InvokeServer("SellSingle")
+                                        retryv9 += 1
+                                        task.wait(0.01)
+                                    end
+
                                 else
                                     hrpv9.CFrame = savedCFramev9
-                                    Notify("Fruit empty, waiting for new fruit...", 2)
-                                    break
+
+                                    repeat
+                                        task.wait(0.5)
+                                    until GameData:GetPlantToolv9() ~= nil or not GameData.AutoSellv9
+
+                                    if GameData.AutoSellv9 then
+                                        hrpv9.CFrame = sellTeleportv9.CFrame
+                                        task.wait(0.3)
+                                    end
                                 end
                             end
                         else
@@ -1791,8 +1848,6 @@ Sec.Sell1:AddToggle({
                     end
                 end
             end)
-        else
-            Notify("Auto Sell Disabled!", 2)
         end
     end
 })
@@ -2102,6 +2157,202 @@ Sec.Favorite1:AddToggle({
                 task.cancel(GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4)
                 GameData.FavoriteSystemv4.AutoUnfavoriteLoopv4 = nil
             end
+        end
+    end
+})
+
+Sec.Favorite1:AddSubSection("Favorite Plant")
+
+GameData.Eventv13 = GameData.ReplicatedStoragev13.RemoteEvents.UseGear
+GameData.ModelsFolderv13 = GameData.ReplicatedStoragev13:WaitForChild("Plants"):WaitForChild("Models")
+GameData.MutationDatav13 = require(
+    GameData.ReplicatedStoragev13:WaitForChild("Plants"):WaitForChild("Definitions"):WaitForChild("MutationDataDefinitions")
+)
+GameData.PlantDatav13 = require(
+    GameData.ReplicatedStoragev13:WaitForChild("Plants"):WaitForChild("Definitions"):WaitForChild("PlantDataDefinitions")
+)
+GameData.RarityDefinitionsv13 = require(
+    GameData.ReplicatedStoragev13:WaitForChild("Plants"):WaitForChild("Definitions"):WaitForChild("RarityDefinitions")
+)
+GameData.VariantFolderv13 = GameData.ReplicatedStoragev13:WaitForChild("VariantEffects")
+
+for mutationNamev13, _ in pairs(GameData.MutationDatav13) do
+    table.insert(GameData.MutationNamesv13, mutationNamev13)
+end
+table.sort(GameData.MutationNamesv13)
+
+for _, variantv13 in pairs(GameData.VariantFolderv13:GetChildren()) do
+    table.insert(GameData.VariantNamesv13, variantv13.Name)
+end
+table.sort(GameData.VariantNamesv13)
+
+for _, itemv13 in ipairs(GameData.ModelsFolderv13:GetChildren()) do
+    if itemv13:IsA("Folder") then
+        table.insert(GameData.seedNamesv13, itemv13.Name)
+    end
+end
+
+for rarityNamev13, _ in pairs(GameData.RarityDefinitionsv13) do
+    table.insert(GameData.RarityListv13, rarityNamev13)
+end
+table.sort(GameData.RarityListv13)
+
+local function getPlantRarityv13(plantBaseNamev13)
+    for plantNamev13, datav13 in pairs(GameData.PlantDatav13) do
+        if plantNamev13:lower() == plantBaseNamev13:lower() then
+            return datav13.Rarity
+        end
+    end
+    return nil
+end
+
+local function isPlantSelectedv13(plantBaseNamev13)
+    for _, selectedv13 in ipairs(GameData.selectedPlantsv13) do
+        if plantBaseNamev13 and plantBaseNamev13:lower() == selectedv13:lower() then
+            return true
+        end
+    end
+    return false
+end
+
+local function isRaritySelectedv13(plantBaseNamev13)
+    if #GameData.selectedRaritiesv13 == 0 then return true end
+    local rarityv13 = getPlantRarityv13(plantBaseNamev13)
+    for _, selectedRarityv13 in ipairs(GameData.selectedRaritiesv13) do
+        if rarityv13 and rarityv13:lower() == selectedRarityv13:lower() then
+            return true
+        end
+    end
+    return false
+end
+
+local function isMutationSelectedv13(mutationv13)
+    for _, selectedMutv13 in ipairs(GameData.selectedMutationsv13) do
+        if mutationv13 and mutationv13:lower() == selectedMutv13:lower() then
+            return true
+        end
+    end
+    return false
+end
+
+local function isVariantSelectedv13(variantv13)
+    for _, selectedVarv13 in ipairs(GameData.selectedVariantsv13) do
+        if variantv13 and variantv13:lower() == selectedVarv13:lower() then
+            return true
+        end
+    end
+    return false
+end
+
+local function tryFavoritev13(instancev13)
+    if instancev13:GetAttribute("Favorited") ~= nil then return end
+    local rawUuidv13 = instancev13:GetAttribute("uuid")
+    if not rawUuidv13 then return end
+    local cleanUuidv13 = rawUuidv13:gsub(":regrow:%d+", "")
+    GameData.Eventv13:FireServer("Favorite Tool", {
+        PlantUuid = cleanUuidv13,
+        GrowthAnchorIndex = 1
+    })
+    task.wait(1)
+end
+
+local function getTargetsv13(plantv13)
+    local fruitsv13 = {}
+    for _, childv13 in pairs(plantv13:GetChildren()) do
+        if childv13.Name:match("^Fruit") then
+            table.insert(fruitsv13, childv13)
+        end
+    end
+    if #fruitsv13 > 0 then return fruitsv13 end
+    return {plantv13}
+end
+
+Sec.Favorite1:AddDropdown({
+    Title = "Select Plant To Favorite",
+    Options = GameData.seedNamesv13,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedTablev13)
+        GameData.selectedPlantsv13 = selectedTablev13
+    end
+})
+
+Sec.Favorite1:AddDropdown({
+    Title = "Select Rarity To Favorite",
+    Options = GameData.RarityListv13,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedv13)
+        GameData.selectedRaritiesv13 = selectedv13
+    end
+})
+
+Sec.Favorite1:AddDropdown({
+    Title = "Select Mutation To Favorite",
+    Options = GameData.MutationNamesv13,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedv13)
+        GameData.selectedMutationsv13 = selectedv13
+    end
+})
+
+Sec.Favorite1:AddDropdown({
+    Title = "Select Variant To Favorite",
+    Options = GameData.VariantNamesv13,
+    Multi = true,
+    Default = {},
+    Callback = function(selectedv13)
+        GameData.selectedVariantsv13 = selectedv13
+    end
+})
+
+Sec.Favorite1:AddToggle({
+    Title = "Auto Favorite Plant",
+    Default = false,
+    Callback = function(valuev13)
+        GameData.isRunningv13 = valuev13
+        if valuev13 then
+            task.spawn(function()
+                while GameData.isRunningv13 do
+                    local hasPlantv13    = #GameData.selectedPlantsv13 > 0
+                    local hasRarityv13   = #GameData.selectedRaritiesv13 > 0
+                    local hasMutationv13 = #GameData.selectedMutationsv13 > 0
+                    local hasVariantv13  = #GameData.selectedVariantsv13 > 0
+
+                    for _, plantv13 in pairs(workspace.ClientPlants:GetChildren()) do
+                        local plantBaseNamev13 = plantv13.Name:match("^(%a+)")
+                        local targetsv13 = getTargetsv13(plantv13)
+
+                        for _, targetv13 in ipairs(targetsv13) do
+                            local mutationv13 = targetv13:GetAttribute("Mutation")
+                            local variantv13  = targetv13:GetAttribute("Variant")
+
+                            local plantMatchv13    = not hasPlantv13    or isPlantSelectedv13(plantBaseNamev13)
+                            local rarityMatchv13   = isRaritySelectedv13(plantBaseNamev13)
+                            local mutationMatchv13 = not hasMutationv13 or isMutationSelectedv13(mutationv13)
+                            local variantMatchv13  = not hasVariantv13  or isVariantSelectedv13(variantv13)
+
+                            if hasRarityv13 then
+                                if rarityMatchv13 and mutationMatchv13 and variantMatchv13 then
+                                    tryFavoritev13(targetv13)
+                                end
+                            elseif hasPlantv13 and not hasMutationv13 and not hasVariantv13 then
+                                if plantMatchv13 then tryFavoritev13(targetv13) end
+                            elseif not hasPlantv13 and hasMutationv13 and not hasVariantv13 then
+                                if mutationMatchv13 then tryFavoritev13(targetv13) end
+                            elseif not hasPlantv13 and not hasMutationv13 and hasVariantv13 then
+                                if variantMatchv13 then tryFavoritev13(targetv13) end
+                            elseif hasPlantv13 or hasMutationv13 or hasVariantv13 then
+                                if plantMatchv13 and mutationMatchv13 and variantMatchv13 then
+                                    tryFavoritev13(targetv13)
+                                end
+                            end
+                        end
+                    end
+                    task.wait(1)
+                end
+            end)
         end
     end
 })
