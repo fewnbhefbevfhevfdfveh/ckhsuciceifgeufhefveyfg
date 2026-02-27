@@ -1,155 +1,59 @@
-local TweenService = game:GetService("TweenService")
-local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
-local RbxAnalytics = game:GetService("RbxAnalyticsService")
+local TweenService  = game:GetService("TweenService")
+local Players       = game:GetService("Players")
+local HttpService   = game:GetService("HttpService")
+local RbxAnalytics  = game:GetService("RbxAnalyticsService")
 
 local player = Players.LocalPlayer
 
+-- ==============================
+-- CONFIG
+-- ==============================
+local API_URL    = "https://han2343.pythonanywhere.com/check"
+local SCRIPT_URL = "https://nexahub.pythonanywhere.com/script.lua"
+local TIMEOUT    = 10  -- detik timeout request
+
+-- ==============================
+-- EXECUTOR CHECK
+-- ==============================
 local Request =
-    (syn and syn.request) or
-    http_request or
-    request or
-    (fluxus and fluxus.request)
-
-if not Request then
-    local function KickNoExecutor()
-        local playerGui = player:WaitForChild("PlayerGui")
-        local gui = Instance.new("ScreenGui")
-        gui.Name = "NexaKickScreen"
-        gui.ResetOnSpawn = false
-        gui.IgnoreGuiInset = true
-        gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        gui.Parent = playerGui
-
-        local blur = Instance.new("Frame")
-        blur.Parent = gui
-        blur.Size = UDim2.new(1, 0, 1, 0)
-        blur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        blur.BackgroundTransparency = 0.4
-        blur.BorderSizePixel = 0
-        blur.ZIndex = 1
-
-        local card = Instance.new("Frame")
-        card.Parent = gui
-        card.Size = UDim2.new(0, 340, 0, 200)
-        card.AnchorPoint = Vector2.new(0.5, 0.5)
-        card.Position = UDim2.new(0.5, 0, 0.3, 0)
-        card.BackgroundColor3 = Color3.fromRGB(13, 13, 13)
-        card.BackgroundTransparency = 1
-        card.BorderSizePixel = 0
-        card.ZIndex = 2
-
-        local cardCorner = Instance.new("UICorner")
-        cardCorner.CornerRadius = UDim.new(0, 10)
-        cardCorner.Parent = card
-
-        local topBar = Instance.new("Frame")
-        topBar.Parent = card
-        topBar.Size = UDim2.new(1, 0, 0, 4)
-        topBar.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-        topBar.BorderSizePixel = 0
-        topBar.ZIndex = 3
-        Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 10)
-
-        local iconCircle = Instance.new("Frame")
-        iconCircle.Parent = card
-        iconCircle.Size = UDim2.new(0, 48, 0, 48)
-        iconCircle.AnchorPoint = Vector2.new(0.5, 0)
-        iconCircle.Position = UDim2.new(0.5, 0, 0, 22)
-        iconCircle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        iconCircle.BorderSizePixel = 0
-        iconCircle.ZIndex = 3
-        Instance.new("UICorner", iconCircle).CornerRadius = UDim.new(1, 0)
-
-        local iconLabel = Instance.new("TextLabel")
-        iconLabel.Parent = iconCircle
-        iconLabel.Size = UDim2.new(1, 0, 1, 0)
-        iconLabel.BackgroundTransparency = 1
-        iconLabel.Text = "✕"
-        iconLabel.Font = Enum.Font.GothamBold
-        iconLabel.TextSize = 22
-        iconLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        iconLabel.ZIndex = 4
-
-        local titleLabel = Instance.new("TextLabel")
-        titleLabel.Parent = card
-        titleLabel.Size = UDim2.new(1, -20, 0, 28)
-        titleLabel.Position = UDim2.new(0, 10, 0, 80)
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.Text = "⚙️ Executor Tidak Didukung"
-        titleLabel.Font = Enum.Font.GothamBold
-        titleLabel.TextSize = 17
-        titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        titleLabel.TextXAlignment = Enum.TextXAlignment.Center
-        titleLabel.ZIndex = 3
-
-        local divider = Instance.new("Frame")
-        divider.Parent = card
-        divider.Size = UDim2.new(0.7, 0, 0, 1)
-        divider.AnchorPoint = Vector2.new(0.5, 0)
-        divider.Position = UDim2.new(0.5, 0, 0, 114)
-        divider.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        divider.BorderSizePixel = 0
-        divider.ZIndex = 3
-
-        local msgLabel = Instance.new("TextLabel")
-        msgLabel.Parent = card
-        msgLabel.Size = UDim2.new(1, -30, 0, 55)
-        msgLabel.Position = UDim2.new(0, 15, 0, 122)
-        msgLabel.BackgroundTransparency = 1
-        msgLabel.Text = "Executor yang kamu gunakan tidak kompatibel.\nCoba gunakan executor yang didukung."
-        msgLabel.Font = Enum.Font.Gotham
-        msgLabel.TextSize = 13
-        msgLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-        msgLabel.TextXAlignment = Enum.TextXAlignment.Center
-        msgLabel.TextWrapped = true
-        msgLabel.ZIndex = 3
-
-        TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0.5, 0, 0.5, 0),
-            BackgroundTransparency = 0
-        }):Play()
-
-        task.wait(3)
-        player:Kick("⚙️ Executor Tidak Didukung")
-    end
-    KickNoExecutor()
-    return
-end
-
-local API_URL = "https://han2343.pythonanywhere.com/check"
+    (syn        and syn.request)        or
+    (http_request)                       or
+    (request)                            or
+    (fluxus     and fluxus.request)
 
 local DEVICE_ID =
-    (syn and syn.gethwid and syn.gethwid()) or
-    (gethwid and gethwid()) or
-    RbxAnalytics:GetClientId()
+    (syn        and syn.gethwid and syn.gethwid()) or
+    (gethwid    and gethwid())                     or
+    (RbxAnalytics:GetClientId())
 
-local KICK_TITLE   = "🔐 Nexa Hub"
-local KICK_CONTENT = "Akses kamu ditolak.\nHubungi admin untuk informasi lebih lanjut."
-
+-- ==============================
+-- KICK / NOTIF MESSAGES
+-- ==============================
 local KICK_MESSAGES = {
-    missing_key     = { "🔐 Key Tidak Ditemukan",         "Key wajib diinput sebelum memuat script.\nPastikan kamu sudah mengisi key dengan benar." },
-    invalid_key     = { "❌ Key Tidak Valid",               "Key yang kamu masukkan tidak dikenali.\nPeriksa kembali atau hubungi admin." },
-    device_mismatch = { "🔒 Device Tidak Cocok",           "Key ini sudah terdaftar di perangkat lain.\nKey tidak dapat dibagikan." },
-    expired         = { "⏳ Key Sudah Expired",             "Masa aktif key kamu telah habis.\nSilakan perpanjang untuk melanjutkan akses." },
-    server_fail     = { "🌐 Gagal Terhubung ke Server",    "Tidak dapat memverifikasi key saat ini.\nPeriksa koneksi atau coba beberapa saat lagi." },
-    invalid_resp    = { "⚠️ Respons Server Tidak Valid",   "Server mengembalikan data yang tidak dikenali.\nCoba lagi atau hubungi admin." },
+    missing_key     = { "🔐 Key Tidak Ditemukan",       "Key wajib diinput sebelum memuat script.\nPastikan kamu sudah mengisi key dengan benar." },
+    invalid_key     = { "❌ Key Tidak Valid",             "Key yang kamu masukkan tidak dikenali.\nPeriksa kembali atau hubungi admin." },
+    device_mismatch = { "🔒 Device Tidak Cocok",         "Key ini sudah terdaftar di perangkat lain.\nKey tidak dapat dibagikan." },
+    device_banned   = { "⛔ Device Kamu Di-Ban",         "Device kamu telah di-ban dari layanan ini.\nHubungi admin untuk informasi lebih lanjut." },
+    expired         = { "⏳ Key Sudah Expired",           "Masa aktif key kamu telah habis.\nSilakan perpanjang untuk melanjutkan akses." },
+    server_fail     = { "🌐 Gagal Terhubung ke Server",  "Tidak dapat memverifikasi key saat ini.\nPeriksa koneksi atau coba beberapa saat lagi." },
+    invalid_resp    = { "⚠️ Respons Server Tidak Valid", "Server mengembalikan data yang tidak dikenali.\nCoba lagi atau hubungi admin." },
+    no_executor     = { "⚙️ Executor Tidak Didukung",    "Executor yang kamu gunakan tidak kompatibel.\nCoba gunakan executor yang didukung." },
 }
 
-local function ShowKickScreen(title, message)
-    local playerGui = player:WaitForChild("PlayerGui")
+local NOTIF_MESSAGES = {
+    missing_key     = "❌ Key tidak terdeteksi",
+    invalid_key     = "❌ Key tidak valid",
+    device_mismatch = "❌ Key sudah dipakai di device lain",
+    device_banned   = "⛔ Device kamu di-ban",
+    expired         = "⏳ Key sudah expired",
+    server_fail     = "🌐 Gagal terhubung ke server",
+    invalid_resp    = "⚠️ Response server tidak valid",
+}
 
-    for _, g in pairs(playerGui:GetChildren()) do
-        if g.Name == "NexaKickScreen" then g:Destroy() end
-    end
-
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "NexaKickScreen"
-    gui.ResetOnSpawn = false
-    gui.IgnoreGuiInset = true
-    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    gui.Parent = playerGui
-
+-- ==============================
+-- UI HELPERS
+-- ==============================
+local function CreateCard(gui, color)
     local blur = Instance.new("Frame")
     blur.Parent = gui
     blur.Size = UDim2.new(1, 0, 1, 0)
@@ -167,16 +71,12 @@ local function ShowKickScreen(title, message)
     card.BackgroundTransparency = 1
     card.BorderSizePixel = 0
     card.ZIndex = 2
-
-    local cardCorner = Instance.new("UICorner")
-    cardCorner.CornerRadius = UDim.new(0, 10)
-    cardCorner.Parent = card
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 10)
 
     local topBar = Instance.new("Frame")
     topBar.Parent = card
     topBar.Size = UDim2.new(1, 0, 0, 4)
-    topBar.Position = UDim2.new(0, 0, 0, 0)
-    topBar.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    topBar.BackgroundColor3 = color or Color3.fromRGB(255, 50, 50)
     topBar.BorderSizePixel = 0
     topBar.ZIndex = 3
     Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 10)
@@ -198,9 +98,13 @@ local function ShowKickScreen(title, message)
     iconLabel.Text = "✕"
     iconLabel.Font = Enum.Font.GothamBold
     iconLabel.TextSize = 22
-    iconLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+    iconLabel.TextColor3 = color or Color3.fromRGB(255, 50, 50)
     iconLabel.ZIndex = 4
 
+    return card
+end
+
+local function AddCardText(card, title, message)
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Parent = card
     titleLabel.Size = UDim2.new(1, -20, 0, 28)
@@ -234,24 +138,40 @@ local function ShowKickScreen(title, message)
     msgLabel.TextXAlignment = Enum.TextXAlignment.Center
     msgLabel.TextWrapped = true
     msgLabel.ZIndex = 3
+end
+
+local function ShowKickScreen(title, message)
+    local playerGui = player:WaitForChild("PlayerGui")
+    for _, g in pairs(playerGui:GetChildren()) do
+        if g.Name == "NexaKickScreen" then g:Destroy() end
+    end
+
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "NexaKickScreen"
+    gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.Parent = playerGui
+
+    local card = CreateCard(gui)
+    AddCardText(card, title, message)
 
     TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.5, 0),
-        BackgroundTransparency = 0
+        BackgroundTransparency = 0,
     }):Play()
 
     task.wait(3)
 end
 
 local function KickPlayer(reason)
-    local entry = KICK_MESSAGES[reason] or { KICK_TITLE, KICK_CONTENT }
+    local entry = KICK_MESSAGES[reason] or { "🔐 Nexa Hub", "Akses kamu ditolak.\nHubungi admin untuk informasi lebih lanjut." }
     ShowKickScreen(entry[1], entry[2])
     player:Kick(entry[1] .. " — " .. entry[2]:gsub("\n", " "))
 end
 
 local function ShowNotification(text, isError)
     local playerGui = player:WaitForChild("PlayerGui")
-
     for _, gui in pairs(playerGui:GetChildren()) do
         if gui.Name == "NexaNotify" then gui:Destroy() end
     end
@@ -262,6 +182,8 @@ local function ShowNotification(text, isError)
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     gui.Parent = playerGui
 
+    local accentColor = isError and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 200, 100)
+
     local frame = Instance.new("Frame")
     frame.Parent = gui
     frame.Size = UDim2.new(0, 280, 0, 50)
@@ -269,16 +191,12 @@ local function ShowNotification(text, isError)
     frame.AnchorPoint = Vector2.new(1, 0)
     frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     frame.BorderSizePixel = 0
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = frame
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
 
     local accent = Instance.new("Frame")
     accent.Parent = frame
     accent.Size = UDim2.new(0, 3, 1, 0)
-    accent.Position = UDim2.new(0, 0, 0, 0)
-    accent.BackgroundColor3 = isError and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 200, 100)
+    accent.BackgroundColor3 = accentColor
     accent.BorderSizePixel = 0
     Instance.new("UICorner", accent).CornerRadius = UDim.new(0, 6)
 
@@ -292,7 +210,6 @@ local function ShowNotification(text, isError)
     shadow.ImageTransparency = 0.5
     shadow.ScaleType = Enum.ScaleType.Slice
     shadow.SliceCenter = Rect.new(23, 23, 277, 277)
-    shadow.SliceScale = 1
     shadow.ZIndex = -1
 
     local icon = Instance.new("TextLabel")
@@ -303,7 +220,7 @@ local function ShowNotification(text, isError)
     icon.Text = isError and "⚠" or "✓"
     icon.Font = Enum.Font.GothamSemibold
     icon.TextSize = 18
-    icon.TextColor3 = isError and Color3.fromRGB(255, 50, 50) or Color3.fromRGB(0, 200, 100)
+    icon.TextColor3 = accentColor
 
     local label = Instance.new("TextLabel")
     label.Parent = frame
@@ -328,12 +245,8 @@ local function ShowNotification(text, isError)
     closeBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
     closeBtn.TextTransparency = 0.3
 
-    closeBtn.MouseEnter:Connect(function()
-        closeBtn.TextTransparency = 0
-    end)
-    closeBtn.MouseLeave:Connect(function()
-        closeBtn.TextTransparency = 0.3
-    end)
+    closeBtn.MouseEnter:Connect(function()  closeBtn.TextTransparency = 0   end)
+    closeBtn.MouseLeave:Connect(function()  closeBtn.TextTransparency = 0.3 end)
     closeBtn.MouseButton1Click:Connect(function()
         TweenService:Create(frame, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
             Position = UDim2.new(1, 50, 0.1, 0)
@@ -347,7 +260,7 @@ local function ShowNotification(text, isError)
     }):Play()
 
     task.delay(5, function()
-        if gui.Parent then
+        if gui and gui.Parent then
             TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
                 Position = UDim2.new(1, 50, 0.1, 0)
             }):Play()
@@ -357,70 +270,92 @@ local function ShowNotification(text, isError)
     end)
 end
 
-if typeof(script_key) ~= "string" or script_key == "" then
+-- ==============================
+-- EXECUTOR CHECK
+-- ==============================
+if not Request then
+    KickPlayer("no_executor")
+    return
+end
+
+-- ==============================
+-- KEY VALIDATION
+-- ==============================
+if typeof(script_key) ~= "string" or script_key:match("^%s*$") then
     KickPlayer("missing_key")
     return
 end
 
-local KEY = tostring(script_key)
+local KEY = tostring(script_key):match("^%s*(.-)%s*$") -- trim whitespace
 
-local response = Request({
-    Url = API_URL
-        .. "?key=" .. HttpService:UrlEncode(KEY)
-        .. "&device=" .. HttpService:UrlEncode(DEVICE_ID),
-    Method = "GET",
-    Headers = {
-        ["Content-Type"] = "application/json"
-    }
-})
+-- ==============================
+-- API REQUEST
+-- ==============================
+ShowNotification("🔄 Memverifikasi key...", false)
 
-if not response or not response.Body then
-    ShowNotification("❌ Gagal terhubung ke server", true)
+local response
+local reqSuccess = pcall(function()
+    response = Request({
+        Url = API_URL
+            .. "?key="    .. HttpService:UrlEncode(KEY)
+            .. "&device=" .. HttpService:UrlEncode(DEVICE_ID),
+        Method  = "GET",
+        Headers = { ["Content-Type"] = "application/json" },
+        Timeout = TIMEOUT,
+    })
+end)
+
+if not reqSuccess or not response or not response.Body then
+    ShowNotification(NOTIF_MESSAGES.server_fail, true)
     task.wait(1)
     KickPlayer("server_fail")
     return
 end
 
+-- ==============================
+-- PARSE RESPONSE
+-- ==============================
 local data
-local success = pcall(function()
+local parseOk = pcall(function()
     data = HttpService:JSONDecode(response.Body)
 end)
 
-if not success or typeof(data) ~= "table" then
-    ShowNotification("❌ Response server tidak valid", true)
+if not parseOk or typeof(data) ~= "table" then
+    ShowNotification(NOTIF_MESSAGES.invalid_resp, true)
     task.wait(1)
     KickPlayer("invalid_resp")
     return
 end
 
+-- ==============================
+-- ACCESS CHECK
+-- ==============================
 if not data.allowed then
-    local reason = data.reason or "unknown"
-
-    local notifMessages = {
-        missing_key     = "❌ Key tidak terdeteksi",
-        invalid_key     = "❌ Key tidak valid",
-        device_mismatch = "❌ Key sudah dipakai di device lain",
-        expired         = "⏳ Key sudah expired",
-    }
-
-    ShowNotification(notifMessages[reason] or "❌ Akses ditolak", true)
+    local reason = tostring(data.reason or "invalid_key")
+    ShowNotification(NOTIF_MESSAGES[reason] or "❌ Akses ditolak", true)
     task.wait(1)
     KickPlayer(reason)
     return
 end
 
+-- ==============================
+-- SUCCESS — LOAD MAIN SCRIPT
+-- ==============================
 if data.type == "lifetime" then
-    ShowNotification("💎 Lifetime Premium Activated", false)
+    ShowNotification("💎 Lifetime Premium Activated!", false)
 elseif data.type == "30d" then
-    ShowNotification("⏳ Premium Active  |  Expired: " .. tostring(data.expires), false)
+    local daysLeft = data.days_remaining or 0
+    ShowNotification("⏳ Premium Active  |  " .. daysLeft .. " hari tersisa  |  Exp: " .. tostring(data.expires), false)
 else
     ShowNotification("✅ Premium Access Granted", false)
 end
 
-task.wait(1)
+task.wait(0.8)
 
-pcall(function()
-    loadstring(game:HttpGet(
-        "https://nexahub.pythonanywhere.com/script.lua"
-    ))()
+local loadOk, loadErr = pcall(function()
+    loadstring(game:HttpGet(SCRIPT_URL))()
 end)
+
+if not loadOk then
+    ShowNotification("⚠️ Gagal memuat script utama: " .. tostring(loadErr), true)
+end
