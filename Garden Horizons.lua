@@ -751,7 +751,6 @@ end
 -- UI
 Sec.Main1:AddDropdown({
     Title = "Harvest Mode",
-    Content = "Normal = one by one | Instant = all at once without TP",
     Options = {"Normal", "Instant"},
     Multi = false,
     Default = "Normal",
@@ -761,7 +760,8 @@ Sec.Main1:AddDropdown({
 })
 
 Sec.Main1:AddInput({
-    Title = "Collect Per Fire (Instant Mode)",
+    Title = "Collect Per Fire",
+    Content = "Recommendation 10 or 5 (Instant Mode)",
     Default = "5",
     Callback = function(value)
         local num = tonumber(value)
