@@ -7,10 +7,12 @@ local player = Players.LocalPlayer
 
 -- ==============================
 -- CONFIG
+-- ✅ FIX: Hanya API_URL yang di-hardcode.
+--    SCRIPT_URL sekarang dikirim oleh server setelah key valid,
+--    sehingga tidak bisa dibaca langsung dari script ini.
 -- ==============================
-local API_URL    = "https://han2343.pythonanywhere.com/check"
-local SCRIPT_URL = "https://nexahub.pythonanywhere.com/script.lua"
-local TIMEOUT    = 10  -- detik timeout request
+local API_URL = "https://han2343.pythonanywhere.com/check"
+local TIMEOUT = 10
 
 -- ==============================
 -- EXECUTOR CHECK
@@ -35,8 +37,10 @@ local KICK_MESSAGES = {
     device_mismatch = { "🔒 Device Tidak Cocok",         "Key ini sudah terdaftar di perangkat lain.\nKey tidak dapat dibagikan." },
     device_banned   = { "⛔ Device Kamu Di-Ban",         "Device kamu telah di-ban dari layanan ini.\nHubungi admin untuk informasi lebih lanjut." },
     expired         = { "⏳ Key Sudah Expired",           "Masa aktif key kamu telah habis.\nSilakan perpanjang untuk melanjutkan akses." },
+    rate_limited    = { "⏱️ Terlalu Banyak Request",     "Kamu mengirim terlalu banyak request.\nTunggu sebentar dan coba lagi." },
     server_fail     = { "🌐 Gagal Terhubung ke Server",  "Tidak dapat memverifikasi key saat ini.\nPeriksa koneksi atau coba beberapa saat lagi." },
     invalid_resp    = { "⚠️ Respons Server Tidak Valid", "Server mengembalikan data yang tidak dikenali.\nCoba lagi atau hubungi admin." },
+    no_script_url   = { "⚠️ Script URL Tidak Ditemukan","Server tidak mengembalikan URL script.\nHubungi admin." },
     no_executor     = { "⚙️ Executor Tidak Didukung",    "Executor yang kamu gunakan tidak kompatibel.\nCoba gunakan executor yang didukung." },
 }
 
@@ -46,8 +50,10 @@ local NOTIF_MESSAGES = {
     device_mismatch = "❌ Key sudah dipakai di device lain",
     device_banned   = "⛔ Device kamu di-ban",
     expired         = "⏳ Key sudah expired",
+    rate_limited    = "⏱️ Rate limited, coba lagi sebentar",
     server_fail     = "🌐 Gagal terhubung ke server",
     invalid_resp    = "⚠️ Response server tidak valid",
+    no_script_url   = "⚠️ Script URL tidak ditemukan di response",
 }
 
 -- ==============================
@@ -286,7 +292,7 @@ if typeof(script_key) ~= "string" or script_key:match("^%s*$") then
     return
 end
 
-local KEY = tostring(script_key):match("^%s*(.-)%s*$") -- trim whitespace
+local KEY = tostring(script_key):match("^%s*(.-)%s*$")
 
 -- ==============================
 -- API REQUEST
@@ -335,6 +341,28 @@ if not data.allowed then
     ShowNotification(NOTIF_MESSAGES[reason] or "❌ Akses ditolak", true)
     task.wait(1)
     KickPlayer(reason)
+    return
+end
+
+-- ==============================
+-- ✅ FIX: Ambil SCRIPT_URL dari server response, bukan hardcoded
+-- Di server, tambahkan "script_url" ke response /check setelah key valid
+-- ==============================
+local SCRIPT_URL = data.script_url
+
+if not SCRIPT_URL or type(SCRIPT_URL) ~= "string" or SCRIPT_URL == "" then
+    ShowNotification(NOTIF_MESSAGES.no_script_url, true)
+    task.wait(1)
+    KickPlayer("no_script_url")
+    return
+end
+
+-- Validasi URL harus HTTPS dan dari domain yang dikenal
+-- Ganti "nexahub.pythonanywhere.com" dengan domain kamu
+if not SCRIPT_URL:match("^https://nexahub%.pythonanywhere%.com/") then
+    ShowNotification("⚠️ URL script tidak valid", true)
+    task.wait(1)
+    KickPlayer("invalid_resp")
     return
 end
 
