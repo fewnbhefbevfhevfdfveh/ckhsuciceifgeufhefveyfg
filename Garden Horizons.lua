@@ -262,8 +262,8 @@ local GameData = {
 
     Playerv10 = nil,
 
-    PlantDelayv10 = 0.01,
-    TpDelayv10 = 0.01,
+    PlantDelayv10 = 0.1,
+    TpDelayv10 = 0.2,
 
     SeedNamesv10 = {},
     SelectedSeedv10 = nil,
@@ -1618,8 +1618,7 @@ Sec.Main4:AddDropdown({
 
 Sec.Main4:AddInput({
     Title = "Set Plant Speed",
-    Content = "Default: auto (0.01)",
-    Default = "0.01",
+    Default = "0.1",
     Callback = function(value)
         if value ~= "" then
             local numv10 = tonumber(value)
@@ -1634,8 +1633,7 @@ Sec.Main4:AddInput({
 
 Sec.Main4:AddInput({
     Title = "Set Tp Speed",
-    Content = "Default: auto (0.01)",
-    Default = "0.01",
+    Default = "0.2",
     Callback = function(value)
         if value ~= "" then
             local numv10 = tonumber(value)
