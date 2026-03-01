@@ -46,6 +46,12 @@ local GameData = {
         PlotsFolderv1 = workspace:WaitForChild("Plots")
     },
 
+    Inventoryv1 = {
+        FullTextv1 = "Your inventory is full! Sell or remove items to make space.",
+        IsFullv1 = false,
+        AlreadyDetectedv1 = false,
+    },
+
     Functionsv1 = {
         FindPlayerPlotv1 = nil,
         TeleportTov1 = nil,
@@ -55,6 +61,10 @@ local GameData = {
         IsFruitPlantv1 = nil,
         IsReadyToHarvestv1 = nil,
         CollectBatchv1 = nil,
+        CollectAllBatchv1 = nil,
+        FireBatchv1 = nil,
+        GetFilterFlagsv1 = nil,
+        CheckInventoryv1 = nil,
     },
 
     -- // Auto Buy Seed
@@ -498,14 +508,12 @@ GameData.Functionsv1.GetPlantBaseNamev1 = function(plantNamev1)
     return plantNamev1:match("^(%a+)%d*$")
 end
 
--- Check from Models if plant has FruitFolder
 GameData.Functionsv1.IsFruitPlantv1 = function(plantNamev1)
     local baseNamev1 = GameData.Functionsv1.GetPlantBaseNamev1(plantNamev1)
     local modelv1 = GameData.Plantsv1.Modelsv1:FindFirstChild(baseNamev1)
     return modelv1 and modelv1:FindFirstChild("FruitFolder") ~= nil
 end
 
--- Check GrowthHealth == GrowthMaxHealth → ready to harvest
 GameData.Functionsv1.IsReadyToHarvestv1 = function(targetv1)
     local growthHealthv1 = targetv1:GetAttribute("GrowthHealth")
     local growthMaxHealthv1 = targetv1:GetAttribute("GrowthMaxHealth")
@@ -541,8 +549,6 @@ GameData.Functionsv1.IsPlantSelectedv1 = function(plantv1, hasPlantv1, hasRarity
 end
 
 GameData.Functionsv1.ShouldHarvestTargetv1 = function(targetv1, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1)
-
-    -- If mutation, variant, weather all empty → skip attribute check
     if not hasMutationv1 and not hasVariantv1 and not hasWeatherv1 then
         return true
     end
@@ -592,7 +598,6 @@ GameData.Functionsv1.ShouldHarvestTargetv1 = function(targetv1, hasMutationv1, h
     return true
 end
 
--- Collect matching UUIDs with filters
 GameData.Functionsv1.CollectBatchv1 = function(hasPlantv1, hasRarityv1, hasMutationv1, hasVariantv1, hasWeatherv1, allPlantv1, allRarityv1, allMutationv1, allVariantv1, allWeatherv1)
     local batchv1 = {}
 
@@ -649,12 +654,10 @@ GameData.Functionsv1.CollectBatchv1 = function(hasPlantv1, hasRarityv1, hasMutat
     return batchv1
 end
 
--- Collect ALL UUIDs ignoring all filters (for Harvest All button)
 GameData.Functionsv1.CollectAllBatchv1 = function()
     local batchv1 = {}
 
     for _, plant in pairs(GameData.Worldv1.ClientPlantsv1:GetChildren()) do
-
         local isFruitPlantv1 = GameData.Functionsv1.IsFruitPlantv1(plant.Name)
 
         if isFruitPlantv1 then
@@ -699,7 +702,6 @@ GameData.Functionsv1.CollectAllBatchv1 = function()
     return batchv1
 end
 
--- Fire batch per chunk
 GameData.Functionsv1.FireBatchv1 = function(batchv1)
     for i = 1, #batchv1, GameData.Plantsv1.ChunkSizev1 do
         local chunkv1 = {}
@@ -711,7 +713,6 @@ GameData.Functionsv1.FireBatchv1 = function(batchv1)
     end
 end
 
--- Helper to get all filter flags
 GameData.Functionsv1.GetFilterFlagsv1 = function()
     local hasPlantv1 = #GameData.Plantsv1.SelectedPlantsv1 > 0
     local hasRarityv1 = #GameData.Plantsv1.SelectedRaritiesv1 > 0
@@ -747,6 +748,38 @@ GameData.Functionsv1.GetFilterFlagsv1 = function()
     return hasPlantv1, hasRarityv1, hasMutationv1, hasVariantv1, hasWeatherv1,
            allPlantv1, allRarityv1, allMutationv1, allVariantv1, allWeatherv1
 end
+
+GameData.Functionsv1.CheckInventoryv1 = function()
+    local playerGui = GameData.Playerv1.LocalPlayerv1:FindFirstChild("PlayerGui")
+    local foundv1 = false
+
+    if playerGui then
+        for _, obj in ipairs(playerGui:GetDescendants()) do
+            if obj:IsA("TextLabel") and obj.Name == "CONTENT" then
+                if string.find(obj.Text, GameData.Inventoryv1.FullTextv1, 1, true) then
+                    foundv1 = true
+                    break
+                end
+            end
+        end
+    end
+
+    if foundv1 and not GameData.Inventoryv1.AlreadyDetectedv1 then
+        GameData.Inventoryv1.IsFullv1 = true
+        GameData.Inventoryv1.AlreadyDetectedv1 = true
+    elseif not foundv1 then
+        GameData.Inventoryv1.IsFullv1 = false
+        GameData.Inventoryv1.AlreadyDetectedv1 = false
+    end
+end
+
+-- Inventory Full Checker (background loop)
+task.spawn(function()
+    while true do
+        task.wait(1)
+        GameData.Functionsv1.CheckInventoryv1()
+    end
+end)
 
 -- UI
 Sec.Main1:AddDropdown({
@@ -839,12 +872,18 @@ Sec.Main1:AddToggle({
                 Color = "Green",
                 Time = 0.5,
                 Delay = 5,
-                Icon = ""
+                Icon = "lucide:check"
             })
 
             GameData.Plantsv1.HarvestLoopv1 = task.spawn(function()
 
                 while value do
+
+                    -- Cek inventory full sebelum harvest
+                    if GameData.Inventoryv1.IsFullv1 then
+                        task.wait(1)
+                        continue
+                    end
 
                     local hasPlantv1, hasRarityv1, hasMutationv1, hasVariantv1, hasWeatherv1,
                           allPlantv1, allRarityv1, allMutationv1, allVariantv1, allWeatherv1 =
@@ -857,7 +896,6 @@ Sec.Main1:AddToggle({
 
                     if GameData.Plantsv1.HarvestModev1 == "Instant" then
 
-                        -- INSTANT MODE: collect all UUIDs then fire per chunk
                         local batchv1 = GameData.Functionsv1.CollectBatchv1(
                             hasPlantv1, hasRarityv1, hasMutationv1, hasVariantv1, hasWeatherv1,
                             allPlantv1, allRarityv1, allMutationv1, allVariantv1, allWeatherv1
@@ -869,7 +907,6 @@ Sec.Main1:AddToggle({
 
                     else
 
-                        -- NORMAL MODE: TP to plot first, then one by one
                         GameData.Playerv1.Plotv1 = GameData.Functionsv1.FindPlayerPlotv1()
                         if not GameData.Playerv1.Plotv1 then
                             Chloex:MakeNotify({
@@ -889,6 +926,10 @@ Sec.Main1:AddToggle({
                         task.wait(0.5)
 
                         for _, plant in pairs(GameData.Worldv1.ClientPlantsv1:GetChildren()) do
+
+                            -- Cek inventory full di tengah loop normal mode
+                            if GameData.Inventoryv1.IsFullv1 then break end
+
                             if not GameData.Functionsv1.IsPlantSelectedv1(plant, hasPlantv1, hasRarityv1, allPlantv1, allRarityv1) then
                                 continue
                             end
@@ -907,12 +948,14 @@ Sec.Main1:AddToggle({
                                 if not foundFruitv1 then continue end
 
                                 for _, fruit in pairs(plant:GetChildren()) do
+                                    if GameData.Inventoryv1.IsFullv1 then break end
+
                                     if fruit.Name:match("^Fruit%d+$") then
                                         if fruit:GetAttribute("Favorited") == true then continue end
                                         if not GameData.Functionsv1.IsReadyToHarvestv1(fruit) then continue end
                                         if GameData.Functionsv1.ShouldHarvestTargetv1(fruit, hasMutationv1, hasVariantv1, hasWeatherv1, allMutationv1, allVariantv1, allWeatherv1) then
                                             GameData.Functionsv1.TeleportTov1(fruit:GetPivot().Position)
-                                            task.wait(0.3)
+                                            task.wait(0.5)
 
                                             local rawUuid = fruit:GetAttribute("Uuid")
                                             local growthIndex = fruit:GetAttribute("GrowthAnchorIndex") or 1
@@ -922,7 +965,7 @@ Sec.Main1:AddToggle({
                                                     GrowthAnchorIndex = growthIndex,
                                                     Uuid = cleanUuid
                                                 }})
-                                                task.wait(0.01)
+                                                task.wait(0.1)
                                             end
                                         end
                                     end
@@ -940,12 +983,11 @@ Sec.Main1:AddToggle({
                                         GameData.Plantsv1.HarvestEventv1:FireServer({{
                                             Uuid = cleanUuid
                                         }})
-                                        task.wait(0.01)
+                                        task.wait(0.1)
                                     end
                                 end
                             end
                         end
-
                     end
 
                     task.wait(0.5)
@@ -978,7 +1020,20 @@ Sec.Main1:AddButton({
     Icon = "rbxassetid://79715859717613",
     Callback = function()
 
-        -- Ignore all filters, harvest everything ready and not favorited
+        -- Cek inventory full sebelum Harvest All
+        if GameData.Inventoryv1.IsFullv1 then
+            Chloex:MakeNotify({
+                Title = "Harvest All",
+                Description = "Inventory Full!",
+                Content = "Tidak bisa harvest, inventory penuh!",
+                Color = "Red",
+                Time = 0.5,
+                Delay = 3,
+                Icon = ""
+            })
+            return
+        end
+
         local batchv1 = GameData.Functionsv1.CollectAllBatchv1()
 
         if #batchv1 > 0 then
@@ -2846,7 +2901,6 @@ end
 
 Sec.Seed1:AddDropdown({
     Title = "Select Rarity",
-    Content = "Filter seeds by rarity (overrides seed selection)",
     Options = GameData.SeedShopv2.RarityOptionsv2,
     Multi = true,
     Default = {},
