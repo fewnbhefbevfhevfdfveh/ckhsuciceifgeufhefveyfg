@@ -7,26 +7,49 @@ local player = Players.LocalPlayer
 
 -- ==============================
 -- CONFIG
--- ✅ FIX: Hanya API_URL yang di-hardcode.
---    SCRIPT_URL sekarang dikirim oleh server setelah key valid,
---    sehingga tidak bisa dibaca langsung dari script ini.
+-- ✅ Ganti kedua domain ini dengan domain kamu sendiri
 -- ==============================
-local API_URL = "https://han2343.pythonanywhere.com/check"
+local API_DOMAIN = "han2343.pythonanywhere.com"     -- domain untuk /check
+local SCRIPT_DOMAIN = "nexahub.pythonanywhere.com"  -- domain untuk script.lua
+
+local API_URL = "https://" .. API_DOMAIN .. "/check"
 local TIMEOUT = 10
 
 -- ==============================
--- EXECUTOR CHECK
+-- RETRY CONFIG
+-- ✅ NEW: Retry otomatis sebelum kick kalau server gagal
 -- ==============================
-local Request =
-    (syn        and syn.request)        or
-    (http_request)                       or
-    (request)                            or
-    (fluxus     and fluxus.request)
+local MAX_RETRIES   = 3     -- jumlah percobaan ulang
+local RETRY_DELAY   = 2     -- detik antar retry
 
+-- ==============================
+-- EXECUTOR DETECTION (safe)
+-- ✅ FIX: Semua dicek dengan pcall/typeof agar tidak error
+--    Ditambah support: KRNL, Electron, Delta, Celery, Fluxus
+-- ==============================
+local function safeGet(fn)
+    local ok, val = pcall(fn)
+    return ok and val or nil
+end
+
+local Request =
+    (syn and syn.request)                                       or
+    (typeof(http_request)  == "function" and http_request)      or
+    (typeof(request)       == "function" and request)           or
+    (fluxus and fluxus.request)                                 or
+    (krnl   and krnl.request)                                   or
+    safeGet(function() return KRNL_Execute and KRNL_Execute.request end) or
+    (electron and electron.request)                             or
+    (delta  and delta.request)                                  or
+    (celery and celery.request)
+
+-- ✅ FIX: HWID detection yang aman dengan fallback chain
 local DEVICE_ID =
-    (syn        and syn.gethwid and syn.gethwid()) or
-    (gethwid    and gethwid())                     or
-    (RbxAnalytics:GetClientId())
+    safeGet(function() return syn and syn.gethwid and syn.gethwid() end)     or
+    safeGet(function() return gethwid and gethwid() end)                     or
+    safeGet(function() return identifyexecutor and identifyexecutor() end)   or
+    safeGet(function() return RbxAnalytics:GetClientId() end)               or
+    tostring(player.UserId)  -- last resort fallback
 
 -- ==============================
 -- KICK / NOTIF MESSAGES
@@ -107,7 +130,7 @@ local function CreateCard(gui, color)
     iconLabel.TextColor3 = color or Color3.fromRGB(255, 50, 50)
     iconLabel.ZIndex = 4
 
-    return card
+    return card, iconLabel
 end
 
 local function AddCardText(card, title, message)
@@ -274,6 +297,178 @@ local function ShowNotification(text, isError)
             gui:Destroy()
         end
     end)
+
+    return label  -- ✅ NEW: return label agar bisa di-update (untuk countdown)
+end
+
+-- ==============================
+-- ✅ NEW: LOADING SCREEN
+-- Menampilkan card animasi + spinner saat verifikasi berlangsung
+-- Dipanggil sebelum request, dihapus setelah selesai
+-- ==============================
+local _loadingGui = nil
+
+local function ShowLoadingScreen()
+    local playerGui = player:WaitForChild("PlayerGui")
+    if _loadingGui then _loadingGui:Destroy() end
+
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "NexaLoading"
+    gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.Parent = playerGui
+    _loadingGui = gui
+
+    -- Overlay gelap
+    local overlay = Instance.new("Frame")
+    overlay.Parent = gui
+    overlay.Size = UDim2.new(1, 0, 1, 0)
+    overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    overlay.BackgroundTransparency = 0.5
+    overlay.BorderSizePixel = 0
+    overlay.ZIndex = 1
+
+    -- Card utama
+    local card = Instance.new("Frame")
+    card.Parent = gui
+    card.Size = UDim2.new(0, 320, 0, 160)
+    card.AnchorPoint = Vector2.new(0.5, 0.5)
+    card.Position = UDim2.new(0.5, 0, 0.4, 0)
+    card.BackgroundColor3 = Color3.fromRGB(13, 13, 13)
+    card.BackgroundTransparency = 1
+    card.BorderSizePixel = 0
+    card.ZIndex = 2
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 10)
+
+    -- Top accent bar (biru)
+    local topBar = Instance.new("Frame")
+    topBar.Parent = card
+    topBar.Size = UDim2.new(1, 0, 0, 4)
+    topBar.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+    topBar.BorderSizePixel = 0
+    topBar.ZIndex = 3
+    Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 10)
+
+    -- Logo / Title
+    local title = Instance.new("TextLabel")
+    title.Parent = card
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.Position = UDim2.new(0, 0, 0, 18)
+    title.BackgroundTransparency = 1
+    title.Text = "⬡ NEXA HUB"
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 18
+    title.TextColor3 = Color3.fromRGB(88, 101, 242)
+    title.TextXAlignment = Enum.TextXAlignment.Center
+    title.ZIndex = 3
+
+    -- Spinner frame
+    local spinnerFrame = Instance.new("Frame")
+    spinnerFrame.Parent = card
+    spinnerFrame.Size = UDim2.new(0, 28, 0, 28)
+    spinnerFrame.AnchorPoint = Vector2.new(0.5, 0)
+    spinnerFrame.Position = UDim2.new(0.5, 0, 0, 60)
+    spinnerFrame.BackgroundTransparency = 1
+    spinnerFrame.ZIndex = 3
+
+    local spinnerArc = Instance.new("UIStroke")
+    local spinnerCircle = Instance.new("Frame")
+    spinnerCircle.Parent = spinnerFrame
+    spinnerCircle.Size = UDim2.new(1, 0, 1, 0)
+    spinnerCircle.BackgroundTransparency = 1
+    spinnerCircle.ZIndex = 3
+    Instance.new("UICorner", spinnerCircle).CornerRadius = UDim.new(1, 0)
+
+    -- Spinner dot (animasi manual)
+    local dot = Instance.new("Frame")
+    dot.Parent = spinnerFrame
+    dot.Size = UDim2.new(0, 6, 0, 6)
+    dot.AnchorPoint = Vector2.new(0.5, 0.5)
+    dot.Position = UDim2.new(0.5, 0, 0, 3)
+    dot.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+    dot.BorderSizePixel = 0
+    dot.ZIndex = 4
+    Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+
+    -- Status text (bisa di-update)
+    local statusLabel = Instance.new("TextLabel")
+    statusLabel.Parent = card
+    statusLabel.Name = "StatusLabel"
+    statusLabel.Size = UDim2.new(1, -20, 0, 20)
+    statusLabel.Position = UDim2.new(0, 10, 0, 100)
+    statusLabel.BackgroundTransparency = 1
+    statusLabel.Text = "Memverifikasi key..."
+    statusLabel.Font = Enum.Font.Gotham
+    statusLabel.TextSize = 13
+    statusLabel.TextColor3 = Color3.fromRGB(160, 160, 160)
+    statusLabel.TextXAlignment = Enum.TextXAlignment.Center
+    statusLabel.ZIndex = 3
+
+    -- Sub-text (hint key type / username dll)
+    local subLabel = Instance.new("TextLabel")
+    subLabel.Parent = card
+    subLabel.Name = "SubLabel"
+    subLabel.Size = UDim2.new(1, -20, 0, 18)
+    subLabel.Position = UDim2.new(0, 10, 0, 124)
+    subLabel.BackgroundTransparency = 1
+    subLabel.Text = ""
+    subLabel.Font = Enum.Font.Gotham
+    subLabel.TextSize = 11
+    subLabel.TextColor3 = Color3.fromRGB(100, 100, 100)
+    subLabel.TextXAlignment = Enum.TextXAlignment.Center
+    subLabel.ZIndex = 3
+
+    -- Animasi masuk
+    TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        BackgroundTransparency = 0,
+    }):Play()
+
+    -- Animasi spinner dot berputar
+    task.spawn(function()
+        local angle = 0
+        local radius = 11
+        while gui and gui.Parent do
+            angle = (angle + 6) % 360
+            local rad = math.rad(angle)
+            local cx, cy = 0.5 + math.cos(rad) * (radius / 28), 0.5 + math.sin(rad) * (radius / 28)
+            dot.Position = UDim2.new(cx, -3, cy, -3)
+            task.wait(0.016)
+        end
+    end)
+
+    return gui, statusLabel, subLabel
+end
+
+local function HideLoadingScreen()
+    if _loadingGui then
+        local card = _loadingGui:FindFirstChildWhichIsA("Frame", true)
+        if card then
+            TweenService:Create(card, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0.5, 0, 0.6, 0),
+            }):Play()
+        end
+        task.delay(0.25, function()
+            if _loadingGui then
+                _loadingGui:Destroy()
+                _loadingGui = nil
+            end
+        end)
+    end
+end
+
+-- ==============================
+-- ✅ NEW: RATE LIMIT COUNTDOWN
+-- Tampilkan hitungan mundur di notif kalau kena rate limit
+-- ==============================
+local function ShowRateLimitCountdown(retryAfter)
+    local secs = tonumber(retryAfter) or 10
+    for i = secs, 1, -1 do
+        ShowNotification("⏱️ Rate limited — tunggu " .. i .. " detik...", true)
+        task.wait(1)
+    end
 end
 
 -- ==============================
@@ -295,41 +490,82 @@ end
 local KEY = tostring(script_key):match("^%s*(.-)%s*$")
 
 -- ==============================
--- API REQUEST
+-- API REQUEST + RETRY LOGIC
+-- ✅ NEW: Retry otomatis MAX_RETRIES kali sebelum kick
+--         Rate limit → countdown lalu retry
+--         Server fail → retry dengan delay
 -- ==============================
-ShowNotification("🔄 Memverifikasi key...", false)
 
-local response
-local reqSuccess = pcall(function()
-    response = Request({
-        Url = API_URL
-            .. "?key="    .. HttpService:UrlEncode(KEY)
-            .. "&device=" .. HttpService:UrlEncode(DEVICE_ID),
-        Method  = "GET",
-        Headers = { ["Content-Type"] = "application/json" },
-        Timeout = TIMEOUT,
-    })
-end)
+-- Tampilkan loading screen sebelum mulai request
+local loadingGui, statusLabel, subLabel = ShowLoadingScreen()
 
-if not reqSuccess or not response or not response.Body then
-    ShowNotification(NOTIF_MESSAGES.server_fail, true)
-    task.wait(1)
-    KickPlayer("server_fail")
-    return
+local response = nil
+local data     = nil
+local lastReason = "server_fail"
+
+for attempt = 1, MAX_RETRIES do
+    -- Update status di loading screen
+    if statusLabel then
+        statusLabel.Text = "Menghubungi server... (" .. attempt .. "/" .. MAX_RETRIES .. ")"
+    end
+
+    local reqSuccess = pcall(function()
+        response = Request({
+            Url = API_URL
+                .. "?key="    .. HttpService:UrlEncode(KEY)
+                .. "&device=" .. HttpService:UrlEncode(DEVICE_ID),
+            Method  = "GET",
+            Headers = { ["Content-Type"] = "application/json" },
+            Timeout = TIMEOUT,
+        })
+    end)
+
+    if not reqSuccess or not response or not response.Body then
+        -- Gagal koneksi — tunggu sebentar lalu retry
+        if attempt < MAX_RETRIES then
+            if statusLabel then
+                statusLabel.Text = "Koneksi gagal, mencoba ulang..."
+            end
+            task.wait(RETRY_DELAY)
+        end
+    else
+        -- Parse response
+        local parseOk = pcall(function()
+            data = HttpService:JSONDecode(response.Body)
+        end)
+
+        if not parseOk or typeof(data) ~= "table" then
+            lastReason = "invalid_resp"
+            if attempt < MAX_RETRIES then
+                task.wait(RETRY_DELAY)
+            end
+        elseif not data.allowed and data.reason == "rate_limited" then
+            -- ✅ Rate limited: tampilkan countdown lalu retry
+            lastReason = "rate_limited"
+            local retryAfter = data.retry_after or 10
+            if statusLabel then
+                statusLabel.Text = "Rate limited — tunggu " .. retryAfter .. " detik"
+            end
+            HideLoadingScreen()
+            ShowRateLimitCountdown(retryAfter)
+            -- Tampilkan loading screen lagi untuk retry berikutnya
+            if attempt < MAX_RETRIES then
+                loadingGui, statusLabel, subLabel = ShowLoadingScreen()
+            end
+        else
+            -- Response valid (allowed atau ditolak karena alasan lain)
+            lastReason = tostring(data.reason or "invalid_key")
+            break
+        end
+    end
 end
 
--- ==============================
--- PARSE RESPONSE
--- ==============================
-local data
-local parseOk = pcall(function()
-    data = HttpService:JSONDecode(response.Body)
-end)
-
-if not parseOk or typeof(data) ~= "table" then
-    ShowNotification(NOTIF_MESSAGES.invalid_resp, true)
+-- Setelah semua retry, cek apakah data valid
+if not data or typeof(data) ~= "table" then
+    HideLoadingScreen()
+    ShowNotification(NOTIF_MESSAGES[lastReason] or NOTIF_MESSAGES.server_fail, true)
     task.wait(1)
-    KickPlayer("invalid_resp")
+    KickPlayer(lastReason)
     return
 end
 
@@ -338,6 +574,7 @@ end
 -- ==============================
 if not data.allowed then
     local reason = tostring(data.reason or "invalid_key")
+    HideLoadingScreen()
     ShowNotification(NOTIF_MESSAGES[reason] or "❌ Akses ditolak", true)
     task.wait(1)
     KickPlayer(reason)
@@ -345,21 +582,23 @@ if not data.allowed then
 end
 
 -- ==============================
--- ✅ FIX: Ambil SCRIPT_URL dari server response, bukan hardcoded
--- Di server, tambahkan "script_url" ke response /check setelah key valid
+-- SCRIPT URL VALIDATION
+-- ✅ FIX: Pakai SCRIPT_DOMAIN dari config atas, bukan hardcoded
 -- ==============================
 local SCRIPT_URL = data.script_url
 
 if not SCRIPT_URL or type(SCRIPT_URL) ~= "string" or SCRIPT_URL == "" then
+    HideLoadingScreen()
     ShowNotification(NOTIF_MESSAGES.no_script_url, true)
     task.wait(1)
     KickPlayer("no_script_url")
     return
 end
 
--- Validasi URL harus HTTPS dan dari domain yang dikenal
--- Ganti "nexahub.pythonanywhere.com" dengan domain kamu
-if not SCRIPT_URL:match("^https://nexahub%.pythonanywhere%.com/") then
+-- Validasi domain SCRIPT_URL harus sesuai config
+local escapedDomain = SCRIPT_DOMAIN:gsub("%.", "%%.")
+if not SCRIPT_URL:match("^https://" .. escapedDomain .. "/") then
+    HideLoadingScreen()
     ShowNotification("⚠️ URL script tidak valid", true)
     task.wait(1)
     KickPlayer("invalid_resp")
@@ -367,19 +606,30 @@ if not SCRIPT_URL:match("^https://nexahub%.pythonanywhere%.com/") then
 end
 
 -- ==============================
--- SUCCESS — LOAD MAIN SCRIPT
+-- SUCCESS — Update loading screen lalu load script
 -- ==============================
+local successMsg = ""
 if data.type == "lifetime" then
-    ShowNotification("💎 Lifetime Premium Activated!", false)
+    successMsg = "💎 Lifetime Premium Activated!"
+    if statusLabel then statusLabel.Text = successMsg end
+    if subLabel    then subLabel.Text    = "Memuat script..." end
 elseif data.type == "30d" then
     local daysLeft = data.days_remaining or 0
-    ShowNotification("⏳ Premium Active  |  " .. daysLeft .. " hari tersisa  |  Exp: " .. tostring(data.expires), false)
+    successMsg = "⏳ Active  |  " .. daysLeft .. " hari tersisa  |  Exp: " .. tostring(data.expires)
+    if statusLabel then statusLabel.Text = "Premium Active!" end
+    if subLabel    then subLabel.Text    = daysLeft .. " hari tersisa · Exp " .. tostring(data.expires) end
 else
-    ShowNotification("✅ Premium Access Granted", false)
+    successMsg = "✅ Premium Access Granted"
+    if statusLabel then statusLabel.Text = successMsg end
 end
 
 task.wait(0.8)
+HideLoadingScreen()
+ShowNotification(successMsg, false)
 
+-- ==============================
+-- LOAD MAIN SCRIPT
+-- ==============================
 local loadOk, loadErr = pcall(function()
     loadstring(game:HttpGet(SCRIPT_URL))()
 end)
