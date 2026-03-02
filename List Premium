@@ -512,6 +512,18 @@ end
 if not data.allowed then
     local reason = tostring(data.reason or "invalid_key")
     HideLoadingScreen()
+
+    if reason == "device_banned" then
+        local banReason = tostring(data.ban_reason or "Tidak ada alasan yang diberikan.")
+        local banDate   = tostring(data.banned_at or "")
+        local kickMsg   = "Device kamu telah di-ban dari layanan ini.\nAlasan: " .. banReason
+        if banDate ~= "" then
+            kickMsg = kickMsg .. "\nTanggal: " .. banDate:sub(1, 10)
+        end
+        KICK_MESSAGES["device_banned"] = { "⛔ Device Kamu Di-Ban", kickMsg }
+        NOTIF_MESSAGES["device_banned"] = "⛔ Di-ban: " .. banReason
+    end
+
     ShowNotification(NOTIF_MESSAGES[reason] or "❌ Akses ditolak", true)
     task.wait(1)
     KickPlayer(reason)
