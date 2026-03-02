@@ -5,28 +5,15 @@ local RbxAnalytics  = game:GetService("RbxAnalyticsService")
 
 local player = Players.LocalPlayer
 
--- ==============================
--- CONFIG
--- ✅ Ganti kedua domain ini dengan domain kamu sendiri
--- ==============================
-local API_DOMAIN = "han2343.pythonanywhere.com"     -- domain untuk /check
-local SCRIPT_DOMAIN = "nexahub.pythonanywhere.com"  -- domain untuk script.lua
+local API_DOMAIN = "han2343.pythonanywhere.com"
+local SCRIPT_DOMAIN = "nexahub.pythonanywhere.com"
 
 local API_URL = "https://" .. API_DOMAIN .. "/check"
 local TIMEOUT = 10
 
--- ==============================
--- RETRY CONFIG
--- ✅ NEW: Retry otomatis sebelum kick kalau server gagal
--- ==============================
-local MAX_RETRIES   = 3     -- jumlah percobaan ulang
-local RETRY_DELAY   = 2     -- detik antar retry
+local MAX_RETRIES   = 3
+local RETRY_DELAY   = 2
 
--- ==============================
--- EXECUTOR DETECTION (safe)
--- ✅ FIX: Semua dicek dengan pcall/typeof agar tidak error
---    Ditambah support: KRNL, Electron, Delta, Celery, Fluxus
--- ==============================
 local function safeGet(fn)
     local ok, val = pcall(fn)
     return ok and val or nil
@@ -43,17 +30,13 @@ local Request =
     (delta  and delta.request)                                  or
     (celery and celery.request)
 
--- ✅ FIX: HWID detection yang aman dengan fallback chain
 local DEVICE_ID =
     safeGet(function() return syn and syn.gethwid and syn.gethwid() end)     or
     safeGet(function() return gethwid and gethwid() end)                     or
     safeGet(function() return identifyexecutor and identifyexecutor() end)   or
     safeGet(function() return RbxAnalytics:GetClientId() end)               or
-    tostring(player.UserId)  -- last resort fallback
+    tostring(player.UserId)
 
--- ==============================
--- KICK / NOTIF MESSAGES
--- ==============================
 local KICK_MESSAGES = {
     missing_key     = { "🔐 Key Tidak Ditemukan",       "Key wajib diinput sebelum memuat script.\nPastikan kamu sudah mengisi key dengan benar." },
     invalid_key     = { "❌ Key Tidak Valid",             "Key yang kamu masukkan tidak dikenali.\nPeriksa kembali atau hubungi admin." },
@@ -79,9 +62,6 @@ local NOTIF_MESSAGES = {
     no_script_url   = "⚠️ Script URL tidak ditemukan di response",
 }
 
--- ==============================
--- UI HELPERS
--- ==============================
 local function CreateCard(gui, color)
     local blur = Instance.new("Frame")
     blur.Parent = gui
@@ -298,14 +278,9 @@ local function ShowNotification(text, isError)
         end
     end)
 
-    return label  -- ✅ NEW: return label agar bisa di-update (untuk countdown)
+    return label
 end
 
--- ==============================
--- ✅ NEW: LOADING SCREEN
--- Menampilkan card animasi + spinner saat verifikasi berlangsung
--- Dipanggil sebelum request, dihapus setelah selesai
--- ==============================
 local _loadingGui = nil
 
 local function ShowLoadingScreen()
@@ -320,7 +295,6 @@ local function ShowLoadingScreen()
     gui.Parent = playerGui
     _loadingGui = gui
 
-    -- Overlay gelap
     local overlay = Instance.new("Frame")
     overlay.Parent = gui
     overlay.Size = UDim2.new(1, 0, 1, 0)
@@ -329,7 +303,6 @@ local function ShowLoadingScreen()
     overlay.BorderSizePixel = 0
     overlay.ZIndex = 1
 
-    -- Card utama
     local card = Instance.new("Frame")
     card.Parent = gui
     card.Size = UDim2.new(0, 320, 0, 160)
@@ -341,7 +314,6 @@ local function ShowLoadingScreen()
     card.ZIndex = 2
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 10)
 
-    -- Top accent bar (biru)
     local topBar = Instance.new("Frame")
     topBar.Parent = card
     topBar.Size = UDim2.new(1, 0, 0, 4)
@@ -350,7 +322,6 @@ local function ShowLoadingScreen()
     topBar.ZIndex = 3
     Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 10)
 
-    -- Logo / Title
     local title = Instance.new("TextLabel")
     title.Parent = card
     title.Size = UDim2.new(1, 0, 0, 30)
@@ -363,7 +334,6 @@ local function ShowLoadingScreen()
     title.TextXAlignment = Enum.TextXAlignment.Center
     title.ZIndex = 3
 
-    -- Spinner frame
     local spinnerFrame = Instance.new("Frame")
     spinnerFrame.Parent = card
     spinnerFrame.Size = UDim2.new(0, 28, 0, 28)
@@ -380,7 +350,6 @@ local function ShowLoadingScreen()
     spinnerCircle.ZIndex = 3
     Instance.new("UICorner", spinnerCircle).CornerRadius = UDim.new(1, 0)
 
-    -- Spinner dot (animasi manual)
     local dot = Instance.new("Frame")
     dot.Parent = spinnerFrame
     dot.Size = UDim2.new(0, 6, 0, 6)
@@ -391,7 +360,6 @@ local function ShowLoadingScreen()
     dot.ZIndex = 4
     Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
 
-    -- Status text (bisa di-update)
     local statusLabel = Instance.new("TextLabel")
     statusLabel.Parent = card
     statusLabel.Name = "StatusLabel"
@@ -405,7 +373,6 @@ local function ShowLoadingScreen()
     statusLabel.TextXAlignment = Enum.TextXAlignment.Center
     statusLabel.ZIndex = 3
 
-    -- Sub-text (hint key type / username dll)
     local subLabel = Instance.new("TextLabel")
     subLabel.Parent = card
     subLabel.Name = "SubLabel"
@@ -419,13 +386,11 @@ local function ShowLoadingScreen()
     subLabel.TextXAlignment = Enum.TextXAlignment.Center
     subLabel.ZIndex = 3
 
-    -- Animasi masuk
     TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
         Position = UDim2.new(0.5, 0, 0.5, 0),
         BackgroundTransparency = 0,
     }):Play()
 
-    -- Animasi spinner dot berputar
     task.spawn(function()
         local angle = 0
         local radius = 11
@@ -459,10 +424,6 @@ local function HideLoadingScreen()
     end
 end
 
--- ==============================
--- ✅ NEW: RATE LIMIT COUNTDOWN
--- Tampilkan hitungan mundur di notif kalau kena rate limit
--- ==============================
 local function ShowRateLimitCountdown(retryAfter)
     local secs = tonumber(retryAfter) or 10
     for i = secs, 1, -1 do
@@ -471,17 +432,11 @@ local function ShowRateLimitCountdown(retryAfter)
     end
 end
 
--- ==============================
--- EXECUTOR CHECK
--- ==============================
 if not Request then
     KickPlayer("no_executor")
     return
 end
 
--- ==============================
--- KEY VALIDATION
--- ==============================
 if typeof(script_key) ~= "string" or script_key:match("^%s*$") then
     KickPlayer("missing_key")
     return
@@ -489,14 +444,6 @@ end
 
 local KEY = tostring(script_key):match("^%s*(.-)%s*$")
 
--- ==============================
--- API REQUEST + RETRY LOGIC
--- ✅ NEW: Retry otomatis MAX_RETRIES kali sebelum kick
---         Rate limit → countdown lalu retry
---         Server fail → retry dengan delay
--- ==============================
-
--- Tampilkan loading screen sebelum mulai request
 local loadingGui, statusLabel, subLabel = ShowLoadingScreen()
 
 local response = nil
@@ -504,7 +451,6 @@ local data     = nil
 local lastReason = "server_fail"
 
 for attempt = 1, MAX_RETRIES do
-    -- Update status di loading screen
     if statusLabel then
         statusLabel.Text = "Menghubungi server... (" .. attempt .. "/" .. MAX_RETRIES .. ")"
     end
@@ -521,7 +467,6 @@ for attempt = 1, MAX_RETRIES do
     end)
 
     if not reqSuccess or not response or not response.Body then
-        -- Gagal koneksi — tunggu sebentar lalu retry
         if attempt < MAX_RETRIES then
             if statusLabel then
                 statusLabel.Text = "Koneksi gagal, mencoba ulang..."
@@ -529,7 +474,6 @@ for attempt = 1, MAX_RETRIES do
             task.wait(RETRY_DELAY)
         end
     else
-        -- Parse response
         local parseOk = pcall(function()
             data = HttpService:JSONDecode(response.Body)
         end)
@@ -540,7 +484,6 @@ for attempt = 1, MAX_RETRIES do
                 task.wait(RETRY_DELAY)
             end
         elseif not data.allowed and data.reason == "rate_limited" then
-            -- ✅ Rate limited: tampilkan countdown lalu retry
             lastReason = "rate_limited"
             local retryAfter = data.retry_after or 10
             if statusLabel then
@@ -548,19 +491,16 @@ for attempt = 1, MAX_RETRIES do
             end
             HideLoadingScreen()
             ShowRateLimitCountdown(retryAfter)
-            -- Tampilkan loading screen lagi untuk retry berikutnya
             if attempt < MAX_RETRIES then
                 loadingGui, statusLabel, subLabel = ShowLoadingScreen()
             end
         else
-            -- Response valid (allowed atau ditolak karena alasan lain)
             lastReason = tostring(data.reason or "invalid_key")
             break
         end
     end
 end
 
--- Setelah semua retry, cek apakah data valid
 if not data or typeof(data) ~= "table" then
     HideLoadingScreen()
     ShowNotification(NOTIF_MESSAGES[lastReason] or NOTIF_MESSAGES.server_fail, true)
@@ -569,9 +509,6 @@ if not data or typeof(data) ~= "table" then
     return
 end
 
--- ==============================
--- ACCESS CHECK
--- ==============================
 if not data.allowed then
     local reason = tostring(data.reason or "invalid_key")
     HideLoadingScreen()
@@ -581,10 +518,6 @@ if not data.allowed then
     return
 end
 
--- ==============================
--- SCRIPT URL VALIDATION
--- ✅ FIX: Pakai SCRIPT_DOMAIN dari config atas, bukan hardcoded
--- ==============================
 local SCRIPT_URL = data.script_url
 
 if not SCRIPT_URL or type(SCRIPT_URL) ~= "string" or SCRIPT_URL == "" then
@@ -595,7 +528,6 @@ if not SCRIPT_URL or type(SCRIPT_URL) ~= "string" or SCRIPT_URL == "" then
     return
 end
 
--- Validasi domain SCRIPT_URL harus sesuai config
 local escapedDomain = SCRIPT_DOMAIN:gsub("%.", "%%.")
 if not SCRIPT_URL:match("^https://" .. escapedDomain .. "/") then
     HideLoadingScreen()
@@ -605,9 +537,6 @@ if not SCRIPT_URL:match("^https://" .. escapedDomain .. "/") then
     return
 end
 
--- ==============================
--- SUCCESS — Update loading screen lalu load script
--- ==============================
 local successMsg = ""
 if data.type == "lifetime" then
     successMsg = "💎 Lifetime Premium Activated!"
@@ -627,9 +556,6 @@ task.wait(0.8)
 HideLoadingScreen()
 ShowNotification(successMsg, false)
 
--- ==============================
--- LOAD MAIN SCRIPT
--- ==============================
 local loadOk, loadErr = pcall(function()
     loadstring(game:HttpGet(SCRIPT_URL))()
 end)
