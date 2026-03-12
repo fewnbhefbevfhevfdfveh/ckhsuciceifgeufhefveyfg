@@ -1,4 +1,4 @@
-local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/main.lua"))()
+local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/nhfudzfsrzggt/brigida/refs/heads/main/dist/main.lua"))()
 
 local GameData = {
 	-- // Auto Shoot Fish, Safe Oxygen, Sell Fish
