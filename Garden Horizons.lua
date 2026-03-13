@@ -1,5 +1,5 @@
 local success, err = pcall(function()
-    local url = "https://fitri324.pythonanywhere.com/Garden%20Horizons%20Premium.lua/raw"
+    local url = "https://fitri324.pythonanywhere.com/Garden_Horizons_Premium.lua/raw"
     
     local code = game:HttpGet(url)
     
